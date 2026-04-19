@@ -8,6 +8,7 @@ import jakarta.inject.Inject;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Menu;
@@ -88,6 +89,7 @@ import software.coley.recaf.ui.pane.search.MemberDeclarationSearchPane;
 import software.coley.recaf.ui.pane.search.MemberReferenceSearchPane;
 import software.coley.recaf.ui.pane.search.NumberSearchPane;
 import software.coley.recaf.ui.pane.search.StringSearchPane;
+import software.coley.recaf.ui.pane.search.StringTablePane;
 import software.coley.recaf.util.Animations;
 import software.coley.recaf.util.ClipboardUtil;
 import software.coley.recaf.util.EscapeUtil;
@@ -140,6 +142,7 @@ import static software.coley.recaf.util.StringUtil.*;
 public class Actions implements Service {
 	public static final String ID = "actions";
 	private static final Logger logger = Logging.get(Actions.class);
+	private final List<Class<?>> SEARCH_PANE_TYPES = List.of(AbstractSearchPane.class, StringTablePane.class);
 	private final WorkspaceManager workspaceManager;
 	private final NavigationManager navigationManager;
 	private final DockingManager dockingManager;
@@ -158,6 +161,7 @@ public class Actions implements Service {
 	private final Instance<CommentEditPane> commentPaneProvider;
 	private final Instance<CommentListPane> commentListPaneProvider;
 	private final Instance<MethodCallGraphsPane> callGraphsPaneProvider;
+	private final Instance<StringTablePane> stringTablePaneProvider;
 	private final Instance<StringSearchPane> stringSearchPaneProvider;
 	private final Instance<NumberSearchPane> numberSearchPaneProvider;
 	private final Instance<ClassReferenceSearchPane> classReferenceSearchPaneProvider;
@@ -188,6 +192,7 @@ public class Actions implements Service {
 	               @Nonnull Instance<WorkspaceInformationPane> infoPaneProvider,
 	               @Nonnull Instance<CommentEditPane> commentPaneProvider,
 	               @Nonnull Instance<CommentListPane> commentListPaneProvider,
+	               @Nonnull Instance<StringTablePane> stringTablePaneProvider,
 	               @Nonnull Instance<StringSearchPane> stringSearchPaneProvider,
 	               @Nonnull Instance<NumberSearchPane> numberSearchPaneProvider,
 	               @Nonnull Instance<MethodCallGraphsPane> callGraphsPaneProvider,
@@ -214,6 +219,7 @@ public class Actions implements Service {
 		this.infoPaneProvider = infoPaneProvider;
 		this.commentPaneProvider = commentPaneProvider;
 		this.commentListPaneProvider = commentListPaneProvider;
+		this.stringTablePaneProvider = stringTablePaneProvider;
 		this.stringSearchPaneProvider = stringSearchPaneProvider;
 		this.numberSearchPaneProvider = numberSearchPaneProvider;
 		this.callGraphsPaneProvider = callGraphsPaneProvider;
@@ -2181,11 +2187,19 @@ public class Actions implements Service {
 	}
 
 	/**
+	 * @return New string table pane, opened in a new docking tab.
+	 */
+	@Nonnull
+	public StringTablePane openNewStringTable() {
+		return openPaneAdjacent(SEARCH_PANE_TYPES, "menu.search.string-table", CarbonIcons.QUOTES, stringTablePaneProvider);
+	}
+
+	/**
 	 * @return New string search pane, opened in a new docking tab.
 	 */
 	@Nonnull
 	public StringSearchPane openNewStringSearch() {
-		return openSearchPane("menu.search.string", CarbonIcons.QUOTES, stringSearchPaneProvider);
+		return openPaneAdjacent(SEARCH_PANE_TYPES, "menu.search.string", CarbonIcons.QUOTES, stringSearchPaneProvider);
 	}
 
 	/**
@@ -2193,7 +2207,7 @@ public class Actions implements Service {
 	 */
 	@Nonnull
 	public NumberSearchPane openNewNumberSearch() {
-		return openSearchPane("menu.search.number", CarbonIcons.NUMBER_0, numberSearchPaneProvider);
+		return openPaneAdjacent(SEARCH_PANE_TYPES, "menu.search.number", CarbonIcons.NUMBER_0, numberSearchPaneProvider);
 	}
 
 	/**
@@ -2201,7 +2215,7 @@ public class Actions implements Service {
 	 */
 	@Nonnull
 	public ClassReferenceSearchPane openNewClassReferenceSearch() {
-		return openSearchPane("menu.search.class.type-references", CarbonIcons.CODE_REFERENCE, classReferenceSearchPaneProvider);
+		return openPaneAdjacent(SEARCH_PANE_TYPES, "menu.search.class.type-references", CarbonIcons.CODE_REFERENCE, classReferenceSearchPaneProvider);
 	}
 
 	/**
@@ -2209,7 +2223,7 @@ public class Actions implements Service {
 	 */
 	@Nonnull
 	public MemberReferenceSearchPane openNewMemberReferenceSearch() {
-		return openSearchPane("menu.search.class.member-references", CarbonIcons.CODE_REFERENCE, memberReferenceSearchPaneProvider);
+		return openPaneAdjacent(SEARCH_PANE_TYPES, "menu.search.class.member-references", CarbonIcons.CODE_REFERENCE, memberReferenceSearchPaneProvider);
 	}
 
 	/**
@@ -2217,7 +2231,7 @@ public class Actions implements Service {
 	 */
 	@Nonnull
 	public MemberDeclarationSearchPane openNewMemberDeclarationSearch() {
-		return openSearchPane("menu.search.class.member-declarations", CarbonIcons.CODE, memberDeclarationSearchPaneProvider);
+		return openPaneAdjacent(SEARCH_PANE_TYPES, "menu.search.class.member-declarations", CarbonIcons.CODE, memberDeclarationSearchPaneProvider);
 	}
 
 	/**
@@ -2225,14 +2239,15 @@ public class Actions implements Service {
 	 */
 	@Nonnull
 	public InstructionSearchPane openNewInstructionSearch() {
-		return openSearchPane("menu.search.class.instruction", CarbonIcons.CODE, instructionSearchPaneProvider);
+		return openPaneAdjacent(SEARCH_PANE_TYPES, "menu.search.class.instruction", CarbonIcons.CODE, instructionSearchPaneProvider);
 	}
 
 	@Nonnull
-	private <T extends AbstractSearchPane> T openSearchPane(@Nonnull String titleId, @Nonnull Ikon icon, @Nonnull Instance<T> paneProvider) {
-		// Place the tab in a region with other searches if possible.
+	private <T extends Parent> T openPaneAdjacent(@Nonnull List<Class<?>> adjacentTypes, @Nonnull String titleId,
+	                                              @Nonnull Ikon icon, @Nonnull Instance<T> paneProvider) {
+		// Place the tab in a region with other panes of the given 'adjacent' types if possible.
 		DockablePath searchPath = dockingManager.getBento()
-				.search().dockable(d -> d.getNode() instanceof AbstractSearchPane);
+				.search().dockable(d -> adjacentTypes.stream().anyMatch(t -> t.isAssignableFrom(d.getNode().getClass())));
 		DockContainerLeaf container = searchPath == null ? null : searchPath.leafContainer();
 
 		T content = paneProvider.get();

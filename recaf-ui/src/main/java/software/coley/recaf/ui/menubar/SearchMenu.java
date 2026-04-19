@@ -28,6 +28,7 @@ public class SearchMenu extends WorkspaceAwareMenu {
 		setGraphic(new FontIconView(CarbonIcons.SEARCH));
 
 		getItems().add(action("menu.search.string", CarbonIcons.QUOTES, actions::openNewStringSearch));
+		getItems().add(action("menu.search.string-table", CarbonIcons.QUOTES, actions::openNewStringTable));
 		getItems().add(action("menu.search.number", CarbonIcons.NUMBER_0, actions::openNewNumberSearch));
 		getItems().add(action("menu.search.class.type-references", CarbonIcons.CODE_REFERENCE, actions::openNewClassReferenceSearch));
 		getItems().add(action("menu.search.class.member-references", CarbonIcons.CODE_REFERENCE, actions::openNewMemberReferenceSearch));

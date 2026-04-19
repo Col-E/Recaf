@@ -24,7 +24,7 @@ public class StringResult extends Result<String> {
 
 	@Nonnull
 	@Override
-	protected String getValue() {
+	public String getValue() {
 		return value;
 	}
 }

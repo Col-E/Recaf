@@ -25,7 +25,7 @@ public abstract class Result<T> implements Comparable<Result<?>> {
 	 * @return Wrapped value, used internally for {@link #toString()}.
 	 */
 	@Nonnull
-	protected abstract T getValue();
+	public abstract T getValue();
 
 	/**
 	 * @return Path to item containing the result.

@@ -34,7 +34,7 @@ public class ClassReferenceResult extends Result<ClassReference> {
 
 	@Nonnull
 	@Override
-	protected ClassReference getValue() {
+	public ClassReference getValue() {
 		return ref;
 	}
 }

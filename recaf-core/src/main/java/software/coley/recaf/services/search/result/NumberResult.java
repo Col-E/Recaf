@@ -24,7 +24,7 @@ public class NumberResult extends Result<Number> {
 
 	@Nonnull
 	@Override
-	protected Number getValue() {
+	public Number getValue() {
 		return value;
 	}
 }

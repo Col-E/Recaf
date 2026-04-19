@@ -39,7 +39,7 @@ public class MemberReferenceResult extends Result<MemberReference> {
 
 	@Nonnull
 	@Override
-	protected MemberReference getValue() {
+	public MemberReference getValue() {
 		return ref;
 	}
 }
