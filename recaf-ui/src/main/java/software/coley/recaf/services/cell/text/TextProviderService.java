@@ -3,8 +3,12 @@ package software.coley.recaf.services.cell.text;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import me.darknet.assembler.printer.DalvikCodePrinter;
+import me.darknet.assembler.printer.PrintContext;
 import me.darknet.dex.tree.definitions.instructions.Instruction;
+import me.darknet.dex.tree.simulation.ExecutionEngine;
 import org.benf.cfr.reader.entities.annotations.ElementValue;
+import org.benf.cfr.reader.util.collections.LazyMap;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import software.coley.recaf.info.*;
@@ -29,6 +33,7 @@ import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.*;
 import software.coley.recaf.workspace.model.resource.*;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -259,7 +264,16 @@ public class TextProviderService implements Service {
 	                                               @Nonnull ClassInfo declaringClass,
 	                                               @Nonnull MethodMember declaringMethod,
 	                                               @Nonnull Instruction insn) {
-		return () -> formatConfig.filter(insn.toString());
+
+		return () -> {
+			PrintContext.CodePrint ctx = new PrintContext.CodePrint(new PrintContext<>(" "));
+			DalvikCodePrinter printer = new DalvikCodePrinter(ctx,
+					new LazyMap<>(new HashMap<>(), v -> "v" + v),
+					new LazyMap<>(new HashMap<>(), v -> "L" + v));
+			ExecutionEngine.execute(printer, insn);
+			String text = ctx.toString().replace('\n', ' ').trim();
+			return formatConfig.filterMaxLength(text);
+		};
 	}
 
 	/**
