@@ -5,6 +5,7 @@ import jakarta.annotation.Nullable;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.event.EventHandler;
+import javafx.scene.Cursor;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
@@ -60,8 +61,8 @@ import java.util.stream.Collectors;
  *
  * @author Amejonah
  */
-public class MethodCallGraphPane extends BorderPane implements ClassNavigable, UpdatableNavigable {
-	private static final Logger logger = Logging.get(MethodCallGraphPane.class);
+public class MethodCallGraphTreePane extends BorderPane implements ClassNavigable, UpdatableNavigable {
+	private static final Logger logger = Logging.get(MethodCallGraphTreePane.class);
 	public static final int MAX_TREE_DEPTH = 20;
 	private final ObjectProperty<MethodMember> currentMethod = new SimpleObjectProperty<>();
 	private final CallGraphTreeView graphTreeView = new CallGraphTreeView();
@@ -73,9 +74,9 @@ public class MethodCallGraphPane extends BorderPane implements ClassNavigable, U
 	private final Actions actions;
 	private ClassPathNode path;
 
-	public MethodCallGraphPane(@Nonnull Workspace workspace, @Nonnull CallGraph callGraph, @Nonnull CellConfigurationService configurationService,
-	                           @Nonnull TextFormatConfig format, @Nonnull Actions actions, @Nonnull CallGraphMode mode,
-	                           @Nullable ObjectProperty<MethodMember> methodInfoObservable) {
+	public MethodCallGraphTreePane(@Nonnull Workspace workspace, @Nonnull CallGraph callGraph, @Nonnull CellConfigurationService configurationService,
+	                               @Nonnull TextFormatConfig format, @Nonnull Actions actions, @Nonnull CallGraphMode mode,
+	                               @Nullable ObjectProperty<MethodMember> methodInfoObservable) {
 		this.configurationService = configurationService;
 		this.workspace = workspace;
 		this.callGraph = callGraph;
@@ -181,7 +182,7 @@ public class MethodCallGraphPane extends BorderPane implements ClassNavigable, U
 		private EventHandler<MouseEvent> onClickFilter;
 
 		private CallGraphCell() {
-			getStyleClass().addAll("code-area", "transparent-cell");
+			getStyleClass().addAll("code-area", "transparent-cell", "cursor-hand");
 		}
 
 		@Override

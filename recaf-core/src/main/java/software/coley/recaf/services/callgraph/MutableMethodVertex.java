@@ -59,7 +59,7 @@ public class MutableMethodVertex implements MethodVertex {
 	 * @return Snapshot of incoming edges.
 	 */
 	@Nonnull
-	public Collection<CallEdge> getIncomingEdgesSnapshot() {
+	private Collection<CallEdge> getIncomingEdgesSnapshot() {
 		synchronized (incomingEdges) {
 			return new HashSet<>(incomingEdges);
 		}
@@ -133,6 +133,18 @@ public class MutableMethodVertex implements MethodVertex {
 	@Override
 	public Collection<MethodVertex> getCalls() {
 		return calls;
+	}
+
+	@Nonnull
+	@Override
+	public Collection<CallEdge> getCallerEdges() {
+		return getIncomingEdgesSnapshot();
+	}
+
+	@Nonnull
+	@Override
+	public Collection<CallEdge> getCallEdges() {
+		return getOutgoingEdgesSnapshot();
 	}
 
 	@Override

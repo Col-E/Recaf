@@ -3,10 +3,7 @@ package software.coley.recaf.services.cell.context;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import javafx.collections.ObservableList;
 import javafx.scene.control.ContextMenu;
-import javafx.scene.control.MenuItem;
-import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import org.slf4j.Logger;
 import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.Logging;
@@ -33,7 +30,6 @@ import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import static org.kordamp.ikonli.carbonicons.CarbonIcons.*;
-import static software.coley.recaf.util.Menus.action;
 
 /**
  * Basic implementation for {@link ClassContextMenuProviderFactory}.
@@ -117,7 +113,6 @@ public class BasicClassContextMenuProviderFactory extends AbstractContextMenuPro
 		addHeader(menu, nameProvider.makeText(), iconProvider.makeIcon());
 		return menu;
 	}
-
 
 	/**
 	 * Append JVM specific operations to the given menu.

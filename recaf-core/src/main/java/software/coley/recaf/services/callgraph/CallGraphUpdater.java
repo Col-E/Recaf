@@ -120,7 +120,7 @@ public class CallGraphUpdater {
 		for (MethodVertex vertex : container.getVertices()) {
 			MethodRef ref = vertex.getMethod();
 			if (vertex instanceof MutableMethodVertex mutableMethodVertex) {
-				Collection<CallEdge> incomingEdges = mutableMethodVertex.getIncomingEdgesSnapshot();
+				Collection<CallEdge> incomingEdges = mutableMethodVertex.getCallerEdges();
 				for (CallEdge edge : incomingEdges) {
 					MethodMember callingMethod = edge.caller().getResolvedMethod();
 					ClassInfo callingClass = callingMethod.getDeclaringClass();

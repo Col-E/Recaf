@@ -114,7 +114,7 @@ public class BasicMethodContextMenuProviderFactory extends AbstractContextMenuPr
 			//    - Control flow graph
 			//    - Application flow graph
 			var view = builder.submenu("menu.view", VIEW);
-			view.item("menu.view.methodcallgraph", FLOW, () -> actions.openMethodCallGraph(workspace, resource, bundle, declaringClass, method));
+			view.item("menu.view.methodcallgraph.tree", TREE_VIEW, () -> actions.openMethodCallGraphTree(workspace, resource, bundle, declaringClass, method));
 
 			// TODO: implement additional operations
 			//  - Deobfuscate

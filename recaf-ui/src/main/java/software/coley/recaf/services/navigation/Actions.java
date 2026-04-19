@@ -63,7 +63,7 @@ import software.coley.recaf.services.window.WindowFactory;
 import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.ui.config.KeybindingConfig;
 import software.coley.recaf.ui.control.FontIconView;
-import software.coley.recaf.ui.control.graph.MethodCallGraphsPane;
+import software.coley.recaf.ui.control.graph.MethodCallGraphTreesPane;
 import software.coley.recaf.ui.control.popup.AddMemberPopup;
 import software.coley.recaf.ui.control.popup.ItemListSelectionPopup;
 import software.coley.recaf.ui.control.popup.ItemTreeSelectionPopup;
@@ -160,7 +160,7 @@ public class Actions implements Service {
 	private final Instance<WorkspaceInformationPane> infoPaneProvider;
 	private final Instance<CommentEditPane> commentPaneProvider;
 	private final Instance<CommentListPane> commentListPaneProvider;
-	private final Instance<MethodCallGraphsPane> callGraphsPaneProvider;
+	private final Instance<MethodCallGraphTreesPane> callGraphsTreePaneProvider;
 	private final Instance<StringTablePane> stringTablePaneProvider;
 	private final Instance<StringSearchPane> stringSearchPaneProvider;
 	private final Instance<NumberSearchPane> numberSearchPaneProvider;
@@ -195,7 +195,7 @@ public class Actions implements Service {
 	               @Nonnull Instance<StringTablePane> stringTablePaneProvider,
 	               @Nonnull Instance<StringSearchPane> stringSearchPaneProvider,
 	               @Nonnull Instance<NumberSearchPane> numberSearchPaneProvider,
-	               @Nonnull Instance<MethodCallGraphsPane> callGraphsPaneProvider,
+	               @Nonnull Instance<MethodCallGraphTreesPane> callGraphsTreePaneProvider,
 	               @Nonnull Instance<ClassReferenceSearchPane> classReferenceSearchPaneProvider,
 	               @Nonnull Instance<MemberReferenceSearchPane> memberReferenceSearchPaneProvider,
 	               @Nonnull Instance<MemberDeclarationSearchPane> memberDeclarationSearchPaneProvider,
@@ -222,7 +222,7 @@ public class Actions implements Service {
 		this.stringTablePaneProvider = stringTablePaneProvider;
 		this.stringSearchPaneProvider = stringSearchPaneProvider;
 		this.numberSearchPaneProvider = numberSearchPaneProvider;
-		this.callGraphsPaneProvider = callGraphsPaneProvider;
+		this.callGraphsTreePaneProvider = callGraphsTreePaneProvider;
 		this.classReferenceSearchPaneProvider = classReferenceSearchPaneProvider;
 		this.memberReferenceSearchPaneProvider = memberReferenceSearchPaneProvider;
 		this.memberDeclarationSearchPaneProvider = memberDeclarationSearchPaneProvider;
@@ -1523,7 +1523,7 @@ public class Actions implements Service {
 	}
 
 	/**
-	 * Exports a class, prompting the user to select a location to save the class to.
+	 * Displays a call graph for a method, showing incoming and outgoing calls in separate trees.
 	 *
 	 * @param workspace
 	 * 		Containing workspace.
@@ -1539,23 +1539,23 @@ public class Actions implements Service {
 	 * @return Navigable reference to the call graph pane.
 	 */
 	@Nonnull
-	public Navigable openMethodCallGraph(@Nonnull Workspace workspace,
-	                                     @Nonnull WorkspaceResource resource,
-	                                     @Nonnull ClassBundle<?> bundle,
-	                                     @Nonnull ClassInfo declaringClass,
-	                                     @Nonnull MethodMember method) {
+	public Navigable openMethodCallGraphTree(@Nonnull Workspace workspace,
+	                                         @Nonnull WorkspaceResource resource,
+	                                         @Nonnull ClassBundle<?> bundle,
+	                                         @Nonnull ClassInfo declaringClass,
+	                                         @Nonnull MethodMember method) {
 		return createContent(() -> {
 			// Create text/graphic for the tab to create.
-			String title = Lang.get("menu.view.methodcallgraph") + ": " + method.getName();
-			DockableIconFactory graphicFactory = d -> new FontIconView(CarbonIcons.FLOW);
+			String title = Lang.get("menu.view.methodcallgraph.tree") + ": " + method.getName();
+			DockableIconFactory graphicFactory = d -> new FontIconView(CarbonIcons.TREE_VIEW);
 
 			// Create content for the tab.
-			MethodCallGraphsPane content = callGraphsPaneProvider.get();
+			MethodCallGraphTreesPane content = callGraphsTreePaneProvider.get();
 			content.onUpdatePath(PathNodes.memberPath(workspace, resource, bundle, declaringClass, method));
 
 			// Build the tab.
 			Dockable dockable = createDockable(dockingManager.getPrimaryDockingContainer(), title, graphicFactory, content);
-			dockable.addCloseListener((_, _) -> callGraphsPaneProvider.destroy(content));
+			dockable.addCloseListener((_, _) -> callGraphsTreePaneProvider.destroy(content));
 			return dockable;
 		});
 	}

@@ -32,26 +32,26 @@ import java.util.Collections;
 import java.util.Objects;
 
 /**
- * Container pane for two {@link MethodCallGraphPane} for inbound and outbound calls.
+ * Container pane for two {@link MethodCallGraphTreePane} for inbound and outbound calls.
  *
  * @author Amejonah
  */
 @Dependent
-public class MethodCallGraphsPane extends TabPane implements ClassNavigable, UpdatableNavigable {
+public class MethodCallGraphTreesPane extends TabPane implements ClassNavigable, UpdatableNavigable {
 	private final ObjectProperty<MethodMember> currentMethodInfo;
 	private ClassPathNode path;
 
 	@Inject
-	public MethodCallGraphsPane(@Nonnull WorkspaceManager workspaceManager, @Nonnull CallGraphService callGraphService,
-	                            @Nonnull TextFormatConfig format, @Nonnull Actions actions,
-	                            @Nonnull CellConfigurationService configurationService) {
+	public MethodCallGraphTreesPane(@Nonnull WorkspaceManager workspaceManager, @Nonnull CallGraphService callGraphService,
+	                                @Nonnull TextFormatConfig format, @Nonnull Actions actions,
+	                                @Nonnull CellConfigurationService configurationService) {
 		Workspace workspace = workspaceManager.getCurrent();
 
 		currentMethodInfo = new SimpleObjectProperty<>();
 
 		CallGraph callGraph = Objects.requireNonNull(callGraphService.getCurrentWorkspaceCallGraph(), "Graph not created");
-		getTabs().add(creatTab(workspace, callGraph, configurationService, format, actions, MethodCallGraphPane.CallGraphMode.CALLS, currentMethodInfo));
-		getTabs().add(creatTab(workspace, callGraph, configurationService, format, actions, MethodCallGraphPane.CallGraphMode.CALLERS, currentMethodInfo));
+		getTabs().add(creatTab(workspace, callGraph, configurationService, format, actions, MethodCallGraphTreePane.CallGraphMode.CALLS, currentMethodInfo));
+		getTabs().add(creatTab(workspace, callGraph, configurationService, format, actions, MethodCallGraphTreePane.CallGraphMode.CALLERS, currentMethodInfo));
 
 		// Remove the standard tab-pane border.
 		getStyleClass().addAll("borderless");
@@ -59,12 +59,12 @@ public class MethodCallGraphsPane extends TabPane implements ClassNavigable, Upd
 
 	@Nonnull
 	private Tab creatTab(@Nonnull Workspace workspace, @Nonnull CallGraph callGraph, @Nonnull CellConfigurationService configurationService,
-	                     @Nonnull TextFormatConfig format, @Nonnull Actions actions, @Nonnull MethodCallGraphPane.CallGraphMode mode,
+	                     @Nonnull TextFormatConfig format, @Nonnull Actions actions, @Nonnull MethodCallGraphTreePane.CallGraphMode mode,
 	                     @Nullable ObjectProperty<MethodMember> methodInfoObservable) {
 		Tab tab = new Tab();
-		tab.setContent(new MethodCallGraphPane(workspace, callGraph, configurationService, format, actions, mode, methodInfoObservable));
+		tab.setContent(new MethodCallGraphTreePane(workspace, callGraph, configurationService, format, actions, mode, methodInfoObservable));
 		tab.textProperty().bind(Lang.getBinding("menu.view.methodcallgraph." + mode.name().toLowerCase()));
-		tab.setGraphic(new FontIconView(mode == MethodCallGraphPane.CallGraphMode.CALLS ? CarbonIcons.LOGOUT : CarbonIcons.LOGIN));
+		tab.setGraphic(new FontIconView(mode == MethodCallGraphTreePane.CallGraphMode.CALLS ? CarbonIcons.LOGOUT : CarbonIcons.LOGIN));
 		tab.setClosable(false);
 		return tab;
 	}

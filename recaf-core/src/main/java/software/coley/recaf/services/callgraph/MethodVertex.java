@@ -35,4 +35,16 @@ public interface MethodVertex {
 	 */
 	@Nonnull
 	Collection<MethodVertex> getCalls();
+
+	/**
+	 * @return Edge representations of {@link #getCallers()}.
+	 */
+	@Nonnull
+	Collection<CallEdge> getCallerEdges();
+
+	/**
+	 * @return Edge representations of {@link #getCalls()}.
+	 */
+	@Nonnull
+	Collection<CallEdge> getCallEdges();
 }

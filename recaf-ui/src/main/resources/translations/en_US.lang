@@ -115,6 +115,7 @@ menu.view.hierarchy.children=Children
 menu.view.hierarchy.parents=Parents
 menu.view.methodcfg=Control flow graph
 menu.view.methodcallgraph=Call Graph
+menu.view.methodcallgraph.tree=Call Graph Tree
 menu.view.methodcallgraph.calls=Calls
 menu.view.methodcallgraph.callers=Callers
 menu.view.methodcallgraph.focus=Focus on Method
