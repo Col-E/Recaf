@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import me.darknet.dex.tree.codec.definition.CodeCodec;
 import org.objectweb.asm.ClassReader;
 import org.slf4j.Logger;
 import software.coley.cafedude.classfile.VersionConstants;
@@ -125,6 +126,7 @@ public class BasicInfoImporter implements InfoImporter {
 	@Nullable
 	private static FileInfo readAsSpecializedFile(@Nonnull String name, byte[] data) {
 		if (ByteHeaderUtil.match(data, ByteHeaderUtil.DEX)) {
+			CodeCodec.readDebug = false; // TODO: Remove this flag when debug parsing is fixed upstream.
 			return new DexFileInfoBuilder()
 					.withRawContent(data)
 					.withName(name)
