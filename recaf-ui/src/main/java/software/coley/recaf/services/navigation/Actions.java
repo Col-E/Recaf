@@ -2337,11 +2337,9 @@ public class Actions implements Service {
 				items.add(mode);
 			} else if (info instanceof AndroidClassInfo classInfo && contentPane instanceof AndroidClassPane content) {
 				Menu mode = menu("menu.mode", CarbonIcons.VIEW);
-				mode.getItems().addAll(
+				mode.getItems().add(
 						action("menu.mode.class.decompile", CarbonIcons.CODE,
-								() -> content.setEditorType(AndroidClassEditorType.DECOMPILE)),
-						action("menu.mode.file.smali", CarbonIcons.NUMBER_0,
-								() -> content.setEditorType(AndroidClassEditorType.SMALI))
+								() -> content.setEditorType(AndroidClassEditorType.DECOMPILE))
 				);
 				items.add(mode);
 			}

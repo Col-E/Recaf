@@ -4,7 +4,6 @@ import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
-import javafx.scene.control.Label;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.ui.config.ClassEditingConfig;
 import software.coley.recaf.ui.pane.editing.ClassPane;
@@ -59,11 +58,6 @@ public class AndroidClassPane extends ClassPane {
 		AndroidClassEditorType type = getEditorType();
 		switch (type) {
 			case DECOMPILE -> setDisplay(decompilerProvider.get());
-			case SMALI -> {
-				// TODO: Create 'Editor' set-up for smali
-				Label decompile = new Label("TODO: Smali");
-				setDisplay(decompile);
-			}
 			default -> throw new IllegalStateException("Unknown editor type: " + type.name());
 		}
 	}
