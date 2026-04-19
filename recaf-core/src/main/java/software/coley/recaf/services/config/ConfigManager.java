@@ -28,16 +28,24 @@ import software.coley.recaf.services.file.RecafDirectoriesConfig;
 import software.coley.recaf.services.json.GsonProvider;
 import software.coley.recaf.util.TestEnvironment;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * Tracker for all {@link ConfigContainer} instances.
@@ -68,8 +76,11 @@ public class ConfigManager implements Service {
 		load();
 	}
 
+	/**
+	 * Save all current config values to disk.
+	 */
 	@PreDestroy
-	private void save() {
+	public void save() {
 		// Skip persisting in test environments
 		if (TestEnvironment.isTestEnv())
 			return;
@@ -94,7 +105,7 @@ public class ConfigManager implements Service {
 
 			// Write the appropriate path based on the container id.
 			String key = container.getGroupAndId();
-			Path containerPath = fileConfig.getConfigDirectory().resolve(key + ".json");
+			Path containerPath = getContainerPath(container);
 			try (JsonWriter writer = gson.newJsonWriter(Files.newBufferedWriter(containerPath))) {
 				gson.toJson(json, writer);
 			} catch (IOException e) {
@@ -103,22 +114,22 @@ public class ConfigManager implements Service {
 		}
 	}
 
+	/**
+	 * Load all current config values from disk.
+	 */
 	@SuppressWarnings({"raw", "rawtypes"})
-	private void load() {
-		// Skip loading in test environments
-		if (TestEnvironment.isTestEnv())
-			return;
-
+	public void load() {
 		Gson gson = gsonProvider.getGson();
 		for (ConfigContainer container : containers.values()) {
 			String key = container.getGroupAndId();
-			Path containerPath = fileConfig.getConfigDirectory().resolve(key + ".json");
+			Path containerPath = getContainerPath(container);
 			if (!Files.exists(containerPath)) {
 				if (container instanceof RestoreAwareConfigContainer listener)
 					listener.onNoRestore();
 				continue;
 			}
 
+			// Sanity check the contents are valid JSON.
 			JsonObject json;
 			try (JsonReader reader = gson.newJsonReader(Files.newBufferedReader(containerPath))) {
 				json = Objects.requireNonNull(gson.fromJson(reader, JsonObject.class));
@@ -147,6 +158,98 @@ public class ConfigManager implements Service {
 			if (container instanceof RestoreAwareConfigContainer listener)
 				listener.onRestore();
 		}
+	}
+
+	/**
+	 * Export all currently managed config files to the given ZIP file.
+	 *
+	 * @param zipPath
+	 * 		Path to write the profile ZIP to.
+	 *
+	 * @throws IOException
+	 * 		When the ZIP cannot be written.
+	 */
+	public void exportProfile(@Nonnull Path zipPath) throws IOException {
+		// Ensure all current values are saved to disk before exporting.
+		save();
+
+		// Ensure the parent directory exists before writing the ZIP file.
+		Path parent = zipPath.getParent();
+		if (parent != null)
+			Files.createDirectories(parent);
+
+		// Write all config files to the ZIP, using the container group and id as the file name.
+		try (ZipOutputStream zip = new ZipOutputStream(Files.newOutputStream(zipPath))) {
+			for (ConfigContainer container : containers.values()) {
+				Path containerPath = getContainerPath(container);
+				if (!Files.isRegularFile(containerPath))
+					continue;
+
+				zip.putNextEntry(new ZipEntry(getContainerFileName(container)));
+				Files.copy(containerPath, zip);
+				zip.closeEntry();
+			}
+		}
+	}
+
+	/**
+	 * Import all recognized config files from the given ZIP file and reload current values.
+	 *
+	 * @param zipPath
+	 * 		Path to read the profile ZIP from.
+	 *
+	 * @throws IOException
+	 * 		When the ZIP cannot be read or does not contain valid config files.
+	 */
+	public void importProfile(@Nonnull Path zipPath) throws IOException {
+		// Map config files to their respective containers.
+		Map<String, ConfigContainer> fileNameToContainer = new TreeMap<>();
+		for (ConfigContainer container : containers.values())
+			fileNameToContainer.put(getContainerFileName(container), container);
+
+		// Read zip contents and import any recognized config files.
+		Gson gson = gsonProvider.getGson();
+		Map<Path, byte[]> validatedConfigContents = new HashMap<>();
+		try (ZipInputStream zip = new ZipInputStream(Files.newInputStream(zipPath))) {
+			ZipEntry entry;
+			while ((entry = zip.getNextEntry()) != null) {
+				String name = entry.getName();
+				try {
+					// Skip directories and invalid entry names.
+					if (entry.isDirectory())
+						continue;
+					if (isInvalidProfileEntryName(name))
+						throw new IOException("Config profile contains non-root entry: " + name);
+
+					// Skip unrecognized config names.
+					ConfigContainer container = fileNameToContainer.get(name);
+					if (container == null)
+						continue;
+
+					// Sanity check that the file contents are valid JSON before queuing them for import.
+					byte[] content = zip.readAllBytes();
+					try (JsonReader reader = gson.newJsonReader(new InputStreamReader(new ByteArrayInputStream(content), UTF_8))) {
+						Objects.requireNonNull(gson.fromJson(reader, JsonObject.class));
+					} catch (Exception ex) {
+						throw new IOException("Config profile contains malformed JSON: " + name, ex);
+					}
+					validatedConfigContents.put(getContainerPath(container), content);
+				} finally {
+					zip.closeEntry();
+				}
+			}
+		}
+
+		if (validatedConfigContents.isEmpty())
+			throw new IOException("Config profile does not contain any recognized config files");
+
+		// Extract the validated config files to their respective paths, overwriting any existing files.
+		Files.createDirectories(fileConfig.getConfigDirectory());
+		for (Map.Entry<Path, byte[]> entry : validatedConfigContents.entrySet())
+			Files.write(entry.getKey(), entry.getValue());
+
+		// Regular input now. Updated config files are in-place.
+		load();
 	}
 
 	@SuppressWarnings({"unchecked", "rawtypes"})
@@ -189,6 +292,11 @@ public class ConfigManager implements Service {
 		} else {
 			value.setValue(gson.fromJson(element, value.getType()));
 		}
+	}
+
+	@Nonnull
+	private Path getContainerPath(@Nonnull ConfigContainer container) {
+		return fileConfig.getConfigDirectory().resolve(getContainerFileName(container));
 	}
 
 	/**
@@ -245,6 +353,15 @@ public class ConfigManager implements Service {
 	 */
 	public boolean removeManagedConfigListener(@Nonnull ManagedConfigListener listener) {
 		return listeners.remove(listener);
+	}
+
+	@Nonnull
+	private static String getContainerFileName(@Nonnull ConfigContainer container) {
+		return container.getGroupAndId() + ".json";
+	}
+
+	private static boolean isInvalidProfileEntryName(@Nonnull String name) {
+		return name.isBlank() || name.contains("/") || name.contains("\\") || name.equals(".") || name.equals("..");
 	}
 
 	@Nonnull
