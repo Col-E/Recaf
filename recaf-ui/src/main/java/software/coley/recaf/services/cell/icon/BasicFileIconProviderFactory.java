@@ -30,16 +30,17 @@ public class BasicFileIconProviderFactory implements FileIconProviderFactory {
 	private static final IconProvider ZIP = Icons.createProvider(Icons.FILE_ZIP);
 	private static final IconProvider JAR = Icons.createProvider(Icons.FILE_JAR);
 	private static final IconProvider ANDROID = Icons.createProvider(Icons.ANDROID);
+	private static final IconProvider ARSC = Icons.createProvider(Icons.FOLDER_RES);
 	private static final IconProvider UNKNOWN = Icons.createProvider(Icons.FILE_BINARY);
 
 	@Nonnull
 	@Override
 	public IconProvider getFileInfoIconProvider(@Nonnull Workspace workspace,
-												@Nonnull WorkspaceResource resource,
-												@Nonnull FileBundle bundle,
-												@Nonnull FileInfo info) {
+	                                            @Nonnull WorkspaceResource resource,
+	                                            @Nonnull FileBundle bundle,
+	                                            @Nonnull FileInfo info) {
 		// Built-in info match
-		if (info.isTextFile()) {
+		if (info.isTextFile() || info instanceof BinaryXmlFileInfo) {
 			String name = info.getName();
 			String ext = name.substring(name.lastIndexOf('.') + 1).toLowerCase();
 			return (CODE_EXTENSIONS.contains(ext)) ? TEXT_CODE : TEXT;
@@ -51,8 +52,8 @@ public class BasicFileIconProviderFactory implements FileIconProviderFactory {
 			if (ext.equals("apk"))
 				return ANDROID;
 			return ZIP;
-		} else if (info instanceof ArscFileInfo || info instanceof BinaryXmlFileInfo) {
-			return ANDROID;
+		} else if (info instanceof ArscFileInfo) {
+			return ARSC;
 		}
 
 		// Content match

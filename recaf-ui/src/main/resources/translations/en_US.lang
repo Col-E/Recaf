@@ -138,6 +138,7 @@ menu.mode.file.audio=Audio
 menu.mode.file.video=Video
 menu.mode.file.pe=Windows PE
 menu.mode.file.elf=ELF
+menu.mode.file.arsc=Android Resources
 menu.mode.diff.decompile=Decompile
 menu.mode.diff.disassemble=Disassemble
 menu.vm=Virtualize
@@ -570,6 +571,13 @@ mapgen.apply=Apply
 mapprog=Mapping progress
 mapprog.metric.size=Class file size
 mapprog.metric.membercount=Class fields & methods
+
+## Arsc view
+arscviewer.complex-entries-suffix=entries
+arscviewer.unknown-resource=(unresolved)
+arscviewer.no-resources-placeholder=No resource entries were decoded.
+arscviewer.no-complex-values-placeholder=Select a complex resource to inspect its map entries.
+arscviewer.xml-placeholder=Select an XML resource to preview its content.
 
 ##### Tree
 tree.classes=Classes

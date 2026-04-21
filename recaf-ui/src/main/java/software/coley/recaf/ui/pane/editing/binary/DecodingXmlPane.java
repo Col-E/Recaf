@@ -60,6 +60,14 @@ public class DecodingXmlPane extends BorderPane implements FileNavigable, Updata
 		setCenter(editor);
 	}
 
+	/**
+	 * @param text
+	 * 		Text to set in the editor.
+	 */
+	public void setText(@Nonnull String text) {
+		FxThreadUtil.run(() -> editor.setText("<!-----------------------\n\n" + text + "\n\n------------------------>"));
+	}
+
 	@Nonnull
 	@Override
 	public FilePathNode getPath() {
@@ -121,7 +129,7 @@ public class DecodingXmlPane extends BorderPane implements FileNavigable, Updata
 	 * @return Decoded XML string.
 	 */
 	@Nonnull
-	public String decode(@Nullable Workspace workspace, @Nonnull BinaryResourceFile chunkModel) {
+	private String decode(@Nullable Workspace workspace, @Nonnull BinaryResourceFile chunkModel) {
 		// Attempt to lookup ARSC resource for better decoding.
 		ArscFileInfo arscFile = null;
 		if (workspace != null) {

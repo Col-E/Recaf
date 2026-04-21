@@ -20,7 +20,8 @@ public enum FileDisplayMode {
 	AUDIO("menu.mode.file.audio", CarbonIcons.VOLUME_UP),
 	VIDEO("menu.mode.file.video", CarbonIcons.VIDEO),
 	EXECUTABLE_PE("menu.mode.file.pe", CarbonIcons.CODE),
-	EXECUTABLE_ELF("menu.mode.file.elf", CarbonIcons.CODE);
+	EXECUTABLE_ELF("menu.mode.file.elf", CarbonIcons.CODE),
+	ARSC("menu.mode.file.arsc", CarbonIcons.CODE);
 
 	private final String key;
 	private final Ikon ikon;
@@ -45,6 +46,8 @@ public enum FileDisplayMode {
 	public Node newIcon() {
 		if (this == EXECUTABLE_PE || this == EXECUTABLE_ELF)
 			return Icons.getIconView(Icons.FILE_PROGRAM);
+		if (this == ARSC)
+			return Icons.getIconView(Icons.FOLDER_RES);
 		return new FontIconView(ikon);
 	}
 }

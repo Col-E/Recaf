@@ -63,9 +63,6 @@ public interface WorkspaceResource extends PropertyContainer, Closing {
 	@Nonnull
 	Map<String, AndroidClassBundle> getAndroidClassBundles();
 
-	// TODO: Specific Android resource bundle for 'resources.arsc'?
-	//       - Or make custom FileInfo?
-
 	/**
 	 * @return Immediate files within the resource.
 	 */

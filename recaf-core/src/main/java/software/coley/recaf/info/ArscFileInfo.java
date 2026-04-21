@@ -2,6 +2,7 @@ package software.coley.recaf.info;
 
 import jakarta.annotation.Nonnull;
 import software.coley.android.xml.AndroidResourceProvider;
+import software.coley.recaf.util.android.AndroidRes;
 
 /**
  * Outline of a ARSC file, used by Android APK's.
@@ -18,5 +19,5 @@ public interface ArscFileInfo extends AndroidChunkFileInfo {
 	 * @return Resource information extracted from the ARSC file contents.
 	 */
 	@Nonnull
-	AndroidResourceProvider getResourceInfo();
+	AndroidRes getResourceInfo();
 }

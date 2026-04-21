@@ -8,6 +8,7 @@ import javafx.event.EventHandler;
 import javafx.scene.input.KeyEvent;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.info.ArscFileInfo;
 import software.coley.recaf.info.AudioFileInfo;
 import software.coley.recaf.info.BinaryXmlFileInfo;
 import software.coley.recaf.info.FileInfo;
@@ -20,6 +21,7 @@ import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.navigation.FileNavigable;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
 import software.coley.recaf.ui.config.KeybindingConfig;
+import software.coley.recaf.ui.pane.editing.binary.ArscPane;
 import software.coley.recaf.ui.pane.editing.binary.DecodingXmlPane;
 import software.coley.recaf.ui.pane.editing.binary.ElfPane;
 import software.coley.recaf.ui.pane.editing.binary.PePane;
@@ -54,6 +56,7 @@ public class FilePane extends AbstractContentPane<FilePathNode> implements FileN
 	private final Instance<PePane> execPeProvider;
 	private final Instance<ElfPane> execElfProvider;
 	private final Instance<DecodingXmlPane> binaryXmlProvider;
+	private final Instance<ArscPane> arscProvider;
 	private final HexConfig hexConfig;
 	private final KeybindingConfig keys;
 	private final List<FileDisplayMode> fileDisplayModes = new ArrayList<>();
@@ -68,6 +71,7 @@ public class FilePane extends AbstractContentPane<FilePathNode> implements FileN
 	                @Nonnull Instance<PePane> execPeProvider,
 	                @Nonnull Instance<ElfPane> execElfProvider,
 	                @Nonnull Instance<DecodingXmlPane> binaryXmlProvider,
+	                @Nonnull Instance<ArscPane> arscProvider,
 	                @Nonnull HexConfig hexConfig,
 	                @Nonnull KeybindingConfig keys) {
 		this.textProvider = textProvider;
@@ -77,6 +81,7 @@ public class FilePane extends AbstractContentPane<FilePathNode> implements FileN
 		this.execPeProvider = execPeProvider;
 		this.execElfProvider = execElfProvider;
 		this.binaryXmlProvider = binaryXmlProvider;
+		this.arscProvider = arscProvider;
 		this.hexConfig = hexConfig;
 		this.keys = keys;
 
@@ -101,6 +106,7 @@ public class FilePane extends AbstractContentPane<FilePathNode> implements FileN
 					setFileDisplayModes(List.of(HEX));
 				}
 			}
+			case ArscFileInfo arscFileInfo -> setFileDisplayModes(List.of(ARSC, HEX));
 			default -> setFileDisplayModes(List.of(HEX));
 		}
 	}
@@ -153,6 +159,7 @@ public class FilePane extends AbstractContentPane<FilePathNode> implements FileN
 			case VIDEO -> setDisplay(videoProvider.get());
 			case EXECUTABLE_PE -> setDisplay(execPeProvider.get());
 			case EXECUTABLE_ELF -> setDisplay(execElfProvider.get());
+			case ARSC -> setDisplay(arscProvider.get());
 			default -> throw new IllegalStateException("Unknown file mode: " + mode.name());
 		}
 	}

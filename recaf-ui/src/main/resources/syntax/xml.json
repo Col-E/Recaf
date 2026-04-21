@@ -20,7 +20,7 @@
       "sub-rules": [
         {
           "name": "TagName",
-          "regex": "(?:<|<\\/)[\\w\\-?]+>?",
+          "regex": "(?:<|<\\/)[\\w\\-?.]+>?",
           "classes": [
             "tag-name"
           ],
