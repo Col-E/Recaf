@@ -371,8 +371,12 @@ public class MappingProgressPane extends BorderPane implements ResourceJvmClassL
 				ClassInfo info = path.getValue();
 				if (info instanceof JvmClassInfo jvmClassInfo) {
 					weight = jvmClassInfo.getBytecode().length;
+				} else if (info instanceof AndroidClassInfo androidClassInfo) {
+					// Android classes are intermediate models, so they don't have a great size metric
+					// that's quick to calculate without walking the full model. This is fast and ok for now.
+					weight = androidClassInfo.getFields().size() * 5 +
+							androidClassInfo.getMethods().size() * 10;
 				} else {
-					// TODO: Compute rough android size (can estimate based on insn count and such)
 					weight = 1;
 				}
 				return weight;
