@@ -34,7 +34,11 @@ For example, you can contribute ideas, add translations, or write documentation:
 
 ## What should I know before getting started?
 
-It depends on what changes you are making. For instance, changing the user-interface requires very minimal or no reverse-engineering prior knowledge. If you do need JVM reversal knowledge to work on a feature you can check the [primer guide](PRIMER.md) which points to several good resources and outlines key details. For a general understanding of how Recaf works and how to begin creating contributions you can read our [getting started](https://recaf.coley.software/dev/getting-started.html) page as well.
+It depends on what changes you are making. For instance, changing the user-interface requires very minimal or no reverse-engineering prior knowledge.
+
+If you do need JVM reversal knowledge to work on a feature you can check the [topical knowledge](https://recaf.coley.software/user/info/index.html) sections of the user guide.
+
+For a general understanding of how Recaf works and how to begin creating contributions you can read our [getting started](https://recaf.coley.software/dev/getting-started.html) page as well.
 
 ## Is there a to-do list?
 
