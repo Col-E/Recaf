@@ -97,6 +97,7 @@ menu.scripting.edit=Edit
 menu.scripting.browse=Browse scripts
 menu.scripting.save=Save script
 menu.scripting.execute=Execute
+menu.scripting.stop=Stop
 menu.scripting.editor=Script editor
 menu.scripting.author=Author
 menu.scripting.version=Version

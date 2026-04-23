@@ -9,8 +9,13 @@ import org.objectweb.asm.Type;
 import regexodus.Matcher;
 import software.coley.recaf.analytics.logging.DebuggingLogger;
 import software.coley.recaf.analytics.logging.Logging;
-import software.coley.recaf.services.compile.*;
+import software.coley.recaf.services.compile.CompilerDiagnostic;
+import software.coley.recaf.services.compile.CompilerResult;
+import software.coley.recaf.services.compile.JavacArguments;
+import software.coley.recaf.services.compile.JavacArgumentsBuilder;
+import software.coley.recaf.services.compile.JavacCompiler;
 import software.coley.recaf.services.plugin.CdiClassAllocator;
+import software.coley.recaf.util.CancelSignal;
 import software.coley.recaf.util.ReflectUtil;
 import software.coley.recaf.util.RegexUtil;
 import software.coley.recaf.util.StringUtil;
@@ -19,8 +24,14 @@ import software.coley.recaf.util.threading.ThreadPoolFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
@@ -78,8 +89,9 @@ public class JavacScriptEngine implements ScriptEngine {
 			"jakarta.inject.*",
 			"org.slf4j.Logger"
 	);
-	private final Map<Integer, ScriptTemplate> generateResultMap = new HashMap<>();
-	private final ExecutorService compileAndRunPool = ThreadPoolFactory.newSingleThreadExecutor("script-loader");
+	private final Map<Integer, GenerateResult> scriptResultMap = new HashMap<>();
+	private final ExecutorService compilePool = ThreadPoolFactory.newSingleThreadExecutor("script-compiler");
+	private final ExecutorService runPool = ThreadPoolFactory.newCachedThreadPool("script-runner");
 	private final JavacCompiler compiler;
 	private final CdiClassAllocator allocator;
 	private final ScriptEngineConfig config;
@@ -106,28 +118,31 @@ public class JavacScriptEngine implements ScriptEngine {
 	@Nonnull
 	@Override
 	public CompletableFuture<ScriptResult> run(@Nonnull String script) {
-		return CompletableFuture.supplyAsync(() -> handleExecute(script), compileAndRunPool);
+		return compile(script).thenCompose(this::run);
+	}
+
+	@Nonnull
+	@Override
+	public CompletableFuture<ScriptResult> run(@Nonnull GenerateResult result) {
+		return CompletableFuture.supplyAsync(() -> handleExecute(result), runPool);
 	}
 
 	@Nonnull
 	@Override
 	public CompletableFuture<GenerateResult> compile(@Nonnull String scriptSource) {
-		return CompletableFuture.supplyAsync(() -> generate(scriptSource), compileAndRunPool);
+		return CompletableFuture.supplyAsync(() -> generate(scriptSource), compilePool);
 	}
 
 	/**
-	 * Compiles and executes the script.
-	 * If the same script has already been compiled previously, the prior class reference will be used
-	 * to reduce duplicate compilations.
+	 * Executes the generated script.
 	 *
-	 * @param script
-	 * 		Script to execute.
+	 * @param result
+	 * 		Compiled script to execute.
 	 *
 	 * @return Result of script execution.
 	 */
 	@Nonnull
-	private ScriptResult handleExecute(@Nonnull String script) {
-		GenerateResult result = generate(script);
+	private ScriptResult handleExecute(@Nonnull GenerateResult result) {
 		if (result.cls() != null) {
 			try {
 				logger.debugging(l -> l.info("Allocating script instance"));
@@ -137,9 +152,23 @@ public class JavacScriptEngine implements ScriptEngine {
 				run.invoke(instance);
 				logger.debugging(l -> l.info("Successfully ran script"));
 				return new ScriptResult(result.diagnostics());
+			} catch (InvocationTargetException ex) {
+				Throwable target = ex.getTargetException();
+				if (target instanceof CancelSignal) {
+					logger.debugging(l -> l.info("Cancelled script"));
+					return ScriptResult.cancelled(result.diagnostics());
+				}
+				logger.error("Failed to execute script", target);
+				return new ScriptResult(result.diagnostics(), target);
 			} catch (Exception ex) {
 				logger.error("Failed to execute script", ex);
 				return new ScriptResult(result.diagnostics(), ex);
+			} finally {
+				try {
+					result.resetStop();
+				} catch (IllegalStateException ex) {
+					logger.error("Failed to reset script cancellation state", ex);
+				}
 			}
 		} else {
 			logger.error("Failed to compile script");
@@ -160,16 +189,17 @@ public class JavacScriptEngine implements ScriptEngine {
 	 *
 	 * @return Compiler result wrapper containing the loaded class reference.
 	 */
+	@Nonnull
 	private GenerateResult generate(@Nonnull String script) {
 		int hash = script.hashCode();
 		GenerateResult result;
 		if (RegexUtil.matchesAny(PATTERN_CLASS_NAME, script)) {
 			logger.debugging(l -> l.info("Compiling script as class"));
-			result = generateResultMap.computeIfAbsent(hash, n -> generateStandardClass(script)).generateResult();
+			result = scriptResultMap.computeIfAbsent(hash, n -> generateStandardClass(script).generateResult());
 		} else {
 			logger.debugging(l -> l.info("Compiling script as function"));
 			String className = "Script" + Math.abs(hash);
-			result = generateResultMap.computeIfAbsent(hash, n -> generateScriptClass(className, script)).generateResult();
+			result = scriptResultMap.computeIfAbsent(hash, n -> generateScriptClass(className, script).generateResult());
 		}
 		return result;
 	}
@@ -235,7 +265,7 @@ public class JavacScriptEngine implements ScriptEngine {
 	 * @param script
 	 * 		Initial source of the script.
 	 *
-	 * @return Compiler result wrapper containing the loaded class reference.
+	 * @return Script wrapper containing the loaded class reference.
 	 */
 	@Nonnull
 	private ScriptTemplate generateScriptClass(@Nonnull String className, @Nonnull String script) {
@@ -257,7 +287,7 @@ public class JavacScriptEngine implements ScriptEngine {
 				"@Dependent public class " + className + " implements Runnable, Opcodes { " +
 						"private static final Logger log = Logging.get(\"script\"); " +
 						"Workspace workspace; " +
-						"@Inject " + className +"(Workspace workspace) { this.workspace = workspace; } " +
+						"@Inject " + className + "(Workspace workspace) { this.workspace = workspace; } " +
 						"public void run() {\n" + script + "\n" + "}" +
 						"}");
 		for (String imp : imports)
@@ -272,8 +302,8 @@ public class JavacScriptEngine implements ScriptEngine {
 	@Nonnull
 	private byte[] postProcessClass(@Nonnull byte[] classBytes) {
 		ClassReader cr = new ClassReader(classBytes);
-		ClassWriter cw = new ClassWriter(cr, 0);
-		cr.accept(new InsertCancelSignalVisitor(cw), 0);
+		ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
+		cr.accept(new InsertCancelSignalVisitor(cw), ClassReader.EXPAND_FRAMES);
 		return cw.toByteArray();
 	}
 
@@ -295,12 +325,12 @@ public class JavacScriptEngine implements ScriptEngine {
 	 * @param compileSource
 	 * 		Full source of the script to pass to the compiler.
 	 *
-	 * @return Compiler result wrapper containing the loaded class reference.
+	 * @return Script wrapper containing the loaded class reference.
 	 */
 	@Nonnull
 	private ScriptTemplate generate(@Nonnull String className,
-									@Nonnull String originalSource,
-									@Nonnull String compileSource) {
+	                                @Nonnull String originalSource,
+	                                @Nonnull String compileSource) {
 		JavacArguments args = new JavacArgumentsBuilder()
 				.withClassName(className)
 				.withClassSource(compileSource)
@@ -327,8 +357,8 @@ public class JavacScriptEngine implements ScriptEngine {
 	 * @return List of updated diagnostics.
 	 */
 	private List<CompilerDiagnostic> mapDiagnostics(@Nonnull String originalSource,
-													@Nonnull String compileSource,
-													@Nonnull List<CompilerDiagnostic> diagnostics) {
+	                                                @Nonnull String compileSource,
+	                                                @Nonnull List<CompilerDiagnostic> diagnostics) {
 
 		int syntheticLineCount = StringUtil.count("\n", StringUtil.cutOffAtFirst(compileSource, originalSource));
 		return diagnostics.stream()

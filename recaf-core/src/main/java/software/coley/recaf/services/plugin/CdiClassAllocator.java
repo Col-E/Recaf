@@ -35,8 +35,10 @@ public class CdiClassAllocator implements ClassAllocator {
 		try {
 			// Create bean
 			Bean<T> bean = (Bean<T>) classBeanMap.computeIfAbsent(cls, c -> {
-				// TODO bugged.
-				// Equivalence check is based on the class name and does not include the loader.
+				// TODO something here is bugged
+				//  bean.create(creationalContext).getClass().getClassLoader() == cls.getClassLoader()
+				//   - Evaluates to false
+				//   - In AnnotatedTypeIdentifier#forBackedAnnotatedType the ClassLoader is not considered, just the class's name
 				AnnotatedType<T> annotatedClass = beanManager.createAnnotatedType((Class<T>) c);
 				BeanAttributes<T> attributes = beanManager.createBeanAttributes(annotatedClass);
 				InjectionTargetFactory<T> factory = beanManager.getInjectionTargetFactory(annotatedClass);

@@ -26,17 +26,36 @@ public record GenerateResult(@Nullable Class<?> cls, @Nonnull List<CompilerDiagn
 	}
 
 	/**
-	 * Attempts to stop the script. If the generation failed,
-	 * this method will do nothing.
+	 * Attempts to stop the script. If the generation failed, this method will do nothing.
+	 * <p>
+	 * Cancellation is scoped to the generated class loader that owns {@link #cls()}.
+	 * Callers that wish to stop running scripts must use {@link ScriptEngine#run(GenerateResult)}
+	 * and track the returned instance for stopping.
 	 *
-	 * @throws IllegalStateException If something went wrong.
+	 * @throws IllegalStateException
+	 * 		If something went wrong.
 	 */
 	public void requestStop() {
+		invokeCancellationSingleton("stop");
+	}
+
+	/**
+	 * Clears any prior request to stop the script. If the generation failed, this method will do nothing.
+	 *
+	 * @throws IllegalStateException
+	 * 		If something went wrong.
+	 */
+	public void resetStop() {
+		invokeCancellationSingleton("reset");
+	}
+
+	private void invokeCancellationSingleton(@Nonnull String methodName) {
 		Class<?> cls = this.cls;
-		if (cls == null) return;
+		if (cls == null)
+			return;
 		try {
 			Class<?> cancellationSingleton = cls.getClassLoader().loadClass(CancellationSingleton.class.getName());
-			cancellationSingleton.getDeclaredMethod("stop").invoke(null);
+			cancellationSingleton.getDeclaredMethod(methodName).invoke(null);
 		} catch (InvocationTargetException ex) {
 			throw new IllegalStateException(ex.getTargetException());
 		} catch (Exception ex) {

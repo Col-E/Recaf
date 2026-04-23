@@ -8,9 +8,9 @@ import javafx.stage.Stage;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import software.coley.observables.ObservableBoolean;
 import software.coley.observables.ObservableCollection;
-import software.coley.recaf.services.script.ScriptEngine;
 import software.coley.recaf.services.script.ScriptFile;
 import software.coley.recaf.services.script.ScriptManager;
+import software.coley.recaf.services.script.ScriptRunController;
 import software.coley.recaf.services.window.WindowManager;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.pane.ScriptManagerPane;
@@ -34,14 +34,14 @@ public class ScriptMenu extends Menu {
 	private final ObservableCollection<ScriptFile, List<ScriptFile>> scriptFiles;
 	private final ObservableBoolean hasScripts;
 	private final ScriptManagerPane scriptManagerPane;
-	private final ScriptEngine engine;
+	private final ScriptRunController scriptRunController;
 
 	@Inject
-	public ScriptMenu(WindowManager windowManager, ScriptManager scriptManager, ScriptEngine engine,
+	public ScriptMenu(WindowManager windowManager, ScriptManager scriptManager, ScriptRunController scriptRunController,
 					  ScriptManagerPane scriptManagerPane) {
 		this.windowManager = windowManager;
 		this.scriptManagerPane = scriptManagerPane;
-		this.engine = engine;
+		this.scriptRunController = scriptRunController;
 
 		scriptFiles = scriptManager.getScriptFiles();
 		hasScripts = scriptFiles.mapBoolean(List::isEmpty).negated();
@@ -54,6 +54,7 @@ public class ScriptMenu extends Menu {
 		getItems().add(action("menu.scripting.new", CarbonIcons.ADD_ALT, this::newScript));
 
 		hasScripts.addChangeListener((ob, old, cur) -> refreshList());
+		scriptRunController.executionStateVersionProperty().addListener((ob, old, cur) -> refreshList());
 		refreshList();
 	}
 
@@ -65,8 +66,16 @@ public class ScriptMenu extends Menu {
 			menuScripts.getItems().clear();
 			if (hasScripts.getValue()) {
 				for (ScriptFile scriptFile : new TreeSet<>(scriptFiles)) {
-					menuScripts.getItems().add(actionLiteral(scriptFile.name(), CarbonIcons.PLAY_FILLED,
-							() -> scriptFile.execute(engine)));
+					// Menu entries do not own result presentation, so any entry can cancel the single active run.
+					boolean running = scriptRunController.isRunning();
+					menuScripts.getItems().add(actionLiteral(scriptFile.name(),
+							running ? CarbonIcons.STOP_FILLED : CarbonIcons.PLAY_FILLED,
+							() -> {
+								if (scriptRunController.isRunning())
+									scriptRunController.requestStop();
+								else
+									scriptRunController.start(scriptFile.path(), scriptFile.source());
+							}));
 				}
 			} else {
 				MenuItem item = new MenuItem();
