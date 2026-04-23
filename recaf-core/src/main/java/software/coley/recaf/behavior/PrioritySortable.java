@@ -27,7 +27,9 @@ public interface PrioritySortable extends Comparable<PrioritySortable> {
 	}
 
 	@Override
-	default int compareTo(@Nonnull PrioritySortable o) {
+	default int compareTo(PrioritySortable o) {
+		// DO NOT ANNOTATE THE PARAMETER WITH '@Nonnull'
+		// See: https://github.com/Col-E/Recaf/issues/1017
 		return Integer.compare(getPriority(), o.getPriority());
 	}
 
