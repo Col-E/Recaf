@@ -24,6 +24,11 @@ public class ActionButton extends Button implements Tooltipable {
 	private static final ExecutorService service = ThreadPoolFactory.newSingleThreadExecutor("async-button-action");
 
 	/**
+	 * Set nothing initially.
+	 */
+	public ActionButton() {}
+
+	/**
 	 * @param text
 	 * 		Button display text.
 	 * @param action
@@ -165,7 +170,7 @@ public class ActionButton extends Button implements Tooltipable {
 		return this;
 	}
 
-	private static void wrap(ActionEvent e, Runnable action) {
+	protected static void wrap(ActionEvent e, Runnable action) {
 		// This stops the input from 'bleeding' through to parent control handlers.
 		//  - Useful for when the button is used in 'x.setGraphic(button)' scenarios
 		e.consume();

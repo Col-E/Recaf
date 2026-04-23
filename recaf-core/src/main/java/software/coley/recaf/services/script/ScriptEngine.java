@@ -23,6 +23,17 @@ public interface ScriptEngine extends Service {
 	CompletableFuture<ScriptResult> run(@Nonnull String scriptSource);
 
 	/**
+	 * @param result
+	 * 		Compiled script to execute.
+	 * 		Use this overload when the caller needs to keep the {@link GenerateResult}
+	 * 		as a cancellation handle for the running script.
+	 *
+	 * @return Future of script execution.
+	 */
+	@Nonnull
+	CompletableFuture<ScriptResult> run(@Nonnull GenerateResult result);
+
+	/**
 	 * @param scriptSource
 	 * 		Script source to compile.
 	 *

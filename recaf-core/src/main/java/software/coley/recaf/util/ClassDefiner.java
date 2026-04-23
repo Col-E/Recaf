@@ -33,6 +33,26 @@ public class ClassDefiner extends ClassLoader {
 	}
 
 	@Override
+	protected final Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+		// We must override this to prevent parent-first delegation.
+		Class<?> c;
+		if ((c = findLoadedClass(name)) != null) {
+			return c;
+		}
+		synchronized (getClassLoadingLock(name)) {
+			if ((c = findLoadedClass(name)) != null) {
+				return c;
+			}
+			try {
+				c = findClass(name);
+			} catch (ClassNotFoundException e) {
+				c = super.loadClass(name, resolve);
+			}
+			return c;
+		}
+	}
+
+	@Override
 	public final Class<?> findClass(String name) throws ClassNotFoundException {
 		byte[] bytecode = classes.get(name);
 		if (bytecode != null)
