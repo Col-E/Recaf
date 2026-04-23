@@ -6,17 +6,17 @@ package software.coley.recaf.services.transform;
  * @author Matt Coley
  */
 public class CancellableTransformationFeedback implements TransformationFeedback {
-	private boolean canceled;
+	private boolean cancelled;
 
 	/**
 	 * Mark transformation as cancelled.
 	 */
 	public void cancel() {
-		canceled = true;
+		cancelled = true;
 	}
 
 	@Override
 	public boolean hasRequestedCancellation() {
-		return canceled;
+		return cancelled;
 	}
 }

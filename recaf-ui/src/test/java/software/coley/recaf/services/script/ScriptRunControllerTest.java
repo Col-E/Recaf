@@ -40,7 +40,7 @@ class ScriptRunControllerTest extends TestBase {
 		assertTrue(controller.isRunning(key));
 		controller.requestStop();
 
-		// Wait for the script to acknowledge the stop request and verify it was canceled.
+		// Wait for the script to acknowledge the stop request and verify it was cancelled.
 		assertTrue(firstRun.get(5, TimeUnit.SECONDS).wasCancelled());
 		assertFalse(controller.isRunning(key));
 
@@ -51,7 +51,7 @@ class ScriptRunControllerTest extends TestBase {
 		assertTrue(controller.isRunning(key));
 		controller.requestStop();
 
-		// Wait for the script to acknowledge the stop request and verify it was canceled.
+		// Wait for the script to acknowledge the stop request and verify it was cancelled.
 		ScriptResult secondResult = secondRun.get(5, TimeUnit.SECONDS);
 		assertTrue(secondResult.wasCancelled());
 		assertFalse(controller.isRunning(key));
@@ -76,7 +76,7 @@ class ScriptRunControllerTest extends TestBase {
 		assertTrue(secondRun.isCompletedExceptionally());
 		assertFalse(controller.isRunning(secondKey));
 
-		// Request the first script to stop and verify it was canceled.
+		// Request the first script to stop and verify it was cancelled.
 		controller.requestStop();
 		assertTrue(firstRun.get(5, TimeUnit.SECONDS).wasCancelled());
 		assertFalse(controller.isRunning());
