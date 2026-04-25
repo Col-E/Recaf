@@ -47,6 +47,13 @@ abstract class AbstractObjectKeyMap<K> {
 		return size;
 	}
 
+	/**
+	 * @return {@code true} when there are no element pairs in the map, {@code false} otherwise.
+	 */
+	public final boolean isEmpty() {
+		return size == 0;
+	}
+
 	protected final void allocateTable(int capacity) {
 		keys = new Object[capacity];
 		occupied = new boolean[capacity];
@@ -113,4 +120,10 @@ abstract class AbstractObjectKeyMap<K> {
 	protected abstract void moveValue(int from, int to);
 
 	protected abstract void resize();
+
+	@Override
+	public abstract boolean equals(Object o);
+
+	@Override
+	public abstract int hashCode();
 }

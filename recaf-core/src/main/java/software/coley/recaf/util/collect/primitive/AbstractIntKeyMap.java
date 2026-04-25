@@ -115,4 +115,10 @@ abstract class AbstractIntKeyMap {
 	protected abstract void moveValue(int from, int to);
 
 	protected abstract void resize();
+
+	@Override
+	public abstract boolean equals(Object o);
+
+	@Override
+	public abstract int hashCode();
 }

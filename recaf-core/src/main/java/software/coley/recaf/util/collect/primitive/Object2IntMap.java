@@ -42,6 +42,17 @@ public class Object2IntMap<K> extends AbstractObjectKeyMap<K> {
 	}
 
 	/**
+	 * @return Sum of all values in the map.
+	 */
+	public int sum() {
+		int sum = 0;
+		for (int i = 0; i < keys.length; i++)
+			if (occupied[i])
+				sum += values[i];
+		return sum;
+	}
+
+	/**
 	 * @param key
 	 * 		Key to compute the value of if present.
 	 * @param value
@@ -61,6 +72,27 @@ public class Object2IntMap<K> extends AbstractObjectKeyMap<K> {
 		values[idx] = value;
 		insertKeyAt(idx, key);
 		return -1;
+	}
+
+	/**
+	 * @param key
+	 * 		Key to compute the value of if present.
+	 * @param delta
+	 * 		Value to add.
+	 *
+	 * @return Existing value <i>(or zero if not found)</i> plus delta if the key is already present.
+	 */
+	public int increment(K key, int delta) {
+		if (key == null)
+			throw new NullPointerException("Null keys not supported");
+		int idx = findIndex(key);
+		if (occupied[idx]) {
+			values[idx] += delta;
+			return values[idx];
+		}
+		values[idx] = delta;
+		insertKeyAt(idx, key);
+		return delta;
 	}
 
 	/**
@@ -159,6 +191,41 @@ public class Object2IntMap<K> extends AbstractObjectKeyMap<K> {
 			if (oldOccupied[i])
 				put((K) oldKeys[i], oldValues[i]);
 		}
+	}
+
+	@Override
+	@SuppressWarnings({"unchecked", "rawtypes"})
+	public boolean equals(Object o) {
+		if (this == o)
+			return true;
+		if (!(o instanceof Object2IntMap other))
+			return false;
+		if (size() != other.size())
+			return false;
+
+		for (int i = 0; i < keys.length; i++) {
+			if (occupied[i]) {
+				K key = (K) keys[i];
+				int value = values[i];
+				int otherValue = other.get(key);
+				if (otherValue != value)
+					return false;
+			}
+		}
+		return true;
+	}
+
+	@Override
+	public int hashCode() {
+		int hash = 0;
+		for (int i = 0; i < keys.length; i++) {
+			if (occupied[i]) {
+				K key = (K) keys[i];
+				int value = values[i];
+				hash += key.hashCode() ^ Integer.hashCode(value);
+			}
+		}
+		return hash;
 	}
 
 	@FunctionalInterface

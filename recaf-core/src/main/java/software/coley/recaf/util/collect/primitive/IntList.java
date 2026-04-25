@@ -119,4 +119,26 @@ public class IntList {
 			data = Arrays.copyOf(data, newCapacity);
 		}
 	}
+
+	@Override
+	public final boolean equals(Object o) {
+		if (this == o)
+			return true;
+		if (!(o instanceof IntList other))
+			return false;
+		if (size != other.size)
+			return false;
+		for (int i = 0; i < size; i++)
+			if (data[i] != other.data[i])
+				return false;
+		return true;
+	}
+
+	@Override
+	public int hashCode() {
+		int result = Integer.hashCode(size);
+		for (int i = 0; i < size; i++)
+			result = 31 * result + Integer.hashCode(data[i]);
+		return result;
+	}
 }

@@ -161,6 +161,41 @@ public class Object2LongMap<K> extends AbstractObjectKeyMap<K> {
 		}
 	}
 
+	@Override
+	@SuppressWarnings({"unchecked", "rawtypes"})
+	public boolean equals(Object o) {
+		if (this == o)
+			return true;
+		if (!(o instanceof Object2LongMap other))
+			return false;
+		if (size() != other.size())
+			return false;
+
+		for (int i = 0; i < keys.length; i++) {
+			if (occupied[i]) {
+				K key = (K) keys[i];
+				long value = values[i];
+				long otherValue = other.get(key);
+				if (otherValue != value)
+					return false;
+			}
+		}
+		return true;
+	}
+
+	@Override
+	public int hashCode() {
+		int hash = 0;
+		for (int i = 0; i < keys.length; i++) {
+			if (occupied[i]) {
+				K key = (K) keys[i];
+				long value = values[i];
+				hash += key.hashCode() ^ Long.hashCode(value);
+			}
+		}
+		return hash;
+	}
+
 	@FunctionalInterface
 	public interface ObjectLongConsumer<K> {
 		void accept(K key, long value);

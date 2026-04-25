@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.IntFunction;
 
 /**
@@ -152,6 +153,40 @@ public class Int2ObjectMap<V> extends AbstractIntKeyMap {
 			if (oldOccupied[i])
 				put(oldKeys[i], (V) oldValues[i]);
 		}
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o)
+			return true;
+		if (!(o instanceof Int2ObjectMap<?> other))
+			return false;
+		if (size() != other.size())
+			return false;
+
+		for (int i = 0; i < keys.length; i++) {
+			if (!occupied[i])
+				continue;
+			int key = keys[i];
+			Object value = values[i];
+			Object thatValue = other.get(key);
+			if (!Objects.equals(value, thatValue))
+				return false;
+		}
+		return true;
+	}
+
+	@Override
+	public int hashCode() {
+		int hash = 0;
+		for (int i = 0; i < keys.length; i++) {
+			if (!occupied[i])
+				continue;
+			int key = keys[i];
+			Object value = values[i];
+			hash += Integer.hashCode(key) ^ Objects.hashCode(value);
+		}
+		return hash;
 	}
 
 	@FunctionalInterface

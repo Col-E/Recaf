@@ -74,6 +74,32 @@ class PrimitiveCollectionsTest {
 			), copy);
 			assertArrayEquals(new int[]{7, 11}, Arrays.stream(map.keys()).sorted().toArray());
 		}
+
+		@Test
+		void equality() {
+			Int2IntMap map1 = new Int2IntMap(4);
+			Int2IntMap map2 = new Int2IntMap(4);
+
+			assertEquals(map1, map2);
+			assertEquals(map1.hashCode(), map2.hashCode());
+
+			map1.put(1, 10);
+			assertNotEquals(map1, map2);
+
+			map2.put(1, 10);
+			assertEquals(map1, map2);
+			assertEquals(map1.hashCode(), map2.hashCode());
+
+			map1.put(16, 20);
+			map1.put(32, 30);
+			map2.put(16, 20);
+			map2.put(32, 30);
+			assertEquals(map1, map2);
+			assertEquals(map1.hashCode(), map2.hashCode());
+
+			map1.put(16, 25);
+			assertNotEquals(map1, map2);
+		}
 	}
 
 	/**
@@ -132,6 +158,32 @@ class PrimitiveCollectionsTest {
 					8, "value-8"
 			), copy);
 			assertArrayEquals(new int[]{5, 8}, Arrays.stream(map.keys()).sorted().toArray());
+		}
+
+		@Test
+		void equality() {
+			Int2ObjectMap<String> map1 = new Int2ObjectMap<>(4);
+			Int2ObjectMap<String> map2 = new Int2ObjectMap<>(4);
+
+			assertEquals(map1, map2);
+			assertEquals(map1.hashCode(), map2.hashCode());
+
+			map1.put(1, "a");
+			assertNotEquals(map1, map2);
+
+			map2.put(1, "a");
+			assertEquals(map1, map2);
+			assertEquals(map1.hashCode(), map2.hashCode());
+
+			map1.put(16, "b");
+			map1.put(32, "c");
+			map2.put(16, "b");
+			map2.put(32, "c");
+			assertEquals(map1, map2);
+			assertEquals(map1.hashCode(), map2.hashCode());
+
+			map1.put(16, "other");
+			assertNotEquals(map1, map2);
 		}
 	}
 
@@ -201,6 +253,35 @@ class PrimitiveCollectionsTest {
 			assertEquals(-1, map.remove(null));
 			assertFalse(map.containsKey(null));
 		}
+
+		@Test
+		void equality() {
+			Object2IntMap<Key> map1 = new Object2IntMap<>(4);
+			Object2IntMap<Key> map2 = new Object2IntMap<>(4);
+
+			assertEquals(map1, map2);
+			assertEquals(map1.hashCode(), map2.hashCode());
+
+			Key key1 = new Key("a", 123);
+			map1.put(key1, 10);
+			assertNotEquals(map1, map2);
+
+			map2.put(key1, 10);
+			assertEquals(map1, map2);
+			assertEquals(map1.hashCode(), map2.hashCode());
+
+			Key key2 = new Key("b", 456);
+			Key key3 = new Key("c", 789);
+			map1.put(key2, 20);
+			map1.put(key3, 30);
+			map2.put(key2, 20);
+			map2.put(key3, 30);
+			assertEquals(map1, map2);
+			assertEquals(map1.hashCode(), map2.hashCode());
+
+			map1.put(key2, 25);
+			assertNotEquals(map1, map2);
+		}
 	}
 
 	/**
@@ -266,6 +347,35 @@ class PrimitiveCollectionsTest {
 			assertEquals(11L, map.getOrDefault(null, 11L));
 			assertEquals(-1L, map.remove(null));
 			assertFalse(map.containsKey(null));
+		}
+
+		@Test
+		void equality() {
+			Object2LongMap<Key> map1 = new Object2LongMap<>(4);
+			Object2LongMap<Key> map2 = new Object2LongMap<>(4);
+
+			assertEquals(map1, map2);
+			assertEquals(map1.hashCode(), map2.hashCode());
+
+			Key key1 = new Key("a", 123);
+			map1.put(key1, 10L);
+			assertNotEquals(map1, map2);
+
+			map2.put(key1, 10L);
+			assertEquals(map1, map2);
+			assertEquals(map1.hashCode(), map2.hashCode());
+
+			Key key2 = new Key("b", 456);
+			Key key3 = new Key("c", 789);
+			map1.put(key2, 20L);
+			map1.put(key3, 30L);
+			map2.put(key2, 20L);
+			map2.put(key3, 30L);
+			assertEquals(map1, map2);
+			assertEquals(map1.hashCode(), map2.hashCode());
+
+			map1.put(key2, 25L);
+			assertNotEquals(map1, map2);
 		}
 	}
 
