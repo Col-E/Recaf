@@ -2,9 +2,10 @@ package software.coley.recaf.path;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import software.coley.collections.Lists;
+import software.coley.collections.Maps;
 import software.coley.collections.Unchecked;
 import software.coley.recaf.info.Named;
-import software.coley.recaf.util.collect.CollectionUtils;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.Bundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceFileResource;
@@ -132,8 +133,8 @@ public class ResourcePathNode extends AbstractPathNode<Workspace, WorkspaceResou
 			if (parent instanceof EmbeddedResourceContainerPathNode) {
 				PathNode<WorkspaceResource> parentOfParent = Unchecked.cast(parent.getParent());
 				Map<String, WorkspaceFileResource> embeddedResources = parentOfParent.getValue().getEmbeddedResources();
-				String ourKey = getEmbeddedResourceKey(embeddedResources, resource);
-				String otherKey = getEmbeddedResourceKey(embeddedResources, otherResource);
+				String ourKey = Objects.requireNonNullElse(Maps.identityKeyOf(embeddedResources, resource), "?");
+				String otherKey = Objects.requireNonNullElse(Maps.identityKeyOf(embeddedResources, otherResource), "?");
 				return Named.STRING_PATH_COMPARATOR.compare(ourKey, otherKey);
 			} else {
 				if (workspace != null) {
@@ -142,7 +143,7 @@ public class ResourcePathNode extends AbstractPathNode<Workspace, WorkspaceResou
 
 					// Show in order as in the workspace.
 					List<WorkspaceResource> resources = workspace.getAllResources(false);
-					return Integer.compare(CollectionUtils.identityIndexOf(resources, resource), CollectionUtils.identityIndexOf(resources, otherResource));
+					return Integer.compare(Lists.identityIndexOf(resources, resource), Lists.identityIndexOf(resources, otherResource));
 				} else {
 					// Enforce some ordering. Not ideal but works.
 					return Named.STRING_COMPARATOR.compare(
@@ -153,15 +154,6 @@ public class ResourcePathNode extends AbstractPathNode<Workspace, WorkspaceResou
 			}
 		}
 		return 0;
-	}
-
-	@Nonnull
-	private static String getEmbeddedResourceKey(@Nonnull Map<String, WorkspaceFileResource> embeddedResources,
-	                                             @Nonnull WorkspaceResource resource) {
-		for (Map.Entry<String, WorkspaceFileResource> entry : embeddedResources.entrySet())
-			if (entry.getValue() == resource)
-				return entry.getKey();
-		return "?";
 	}
 
 	@Override

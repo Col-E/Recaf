@@ -201,6 +201,18 @@ public final class MultiMap<K, V, C extends Collection<V>> {
 		return backing.entrySet();
 	}
 
+	@Override
+	public boolean equals(Object o) {
+		if (!(o instanceof MultiMap<?, ?, ?> multiMap))
+			return false;
+		return backing.equals(multiMap.backing);
+	}
+
+	@Override
+	public int hashCode() {
+		return backing.hashCode();
+	}
+
 	/**
 	 * Creates a multi-map.
 	 *
