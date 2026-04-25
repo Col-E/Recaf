@@ -213,7 +213,8 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 	 */
 	public void select(@Nonnull ClassMember member) {
 		CompilationUnitModel localUnit = unit;
-		if (localUnit == null) {
+ 		ResolverAdapter localResolver = resolver;
+		if (localUnit == null || localResolver == null) {
 			queuedSelectionTask = () -> select(member);
 		} else {
 			queuedSelectionTask = null;
@@ -229,7 +230,7 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 						} else if (matchedFields.size() > 1) {
 							// Multiple fields by the given name, need to differentiate by type.
 							for (VariableModel field : matchedFields) {
-								if (field.getType().resolve(resolver) instanceof DescribableResolution fieldTypeResolution
+								if (field.getType().resolve(localResolver) instanceof DescribableResolution fieldTypeResolution
 										&& fieldTypeResolution.getDescribableEntry().getDescriptor().equals(member.getDescriptor())) {
 									selectRange(field.getRange());
 									break;
@@ -246,7 +247,7 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 						} else if (matchedMethods.size() > 1) {
 							// Multiple methods by the given name, need to differentiate by signature.
 							for (MethodModel method : matchedMethods) {
-								if (method.resolve(resolver) instanceof MethodResolution methodResolution
+								if (method.resolve(localResolver) instanceof MethodResolution methodResolution
 										&& methodResolution.getMethodEntry().getDescriptor().equals(member.getDescriptor())) {
 									selectRange(method.getRange());
 									break;
