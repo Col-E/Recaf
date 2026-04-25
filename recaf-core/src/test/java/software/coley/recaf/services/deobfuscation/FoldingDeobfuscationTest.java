@@ -13,7 +13,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class FoldingDeobfuscationTest extends BaseDeobfuscationTest {
+public class FoldingDeobfuscationTest extends TransformerTestBase {
 	@Test
 	void foldIntegerMath() {
 		String asm = """

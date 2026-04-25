@@ -23,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * An assortment of deobfuscation tests, specifically to ensure weird bugs that occurred at one point do not come back.
  */
-public class RegressionDeobfuscationTest extends BaseDeobfuscationTest {
+public class RegressionDeobfuscationTest extends TransformerTestBase {
 	@Test
 	void gotoInlining1a() {
 		String asm = """

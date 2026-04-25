@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 /**
  * Tests for various deobfuscation transformers that don't fit in other test classes.
  */
-class MiscDeobfuscationTest extends BaseDeobfuscationTest {
+class MiscDeobfuscationTest extends TransformerTestBase {
 	@Test
 	void enumNameRestoration() {
 		String asm = """

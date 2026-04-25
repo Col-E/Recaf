@@ -133,6 +133,10 @@ public class BasicMethodContextMenuProviderFactory extends AbstractContextMenuPr
 				pane.nameValueProperty().setValue(method.getName());
 				pane.descValueProperty().setValue(method.getDescriptor());
 			});
+			if (declaringClass.isJvmClass()) {
+				builder.item("menu.search.method-similar", CODE_REFERENCE,
+						() -> actions.openSimilarMethodSearch(PathNodes.memberPath(workspace, resource, bundle, declaringClass, method)));
+			}
 
 			// Copy path
 			builder.item("menu.tab.copypath", COPY_LINK, () -> ClipboardUtil.copyString(declaringClass, method));

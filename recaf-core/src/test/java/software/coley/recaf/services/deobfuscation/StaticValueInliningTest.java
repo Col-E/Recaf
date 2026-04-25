@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * Tests for {@link StaticValueCollectionTransformer} / {@link StaticValueInliningTransformer}.
  */
-public class StaticValueInliningTest extends BaseDeobfuscationTest{
+public class StaticValueInliningTest extends TransformerTestBase {
 	@Test
 	void effectiveFinalAssignmentInClinit() {
 		String asm = """

@@ -2,8 +2,10 @@ package software.coley.recaf.util;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
+import org.objectweb.asm.tree.IntInsnNode;
 import org.objectweb.asm.util.CheckClassAdapter;
 
 import java.util.Arrays;
@@ -155,6 +157,18 @@ public class Types {
 		if (arrayType.getSort() != Type.ARRAY)
 			throw new IllegalStateException("Not an array: " + arrayType);
 		return Type.getType(arrayType.getDescriptor().substring(1));
+	}
+
+	/**
+	 * @param type
+	 * 		Some internal type name.
+	 *
+	 * @return {@code true} for super-types of arrays.
+	 */
+	public static boolean isArraySuperType(@Nonnull String type) {
+		return "java/lang/Object".equals(type)
+				|| "java/lang/Cloneable".equals(type)
+				|| "java/io/Serializable".equals(type);
 	}
 
 	/**
@@ -324,6 +338,49 @@ public class Types {
 	}
 
 	/**
+	 * @param tag
+	 *        {@link Handle#getTag()}.
+	 *
+	 * @return Name of sort.
+	 */
+	@Nonnull
+	public static String getArraySortName(int tag) {
+		return switch (tag) {
+			case Opcodes.T_BOOLEAN -> "boolean";
+			case Opcodes.T_CHAR -> "char";
+			case Opcodes.T_FLOAT -> "float";
+			case Opcodes.T_DOUBLE -> "double";
+			case Opcodes.T_BYTE -> "byte";
+			case Opcodes.T_SHORT -> "short";
+			case Opcodes.T_INT -> "int";
+			case Opcodes.T_LONG -> "long";
+			case -1 -> "<undefined>";
+			default -> "<unknown>";
+		};
+	}
+
+	/**
+	 * @param operand
+	 *        {@link IntInsnNode#operand} for {@link Opcodes#NEWARRAY}.
+	 *
+	 * @return Type of array element, or {@link #OBJECT_TYPE} if the operand does not match a primitive type.
+	 */
+	@Nonnull
+	public static Type newArrayElementType(int operand) {
+		return switch (operand) {
+			case Opcodes.T_BOOLEAN -> Type.BOOLEAN_TYPE;
+			case Opcodes.T_CHAR -> Type.CHAR_TYPE;
+			case Opcodes.T_FLOAT -> Type.FLOAT_TYPE;
+			case Opcodes.T_DOUBLE -> Type.DOUBLE_TYPE;
+			case Opcodes.T_BYTE -> Type.BYTE_TYPE;
+			case Opcodes.T_SHORT -> Type.SHORT_TYPE;
+			case Opcodes.T_INT -> Type.INT_TYPE;
+			case Opcodes.T_LONG -> Type.LONG_TYPE;
+			default -> OBJECT_TYPE;
+		};
+	}
+
+	/**
 	 * @param descriptor
 	 * 		Input descriptor.
 	 *
@@ -398,7 +455,6 @@ public class Types {
 	public static boolean isValidFieldSignature(@Nullable String signature) {
 		return isValidSignature(signature, SignatureContext.FIELD);
 	}
-
 
 	/**
 	 * @param signature

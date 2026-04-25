@@ -140,7 +140,7 @@ class WorkspaceTreeNodeTest {
 		p1d = p2.child(classD);
 
 		// Content available in the default package/root directory.
-		default2 = p3f.child(null);
+		default2 = p3f.child((String) null);
 		default1 = default2.child(new BasicFileInfo("root.txt", new byte[0], new BasicPropertyContainer()));
 
 		// The path will visually look like (root)//zero.txt in the workspace tree.
@@ -164,7 +164,6 @@ class WorkspaceTreeNodeTest {
 				.embeddedChildContainer()
 				.child(embeddedResource)
 				.child(embeddedResource.getFileBundle())
-				.child(null)
 				.child(default1.getValue());
 
 		WorkspaceTreeNode root = new WorkspaceTreeNode(workspacePath);

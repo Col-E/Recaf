@@ -179,6 +179,8 @@ public class BasicClassContextMenuProviderFactory extends AbstractContextMenuPro
 			pane.typePredicateIdProperty().setValue(StringPredicateProvider.KEY_EQUALS);
 			pane.typeValueProperty().setValue(info.getName());
 		});
+		search.item("menu.search.class-similar", CODE_REFERENCE,
+				() -> actions.openSimilarClassSearch(PathNodes.classPath(workspace, resource, bundle, info)));
 
 		// Refactor actions
 		if (!resource.isInternal()) {
@@ -276,6 +278,8 @@ public class BasicClassContextMenuProviderFactory extends AbstractContextMenuPro
 			pane.typePredicateIdProperty().setValue(StringPredicateProvider.KEY_EQUALS);
 			pane.typeValueProperty().setValue(info.getName());
 		});
+		search.item("menu.search.class-similar", CODE_REFERENCE,
+				() -> actions.openSimilarClassSearch(PathNodes.classPath(workspace, resource, bundle, info)));
 
 		// Refactor actions
 		if (!resource.isInternal()) {

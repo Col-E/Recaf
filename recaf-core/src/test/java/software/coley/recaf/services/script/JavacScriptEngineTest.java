@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Tests for {@link JavacScriptEngine}
  */
-@Execution(ExecutionMode.SAME_THREAD)
+@Execution(ExecutionMode.SAME_THREAD) // Tests are not thread safe due to shared static state.
 public class JavacScriptEngineTest extends TestBase {
 	static JavacScriptEngine engine;
 	public static CountDownLatch concurrentStarted;

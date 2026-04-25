@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * Tests {@link IllegalVarargsRemovingTransformer} / {@link IllegalSignatureRemovingTransformer} / {@link IllegalAnnotationRemovingTransformer}.
  */
-public class IllegalAttributeDeobfuscationTest extends BaseDeobfuscationTest {
+public class IllegalAttributeDeobfuscationTest extends TransformerTestBase {
 	@Test
 	void illegalSignatureRemoving() {
 		// An int primitive is an invalid argument for a field signature (Valhalla when Brian?).

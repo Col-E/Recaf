@@ -3,6 +3,7 @@ package software.coley.recaf.util;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import me.darknet.assembler.util.BlwOpcodes;
+import me.darknet.dex.tree.definitions.code.Code;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -759,8 +760,9 @@ public class AsmInsnUtil implements Opcodes {
 	 * 		Output successor map.
 	 * @param predecessorMap
 	 * 		Output predecessor map.
+	 *
+	 * @see DexInsnUtil#populateFlowMaps(Code, Int2ObjectMap, Int2ObjectMap)
 	 */
-	@SuppressWarnings("StatementWithEmptyBody")
 	public static void populateFlowMaps(@Nonnull MethodNode method,
 	                                    @Nonnull Int2ObjectMap<List<Integer>> successorMap,
 	                                    @Nonnull Int2ObjectMap<List<Integer>> predecessorMap) {
@@ -834,10 +836,9 @@ public class AsmInsnUtil implements Opcodes {
 		}
 
 		// Populate predecessor map from successor map.
-		for (int i = 0; i < size; i++) {
+		for (int i = 0; i < size; i++)
 			for (int s : successorMap.getOrDefault(i, emptyList()))
 				predecessorMap.computeIfAbsent(s, _ -> new ArrayList<>()).add(i);
-		}
 	}
 
 	/**

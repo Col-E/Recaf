@@ -90,6 +90,8 @@ import software.coley.recaf.ui.pane.search.MemberReferenceSearchPane;
 import software.coley.recaf.ui.pane.search.NumberSearchPane;
 import software.coley.recaf.ui.pane.search.StringSearchPane;
 import software.coley.recaf.ui.pane.search.StringTablePane;
+import software.coley.recaf.ui.pane.search.SimilarClassTablePane;
+import software.coley.recaf.ui.pane.search.SimilarMethodTablePane;
 import software.coley.recaf.util.Animations;
 import software.coley.recaf.util.ClipboardUtil;
 import software.coley.recaf.util.EscapeUtil;
@@ -142,7 +144,8 @@ import static software.coley.recaf.util.StringUtil.*;
 public class Actions implements Service {
 	public static final String ID = "actions";
 	private static final Logger logger = Logging.get(Actions.class);
-	private final List<Class<?>> SEARCH_PANE_TYPES = List.of(AbstractSearchPane.class, StringTablePane.class);
+	private final List<Class<?>> SEARCH_PANE_TYPES = List.of(AbstractSearchPane.class, StringTablePane.class,
+			SimilarMethodTablePane.class, SimilarClassTablePane.class);
 	private final WorkspaceManager workspaceManager;
 	private final NavigationManager navigationManager;
 	private final DockingManager dockingManager;
@@ -162,6 +165,8 @@ public class Actions implements Service {
 	private final Instance<CommentListPane> commentListPaneProvider;
 	private final Instance<MethodCallGraphTreesPane> callGraphsTreePaneProvider;
 	private final Instance<StringTablePane> stringTablePaneProvider;
+	private final Instance<SimilarClassTablePane> similarClassTablePaneProvider;
+	private final Instance<SimilarMethodTablePane> similarMethodTablePaneProvider;
 	private final Instance<StringSearchPane> stringSearchPaneProvider;
 	private final Instance<NumberSearchPane> numberSearchPaneProvider;
 	private final Instance<ClassReferenceSearchPane> classReferenceSearchPaneProvider;
@@ -193,6 +198,8 @@ public class Actions implements Service {
 	               @Nonnull Instance<CommentEditPane> commentPaneProvider,
 	               @Nonnull Instance<CommentListPane> commentListPaneProvider,
 	               @Nonnull Instance<StringTablePane> stringTablePaneProvider,
+	               @Nonnull Instance<SimilarClassTablePane> similarClassTablePaneProvider,
+	               @Nonnull Instance<SimilarMethodTablePane> similarMethodTablePaneProvider,
 	               @Nonnull Instance<StringSearchPane> stringSearchPaneProvider,
 	               @Nonnull Instance<NumberSearchPane> numberSearchPaneProvider,
 	               @Nonnull Instance<MethodCallGraphTreesPane> callGraphsTreePaneProvider,
@@ -220,6 +227,8 @@ public class Actions implements Service {
 		this.commentPaneProvider = commentPaneProvider;
 		this.commentListPaneProvider = commentListPaneProvider;
 		this.stringTablePaneProvider = stringTablePaneProvider;
+		this.similarClassTablePaneProvider = similarClassTablePaneProvider;
+		this.similarMethodTablePaneProvider = similarMethodTablePaneProvider;
 		this.stringSearchPaneProvider = stringSearchPaneProvider;
 		this.numberSearchPaneProvider = numberSearchPaneProvider;
 		this.callGraphsTreePaneProvider = callGraphsTreePaneProvider;
@@ -2216,6 +2225,78 @@ public class Actions implements Service {
 	@Nonnull
 	public ClassReferenceSearchPane openNewClassReferenceSearch() {
 		return openPaneAdjacent(SEARCH_PANE_TYPES, "menu.search.class.type-references", CarbonIcons.CODE_REFERENCE, classReferenceSearchPaneProvider);
+	}
+
+	/**
+	 * @param referenceClassPath
+	 * 		Class path used as the similarity reference.
+	 *
+	 * @return New similar-class search pane, opened in a new docking tab.
+	 */
+	@Nonnull
+	public SimilarClassTablePane openSimilarClassSearch(@Nonnull ClassPathNode referenceClassPath) {
+		DockablePath searchPath = dockingManager.getBento()
+				.search().dockable(d -> SEARCH_PANE_TYPES.stream().anyMatch(t -> t.isAssignableFrom(d.getNode().getClass())));
+		DockContainerLeaf container = searchPath == null ? null : searchPath.leafContainer();
+
+		SimilarClassTablePane content = similarClassTablePaneProvider.get();
+		content.onUpdatePath(referenceClassPath);
+		Dockable dockable;
+		if (container != null) {
+			dockable = createDockable(container, getBinding("menu.search.class-similar"),
+					d -> new FontIconView(CarbonIcons.CODE_REFERENCE), content);
+		} else {
+			dockable = createDockable(null, getBinding("menu.search.class-similar"),
+					d -> new FontIconView(CarbonIcons.CODE_REFERENCE), content);
+			Scene originScene = dockingManager.getPrimaryDockingContainer().asRegion().getScene();
+			Stage stage = dockingManager.getBento().stageBuilding().newStageForDockable(originScene, dockable, 900, 500);
+			stage.show();
+			stage.requestFocus();
+		}
+		dockable.setDragGroupMask(DockingManager.GROUP_ANYWHERE);
+		dockable.addCloseListener((_, _) -> similarClassTablePaneProvider.destroy(content));
+		dockable.setContextMenuFactory(d -> {
+			ContextMenu menu = new ContextMenu();
+			addCloseActions(menu, d);
+			return menu;
+		});
+		return content;
+	}
+
+	/**
+	 * @param referenceMethodPath
+	 * 		Method path used as the similarity reference.
+	 *
+	 * @return New similar-method search pane, opened in a new docking tab.
+	 */
+	@Nonnull
+	public SimilarMethodTablePane openSimilarMethodSearch(@Nonnull ClassMemberPathNode referenceMethodPath) {
+		DockablePath searchPath = dockingManager.getBento()
+				.search().dockable(d -> SEARCH_PANE_TYPES.stream().anyMatch(t -> t.isAssignableFrom(d.getNode().getClass())));
+		DockContainerLeaf container = searchPath == null ? null : searchPath.leafContainer();
+
+		SimilarMethodTablePane content = similarMethodTablePaneProvider.get();
+		content.onUpdatePath(referenceMethodPath);
+		Dockable dockable;
+		if (container != null) {
+			dockable = createDockable(container, getBinding("menu.search.method-similar"),
+					d -> new FontIconView(CarbonIcons.CODE_REFERENCE), content);
+		} else {
+			dockable = createDockable(null, getBinding("menu.search.method-similar"),
+					d -> new FontIconView(CarbonIcons.CODE_REFERENCE), content);
+			Scene originScene = dockingManager.getPrimaryDockingContainer().asRegion().getScene();
+			Stage stage = dockingManager.getBento().stageBuilding().newStageForDockable(originScene, dockable, 900, 500);
+			stage.show();
+			stage.requestFocus();
+		}
+		dockable.setDragGroupMask(DockingManager.GROUP_ANYWHERE);
+		dockable.addCloseListener((_, _) -> similarMethodTablePaneProvider.destroy(content));
+		dockable.setContextMenuFactory(d -> {
+			ContextMenu menu = new ContextMenu();
+			addCloseActions(menu, d);
+			return menu;
+		});
+		return content;
 	}
 
 	/**
