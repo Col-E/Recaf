@@ -95,6 +95,7 @@ public class DockingManager {
 	private final Instance<WorkspaceExplorerPane> workspaceExplorerProvider;
 	private final DockContainerRootBranch root;
 	private final ResourceSummaryServiceConfig resourceSummaryConfig;
+	private final WorkspaceManager workspaceManager;
 
 	// The primary bento instance
 	private final Bento bento = new Bento() {
@@ -158,6 +159,7 @@ public class DockingManager {
 	                      @Nonnull Instance<WorkspaceInformationPane> workspaceInfoProvider,
 	                      @Nonnull Instance<WorkspaceExplorerPane> workspaceExplorerProvider,
 	                      @Nonnull ResourceSummaryServiceConfig resourceSummaryConfig) {
+		this.workspaceManager = workspaceManager;
 		this.actions = actions;
 		this.loggingPaneProvider = loggingPaneProvider;
 		this.welcomePaneProvider = welcomePaneProvider;
@@ -393,10 +395,13 @@ public class DockingManager {
 	private DockContainerBranch newWorkspaceContainer() {
 		// Container to hold:
 		//  - Workspace explorer
+		Workspace workspace = workspaceManager.getCurrent();
+		WorkspaceExplorerPane explorerPane = workspaceExplorerProvider.get();
 		DockContainerLeaf explorer = newLeafContainer(ID_CONTAINER_WORKSPACE_TOOLS);
 		explorer.setCanSplit(false);
-		explorer.addDockables(newToolDockable("workspace.title", CarbonIcons.TREE_VIEW, workspaceExplorerProvider.get()));
+		explorer.addDockables(newToolDockable("workspace.title", CarbonIcons.TREE_VIEW, explorerPane));
 		SplitPane.setResizableWithParent(explorer.asRegion(), false);
+		scheduleCleanupListener(workspace, explorerPane);
 
 		// Container to hold:
 		//  - Tabs for displaying open classes/files in the workspace
@@ -448,6 +453,35 @@ public class DockingManager {
 					() -> container.sideProperty().set(side));
 			menu.getItems().add(item);
 		}
+	}
+
+	/**
+	 * Register {@link Instance#destroy(Object)} call on the given explorer pane when the workspace is closed.
+	 * This ensures that any resources used by the explorer pane are cleaned up when the workspace is closed.
+	 *
+	 * @param workspace
+	 * 		Workspace to register the close listener for.
+	 * @param explorer
+	 * 		Workspace explorer pane to destroy when the workspace is closed.
+	 */
+	private void scheduleCleanupListener(@Nonnull Workspace workspace, @Nonnull WorkspaceExplorerPane explorer) {
+		WorkspaceCloseListener cleanupListener = new WorkspaceCloseListener() {
+			@Override
+			public void onWorkspaceClosed(@Nonnull Workspace closedWorkspace) {
+				if (closedWorkspace != workspace)
+					return;
+
+				workspaceManager.removeWorkspaceCloseListener(this);
+				workspaceExplorerProvider.destroy(explorer);
+			}
+
+			@Override
+			public int getPriority() {
+				// Run after default close handlers process open dockables, but before the welcome container is shown.
+				return PriorityKeys.LATE;
+			}
+		};
+		workspaceManager.addWorkspaceCloseListener(cleanupListener);
 	}
 
 	/**
