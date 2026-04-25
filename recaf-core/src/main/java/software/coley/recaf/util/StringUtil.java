@@ -92,7 +92,7 @@ public class StringUtil {
 	@Nonnull
 	public static List<String> fastSplit(@Nonnull String input, boolean includeEmpty, char split) {
 		StringBuilder sb = new StringBuilder();
-		ArrayList<String> words = new ArrayList<>(input.length() / 5);
+		List<String> words = new ArrayList<>(input.length() / 5);
 		char[] strArray = input.toCharArray();
 		for (char c : strArray) {
 			if (c == split) {

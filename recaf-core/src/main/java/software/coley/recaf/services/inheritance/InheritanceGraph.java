@@ -21,8 +21,10 @@ import software.coley.recaf.workspace.model.resource.ResourceAndroidClassListene
 import software.coley.recaf.workspace.model.resource.ResourceJvmClassListener;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
+import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashSet;
@@ -109,13 +111,84 @@ public class InheritanceGraph {
 	 * Refresh parent-to-child lookup.
 	 */
 	private void refreshChildLookup() {
-		// Clear
 		parentToChild.clear();
+		ClassPathNodeProvider.Cached cachedProvider = ClassPathNodeProvider.cache(workspace);
+		Set<String> visited = new HashSet<>(cachedProvider.size() + 1024 /* leeway */);
+		workspace.forEachClass(false, cls -> populateParentToChildLookupForRefreshIterative(cls, visited, cachedProvider));
+		clearCachedVertices();
+	}
 
-		// Repopulate
-		ClassPathNodeProvider.Cached nodeProvider = ClassPathNodeProvider.cache(workspace);
-		Set<ClassInfo> visited = Collections.newSetFromMap(new IdentityHashMap<>(nodeProvider.size() + 1024 /* leeway */));
-		workspace.forEachClass(false, cls -> populateParentToChildLookup(cls, visited, nodeProvider));
+	/**
+	 * Clear cached vertex relationships after a bulk graph update.
+	 */
+	private void clearCachedVertices() {
+		vertices.values().forEach(InheritanceVertex::clearCachedVertices);
+	}
+
+	/**
+	 * Populate direct references from the given child class to its parents during a full lookup rebuild,
+	 * and iteratively do the same for any resolvable parent classes so runtime/library hierarchies remain traversable.
+	 *
+	 * @param info
+	 * 		Child class.
+	 * @param visited
+	 * 		Class names already visited in this refresh.
+	 * @param provider
+	 * 		Node provider for resolving parent classes.
+	 */
+	private void populateParentToChildLookupForRefreshIterative(@Nonnull ClassInfo info,
+	                                                            @Nonnull Set<String> visited,
+	                                                            @Nonnull ClassPathNodeProvider provider) {
+		Deque<ClassInfo> pending = new ArrayDeque<>();
+		pending.add(info);
+		while (!pending.isEmpty()) {
+			ClassInfo current = pending.removeLast();
+
+			// Since we have observed this class to exist, we will remove the "stub" placeholder for this name.
+			String name = current.getName();
+			stubs.remove(name);
+
+			// Skip if already visited.
+			if (!visited.add(name))
+				continue;
+
+			// Skip module classes.
+			if (current.hasModuleModifier())
+				continue;
+
+			// Add direct parent.
+			String superName = current.getSuperName();
+			if (superName != null) {
+				populateParentToChildLookupFast(name, superName);
+
+				// Visit parent.
+				ClassInfo superInfo = resolveClass(superName, provider);
+				if (superInfo != null)
+					pending.add(superInfo);
+			}
+
+			// Add direct interfaces.
+			for (String itf : current.getInterfaces()) {
+				populateParentToChildLookupFast(name, itf);
+
+				// Visit interface.
+				ClassInfo interfaceInfo = resolveClass(itf, provider);
+				if (interfaceInfo != null)
+					pending.add(interfaceInfo);
+			}
+		}
+	}
+
+	/**
+	 * Populate a reference from the given child class to the parent class without touching vertex caches.
+	 *
+	 * @param name
+	 * 		Child class name.
+	 * @param parentName
+	 * 		Parent class name.
+	 */
+	private void populateParentToChildLookupFast(@Nonnull String name, @Nonnull String parentName) {
+		parentToChild.computeIfAbsent(parentName, k -> ConcurrentHashMap.newKeySet()).add(name);
 	}
 
 	/**
@@ -126,10 +199,10 @@ public class InheritanceGraph {
 	 * @param parentName
 	 * 		Parent class name.
 	 * @param provider
-	 *      Node provider.
+	 * 		Node provider.
 	 */
 	private void populateParentToChildLookup(@Nonnull String name, @Nonnull String parentName, @Nonnull ClassPathNodeProvider provider) {
-		parentToChild.computeIfAbsent(parentName, k -> ConcurrentHashMap.newKeySet()).add(name);
+		populateParentToChildLookupFast(name, parentName);
 
 		// Clear any cached relationships in the vertex and the parent vertex.
 		InheritanceVertex parentVertex = getVertex(parentName, provider);
@@ -168,7 +241,7 @@ public class InheritanceGraph {
 	 * @param visited
 	 * 		Classes already visited in population.
 	 * @param provider
-	 *      Node provider.
+	 * 		Node provider.
 	 */
 	private void populateParentToChildLookup(@Nonnull ClassInfo info, @Nonnull Set<ClassInfo> visited, @Nonnull ClassPathNodeProvider provider) {
 		// Since we have observed this class to exist, we will remove the "stub" placeholder for this name.
@@ -283,7 +356,7 @@ public class InheritanceGraph {
 	 * @param name
 	 * 		Class name.
 	 * @param provider
-	 *      Node provider.
+	 * 		Node provider.
 	 *
 	 * @return Vertex in graph of class. {@code null} if no such class was found in the inputs.
 	 */
@@ -484,7 +557,7 @@ public class InheritanceGraph {
 	 * @param name
 	 * 		Internal class name.
 	 * @param provider
-	 *      Node provider.
+	 * 		Node provider.
 	 *
 	 * @return Vertex of class.
 	 */
@@ -509,6 +582,26 @@ public class InheritanceGraph {
 		boolean isPrimary = resourcePath != null && resourcePath.isPrimaryOrEmbeddedInPrimary();
 		ClassInfo info = result.getValue();
 		return new InheritanceVertex(info, this::getVertex, this::getDirectChildren, isPrimary);
+	}
+
+	/**
+	 * @param name
+	 * 		Class name to resolve.
+	 * @param provider
+	 * 		Node provider for resolving parent classes.
+	 *
+	 * @return Resolved class info, or {@code null} when the class cannot be found.
+	 */
+	@Nullable
+	private ClassInfo resolveClass(@Nonnull String name,
+	                               @Nonnull ClassPathNodeProvider provider) {
+		ClassPathNode path = provider.getNode(name);
+		if (path == null) {
+			// The cached provider only contains classes present during refresh setup. Fall back to the live provider
+			// so runtime classes can still contribute their own parent-child edges.
+			path = workspaceNodeProvider.getNode(name);
+		}
+		return path != null ? path.getValue() : null;
 	}
 
 	private void onUpdateClassImpl(@Nonnull ClassInfo oldValue, @Nonnull ClassInfo newValue) {
@@ -578,13 +671,6 @@ public class InheritanceGraph {
 
 		@Override
 		public void onAddLibrary(@Nonnull Workspace workspace, @Nonnull WorkspaceResource library) {
-			Set<ClassInfo> visited = Collections.newSetFromMap(new IdentityHashMap<>());
-			library.jvmClassBundleStreamRecursive()
-					.flatMap(Bundle::stream)
-					.forEach(c -> populateParentToChildLookup(c, visited));
-			library.androidClassBundleStreamRecursive()
-					.flatMap(Bundle::stream)
-					.forEach(c -> populateParentToChildLookup(c, visited));
 			refreshChildLookup();
 		}
 

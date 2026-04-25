@@ -109,8 +109,8 @@ class PathNodeTest {
 		p3and1 = p4.child(primaryAndroidBundle);
 		p3and2 = p4.child(secondaryAndroidBundle);
 		p3file = p4.child(primaryFileBundle);
-		pFile1 = p3file.child(null).child(primaryFileInfo);
-		pFile2 = p3file.child(null).child(secondaryFileInfo);
+		pFile1 = p3file.child(primaryFileInfo);
+		pFile2 = p3file.child(secondaryFileInfo);
 		p2 = p3.child(packageName);
 		p2parent = p3.child(parentPackageName);
 		p1 = p2.child(primaryClassInfo);
@@ -336,7 +336,7 @@ class PathNodeTest {
 			NavigableMap<Integer, BundlePathNode> versionedBundles = new TreeMap<>();
 			for (int i = min; i < max; i++) {
 				BundlePathNode bundlePath = s4.child(new BasicVersionedJvmClassBundle(i));
-				ClassPathNode classPath = bundlePath.child(null).child(new StubClassInfo("Foo"));
+				ClassPathNode classPath = bundlePath.child(new StubClassInfo("Foo"));
 				versionedClasses.put(i, classPath);
 				versionedBundles.put(i, bundlePath);
 			}

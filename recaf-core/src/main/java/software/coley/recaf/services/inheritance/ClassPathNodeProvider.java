@@ -7,7 +7,6 @@ import software.coley.recaf.workspace.model.Workspace;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Stream;
 
 /**
  * Provider of class path nodes.
@@ -32,13 +31,11 @@ sealed interface ClassPathNodeProvider {
 	 *
 	 * @return Provider that caches all nodes from the workspace at the time of creation.
 	 */
+	@Nonnull
 	static ClassPathNodeProvider.Cached cache(@Nonnull Workspace workspace) {
-		Stream<ClassPathNode> stream = workspace.classesStream();
-		Map<String, ClassPathNode> nodes = new HashMap<>(4096);
-		stream.forEach(classPathNode -> {
-			nodes.putIfAbsent(classPathNode.getValue().getName(), classPathNode);
-		});
-		return new Cached(Map.copyOf(nodes));
+		Map<String, ClassPathNode> nodes = new HashMap<>((int) workspace.classesStream().count());
+		workspace.classesStream().forEach(path -> nodes.putIfAbsent(path.getValue().getName(), path));
+		return new Cached(nodes);
 	}
 
 	/**

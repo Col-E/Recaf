@@ -1,10 +1,16 @@
 package software.coley.recaf.services.inheritance;
 
+import jakarta.annotation.Nonnull;
+import me.darknet.dex.tree.definitions.ClassDefinition;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.objectweb.asm.Opcodes;
+import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.info.builder.AndroidClassInfoBuilder;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.test.TestBase;
 import software.coley.recaf.test.TestClassUtils;
@@ -12,8 +18,11 @@ import software.coley.recaf.test.dummy.Inheritance;
 import software.coley.recaf.test.dummy.StringConsumer;
 import software.coley.recaf.util.Types;
 import software.coley.recaf.workspace.model.Workspace;
+import software.coley.recaf.workspace.model.bundle.BasicAndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.BasicJvmClassBundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
+import software.coley.recaf.workspace.model.resource.WorkspaceResource;
+import software.coley.recaf.workspace.model.resource.WorkspaceResourceBuilder;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -23,6 +32,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.objectweb.asm.Opcodes.ACC_PUBLIC;
 
 /**
  * Tests for {@link InheritanceGraph}
@@ -191,5 +201,101 @@ class InheritanceGraphTest extends TestBase {
 		InheritanceVertex vertexUpdated = inheritanceGraph.getVertex(appleName);
 		assertNotNull(vertexUpdated);
 		assertSame(classInfoUpdated, vertexUpdated.getValue(), "Expected updated vertex to point to updated class");
+	}
+
+	@Test
+	void addingLibraryClearsCachedChildLookups() throws IOException {
+		// Create a graph from 'Inheritance' and its nested classes.
+		Workspace localWorkspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(Inheritance.class.getClasses()));
+		InheritanceGraph localGraph = new InheritanceGraph(localWorkspace);
+
+		// Get the 'Apple' vertex and assert we can see the initial child 'AppleWithWorm' but not the new child we are about to add.
+		String appleName = Inheritance.Apple.class.getName().replace('.', '/');
+		InheritanceVertex appleVertex = localGraph.getVertex(appleName);
+		assertNotNull(appleVertex, "Could not get Apple vertex from local workspace");
+		Set<String> initialChildren = appleVertex.getChildren().stream()
+				.map(InheritanceVertex::getName)
+				.collect(Collectors.toSet());
+		assertEquals(Set.of(appleName + "WithWorm"), initialChildren, "Unexpected initial children for Apple");
+
+		// Add a new class to the workspace that extends Apple.
+		String extraChildName = appleName + "ExtraChild";
+		WorkspaceResource library = new WorkspaceResourceBuilder()
+				.withJvmClassBundle(TestClassUtils.fromClasses(createChildClass(extraChildName, appleName)))
+				.build();
+		localWorkspace.addSupportingResource(library);
+
+		// Assert that the new child is now visible in the graph.
+		Set<String> refreshedChildren = appleVertex.getChildren().stream()
+				.map(InheritanceVertex::getName)
+				.collect(Collectors.toSet());
+		assertEquals(Set.of(appleName + "WithWorm", extraChildName), refreshedChildren,
+				"Expected full refresh to invalidate cached child lookups");
+
+		// Assert that the family also includes the new child and that the new child vertex is resolvable.
+		Set<String> family = localGraph.getVertexFamily(appleName, false).stream()
+				.map(InheritanceVertex::getName)
+				.collect(Collectors.toSet());
+		assertTrue(family.contains(extraChildName), "Expected refreshed family to include library child");
+		assertNotNull(localGraph.getVertex(extraChildName), "Expected library child vertex to be resolvable after refresh");
+	}
+
+	/** Had a regression at some point where Android workspaces were not properly populating JDK class hierarchies. */
+	@Test
+	void androidClassInheritsThroughRuntimeHierarchy() {
+		// Mock Android workspace.
+		BasicAndroidClassBundle bundle = new BasicAndroidClassBundle();
+		String childName = "foo/AndroidListImpl";
+		bundle.initialPut(createAndroidChildClass(childName, "java/util/AbstractList"));
+		Workspace localWorkspace = TestClassUtils.fromBundle(bundle);
+		InheritanceGraph localGraph = new InheritanceGraph(localWorkspace);
+
+		// Assert that a common JDK class has lookups populated for:
+		//  - Other JDK classes (List -> AbstractList)
+		//  - Android classes (List -> AndroidListImpl)
+		Set<String> listChildren = localGraph.getVertex("java/util/List").getAllChildren().stream()
+				.map(InheritanceVertex::getName)
+				.collect(Collectors.toSet());
+		assertTrue(listChildren.contains("java/util/AbstractList"),
+				"Expected java/util/List children to include AbstractList from runtime resource");
+		assertTrue(listChildren.contains(childName),
+				"Expected java/util/List children to include AndroidListImpl from primary resource");
+	}
+
+	@Test
+	@Timeout(5)
+	void profileLargeHierarchyConstruction() {
+		// Generate a workspace with a large number of classes in a single inheritance chain.
+		int classCount = 200_000;
+		String prefix = "bench/Generated";
+		BasicJvmClassBundle classes = new BasicJvmClassBundle();
+		for (int i = 0; i < classCount; i++) {
+			String name = prefix + i;
+			String superName = i == 0 ? "java/lang/Object" : prefix + (i - 1);
+			classes.initialPut(createChildClass(name, superName));
+		}
+		Workspace localWorkspace = TestClassUtils.fromBundle(classes);
+		long start = System.nanoTime();
+
+		// Constructing the graph should be reasonably fast even with a large number of classes.
+		// If this test fails, it is likely that the graph construction is doing something inefficient.
+		InheritanceGraph localGraph = new InheritanceGraph(localWorkspace);
+		long elapsedMs = (System.nanoTime() - start) / 1_000_000L;
+		assertNotNull(localGraph.getVertex(prefix + (classCount - 1)), "Expected last generated class to be present");
+		System.out.println("Constructed inheritance graph for " + classCount + " classes in " + elapsedMs + "ms");
+	}
+
+	@Nonnull
+	private static JvmClassInfo createChildClass(String name, String superName) {
+		return TestClassUtils.createClass(name, node -> node.superName = superName);
+	}
+
+	@Nonnull
+	private static AndroidClassInfo createAndroidChildClass(String name, String superName) {
+		ClassDefinition definition = new ClassDefinition(
+				me.darknet.dex.tree.type.Types.instanceTypeFromInternalName(name),
+				me.darknet.dex.tree.type.Types.instanceTypeFromInternalName(superName),
+				ACC_PUBLIC);
+		return new AndroidClassInfoBuilder(definition).build();
 	}
 }

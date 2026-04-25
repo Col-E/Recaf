@@ -4,12 +4,14 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import org.objectweb.asm.ClassReader;
 import org.slf4j.Logger;
+import software.coley.collections.tree.Tree;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.builder.JvmClassInfoBuilder;
 import software.coley.recaf.info.properties.BasicPropertyContainer;
 import software.coley.recaf.util.ClasspathUtil;
 import software.coley.recaf.util.IOUtil;
+import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.BasicFileBundle;
@@ -40,6 +42,8 @@ public class RuntimeWorkspaceResource extends BasicPropertyContainer implements 
 	private static final Logger logger = Logging.get(RuntimeWorkspaceResource.class);
 	private static final Map<String, JvmClassInfo> cache = new ConcurrentHashMap<>();
 	private static final Set<String> stubClasses = ConcurrentHashMap.newKeySet();
+	private static final Tree<String, String> systemClassTree = ClasspathUtil.getSystemClassTree();
+	private static final Tree<String, String> classpathClassTree = ClasspathUtil.getClasspathClassTree();
 	private final JvmClassBundle classes;
 	private final FileBundle files;
 
@@ -94,6 +98,12 @@ public class RuntimeWorkspaceResource extends BasicPropertyContainer implements 
 				// Check if the class is a known failure case.
 				if (stubClasses.contains(key))
 					return null;
+
+				// Check if the class exists in either the system or classpath trees.
+				if (!hasSystemClass(key) && !hasClasspathClass(key)) {
+					stubClasses.add(key);
+					return null;
+				}
 
 				// Get the class bytes.
 				byte[] classBytes = getClassBytes(key);
@@ -282,6 +292,24 @@ public class RuntimeWorkspaceResource extends BasicPropertyContainer implements 
 
 	@Override
 	public boolean isInternal() {
+		return true;
+	}
+
+	private static boolean hasSystemClass(@Nonnull String key) {
+		return hasClass(systemClassTree, key);
+	}
+
+	private static boolean hasClasspathClass(@Nonnull String key) {
+		return hasClass(classpathClassTree, key);
+	}
+
+	private static boolean hasClass(@Nonnull Tree<String, String> tree, @Nonnull String key) {
+		Tree<String, String> path = tree;
+		for (String section : StringUtil.fastSplit(key, false, '/')) {
+			path = path.get(section);
+			if (path == null)
+				return false;
+		}
 		return true;
 	}
 
