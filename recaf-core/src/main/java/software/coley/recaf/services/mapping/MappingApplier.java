@@ -191,6 +191,12 @@ public class MappingApplier {
 			MappingsAdapter adapter = new MappingsAdapter(fieldDifferentiation, varDifferentiation);
 			adapter.importIntermediate(intermediateMappings);
 			mappings = adapter;
+
+			// Consider the method family of: "Circle.area() --> Shape.area()"
+			// - If you provide a mapping for just "Shape.area()" a parent-lookup from "Circle.area()" can see the mapping by checking parents.
+			// - If you provide a mapping for just "Circle.area()" then "Shape.area()" needs to look at children.
+			// This infilling will flesh out the mappings so that if you provide either end of the family, the other end will be present in the mappings.
+			adapter.infillMethodFamilies(intermediateMappings, inheritanceGraph);
 		}
 
 		// Check if mappings can be enriched with type look-ups

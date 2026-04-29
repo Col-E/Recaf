@@ -3,7 +3,6 @@ package software.coley.recaf.services.mapping;
 import jakarta.annotation.Nonnull;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
@@ -17,18 +16,37 @@ import software.coley.recaf.services.inheritance.InheritanceGraphService;
 import software.coley.recaf.services.mapping.aggregate.AggregateMappingManager;
 import software.coley.recaf.services.mapping.aggregate.AggregatedMappings;
 import software.coley.recaf.services.mapping.gen.MappingGenerator;
-import software.coley.recaf.services.mapping.gen.naming.NameGenerator;
 import software.coley.recaf.services.mapping.gen.filter.NameGeneratorFilter;
 import software.coley.recaf.services.mapping.gen.naming.AlphabetNameGenerator;
+import software.coley.recaf.services.mapping.gen.naming.NameGenerator;
 import software.coley.recaf.test.TestBase;
 import software.coley.recaf.test.TestClassUtils;
-import software.coley.recaf.test.dummy.*;
+import software.coley.recaf.test.dummy.AnnotationImpl;
+import software.coley.recaf.test.dummy.AnonymousLambda;
+import software.coley.recaf.test.dummy.ClassWithAnnotation;
+import software.coley.recaf.test.dummy.DiamondA;
+import software.coley.recaf.test.dummy.DiamondB;
+import software.coley.recaf.test.dummy.DiamondC;
+import software.coley.recaf.test.dummy.DummyEnum;
+import software.coley.recaf.test.dummy.DummyEnumPrinter;
+import software.coley.recaf.test.dummy.MethodMappingScopeBase;
+import software.coley.recaf.test.dummy.MethodMappingScopeChild;
+import software.coley.recaf.test.dummy.OverlapCaller;
+import software.coley.recaf.test.dummy.OverlapClassAB;
+import software.coley.recaf.test.dummy.OverlapInterfaceA;
+import software.coley.recaf.test.dummy.OverlapInterfaceB;
+import software.coley.recaf.test.dummy.SealedCircle;
+import software.coley.recaf.test.dummy.SealedShape;
+import software.coley.recaf.test.dummy.StringSupplier;
+import software.coley.recaf.test.dummy.base.CrossPackageBase;
+import software.coley.recaf.test.dummy.child.CrossPackageChild;
 import software.coley.recaf.util.ClassDefiner;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -72,7 +90,16 @@ class MappingApplierTest extends TestBase {
 				OverlapInterfaceA.class,
 				OverlapInterfaceB.class,
 				OverlapClassAB.class,
-				OverlapCaller.class
+				OverlapCaller.class,
+				//
+				SealedShape.class,
+				SealedCircle.class,
+				//
+				MethodMappingScopeBase.class,
+				MethodMappingScopeChild.class,
+				//
+				CrossPackageBase.class,
+				CrossPackageChild.class
 		));
 		resource = workspace.getPrimaryResource();
 
@@ -302,7 +329,6 @@ class MappingApplierTest extends TestBase {
 	}
 
 	@Test
-	@Disabled("Need to update hierarchy scanning in MappingsAdapter")
 	void applyDiamond() {
 		String diamondA = DiamondA.class.getName().replace('.', '/');
 		String diamondB = DiamondB.class.getName().replace('.', '/');
@@ -321,10 +347,144 @@ class MappingApplierTest extends TestBase {
 		ClassInfo postC = results.getPostMappingClass(diamondC);
 		assertNotNull(postA, "DiamondA should be remapped");
 		assertNotNull(postB, "DiamondB should be remapped");
-		assertNull(postC, "DiamondA should not be remapped");
+		assertNotNull(postA.getFirstDeclaredMethodByName("foo"), "DiamondA#diamond() should be renamed");
+		assertNotNull(postB.getFirstDeclaredMethodByName("foo"), "DiamondB#diamond() should be renamed");
+		assertNull(postC, "DiamondC should not be remapped");
 	}
 
-	private String runMapped(Class<?> cls, String methodName) {
+	@Test
+	void applyOverlapManualMethodFamilyMapping() {
+		String overlapInterfaceA = OverlapInterfaceA.class.getName().replace('.', '/');
+		String overlapInterfaceB = OverlapInterfaceB.class.getName().replace('.', '/');
+		String overlapClassAB = OverlapClassAB.class.getName().replace('.', '/');
+		String overlapCaller = OverlapCaller.class.getName().replace('.', '/');
+
+		// InterfaceA, InterfaceB, and ClassAB all have a method "methodA()V"
+		IntermediateMappings mappings = new IntermediateMappings();
+		mappings.addMethod(overlapInterfaceA, "()V", "methodA", "shared");
+
+		// Mapping from the overlap class should trigger mapping of both parent interfaces.
+		MappingResults results = mappingApplierService.inCurrentWorkspace().applyToPrimaryResource(mappings);
+		for (String owner : Arrays.asList(overlapInterfaceA, overlapInterfaceB, overlapClassAB)) {
+			ClassInfo post = results.getPostMappingClass(owner);
+			assertNotNull(post, "Class should be remapped: " + owner);
+			assertNotNull(post.getFirstDeclaredMethodByName("shared"), "Method should be renamed in: " + owner);
+		}
+		assertTrue(results.wasMapped(overlapCaller), "Caller should be updated to the normalized method name");
+		results.apply();
+		runMapped(OverlapCaller.class, "run");
+	}
+
+	@Test
+	void applyMappingWorksBiDirectional() {
+		String shape = SealedShape.class.getName().replace('.', '/');
+		String circle = SealedCircle.class.getName().replace('.', '/');
+
+		// Make two mappings, one for the parent class and one for the child class.
+		// Both will rename the same method, but since the child overrides it, we want to make sure both are remapped correctly.
+		IntermediateMappings mappings1 = new IntermediateMappings();
+		IntermediateMappings mappings2 = new IntermediateMappings();
+		String renamedMethod = "space";
+		mappings1.addMethod(shape, "()D", "area", renamedMethod);
+		mappings2.addMethod(circle, "()D", "area", renamedMethod);
+
+		// When applied the parent and child's 'area' methods should be remapped.
+		MappingResults results1 = mappingApplierService.inCurrentWorkspace().applyToPrimaryResource(mappings1);
+		MappingResults results2 = mappingApplierService.inCurrentWorkspace().applyToPrimaryResource(mappings2);
+		for (String name : Arrays.asList(circle, shape)) {
+			ClassInfo cls1 = results1.getPostMappingClass(name);
+			ClassInfo cls2 = results2.getPostMappingClass(name);
+			assertNotNull(cls1, "Class not mapped via parent: " + name);
+			assertNotNull(cls2, "Class not mapped via child: " + name);
+			assertNotNull(cls1.getFirstDeclaredMethodByName(renamedMethod), "Method '" + renamedMethod + "' not mapped via parent in: " + name);
+			assertNotNull(cls2.getFirstDeclaredMethodByName(renamedMethod), "Method '" + renamedMethod + "' not mapped via child in: " + name);
+		}
+	}
+
+	@Test
+	void applyMappingFamilyConflictFailsFast() {
+		String shape = SealedShape.class.getName().replace('.', '/');
+		String circle = SealedCircle.class.getName().replace('.', '/');
+
+		// If there are two mappings that rename the same method to different names, that's a conflict.
+		IntermediateMappings mappings = new IntermediateMappings();
+		mappings.addMethod(shape, "()D", "area", "space");
+		mappings.addMethod(circle, "()D", "area", "cowboy");
+
+		// When applied, the conflict should be detected and an exception thrown.
+		IllegalStateException ex = assertThrows(IllegalStateException.class,
+				() -> mappingApplierService.inCurrentWorkspace().applyToPrimaryResource(mappings));
+	}
+
+	@Test
+	void applyPrivateAndStaticMethodMappingsStayOwnerLocal() {
+		// Both classes define the same methods:
+		// - private void hidden()
+		// - public static void ping()
+		String base = MethodMappingScopeBase.class.getName().replace('.', '/');
+		String child = MethodMappingScopeChild.class.getName().replace('.', '/');
+
+		// If we try to map the private method in the base class, it should only rename the base method, and not the child method.
+		IntermediateMappings privateBaseMapping = new IntermediateMappings();
+		privateBaseMapping.addMethod(base, "()V", "hidden", "baseHidden");
+		MappingResults privateBaseResults = mappingApplierService.inCurrentWorkspace().applyToPrimaryResource(privateBaseMapping);
+		assertNotNull(privateBaseResults.getPostMappingClass(base), "Base private method should be renamed locally");
+		assertNotNull(privateBaseResults.getPostMappingClass(base).getFirstDeclaredMethodByName("baseHidden"));
+		assertNull(privateBaseResults.getPostMappingClass(child), "Child private method should not be renamed by base mapping");
+
+		// If we try to map the private method in the child class, it should only rename the child method, and not the base method.
+		IntermediateMappings privateChildMapping = new IntermediateMappings();
+		privateChildMapping.addMethod(child, "()V", "hidden", "childHidden");
+		MappingResults privateChildResults = mappingApplierService.inCurrentWorkspace().applyToPrimaryResource(privateChildMapping);
+		assertNull(privateChildResults.getPostMappingClass(base), "Base private method should not be renamed by child mapping");
+		assertNotNull(privateChildResults.getPostMappingClass(child), "Child private method should be renamed locally");
+		assertNotNull(privateChildResults.getPostMappingClass(child).getFirstDeclaredMethodByName("childHidden"));
+
+		// If we try to map the static method in the base class, it should only rename the base method, and not the child method.
+		IntermediateMappings staticBaseMapping = new IntermediateMappings();
+		staticBaseMapping.addMethod(base, "()V", "ping", "basePing");
+		MappingResults staticBaseResults = mappingApplierService.inCurrentWorkspace().applyToPrimaryResource(staticBaseMapping);
+		assertNotNull(staticBaseResults.getPostMappingClass(base), "Base static method should be renamed locally");
+		assertNotNull(staticBaseResults.getPostMappingClass(base).getFirstDeclaredMethodByName("basePing"));
+		assertNull(staticBaseResults.getPostMappingClass(child), "Child static method should not be renamed by base mapping");
+
+		// If we try to map the static method in the child class, it should only rename the child method, and not the base method.
+		IntermediateMappings staticChildMapping = new IntermediateMappings();
+		staticChildMapping.addMethod(child, "()V", "ping", "childPing");
+		MappingResults staticChildResults = mappingApplierService.inCurrentWorkspace().applyToPrimaryResource(staticChildMapping);
+		assertNull(staticChildResults.getPostMappingClass(base), "Base static method should not be renamed by child mapping");
+		assertNotNull(staticChildResults.getPostMappingClass(child), "Child static method should be renamed locally");
+		assertNotNull(staticChildResults.getPostMappingClass(child).getFirstDeclaredMethodByName("childPing"));
+	}
+
+	@Test
+	void applyPackagePrivateCrossPackageMethodsDoNotMerge() {
+		// Both classes define the same method name/desc but:
+		//  - CrossPackageBase -> void packageMethod()
+		//  - CrossPackageChild extends CrossPackageBase -> public void packageMethod()
+		// Each are in separate packages.
+		String base = CrossPackageBase.class.getName().replace('.', '/');
+		String child = CrossPackageChild.class.getName().replace('.', '/');
+
+		// If we try to map the package-private method in the base class, it should only rename the base method, and not the child method.
+		IntermediateMappings baseMapping = new IntermediateMappings();
+		baseMapping.addMethod(base, "()V", "packageMethod", "baseOnly");
+		MappingResults baseResults = mappingApplierService.inCurrentWorkspace().applyToPrimaryResource(baseMapping);
+		assertNotNull(baseResults.getPostMappingClass(base), "Base package-private method should be renamed locally");
+		assertNotNull(baseResults.getPostMappingClass(base).getFirstDeclaredMethodByName("baseOnly"));
+		assertNull(baseResults.getPostMappingClass(child), "Cross-package child method should not be renamed by base mapping");
+
+		// If we try to map the package-private method in the child class, it should only rename the child method, and not the base method.
+		IntermediateMappings childMapping = new IntermediateMappings();
+		childMapping.addMethod(child, "()V", "packageMethod", "childOnly");
+		MappingResults childResults = mappingApplierService.inCurrentWorkspace().applyToPrimaryResource(childMapping);
+		assertNull(childResults.getPostMappingClass(base), "Cross-package base method should not be renamed by child mapping");
+		assertNotNull(childResults.getPostMappingClass(child), "Child method should be renamed locally");
+		assertNotNull(childResults.getPostMappingClass(child).getFirstDeclaredMethodByName("childOnly"));
+	}
+
+	@Nonnull
+	private String runMapped(@Nonnull Class<?> cls, @Nonnull String methodName) {
 		String className = cls.getName();
 		ClassDefiner definer = newDefinerFromWorkspace();
 		try {
@@ -341,6 +501,7 @@ class MappingApplierTest extends TestBase {
 		throw new IllegalStateException();
 	}
 
+	@Nonnull
 	private ClassDefiner newDefinerFromWorkspace() {
 		Map<String, byte[]> map = resource.getJvmClassBundle().values().stream()
 				.collect(Collectors.toMap(e -> e.getName().replace('/', '.'), JvmClassInfo::getBytecode));
