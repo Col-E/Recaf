@@ -264,6 +264,7 @@ class InheritanceGraphTest extends TestBase {
 
 	@Test
 	@Timeout(5)
+	@Disabled("The GitHub CI runner does not have enough resources to test this reliably. Sad.")
 	void profileLargeHierarchyConstruction() {
 		// Generate a workspace with a large number of classes in a single inheritance chain.
 		int classCount = 200_000;
