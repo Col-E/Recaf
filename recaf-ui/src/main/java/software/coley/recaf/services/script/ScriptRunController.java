@@ -129,8 +129,8 @@ public class ScriptRunController {
 		engine.compile(source).whenComplete((generated, compileError) -> {
 			// If compilation failed, complete the future and clear the active execution.
 			if (compileError != null) {
-				execution.future.completeExceptionally(compileError);
 				clearActive(key, execution);
+				execution.future.completeExceptionally(compileError);
 				return;
 			}
 
@@ -149,11 +149,11 @@ public class ScriptRunController {
 
 			// Run the script and complete the future when done, then clear the active execution
 			engine.run(generated).whenComplete((result, runError) -> {
+				clearActive(key, execution);
 				if (runError != null)
 					execution.future.completeExceptionally(runError);
 				else
 					execution.future.complete(result);
-				clearActive(key, execution);
 			});
 		});
 
