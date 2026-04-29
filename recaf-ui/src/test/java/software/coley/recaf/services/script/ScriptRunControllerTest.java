@@ -3,6 +3,8 @@ package software.coley.recaf.services.script;
 import jakarta.annotation.Nonnull;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import software.coley.recaf.test.TestBase;
 
 import java.nio.file.Path;
@@ -15,6 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * Tests for {@link ScriptRunController}.
  */
+@Execution(ExecutionMode.SAME_THREAD) // Tests are not thread safe due to shared static state of the cancellation mechanism.
 class ScriptRunControllerTest extends TestBase {
 	static ScriptRunController controller;
 
