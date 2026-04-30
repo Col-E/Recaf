@@ -684,7 +684,7 @@ public class AsmInsnUtil implements Opcodes {
 		// NullPointerException
 		return op == GETFIELD || op == PUTFIELD || op == ARRAYLENGTH ||
 				// NullPointerException, ArrayIndexOutOfBoundsException
-				(op >= IALOAD && op <= AASTORE) ||
+				(op >= IALOAD && op <= SASTORE) ||
 				// IllegalMonitorStateException
 				op == MONITORENTER || op == MONITOREXIT ||
 				// ArithmeticException

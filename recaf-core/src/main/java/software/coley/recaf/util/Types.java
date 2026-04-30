@@ -2,10 +2,12 @@ package software.coley.recaf.util;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import org.objectweb.asm.ConstantDynamic;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.IntInsnNode;
+import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.util.CheckClassAdapter;
 
 import java.util.Arrays;
@@ -21,6 +23,7 @@ public class Types {
 	public static final Type OBJECT_TYPE = Type.getObjectType("java/lang/Object");
 	public static final Type CLASS_TYPE = Type.getObjectType("java/lang/Class");
 	public static final Type STRING_TYPE = Type.getObjectType("java/lang/String");
+	public static final Type METHOD_HANDLE_TYPE = Type.getObjectType("java/lang/invoke/MethodHandle");
 	public static final Type ARRAY_1D_BOOLEAN = Type.getObjectType("[Z");
 	public static final Type ARRAY_1D_CHAR = Type.getObjectType("[C");
 	public static final Type ARRAY_1D_BYTE = Type.getObjectType("[B");
@@ -270,6 +273,28 @@ public class Types {
 			case Opcodes.DALOAD, Opcodes.DASTORE -> Type.DOUBLE_TYPE;
 			case Opcodes.LALOAD, Opcodes.LASTORE -> Type.LONG_TYPE;
 			default -> null;
+		};
+	}
+
+	/**
+	 * @param ldc
+	 * 		Constant load instruction.
+	 *
+	 * @return Type of the constant being loaded.
+	 */
+	@Nonnull
+	public static Type fromLdc(@Nonnull LdcInsnNode ldc) {
+		Object constant = ldc.cst;
+		return switch (constant) {
+			case Integer ignored -> Type.INT_TYPE;
+			case Float ignored -> Type.FLOAT_TYPE;
+			case Long ignored -> Type.LONG_TYPE;
+			case Double ignored -> Type.DOUBLE_TYPE;
+			case String ignored -> STRING_TYPE;
+			case Type ignored -> CLASS_TYPE;
+			case Handle ignored -> METHOD_HANDLE_TYPE;
+			case ConstantDynamic dynamic -> Type.getType(dynamic.getDescriptor());
+			default -> OBJECT_TYPE;
 		};
 	}
 

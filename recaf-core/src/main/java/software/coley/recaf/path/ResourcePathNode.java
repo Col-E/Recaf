@@ -141,9 +141,16 @@ public class ResourcePathNode extends AbstractPathNode<Workspace, WorkspaceResou
 					if (resource == otherResource)
 						return 0;
 
-					// Show in order as in the workspace.
+					// Show in order as in the workspace (unknown/supporting resources shown last).
 					List<WorkspaceResource> resources = workspace.getAllResources(false);
-					return Integer.compare(Lists.identityIndexOf(resources, resource), Lists.identityIndexOf(resources, otherResource));
+					int thisIndex = Lists.identityIndexOf(resources, resource);
+					int otherIndex = Lists.identityIndexOf(resources, otherResource);
+					if (thisIndex == -1 && otherIndex >= 0)
+						return 1;
+					else if (thisIndex >= 0 && otherIndex == -1)
+						return -1;
+					else
+						return Integer.compare(thisIndex, otherIndex);
 				} else {
 					// Enforce some ordering. Not ideal but works.
 					return Named.STRING_COMPARATOR.compare(

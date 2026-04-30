@@ -23,7 +23,6 @@ dependencies {
     api(libs.gson)
     api(libs.instrument.server)
     api(libs.jelf)
-    api(libs.jphantom)
     api(libs.lljzip)
     api(libs.bundles.logging)
     api(libs.mapping.io)

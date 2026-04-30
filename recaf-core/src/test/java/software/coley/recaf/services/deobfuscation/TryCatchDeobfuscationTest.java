@@ -815,10 +815,11 @@ public class TryCatchDeobfuscationTest extends TransformerTestBase {
 					exceptions: {
 				       {  A,  B,  C, Ljava/lang/NullPointerException; }
 				    },
+				    parameters: { owner },
 				    code: {
 				    A:
 				        // field owner context is a parameter, and thus can be null or not-null
-				        aload 0
+				        aload owner
 				        iconst_0
 				        putfield Owner.intField I
 				    B:
@@ -837,10 +838,11 @@ public class TryCatchDeobfuscationTest extends TransformerTestBase {
 					exceptions: {
 				       {  A,  B,  C, Ljava/lang/NullPointerException; }
 				    },
+				    parameters: { owner },
 				    code: {
 				    A:
 				        // field owner context is a parameter, and thus can be null or not-null
-				        aload 0
+				        aload owner
 				        getfield Owner.intField I
 				        pop
 				    B:

@@ -8,9 +8,9 @@ package software.coley.recaf.services.phantom;
 public class PhantomGenerationException extends Exception {
 	/**
 	 * @param cause
-	 * 		Root cause of the failure.
+	 * 		The cause of the exception.
 	 * @param message
-	 * 		Additional detail message.
+	 * 		Detail message.
 	 */
 	public PhantomGenerationException(Throwable cause, String message) {
 		super(message, cause);
@@ -18,7 +18,7 @@ public class PhantomGenerationException extends Exception {
 
 	/**
 	 * @param cause
-	 * 		Root cause of the failure.
+	 * 		The cause of the exception.
 	 */
 	public PhantomGenerationException(Throwable cause) {
 		super(cause);
@@ -26,7 +26,7 @@ public class PhantomGenerationException extends Exception {
 
 	/**
 	 * @param message
-	 * 		Additional detail message.
+	 * 		Detail message.
 	 */
 	public PhantomGenerationException(String message) {
 		super(message);

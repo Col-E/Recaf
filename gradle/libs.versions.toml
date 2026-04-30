@@ -24,7 +24,6 @@ jakarta-annotation = "3.0.0"
 jasm = "16de0499c3"
 jelf = "0.10.0"
 jlinker = "3.0.1"
-jphantom = "1.4.4"
 junit = "5.13.4"
 junit-launch = "1.13.4"
 jsvg = "2.0.0"
@@ -108,8 +107,6 @@ jasm-core = { module = "com.github.jumanji144.Jasm:jasm-core", version.ref = "ja
 jelf = { module = "net.fornwall:jelf", version.ref = "jelf" }
 
 jlinker = { module = "com.github.xxDark:jlinker", version.ref = "jlinker" }
-
-jphantom = { module = "com.github.Col-E:jphantom", version.ref = "jphantom" }
 
 junit-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junit" }
 junit-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junit" }

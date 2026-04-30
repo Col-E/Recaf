@@ -1,6 +1,5 @@
 package software.coley.recaf.info;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.objectweb.asm.ClassReader;
@@ -366,7 +365,7 @@ class ClassInfoTest {
 		assertEquals(accessibleFields, accessibleFieldCopy);
 
 		// Even a small change like the version const will make the class copy no longer equal.
-		byte[] accessibleFieldsBytecodeCopy = ArrayUtils.clone(accessibleFields.getBytecode());
+		byte[] accessibleFieldsBytecodeCopy = accessibleFields.getBytecode().clone();
 		accessibleFieldsBytecodeCopy[5] = Opcodes.V11; // Change the major version
 		accessibleFieldCopy = new JvmClassInfoBuilder().adaptFrom(accessibleFieldsBytecodeCopy).build();
 		assertNotEquals(accessibleFields, accessibleFieldCopy);
