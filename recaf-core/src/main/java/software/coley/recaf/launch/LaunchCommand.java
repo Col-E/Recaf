@@ -1,6 +1,5 @@
 package software.coley.recaf.launch;
 
-import ch.qos.logback.classic.Level;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.inject.spi.Bean;
 import jakarta.enterprise.inject.spi.BeanManager;
@@ -15,6 +14,7 @@ import software.coley.recaf.util.StringUtil;
 
 import java.io.File;
 import java.io.StringWriter;
+import java.lang.System.Logger.Level;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -23,7 +23,7 @@ import java.util.concurrent.Callable;
  * Launch arguments for Recaf.
  *
  * @author Matt Coley
- * @see LaunchArguments Bean accesible form availble to CDI components.
+ * @see LaunchArguments Bean accessible form available to CDI components.
  */
 @Command(name = "recaf", mixinStandardHelpOptions = true, version = RecafBuildConfig.VERSION,
 		description = "Recaf: The modern Java reverse engineering tool.")
@@ -51,7 +51,7 @@ public class LaunchCommand implements Callable<Boolean> {
 	public Boolean call() throws Exception {
 		boolean ret = false;
 		if (silent)
-			RecafLoggingFilter.defaultLevel = Level.OFF;
+			RecafLoggingFilter.setConsoleLevel(Level.OFF);
 		if (dataDir != null)
 			System.setProperty("RECAF_DIR", dataDir.getAbsolutePath());
 		if (extraPluginDirectory != null)

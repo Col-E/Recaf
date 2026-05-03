@@ -28,7 +28,7 @@ junit = "5.13.4"
 junit-launch = "1.13.4"
 jsvg = "2.0.0"
 lljzip = "2.8.1"
-logback-classic = { strictly = "1.4.11" } # newer releases break in jar releases
+rainbowgum = "0.8.2"
 mapping-io = "0.7.0"
 mockito = "5.19.0"
 natural-order = "1.1"
@@ -117,7 +117,8 @@ jsvg = { module = "com.github.weisj:jsvg", version.ref = "jsvg" }
 
 lljzip = { module = "software.coley:lljzip", version.ref = "lljzip" }
 
-logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback-classic" }
+rainbowgum-core = { module = "io.jstach.rainbowgum:rainbowgum-core", version.ref = "rainbowgum" }
+rainbowgum-slf4j = { module = "io.jstach.rainbowgum:rainbowgum-slf4j", version.ref = "rainbowgum" }
 
 mapping-io = { module = "net.fabricmc:mapping-io", version.ref = "mapping-io" }
 
@@ -170,7 +171,8 @@ cdi = [
     "cdi-impl",
 ]
 logging = [
-    "logback-classic"
+    "rainbowgum-core",
+    "rainbowgum-slf4j"
 ]
 ikonli = [
     "ikonli-javafx",

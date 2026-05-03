@@ -1,55 +1,65 @@
 package software.coley.recaf.analytics.logging;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.filter.Filter;
-import ch.qos.logback.core.spi.FilterReply;
 import jakarta.annotation.Nonnull;
-import jakarta.annotation.Nullable;
 import software.coley.recaf.util.ExcludeFromJacocoGeneratedReport;
 
-import java.util.Objects;
-import java.util.function.Supplier;
+import java.lang.System.Logger.Level;
 
 /**
- * Logging filter impl that only allows Recaf logger calls.
+ * Logging policy that only allows Recaf logger calls.
  *
  * @author Matt Coley
  */
 @ExcludeFromJacocoGeneratedReport(justification = "Logging not relevant for test coverage")
-public class RecafLoggingFilter extends Filter<ILoggingEvent> {
-	/** Shared default level - used by auto-created instances of this filter. */
-	public static Level defaultLevel = Level.TRACE;
-	/** Instance supplier of the logging level for this filter. */
-	private final Supplier<Level> instanceLevel;
+public final class RecafLoggingFilter {
+	private static volatile Level consoleLevel = Level.DEBUG;
+
+	private RecafLoggingFilter() {}
 
 	/**
-	 * No-args constructor for auto-created instances.
-	 * Will delegate the level to {@link #defaultLevel}.
+	 * @return Console logging threshold.
 	 */
-	public RecafLoggingFilter() {
-		instanceLevel = () -> defaultLevel;
+	@Nonnull
+	public static Level getConsoleLevel() {
+		return consoleLevel;
 	}
 
 	/**
-	 * Constructor for intentionally made use cases which
-	 * want to control the logging level of output.
-	 *
 	 * @param level
-	 * 		Level for this filter instance.
+	 * 		New console logging threshold.
 	 */
-	public RecafLoggingFilter(@Nullable Level level) {
-		instanceLevel = () -> Objects.requireNonNullElse(level, Level.TRACE);
+	public static void setConsoleLevel(@Nonnull Level level) {
+		consoleLevel = level;
 	}
 
-	@Override
-	public FilterReply decide(@Nonnull ILoggingEvent event) {
-		Level level = event.getLevel();
-		if (instanceLevel.get().isGreaterOrEqual(level))
-			return FilterReply.DENY;
-		String loggerName = event.getLoggerName();
-		if (loggerName.startsWith("software.coley.") || Logging.loggerKeys().contains(loggerName))
-			return FilterReply.ACCEPT;
-		return FilterReply.DENY;
+	/**
+	 * @param loggerName
+	 * 		Logger name.
+	 * @param level
+	 * 		Logging level.
+	 *
+	 * @return {@code true} when the console should emit the log event.
+	 */
+	public static boolean allowsConsole(@Nonnull String loggerName, @Nonnull Level level) {
+		return consoleLevel != Level.OFF &&
+				level != Level.OFF &&
+				isRecafLogger(loggerName) &&
+				level.getSeverity() >= consoleLevel.getSeverity();
+	}
+
+	/**
+	 * @param loggerName
+	 * 		Logger name.
+	 * @param level
+	 * 		Logging level.
+	 *
+	 * @return {@code true} when the file sink should emit the log event.
+	 */
+	public static boolean allowsFile(@Nonnull String loggerName, @Nonnull Level level) {
+		return level != Level.OFF && isRecafLogger(loggerName);
+	}
+
+	private static boolean isRecafLogger(@Nonnull String loggerName) {
+		return loggerName.startsWith("software.coley.") || Logging.loggerKeys().contains(loggerName);
 	}
 }
