@@ -50,7 +50,9 @@ public class ClassMapping {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(oldName, newName);
+		int result = oldName.hashCode();
+		result = 31 * result + newName.hashCode();
+		return result;
 	}
 
 	@Override

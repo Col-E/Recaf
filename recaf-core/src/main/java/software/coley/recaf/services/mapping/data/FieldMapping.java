@@ -93,7 +93,11 @@ public class FieldMapping implements MemberMapping {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(ownerName, desc, oldName, newName);
+		int result = Objects.hashCode(ownerName);
+		result = 31 * result + Objects.hashCode(desc);
+		result = 31 * result + Objects.hashCode(oldName);
+		result = 31 * result + Objects.hashCode(newName);
+		return result;
 	}
 
 	@Override

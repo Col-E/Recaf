@@ -73,7 +73,11 @@ public class MethodMapping implements MemberMapping {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(ownerName, desc, oldName, newName);
+		int result = ownerName.hashCode();
+		result = 31 * result + desc.hashCode();
+		result = 31 * result + oldName.hashCode();
+		result = 31 * result + newName.hashCode();
+		return result;
 	}
 
 	@Override
