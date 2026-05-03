@@ -3,6 +3,7 @@ package software.coley.recaf.ui.pane;
 import atlantafx.base.controls.Spacer;
 import atlantafx.base.theme.Styles;
 import jakarta.annotation.Nonnull;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
@@ -60,6 +61,7 @@ public class WorkspaceBuilderPane extends BorderPane {
 	private static final Logger logger = Logging.get(WorkspaceBuilderPane.class);
 	private final ObservableList<Path> paths = FXCollections.observableArrayList();
 	private final ObjectProperty<Path> primary = new SimpleObjectProperty<>();
+	private final boolean primarySelectionEnabled;
 
 	/**
 	 * Builder pane for adding content to a given workspace.
@@ -77,6 +79,8 @@ public class WorkspaceBuilderPane extends BorderPane {
 	                            @Nonnull RecentFilesConfig recentFilesConfig,
 	                            @Nonnull Workspace workspace,
 	                            @Nonnull Runnable onComplete) {
+		primarySelectionEnabled = false;
+
 		// Allow pasting file paths to append to the paths list.
 		addEventFilter(KeyEvent.KEY_PRESSED, this::handlePaste);
 
@@ -107,7 +111,7 @@ public class WorkspaceBuilderPane extends BorderPane {
 		// Label to prompt users to drag/drop files here.
 		// Only shown when there are no items.
 		BoundLabel dropPromptLabel = new BoundLabel(Lang.getBinding("tree.prompt"));
-		dropPromptLabel.visibleProperty().bind(primary.isNull());
+		dropPromptLabel.visibleProperty().bind(Bindings.isEmpty(paths));
 		dropPromptLabel.getStyleClass().addAll(Styles.TEXT_SUBTLE);
 		dropPromptLabel.prefWidthProperty().bind(widthProperty());
 		dropPromptLabel.setAlignment(Pos.CENTER);
@@ -200,6 +204,8 @@ public class WorkspaceBuilderPane extends BorderPane {
 	public WorkspaceBuilderPane(@Nonnull PathLoadingManager pathLoadingManager,
 	                            @Nonnull RecentFilesConfig recentFilesConfig,
 	                            @Nonnull Runnable onComplete) {
+		primarySelectionEnabled = true;
+
 		// Allow pasting file paths to append to the paths list.
 		addEventFilter(KeyEvent.KEY_PRESSED, this::handlePaste);
 
@@ -368,7 +374,7 @@ public class WorkspaceBuilderPane extends BorderPane {
 	 */
 	private void addPath(@Nonnull Path path) {
 		if (!paths.contains(path)) {
-			if (paths.isEmpty())
+			if (primarySelectionEnabled && paths.isEmpty())
 				primary.set(path);
 			paths.add(path);
 		}
@@ -384,8 +390,12 @@ public class WorkspaceBuilderPane extends BorderPane {
 	 */
 	private void setNodes(@Nonnull List<Node> temp, @Nonnull ObservableList<Node> children) {
 		temp.sort((o1, o2) -> {
-			int i1 = o1 instanceof FileEntry e ? e.path == primary.get() ? Integer.MIN_VALUE : paths.indexOf(e.path) : 0;
-			int i2 = o2 instanceof FileEntry e ? e.path == primary.get() ? Integer.MIN_VALUE : paths.indexOf(e.path) : 0;
+			int i1 = 0;
+			int i2 = 0;
+			if (o1 instanceof FileEntry e1)
+				i1 = primarySelectionEnabled && e1.path == primary.get() ? Integer.MIN_VALUE : paths.indexOf(e1.path);
+			if (o2 instanceof FileEntry e2)
+				i2 = primarySelectionEnabled && e2.path == primary.get() ? Integer.MIN_VALUE : paths.indexOf(e2.path);
 			return Integer.compare(i1, i2);
 		});
 		temp.forEach(n -> {
@@ -397,11 +407,13 @@ public class WorkspaceBuilderPane extends BorderPane {
 
 	private class FileEntry extends HBox {
 		private final Path path;
+		private final boolean showPrimary;
 		private final ActionButton up;
 		private final ActionButton down;
 
 		FileEntry(@Nonnull Path path, boolean showPrimary) {
 			this.path = path;
+			this.showPrimary = showPrimary;
 
 			String fileName = path.getFileName().toString();
 			Node graphic = Files.isDirectory(path) ?
@@ -413,9 +425,11 @@ public class WorkspaceBuilderPane extends BorderPane {
 			// Button to remove this path from the inputs.
 			ActionButton remove = new ActionButton(CarbonIcons.TRASH_CAN, Lang.getBinding("misc.remove"), () -> {
 				paths.remove(path);
-				Path primaryPath = primary.get();
-				if (primaryPath != null && primaryPath.equals(path))
-					primary.set(null);
+				if (showPrimary) {
+					Path primaryPath = primary.get();
+					if (primaryPath != null && primaryPath.equals(path))
+						primary.set(null);
+				}
 			});
 			remove.setMinWidth(100);
 			remove.setPrefWidth(100);
@@ -446,8 +460,10 @@ public class WorkspaceBuilderPane extends BorderPane {
 			});
 			up.getStyleClass().add(showPrimary ? Styles.CENTER_PILL : Styles.LEFT_PILL);
 			down.getStyleClass().addAll(Styles.RIGHT_PILL);
-			up.visibleProperty().bind(primary.isNotEqualTo(path));
-			down.visibleProperty().bind(primary.isNotEqualTo(path));
+			if (showPrimary) {
+				up.visibleProperty().bind(primary.isNotEqualTo(path));
+				down.visibleProperty().bind(primary.isNotEqualTo(path));
+			}
 			if (showPrimary) {
 				up.prefHeightProperty().bind(markPrimary.heightProperty());
 				down.prefHeightProperty().bind(markPrimary.heightProperty());
@@ -456,20 +472,27 @@ public class WorkspaceBuilderPane extends BorderPane {
 
 			HBox box = showPrimary ? new HBox(markPrimary, up, down) : new HBox(up, down);
 			HBox buttons = new HBox(new Group(box), remove);
-			buttons.spacingProperty().bind(markPrimary.visibleProperty().map(v -> v ? 8 : 0));
+			if (showPrimary)
+				buttons.spacingProperty().bind(markPrimary.visibleProperty().map(v -> v ? 8 : 0));
+			else
+				buttons.setSpacing(8);
 			buttons.setAlignment(Pos.CENTER);
 
-			Label primaryMarker = new BoundLabel(Lang.getBinding("dialog.file.primary"));
-			primaryMarker.setPadding(new Insets(0, 0, 0, 15));
-			primaryMarker.setTextFill(Color.YELLOW);
-			primaryMarker.maxWidth(Integer.MAX_VALUE);
-			primaryMarker.setAlignment(Pos.CENTER);
-			primaryMarker.setGraphic(new FontIconView(CarbonIcons.STAR_FILLED, Color.YELLOW));
-			primaryMarker.visibleProperty().bind(primary.isEqualTo(path));
+			Node primaryMarker = new Group();
+			if (showPrimary) {
+				Label primaryLabel = new BoundLabel(Lang.getBinding("dialog.file.primary"));
+				primaryLabel.setPadding(new Insets(0, 0, 0, 15));
+				primaryLabel.setTextFill(Color.YELLOW);
+				primaryLabel.maxWidth(Integer.MAX_VALUE);
+				primaryLabel.setAlignment(Pos.CENTER);
+				primaryLabel.setGraphic(new FontIconView(CarbonIcons.STAR_FILLED, Color.YELLOW));
+				primaryLabel.visibleProperty().bind(primary.isEqualTo(path));
+				primaryMarker = new Group(primaryLabel);
+			}
 
 			setAlignment(Pos.CENTER);
 			setPadding(new Insets(5, 10, 5, 10));
-			getChildren().addAll(nameLabel, new Group(primaryMarker), new Spacer(), buttons);
+			getChildren().addAll(nameLabel, primaryMarker, new Spacer(), buttons);
 			getStyleClass().addAll(Styles.BG_DEFAULT, Styles.BORDER_DEFAULT);
 		}
 
@@ -477,8 +500,8 @@ public class WorkspaceBuilderPane extends BorderPane {
 		 * Update the up/down arrow enabled states based on this {@link #path} position in {@link #paths}.
 		 */
 		private void updateButtons() {
-			// Ensure we discount the primary path item (as if it does not exist since it is pinned to the top)
-			List<Path> filtered = paths.stream().filter(p -> p != primary.get()).toList();
+			// Ensure we discount the primary path item when it is pinned to the top.
+			List<Path> filtered = showPrimary ? paths.stream().filter(p -> p != primary.get()).toList() : List.copyOf(paths);
 			int i = filtered.indexOf(path);
 			up.setDisable(i < 1);
 			down.setDisable(i == filtered.size() - 1);
