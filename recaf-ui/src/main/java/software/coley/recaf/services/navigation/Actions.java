@@ -10,6 +10,8 @@ import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
@@ -96,6 +98,7 @@ import software.coley.recaf.util.Animations;
 import software.coley.recaf.util.ClipboardUtil;
 import software.coley.recaf.util.EscapeUtil;
 import software.coley.recaf.util.FxThreadUtil;
+import software.coley.recaf.util.Icons;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.util.visitors.ClassAnnotationRemovingVisitor;
@@ -109,6 +112,7 @@ import software.coley.recaf.util.visitors.MethodNoopingVisitor;
 import software.coley.recaf.util.visitors.MethodPredicate;
 import software.coley.recaf.util.visitors.MethodVariableRemovingVisitor;
 import software.coley.recaf.workspace.PathExportingManager;
+import software.coley.recaf.workspace.WorkspacePromotion;
 import software.coley.recaf.workspace.model.BasicWorkspace;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
@@ -621,6 +625,34 @@ public class Actions implements Service {
 			addCloseActions(menu, d);
 			return menu;
 		});
+	}
+
+	/**
+	 * Opens a new workspace with the given resource promoted to the primary role.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Resource to promote to the new primary resource.
+	 */
+	public void openResourceAsWorkspace(@Nonnull Workspace workspace, @Nonnull WorkspaceResource resource) {
+		// Sanity check
+		if (resource == workspace.getPrimaryResource())
+			return;
+
+		// Let the user know that this will close any open tabs, but keep modifications to classes/files.
+		Alert alert = new Alert(Alert.AlertType.CONFIRMATION, Lang.get("dialog.content.promote-resource-workspace"), ButtonType.YES, ButtonType.NO);
+		alert.setTitle(Lang.get("dialog.title.promote-resource-workspace"));
+		alert.setHeaderText(Lang.get("dialog.header.promote-resource-workspace"));
+		Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
+		stage.getIcons().add(Icons.getImage(Icons.LOGO));
+		if (alert.showAndWait().orElse(ButtonType.NO) != ButtonType.YES)
+			return;
+
+		// Set the workspace to the new one with the resource promotion.
+		Workspace promotedWorkspace = WorkspacePromotion.promoteResourceToWorkspace(workspace, resource);
+		if (!workspaceManager.setCurrent(promotedWorkspace))
+			promotedWorkspace.close();
 	}
 
 	/**

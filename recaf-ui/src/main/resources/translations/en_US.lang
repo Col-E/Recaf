@@ -20,6 +20,7 @@ menu.file.addtoworkspace=Add to workspace
 menu.file.decompileall=Decompile all classes
 menu.file.decompileall.path=Output path:
 menu.file.openworkspace=Open workspace
+menu.file.promoteprimary=Make primary resource
 menu.file.openurl=Open from URL
 menu.file.exportapp=Export application
 menu.file.exportworkspace=Export workspace config
@@ -255,8 +256,11 @@ dialog.filefilter.workspace=Workspaces
 dialog.title.create-workspace=Create workspace
 dialog.title.update-workspace=Handle workspace input
 dialog.title.close-workspace=Close workspace?
+dialog.title.promote-resource-workspace=Promote to primary resource?
 dialog.option.create-workspace=Create new workspace
 dialog.option.update-workspace=Add to workspace
+dialog.header.promote-resource-workspace=Create a new workspace with this as the primary resource?
+dialog.content.promote-resource-workspace=The current workspace will close and the selected resource will become the new primary resource.\n\nAny open tabs will be closed.\n\nSaved changes already committed to the workspace will be kept.
 
 ## Select class/file
 dialog.title.select-class=Select class
