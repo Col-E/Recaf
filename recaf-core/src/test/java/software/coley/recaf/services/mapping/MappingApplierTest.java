@@ -37,6 +37,9 @@ import software.coley.recaf.test.dummy.OverlapInterfaceA;
 import software.coley.recaf.test.dummy.OverlapInterfaceB;
 import software.coley.recaf.test.dummy.SealedCircle;
 import software.coley.recaf.test.dummy.SealedShape;
+import software.coley.recaf.test.dummy.SiblingGetterA;
+import software.coley.recaf.test.dummy.SiblingGetterB;
+import software.coley.recaf.test.dummy.SiblingMarker;
 import software.coley.recaf.test.dummy.StringSupplier;
 import software.coley.recaf.test.dummy.base.CrossPackageBase;
 import software.coley.recaf.test.dummy.child.CrossPackageChild;
@@ -94,6 +97,10 @@ class MappingApplierTest extends TestBase {
 				//
 				SealedShape.class,
 				SealedCircle.class,
+				//
+				SiblingMarker.class,
+				SiblingGetterA.class,
+				SiblingGetterB.class,
 				//
 				MethodMappingScopeBase.class,
 				MethodMappingScopeChild.class,
@@ -455,6 +462,28 @@ class MappingApplierTest extends TestBase {
 		assertNull(staticChildResults.getPostMappingClass(base), "Base static method should not be renamed by child mapping");
 		assertNotNull(staticChildResults.getPostMappingClass(child), "Child static method should be renamed locally");
 		assertNotNull(staticChildResults.getPostMappingClass(child).getFirstDeclaredMethodByName("childPing"));
+	}
+
+	@Test
+	void applySiblingMethodsWithSharedMarkerInterfaceDoNotConflict() {
+		// Both classes define 'int a()' and both implement the same marker interface.
+		// The method names/signatures are the same, but since there is no common override relationship
+		// each should be able to be mapped independently without conflict.
+		String siblingA = SiblingGetterA.class.getName().replace('.', '/');
+		String siblingB = SiblingGetterB.class.getName().replace('.', '/');
+
+		// Map both methods to different names.
+		IntermediateMappings mappings = new IntermediateMappings();
+		mappings.addMethod(siblingA, "()I", "a", "getContainerId");
+		mappings.addMethod(siblingB, "()I", "a", "getId");
+
+		// There should be no conflicts.
+		assertDoesNotThrow(() -> mappingApplierService.inCurrentWorkspace().applyToPrimaryResource(mappings));
+		MappingResults results = mappingApplierService.inCurrentWorkspace().applyToPrimaryResource(mappings);
+		assertNotNull(results.getPostMappingClass(siblingA));
+		assertNotNull(results.getPostMappingClass(siblingB));
+		assertNotNull(results.getPostMappingClass(siblingA).getFirstDeclaredMethodByName("getContainerId"));
+		assertNotNull(results.getPostMappingClass(siblingB).getFirstDeclaredMethodByName("getId"));
 	}
 
 	@Test

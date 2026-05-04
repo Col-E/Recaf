@@ -25,6 +25,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Function;
 
@@ -163,7 +164,7 @@ public class MappingsAdapter implements Mappings {
 				// If it isn't, then we don't want to apply the mapping to it.
 				ClassInfo familyInfo = familyVertex.getValue();
 				MethodMember familyMethod = familyInfo.getDeclaredMethod(methodName, explicitMapping.getDesc());
-				if (familyMethod == null || !MappingsAdapter.isInheritedMethod(ownerInfo, ownerMethod, familyInfo, familyMethod))
+				if (familyMethod == null || !MappingsAdapter.isSameMethodFamily(ownerVertex, ownerInfo, ownerMethod, familyVertex, familyInfo, familyMethod))
 					continue;
 
 				// The method is inherited by this family member. Enrich the adapter.
@@ -379,6 +380,74 @@ public class MappingsAdapter implements Mappings {
 					|| Objects.equals(ownerPackage, parentPackage);
 		return (!ownerMethod.hasPackagePrivateModifier() && !parentMethod.hasPackagePrivateModifier())
 				|| Objects.equals(ownerPackage, parentPackage);
+	}
+
+	/**
+	 * @param ownerVertex
+	 * 		Vertex defining the explicit mapping.
+	 * @param ownerInfo
+	 * 		Class defining the explicit mapping method.
+	 * @param ownerMethod
+	 * 		Explicitly mapped method.
+	 * @param familyVertex
+	 * 		Candidate family vertex to apply the same mapping to.
+	 * @param familyInfo
+	 * 		Class defining the candidate family method.
+	 * @param familyMethod
+	 * 		Candidate family method.
+	 *
+	 * @return {@code true} when both methods belong to the same override/implementation family.
+	 */
+	protected static boolean isSameMethodFamily(@Nonnull InheritanceVertex ownerVertex,
+	                                            @Nonnull ClassInfo ownerInfo,
+	                                            @Nonnull MethodMember ownerMethod,
+	                                            @Nonnull InheritanceVertex familyVertex,
+	                                            @Nonnull ClassInfo familyInfo,
+	                                            @Nonnull MethodMember familyMethod) {
+		if (ownerVertex == familyVertex)
+			return true;
+
+		// Direct ancestry: one method is declared on a parent/interface path of the other.
+		if (familyVertex.isParentOf(ownerVertex))
+			return isInheritedMethod(ownerInfo, ownerMethod, familyInfo, familyMethod);
+		if (familyVertex.isChildOf(ownerVertex))
+			return isInheritedMethod(familyInfo, familyMethod, ownerInfo, ownerMethod);
+
+		// Indirect family members only share a mapping if they both implement/override
+		// a method declared by some common ancestor or interface.
+		Set<InheritanceVertex> ownerParents = ownerVertex.getAllParents();
+		Set<InheritanceVertex> familyParents = familyVertex.getAllParents();
+		for (InheritanceVertex commonParent : ownerParents) {
+			if (!familyParents.contains(commonParent))
+				continue;
+
+			ClassInfo commonInfo = commonParent.getValue();
+			MethodMember commonMethod = commonInfo.getDeclaredMethod(ownerMethod.getName(), ownerMethod.getDescriptor());
+			if (commonMethod == null)
+				continue;
+			if (!isInheritedMethod(ownerInfo, ownerMethod, commonInfo, commonMethod))
+				continue;
+			if (!isInheritedMethod(familyInfo, familyMethod, commonInfo, commonMethod))
+				continue;
+			return true;
+		}
+
+		Set<InheritanceVertex> ownerChildren = ownerVertex.getAllChildren();
+		Set<InheritanceVertex> familyChildren = familyVertex.getAllChildren();
+		for (InheritanceVertex commonChild : ownerChildren) {
+			if (!familyChildren.contains(commonChild))
+				continue;
+
+			ClassInfo childInfo = commonChild.getValue();
+			MethodMember childMethod = childInfo.getDeclaredMethod(ownerMethod.getName(), ownerMethod.getDescriptor());
+			if (!isInheritedMethod(childInfo, childMethod, ownerInfo, ownerMethod))
+				continue;
+			if (!isInheritedMethod(childInfo, childMethod, familyInfo, familyMethod))
+				continue;
+			return true;
+		}
+
+		return false;
 	}
 
 	/**
