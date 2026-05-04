@@ -77,7 +77,7 @@ public class ClassReferenceSearchPane extends AbstractSearchPane {
 		typeValue = textField.textProperty();
 		EventStreams.changesOf(typeValue)
 				.or(EventStreams.changesOf(typePredicateId))
-				.reduceSuccessions(Collections::singletonList, Lists::add, Duration.ofMillis(Editor.SHORT_DELAY_MS))
+				.reduceSuccessions(Collections::singletonList, Lists::add, Duration.ofMillis(Editor.MEDIUM_DELAY_MS))
 				.addObserver(unused -> search());
 
 		setInputs(input);

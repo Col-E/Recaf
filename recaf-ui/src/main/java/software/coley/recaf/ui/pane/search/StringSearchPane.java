@@ -79,7 +79,7 @@ public class StringSearchPane extends AbstractSearchPane {
 		stringValue = textField.textProperty();
 		EventStreams.changesOf(stringValue)
 				.or(EventStreams.changesOf(stringPredicateId))
-				.reduceSuccessions(Collections::singletonList, Lists::add, Duration.ofMillis(Editor.SHORT_DELAY_MS))
+				.reduceSuccessions(Collections::singletonList, Lists::add, Duration.ofMillis(Editor.MEDIUM_DELAY_MS))
 				.addObserver(unused -> search());
 
 		setInputs(input);
