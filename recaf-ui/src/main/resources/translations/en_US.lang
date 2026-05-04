@@ -14,6 +14,10 @@ menu.config=Config
 menu.config.edit=Edit
 menu.config.export=Export
 menu.config.import=Import
+menu.config.profile=Profile
+menu.config.profile.new=New
+menu.config.profile.delete=Delete
+menu.config.filter-prompt=Filter config entries...
 menu.file=File
 menu.file.attach=Attach to remote
 menu.file.addtoworkspace=Add to workspace
@@ -268,6 +272,7 @@ dialog.title.select-file=Select file
 
 ## Create class/file
 dialog.title.create-class=Create class
+dialog.title.create-config-profile=Create config profile
 dialog.header.create-class-error=The class name already exists.\nPlease choose a different name.
 
 

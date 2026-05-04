@@ -1,8 +1,12 @@
 package software.coley.recaf.ui.menubar;
 
+import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
+import javafx.beans.binding.StringBinding;
 import javafx.scene.control.Menu;
+import javafx.scene.control.RadioMenuItem;
+import javafx.scene.control.ToggleGroup;
 import javafx.stage.Stage;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import org.kordamp.ikonli.javafx.FontIcon;
@@ -17,10 +21,12 @@ import software.coley.recaf.util.Lang;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Locale;
+import java.util.ArrayList;
+import java.util.List;
 
 import static software.coley.recaf.util.Lang.getBinding;
 import static software.coley.recaf.util.Menus.action;
+import static software.coley.recaf.util.Menus.menu;
 
 /**
  * Config menu component for {@link MainMenu}.
@@ -32,6 +38,7 @@ public class ConfigMenu extends Menu {
 	private static final Logger logger = Logging.get(ConfigMenu.class);
 	private final WindowManager windowManager;
 	private final ConfigManager configManager;
+	private final Menu profileMenu;
 
 	@Inject
 	public ConfigMenu(WindowManager windowManager,
@@ -41,10 +48,68 @@ public class ConfigMenu extends Menu {
 
 		textProperty().bind(getBinding("menu.config"));
 		setGraphic(new FontIcon(CarbonIcons.SETTINGS));
+		setOnShowing(event -> refreshProfileMenu());
+
+		profileMenu = createProfileMenu();
 
 		getItems().add(action("menu.config.edit", CarbonIcons.CALIBRATE, this::openEditor));
+		getItems().add(profileMenu);
 		getItems().add(action("menu.config.export", CarbonIcons.DOCUMENT_EXPORT, this::exportProfile));
 		getItems().add(action("menu.config.import", CarbonIcons.DOCUMENT_IMPORT, this::importProfile));
+	}
+
+	/**
+	 * @return Menu for switching between config profiles.
+	 */
+	@Nonnull
+	private Menu createProfileMenu() {
+		Menu profileMenu = menu("menu.config.profile", CarbonIcons.COLLABORATE);
+		refreshProfileMenu(profileMenu);
+		return profileMenu;
+	}
+
+	/**
+	 * Refreshes the profile menu with the current profiles and active profile.
+	 */
+	private void refreshProfileMenu() {
+		refreshProfileMenu(profileMenu);
+	}
+
+	/**
+	 * Refreshes the profile menu with the current profiles and active profile.
+	 *
+	 * @param profileMenu
+	 * 		Menu to refresh.
+	 */
+	private void refreshProfileMenu(@Nonnull Menu profileMenu) {
+		profileMenu.getItems().clear();
+
+		// Collect profile names and active profile.
+		String activeProfile;
+		List<String> profileNames;
+		try {
+			activeProfile = configManager.ensureActiveProfile();
+			profileNames = new ArrayList<>(configManager.getProfileNames());
+		} catch (IOException ex) {
+			logger.error("Failed to load config profiles", ex);
+			showProfileError(
+					getBinding("dialog.error.importconfig.title"),
+					getBinding("dialog.error.importconfig.header"),
+					getBinding("dialog.error.importconfig.content"),
+					ex
+			);
+			return;
+		}
+
+		// Create radio menu items for each profile, with the active profile selected.
+		ToggleGroup toggleGroup = new ToggleGroup();
+		for (String profileName : profileNames) {
+			RadioMenuItem item = new RadioMenuItem(profileName);
+			item.setToggleGroup(toggleGroup);
+			item.setSelected(profileName.equals(activeProfile));
+			item.setOnAction(event -> switchProfile(profileName));
+			profileMenu.getItems().add(item);
+		}
 	}
 
 	/**
@@ -69,11 +134,11 @@ public class ConfigMenu extends Menu {
 			return;
 
 		Path exportPath = selectedFile.toPath();
-		if (!exportPath.getFileName().toString().toLowerCase(Locale.ROOT).endsWith(".zip"))
+		if (!exportPath.getFileName().toString().toLowerCase().endsWith(".zip"))
 			exportPath = exportPath.resolveSibling(exportPath.getFileName() + ".zip");
 
 		try {
-			configManager.exportProfile(exportPath);
+			configManager.exportProfileTo(exportPath);
 			logger.info("Exported config profile to path '{}'", exportPath);
 		} catch (IOException ex) {
 			logger.error("Failed to export config profile to path '{}'", exportPath, ex);
@@ -99,7 +164,7 @@ public class ConfigMenu extends Menu {
 
 		Path importPath = selectedFile.toPath();
 		try {
-			configManager.importProfile(importPath);
+			configManager.importProfileFrom(importPath);
 			logger.info("Imported config profile from path '{}'", importPath);
 		} catch (IOException ex) {
 			logger.error("Failed to import config profile from path '{}'", importPath, ex);
@@ -110,5 +175,34 @@ public class ConfigMenu extends Menu {
 					ex
 			);
 		}
+	}
+
+	private void switchProfile(@Nonnull String profileName) {
+		String normalizedProfile = ConfigManager.normalizeProfileName(profileName);
+		String currentProfile = ConfigManager.normalizeProfileName(configManager.getServiceConfig().getCurrentProfile().getValue());
+		if (normalizedProfile.equals(currentProfile))
+			return;
+
+		try {
+			configManager.exportProfile(currentProfile);
+			configManager.importProfile(normalizedProfile);
+			configManager.getServiceConfig().getCurrentProfile().setValue(normalizedProfile);
+			logger.info("Switched active config profile from '{}' to '{}'", currentProfile, normalizedProfile);
+		} catch (IOException ex) {
+			logger.error("Failed to switch config profile to '{}'", normalizedProfile, ex);
+			showProfileError(
+					getBinding("dialog.error.importconfig.title"),
+					getBinding("dialog.error.importconfig.header"),
+					getBinding("dialog.error.importconfig.content"),
+					ex
+			);
+		}
+	}
+
+	private void showProfileError(@Nonnull StringBinding title,
+								  @Nonnull StringBinding header,
+								  @Nonnull StringBinding content,
+								  @Nonnull Throwable throwable) {
+		ErrorDialogs.show(title, header, content, throwable);
 	}
 }

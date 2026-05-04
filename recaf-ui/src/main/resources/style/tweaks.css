@@ -52,6 +52,12 @@
     -fx-background-insets: 0;
 }
 
+/* Clearly separates toolbar from UI below */
+.config-toolbar {
+    -fx-border-color: -color-border-muted;
+    -fx-border-width: 0 0 1px 0;
+}
+
 /* Indicates a class in the workspace tree has been edited */
 .modified-class-cell {
     -fx-text-fill: rgb(75, 175, 210);

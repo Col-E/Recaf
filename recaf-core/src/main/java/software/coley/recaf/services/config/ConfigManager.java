@@ -23,7 +23,6 @@ import software.coley.recaf.config.ConfigContainer;
 import software.coley.recaf.config.ConfigValue;
 import software.coley.recaf.config.RestoreAwareConfigContainer;
 import software.coley.recaf.services.Service;
-import software.coley.recaf.services.ServiceConfig;
 import software.coley.recaf.services.file.RecafDirectoriesConfig;
 import software.coley.recaf.services.json.GsonProvider;
 import software.coley.recaf.util.TestEnvironment;
@@ -41,6 +40,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
@@ -55,6 +55,9 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 @ApplicationScoped
 public class ConfigManager implements Service {
 	public static final String SERVICE_ID = "config-manager";
+	public static final String DEFAULT_PROFILE_NAME = "default";
+	private static final String PROFILE_EXTENSION = ".zip";
+	private static final String PROFILE_DIR = "profiles";
 	private static final Logger logger = Logging.get(ConfigManager.class);
 	private final Map<String, ConfigContainer> containers = new TreeMap<>();
 	private final List<ManagedConfigListener> listeners = new CopyOnWriteArrayList<>();
@@ -169,7 +172,7 @@ public class ConfigManager implements Service {
 	 * @throws IOException
 	 * 		When the ZIP cannot be written.
 	 */
-	public void exportProfile(@Nonnull Path zipPath) throws IOException {
+	public void exportProfileTo(@Nonnull Path zipPath) throws IOException {
 		// Ensure all current values are saved to disk before exporting.
 		save();
 
@@ -201,7 +204,7 @@ public class ConfigManager implements Service {
 	 * @throws IOException
 	 * 		When the ZIP cannot be read or does not contain valid config files.
 	 */
-	public void importProfile(@Nonnull Path zipPath) throws IOException {
+	public void importProfileFrom(@Nonnull Path zipPath) throws IOException {
 		// Map config files to their respective containers.
 		Map<String, ConfigContainer> fileNameToContainer = new TreeMap<>();
 		for (ConfigContainer container : containers.values())
@@ -250,6 +253,184 @@ public class ConfigManager implements Service {
 
 		// Regular input now. Updated config files are in-place.
 		load();
+	}
+
+	/**
+	 * Export the current config state to a managed profile.
+	 *
+	 * @param profileName
+	 * 		Managed profile name.
+	 *
+	 * @throws IOException
+	 * 		When the managed profile archive cannot be written.
+	 */
+	public void exportProfile(@Nonnull String profileName) throws IOException {
+		exportProfileTo(getProfilePath(profileName));
+	}
+
+	/**
+	 * Import config state from a managed profile.
+	 *
+	 * @param profileName
+	 * 		Managed profile name.
+	 *
+	 * @throws IOException
+	 * 		When the managed profile archive cannot be read.
+	 */
+	public void importProfile(@Nonnull String profileName) throws IOException {
+		importProfileFrom(getProfilePath(profileName));
+	}
+
+	/**
+	 * Delete a managed profile archive if it exists.
+	 *
+	 * @param profileName
+	 * 		Managed profile name.
+	 *
+	 * @throws IOException
+	 * 		When the managed profile archive cannot be deleted.
+	 */
+	public void deleteProfile(@Nonnull String profileName) throws IOException {
+		Files.deleteIfExists(getProfilePath(profileName));
+	}
+
+	/**
+	 * @param profileName
+	 * 		Managed profile name.
+	 *
+	 * @return {@code true} when the named managed profile exists.
+	 */
+	public boolean hasProfile(@Nonnull String profileName) {
+		return Files.isRegularFile(getProfilePath(profileName));
+	}
+
+	/**
+	 * @return Directory where managed config profiles are stored.
+	 */
+	@Nonnull
+	public Path getProfileDirectory() {
+		return fileConfig.getConfigDirectory().resolve(PROFILE_DIR);
+	}
+
+	/**
+	 * @param profileName
+	 * 		Managed profile name.
+	 *
+	 * @return Path to the managed profile archive.
+	 *
+	 * @throws IllegalArgumentException
+	 * 		When the profile name is invalid.
+	 */
+	@Nonnull
+	public Path getProfilePath(@Nonnull String profileName) {
+		return getProfileDirectory().resolve(normalizeProfileName(profileName) + PROFILE_EXTENSION);
+	}
+
+	/**
+	 * @return Names of all managed profiles.
+	 *
+	 * @throws IOException
+	 * 		When the profile directory cannot be read.
+	 */
+	@Nonnull
+	public List<String> getProfileNames() throws IOException {
+		Path dir = getProfileDirectory();
+		if (!Files.isDirectory(dir))
+			return List.of();
+		try (Stream<Path> stream = Files.list(dir)) {
+			return stream
+					.filter(Files::isRegularFile)
+					.map(Path::getFileName)
+					.map(Path::toString)
+					.filter(name -> name.endsWith(PROFILE_EXTENSION))
+					.map(name -> name.substring(0, name.length() - PROFILE_EXTENSION.length()))
+					.sorted()
+					.toList();
+		}
+	}
+
+	/**
+	 * Ensure the active managed profile is valid and available.
+	 * <p>
+	 * If the configured active profile is missing, the manager falls back to the default profile. When the default
+	 * profile does not exist yet, it will be created from the current live config state.
+	 *
+	 * @return Name of the active managed profile after reconciliation.
+	 *
+	 * @throws IOException
+	 * 		When a fallback profile needs to be created or loaded and the operation fails.
+	 */
+	@Nonnull
+	public String ensureActiveProfile() throws IOException {
+		// First attempt to use the configured active profile, if it's valid and exists.
+		boolean repairedInvalidProfile = false;
+		String activeProfile;
+		try {
+			activeProfile = normalizeProfileName(config.getCurrentProfile().getValue());
+		} catch (IllegalArgumentException ex) {
+			logger.warn("Configured active profile name was invalid, falling back to '{}'", DEFAULT_PROFILE_NAME, ex);
+			activeProfile = DEFAULT_PROFILE_NAME;
+			repairedInvalidProfile = true;
+		}
+
+		// If the active profile doesn't exist, attempt to fall back to the default profile, creating it if necessary.
+		if (hasProfile(activeProfile)) {
+			if (repairedInvalidProfile)
+				config.getCurrentProfile().setValue(activeProfile);
+			return activeProfile;
+		}
+
+		// Active profile is missing. Fall back to the default profile, creating it if necessary.
+		String fallbackProfile = DEFAULT_PROFILE_NAME;
+		if (hasProfile(fallbackProfile)) {
+			importProfile(fallbackProfile);
+		} else {
+			exportProfile(fallbackProfile);
+		}
+
+		// Update the current profile to the fallback if it wasn't already set to it.
+		config.getCurrentProfile().setValue(fallbackProfile);
+		return fallbackProfile;
+	}
+
+	/**
+	 * @param profileName
+	 * 		Profile name.
+	 *
+	 * @return Normalized profile name.
+	 *
+	 * @throws IllegalArgumentException
+	 * 		When the profile name is invalid.
+	 * @see #isValidProfileName(String)
+	 */
+	@Nonnull
+	public static String normalizeProfileName(@Nonnull String profileName) {
+		// Clear padding whitespace, cut off any profile extension if present.
+		String normalized = profileName.trim();
+		if (normalized.toLowerCase().endsWith(PROFILE_EXTENSION))
+			normalized = normalized.substring(0, normalized.length() - PROFILE_EXTENSION.length()).trim();
+
+		// Validate the normalized name.
+		if (!isValidProfileName(normalized))
+			throw new IllegalArgumentException("Invalid config profile name: " + profileName);
+		return normalized;
+	}
+
+	/**
+	 * @param profileName
+	 * 		Profile name.
+	 *
+	 * @return {@code true} when the name is valid for use as a managed profile identifier.
+	 */
+	public static boolean isValidProfileName(@Nonnull String profileName) {
+		String normalized = profileName.trim();
+		if (normalized.isBlank())
+			return false;
+		if (normalized.equals(".") || normalized.equals(".."))
+			return false;
+		if (normalized.endsWith(".") || normalized.endsWith(" "))
+			return false;
+		return normalized.chars().noneMatch(ch -> ch < 32 || "<>:\"/\\\\|?*".indexOf(ch) >= 0);
 	}
 
 	@SuppressWarnings({"unchecked", "rawtypes"})
@@ -372,7 +553,7 @@ public class ConfigManager implements Service {
 
 	@Nonnull
 	@Override
-	public ServiceConfig getServiceConfig() {
+	public ConfigManagerConfig getServiceConfig() {
 		return config;
 	}
 }

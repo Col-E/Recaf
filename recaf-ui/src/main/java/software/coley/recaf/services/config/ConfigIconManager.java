@@ -43,6 +43,7 @@ public class ConfigIconManager implements Service {
 		registerGroup(SERVICE_MAPPING, CarbonIcons.MAP_BOUNDARY);
 		registerGroup(SERVICE_PLUGIN, CarbonIcons.PLUG);
 		registerGroup(SERVICE_UI, CarbonIcons.DICOM_OVERLAY);
+		registerGroup(SERVICE_TRANSFORM, CarbonIcons.DEVELOPMENT);
 	}
 
 	/**
