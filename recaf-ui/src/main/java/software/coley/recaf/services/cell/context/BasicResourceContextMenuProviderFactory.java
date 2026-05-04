@@ -46,9 +46,9 @@ public class BasicResourceContextMenuProviderFactory extends AbstractContextMenu
 				if (resource instanceof WorkspaceFileResource fileResource) {
 					builder.item("menu.tab.copypath", COPY_LINK, () -> ClipboardUtil.copyString(fileResource.getFileInfo()));
 				}
-				builder.item("misc.remove", TRASH_CAN, () -> workspace.removeSupportingResource(resource));
 			} else if (resource != workspace.getPrimaryResource()) {
 				builder.resourceItem("menu.file.promoteprimary", WORKSPACE_IMPORT, actions::openResourceAsWorkspace);
+				builder.item("misc.remove", TRASH_CAN, () -> workspace.removeSupportingResource(resource));
 			}
 
 			return menu;
