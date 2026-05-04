@@ -4,16 +4,12 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.ClassNode;
 import org.slf4j.Logger;
 import software.coley.recaf.RecafConstants;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.JvmClassInfo;
-import software.coley.recaf.services.inheritance.InheritanceGraph;
-import software.coley.recaf.util.visitors.WorkspaceClassWriter;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.RuntimeWorkspaceResource;
 import xyz.wagyourtail.jvmdg.ClassDowngrader;
@@ -61,32 +57,10 @@ public class JavaDowngraderUtil {
 	public static void downgrade(int targetJavaVersion,
 	                             @Nonnull Map<String, byte[]> classes,
 	                             @Nonnull BiConsumer<String, byte[]> transformConsumer) throws IOException {
-		downgrade(targetJavaVersion, null, classes, transformConsumer);
-	}
-
-	/**
-	 * Downgrade the provided classes.
-	 *
-	 * @param targetJavaVersion
-	 * 		Target Java version to downgrade to.
-	 * @param inheritanceGraph
-	 * 		Inheritance graph of the workspace containing the given classes.
-	 * @param classes
-	 * 		Map of classes to downgrade.
-	 * @param transformConsumer
-	 * 		Consumer to receive downgraded classes.
-	 * 		Additional classes may be provided for cases where the downgrader creates its own backported library code.,
-	 *
-	 * @throws IOException
-	 * 		Thrown when the downgrader instance cannot be constructed.
-	 */
-	public static void downgrade(int targetJavaVersion,
-	                             @Nullable InheritanceGraph inheritanceGraph,
-	                             @Nonnull Map<String, byte[]> classes,
-	                             @Nonnull BiConsumer<String, byte[]> transformConsumer) throws IOException {
 		int targetClassVersion = JavaVersion.VERSION_OFFSET + targetJavaVersion;
 
 		Flags flags = new Flags();
+		flags.logLevel = xyz.wagyourtail.jvmdg.logging.Logger.Level.FATAL; // Closest we have to "off" as possible...
 		flags.classVersion = targetClassVersion;
 		for (String undesirableStub : undesirableStubs)
 			flags.debugSkipStub.add(FullyQualifiedMemberNameAndDesc.of(undesirableStub));
@@ -100,7 +74,7 @@ public class JavaDowngraderUtil {
 		for (int i = JavaVersion.get() + JavaVersion.VERSION_OFFSET + 1; i < 100; i++)
 			flags.debugSkipStubs.add(i);
 
-		try (ClassDowngrader downgrader = new RecafClassDowngrader(flags, inheritanceGraph)) {
+		try (ClassDowngrader downgrader = new RecafClassDowngrader(flags)) {
 			int maxClassFileVersion = downgrader.maxVersion();
 			classes.forEach((className, classBytes) -> {
 				int classFileVersion = classBytes[7];
@@ -179,12 +153,8 @@ public class JavaDowngraderUtil {
 	}
 
 	private static class RecafClassDowngrader extends ClassDowngrader {
-		private final InheritanceGraph inheritanceGraph;
-
-		public RecafClassDowngrader(@Nonnull Flags flags, @Nullable InheritanceGraph inheritanceGraph) {
+		public RecafClassDowngrader(@Nonnull Flags flags) {
 			super(flags);
-
-			this.inheritanceGraph = inheritanceGraph;
 
 			// Compute the max-version. For the override methods below there are some cases where the base
 			// implementation does version checks on classes used only for computing basic structure data.
@@ -211,29 +181,6 @@ public class JavaDowngraderUtil {
 		@Override
 		public Type stubClass(int version, Type type, Set<String> warnings) {
 			return super.stubClass(Math.min(maxVersion, version), type, warnings);
-		}
-
-		@Override
-		public byte[] classNodeToBytes(@Nonnull ClassNode node) {
-			ClassWriter cw;
-
-			// Use our class writer which can pull workspace type information.
-			if (inheritanceGraph != null) {
-				cw = new WorkspaceClassWriter(inheritanceGraph, ClassWriter.COMPUTE_MAXS);
-			} else {
-				cw = new ClassWriter(ClassWriter.COMPUTE_MAXS) {
-					@Override
-					protected String getCommonSuperClass(String type1, String type2) {
-						// Shouldn't be called for computing maxes, but we just want to be sure no
-						// redundant classloading is attempted by the default implementation.
-						return "java/lang/Object";
-					}
-				};
-			}
-
-			// Fallback to base impl
-			node.accept(cw);
-			return cw.toByteArray();
 		}
 	}
 }
