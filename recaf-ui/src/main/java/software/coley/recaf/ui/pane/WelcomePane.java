@@ -141,7 +141,11 @@ public class WelcomePane extends BorderPane implements Navigable {
 						Icons.getIconView(Icons.FOLDER) :
 						Icons.getIconView(Icons.getIconPathForFileExtension(extension));
 
-				Hyperlink entry = new Hyperlink(model.primary().getSimpleName(), graphic);
+				String name = model.primary().getSimpleName();
+				int libs = model.libraries().size();
+				if (libs > 0)
+					name += " + " + libs;
+				Hyperlink entry = new Hyperlink(name, graphic);
 				entry.setOnAction(e -> load(pathLoadingManager, model));
 				recentsPane.getChildren().add(entry);
 			}
