@@ -44,7 +44,7 @@ public class MemoizedFunctions {
 
 		@Override
 		public Value apply(KeyA keyA, KeyB keyB) {
-			return cache.computeIfAbsent(keyA, __ -> new HashMap<>()).computeIfAbsent(keyB, k -> function.apply(keyA, keyB));
+			return cache.computeIfAbsent(keyA, _ -> new HashMap<>()).computeIfAbsent(keyB, k -> function.apply(keyA, keyB));
 		}
 	}
 }

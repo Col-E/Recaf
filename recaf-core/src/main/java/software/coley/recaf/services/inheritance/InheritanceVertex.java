@@ -33,6 +33,7 @@ public class InheritanceVertex {
 	private volatile Set<InheritanceVertex> parents;
 	private volatile Set<InheritanceVertex> children;
 	private ClassInfo value;
+	private int valueHash;
 
 	/**
 	 * @param value
@@ -47,10 +48,10 @@ public class InheritanceVertex {
 	public InheritanceVertex(@Nonnull ClassInfo value,
 	                         @Nonnull Function<String, InheritanceVertex> lookup,
 	                         @Nonnull Function<String, Collection<String>> childrenLookup, boolean isPrimary) {
-		this.value = value;
 		this.lookup = lookup;
 		this.childrenLookup = childrenLookup;
 		this.isPrimary = isPrimary;
+		setValue(value);
 	}
 
 	/**
@@ -331,7 +332,7 @@ public class InheritanceVertex {
 	@Nonnull
 	public Stream<InheritanceVertex> allParents() {
 		// Skip 1 to skip ourselves (which we use as the seed vertex)
-		return Streams.recurseWithoutCycles(this, InheritanceVertex::getParents)
+		return Streams.recurseIdentityWithoutCycles(this, InheritanceVertex::getParents)
 				.skip(1);
 	}
 
@@ -384,7 +385,7 @@ public class InheritanceVertex {
 	@Nonnull
 	public Stream<InheritanceVertex> allChildren() {
 		// Skip 1 to skip ourselves (which we use as the seed vertex)
-		return Streams.recurseWithoutCycles(this, InheritanceVertex::getChildren)
+		return Streams.recurseIdentityWithoutCycles(this, InheritanceVertex::getChildren)
 				.skip(1);
 	}
 
@@ -476,6 +477,7 @@ public class InheritanceVertex {
 	 */
 	public void setValue(@Nonnull ClassInfo value) {
 		this.value = value;
+		this.valueHash = value.getName().hashCode();
 		clearCachedVertices();
 	}
 
@@ -489,7 +491,7 @@ public class InheritanceVertex {
 
 	@Override
 	public int hashCode() {
-		return getName().hashCode();
+		return valueHash;
 	}
 
 	@Override

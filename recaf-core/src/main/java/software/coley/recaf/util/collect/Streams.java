@@ -1,5 +1,6 @@
 package software.coley.recaf.util.collect;
 
+import jakarta.annotation.Nonnull;
 import software.coley.recaf.util.ReflectUtil;
 import software.coley.recaf.util.threading.CountDown;
 
@@ -7,6 +8,7 @@ import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.Spliterator;
@@ -166,18 +168,39 @@ public final class Streams {
 	 *
 	 * @return Stream containing all traversed elements.
 	 */
-	public static <T> Stream<T> recurseWithoutCycles(T seed, Function<T, Set<T>> flatMap) {
+	@Nonnull
+	public static <T> Stream<T> recurseWithoutCycles(@Nonnull T seed, @Nonnull Function<T, Set<T>> flatMap) {
 		Deque<Iterator<T>> vertices = new ArrayDeque<>();
 		Set<T> visited = new HashSet<>();
+		return recurseWithoutCycles0(seed, flatMap, vertices, visited);
+	}
+
+	/**
+	 * @param flatMap
+	 * 		Transforming function.
+	 * @param <T>
+	 * 		Element type.
+	 *
+	 * @return Stream containing all traversed elements.
+	 */
+	@Nonnull
+	public static <T> Stream<T> recurseIdentityWithoutCycles(@Nonnull T seed, @Nonnull Function<T, Set<T>> flatMap) {
+		Deque<Iterator<T>> vertices = new ArrayDeque<>();
+		Set<T> visited = Collections.newSetFromMap(new IdentityHashMap<>());
+		return recurseWithoutCycles0(seed, flatMap, vertices, visited);
+	}
+
+	private static <T> @Nonnull Stream<T> recurseWithoutCycles0(@Nonnull T seed,
+	                                                            @Nonnull Function<T, Set<T>> flatMap,
+	                                                            @Nonnull Deque<Iterator<T>> vertices, Set<T> visited) {
 		vertices.push(Collections.singletonList(seed).iterator());
 		return StreamSupport.stream(new Spliterators.AbstractSpliterator<>(Long.MAX_VALUE, Spliterator.IMMUTABLE | Spliterator.NONNULL) {
 			@Override
 			public boolean tryAdvance(Consumer<? super T> action) {
 				while (true) {
 					Iterator<T> iterator = vertices.peek();
-					if (iterator == null) {
+					if (iterator == null)
 						return false;
-					}
 					if (!iterator.hasNext()) {
 						vertices.poll();
 						continue;

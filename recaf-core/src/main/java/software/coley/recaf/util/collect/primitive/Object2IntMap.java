@@ -36,7 +36,11 @@ public class Object2IntMap<K> extends AbstractObjectKeyMap<K> {
 	 * 		Consumer to accept all key-value pairs in the map.
 	 */
 	public void forEach(ObjectIntConsumer<K> consumer) {
-		for (int i = 0; i < keys.length; i++)
+		boolean[] occupied = this.occupied;
+		Object[] keys = this.keys;
+		int[] values = this.values;
+		int end = keys.length;
+		for (int i = 0; i < end; i++)
 			if (occupied[i])
 				consumer.accept((K) keys[i], values[i]);
 	}
@@ -45,8 +49,11 @@ public class Object2IntMap<K> extends AbstractObjectKeyMap<K> {
 	 * @return Sum of all values in the map.
 	 */
 	public int sum() {
+		boolean[] occupied = this.occupied;
+		int[] values = this.values;
+		int end = keys.length;
 		int sum = 0;
-		for (int i = 0; i < keys.length; i++)
+		for (int i = 0; i < end; i++)
 			if (occupied[i])
 				sum += values[i];
 		return sum;
