@@ -204,7 +204,7 @@ public interface ClassInfo extends Info, Annotated, Accessed {
 	 */
 	@Nonnull
 	default Stream<FieldMember> fieldStream() {
-		return Stream.of(this).flatMap(self -> self.getFields().stream());
+		return getFields().stream();
 	}
 
 	/**
@@ -212,7 +212,7 @@ public interface ClassInfo extends Info, Annotated, Accessed {
 	 */
 	@Nonnull
 	default Stream<MethodMember> methodStream() {
-		return Stream.of(this).flatMap(self -> self.getMethods().stream());
+		return getMethods().stream();
 	}
 
 	/**
@@ -234,9 +234,10 @@ public interface ClassInfo extends Info, Annotated, Accessed {
 	 */
 	@Nullable
 	default FieldMember getFirstDeclaredFieldByName(@Nonnull String name) {
-		return fieldStream()
-				.filter(f -> f.getName().equals(name))
-				.findFirst().orElse(null);
+		for (FieldMember field : getFields())
+			if (field.getName().equals(name))
+				return field;
+		return null;
 	}
 
 	/**
@@ -249,9 +250,10 @@ public interface ClassInfo extends Info, Annotated, Accessed {
 	 */
 	@Nullable
 	default FieldMember getDeclaredField(@Nonnull String name, @Nonnull String descriptor) {
-		return fieldStream()
-				.filter(f -> f.getName().equals(name) && f.getDescriptor().equals(descriptor))
-				.findFirst().orElse(null);
+		for (FieldMember field : getFields())
+			if (field.getName().equals(name) && field.getDescriptor().equals(descriptor))
+				return field;
+		return null;
 	}
 
 	/**
@@ -264,9 +266,10 @@ public interface ClassInfo extends Info, Annotated, Accessed {
 	 */
 	@Nullable
 	default MethodMember getDeclaredMethod(@Nonnull String name, @Nonnull String descriptor) {
-		return methodStream()
-				.filter(m -> m.getName().equals(name) && m.getDescriptor().equals(descriptor))
-				.findFirst().orElse(null);
+		for (MethodMember method : getMethods())
+			if (method.getName().equals(name) && method.getDescriptor().equals(descriptor))
+				return method;
+		return null;
 	}
 
 	/**
@@ -280,9 +283,10 @@ public interface ClassInfo extends Info, Annotated, Accessed {
 	 */
 	@Nullable
 	default MethodMember getFirstDeclaredMethodByName(@Nonnull String name) {
-		return methodStream()
-				.filter(m -> m.getName().equals(name))
-				.findFirst().orElse(null);
+		for (MethodMember method : getMethods())
+			if (method.getName().equals(name))
+				return method;
+		return null;
 	}
 
 	/**
