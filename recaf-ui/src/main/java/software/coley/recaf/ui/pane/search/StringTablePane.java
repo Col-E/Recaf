@@ -110,7 +110,7 @@ public class StringTablePane extends BorderPane implements Navigable {
 	private final SearchOptions searchOptions = new SearchOptions();
 	private final TableView<StringTableItem> table = new TableView<>();
 	private final IntegerProperty minLength = new SimpleIntegerProperty(0);
-	private final IntegerProperty maxLength = new SimpleIntegerProperty(Integer.MAX_VALUE);
+	private final IntegerProperty maxLength = new SimpleIntegerProperty(1_000_000_000);
 	private final StringProperty stringPredicateId = new SimpleStringProperty(KEY_ANYTHING);
 	private final StringProperty stringValue = new SimpleStringProperty("");
 	private ActionButton searchOptionsButton;
@@ -205,11 +205,6 @@ public class StringTablePane extends BorderPane implements Navigable {
 		List<String> stringPredicates = stringPredicateProvider.getBiStringMatchers().keySet().stream()
 				.sorted().toList();
 
-		BoundIntSpinner minLengthSpinner = new BoundIntSpinner(minLength, 0, Integer.MAX_VALUE);
-		BoundIntSpinner maxLengthSpinner = new BoundIntSpinner(maxLength, 0, Integer.MAX_VALUE);
-		minLengthSpinner.setPrefWidth(100);
-		maxLengthSpinner.setPrefWidth(120);
-
 		TextField textField = new TextField();
 		textField.setMaxWidth(Double.MAX_VALUE);
 		textField.textProperty().bindBidirectional(stringValue);
@@ -248,12 +243,11 @@ public class StringTablePane extends BorderPane implements Navigable {
 
 		Region spacer = new Region();
 		HBox input = new HBox(10,
-				new BoundLabel(Lang.getBinding("menu.search.string-table.min")), minLengthSpinner,
-				new BoundLabel(Lang.getBinding("menu.search.string-table.max")), maxLengthSpinner,
 				textField, modeCombo,
 				spacer, searchOptionsButton, refresh);
 		input.setAlignment(Pos.CENTER_LEFT);
 		input.setPadding(new Insets(10));
+		input.getStyleClass().add("config-toolbar");
 		HBox.setHgrow(textField, Priority.ALWAYS);
 		return input;
 	}
@@ -422,6 +416,11 @@ public class StringTablePane extends BorderPane implements Navigable {
 	 */
 	@Nonnull
 	private GridPane createSearchOptionsContent() {
+		BoundIntSpinner minLengthSpinner = new BoundIntSpinner(minLength, 0, Integer.MAX_VALUE);
+		BoundIntSpinner maxLengthSpinner = new BoundIntSpinner(maxLength, 0, Integer.MAX_VALUE);
+		minLengthSpinner.setPrefWidth(120);
+		maxLengthSpinner.setPrefWidth(120);
+
 		GridPane content = new GridPane();
 		ColumnConstraints labelColumn = new ColumnConstraints();
 		ColumnConstraints controlColumn = new ColumnConstraints();
@@ -433,6 +432,10 @@ public class StringTablePane extends BorderPane implements Navigable {
 		content.setVgap(5);
 
 		int row = 0;
+		content.add(new BoundLabel(Lang.getBinding("menu.search.string-table.min")), 0, row);
+		content.add(minLengthSpinner, 1, row++);
+		content.add(new BoundLabel(Lang.getBinding("menu.search.string-table.max")), 0, row);
+		content.add(maxLengthSpinner, 1, row++);
 		content.add(new BoundCheckBox(Lang.getBinding("dialog.search.options.search-classes"),
 				searchOptions.searchClassesProperty()), 0, row++, 2, 1);
 		row = addTextOption(content, row, "dialog.search.options.include-packages",

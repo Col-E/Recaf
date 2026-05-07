@@ -8,8 +8,10 @@ import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.util.Types;
 import software.coley.recaf.util.collect.primitive.Object2IntMap;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -19,16 +21,18 @@ import java.util.stream.Stream;
  * @author Matt Coley
  * @see ClassSimilarityScorer
  */
-public final class MethodSimilarityScorer {
-	private static final double RETURN_ASSIGNABLE_SCORE = 0.85D;
+public class MethodSimilarityScorer {
+	private static final double RETURN_ASSIGNABLE_SCORE = 0.85;
 
 	// Weights for overall scoring of method similarity. Sums to 1.0.
-	private static final double WEIGHT_INSN = 0.50D; // TODO: We should move these to 'SimilarMethodSearchOptions'
-	private static final double WEIGHT_CFG = 0.25D;  //  to let users adjust values based on their needs.
-	private static final double WEIGHT_DESC = 0.15D; //   - Still would need to validate summing to 1.
-	private static final double WEIGHT_EX = 0.10D;   //   - If an item is 0, should also skip computing that portion.
+	private static final double WEIGHT_INSN = 0.50; // TODO: We should move these to 'SimilarMethodSearchOptions'
+	private static final double WEIGHT_CFG = 0.25;  //  to let users adjust values based on their needs.
+	private static final double WEIGHT_DESC = 0.15; //   - Still would need to validate summing to 1.
+	private static final double WEIGHT_EX = 0.10;   //   - If an item is 0, should also skip computing that portion.
 
-	private MethodSimilarityScorer() {}
+	// Cache for assignability checks to avoid redundant graph lookups.
+	// In practice this reduces scoring times by roughly half.
+	private final Map<String, Boolean> assignabilityCache = new HashMap<>();
 
 	/**
 	 * @param reference
@@ -43,13 +47,12 @@ public final class MethodSimilarityScorer {
 	 * @return {@code true} if the candidate method passes the parameter
 	 * and return type pre-filters based on the reference method and search options.
 	 */
-	public static boolean passesPrefilters(@Nonnull MethodFingerprint reference,
-	                                       @Nonnull MethodMember candidateMethod,
-	                                       @Nonnull SimilarMethodSearchOptions options,
-	                                       @Nonnull InheritanceGraph inheritanceGraph) {
+	public boolean passesPrefilters(@Nonnull MethodFingerprint reference,
+	                                @Nonnull MethodMember candidateMethod,
+	                                @Nonnull SimilarMethodSearchOptions options,
+	                                @Nonnull InheritanceGraph inheritanceGraph) {
 		Type[] candidateParameters = Type.getArgumentTypes(candidateMethod.getDescriptor());
 		Type candidateReturnType = Type.getReturnType(candidateMethod.getDescriptor());
-
 		if (!matchesParameters(reference.parameterTypes(), candidateParameters, options.parameterMatchMode()))
 			return false;
 		return matchesReturnPrefilter(reference.returnType(), candidateReturnType, options.returnMatchMode(), inheritanceGraph);
@@ -67,14 +70,14 @@ public final class MethodSimilarityScorer {
 	 *
 	 * @return Normalized similarity score, {@code [0.0, 1.0]}.
 	 */
-	public static double score(@Nonnull MethodFingerprint reference,
-	                           @Nonnull MethodFingerprint candidate,
-	                           @Nonnull InheritanceGraph inheritanceGraph) {
+	public double score(@Nonnull MethodFingerprint reference,
+	                    @Nonnull MethodFingerprint candidate,
+	                    @Nonnull InheritanceGraph inheritanceGraph) {
 		double instruction = sorensenDice(reference.trigrams(), candidate.trigrams());
 		double cfg = compareVectors(reference.controlFlowVector(), candidate.controlFlowVector());
 		double descriptor = (parameterScore(reference.parameterTypes(), candidate.parameterTypes())
-				+ returnScore(reference.returnType(), candidate.returnType(), inheritanceGraph)) / 2D;
-		double thrown = jaccard(reference.thrownTypes(), candidate.thrownTypes());
+				+ returnScore(reference.returnType(), candidate.returnType(), inheritanceGraph)) / 2;
+		double thrown = normalizedJaccard(reference.thrownTypes(), candidate.thrownTypes());
 		return (WEIGHT_INSN * instruction)
 				+ (WEIGHT_CFG * cfg)
 				+ (WEIGHT_DESC * descriptor)
@@ -120,10 +123,10 @@ public final class MethodSimilarityScorer {
 	 *
 	 * @return {@code true} if the candidate method matches the reference method's return type according to the specified pre-filter mode, {@code false} otherwise.
 	 */
-	static boolean matchesReturnPrefilter(@Nonnull Type referenceReturnType,
-	                                      @Nonnull Type candidateReturnType,
-	                                      @Nonnull ReturnMatchMode mode,
-	                                      @Nonnull InheritanceGraph inheritanceGraph) {
+	boolean matchesReturnPrefilter(@Nonnull Type referenceReturnType,
+	                               @Nonnull Type candidateReturnType,
+	                               @Nonnull ReturnMatchMode mode,
+	                               @Nonnull InheritanceGraph inheritanceGraph) {
 		return switch (mode) {
 			case EXACT_TYPE -> referenceReturnType.equals(candidateReturnType);
 			case ANY_ASSIGNABLE ->
@@ -144,13 +147,13 @@ public final class MethodSimilarityScorer {
 	 */
 	private static double sorensenDice(@Nonnull Object2IntMap<String> left, @Nonnull Object2IntMap<String> right) {
 		if (left.isEmpty() && right.isEmpty())
-			return 1D;
+			return 1;
 
 		// Sum the counts of each trigram in both multisets to get the total size of each multiset.
 		int leftTotal = left.sum();
 		int rightTotal = right.sum();
 		if (leftTotal + rightTotal == 0)
-			return 1D;
+			return 1;
 
 		// Sum the minimum counts of each trigram in both multisets to get the intersection size.
 		IntBox intersection = new IntBox(0);
@@ -189,9 +192,9 @@ public final class MethodSimilarityScorer {
 	 * @return Normalized similarity score, {@code [0.0, 1.0]}.
 	 */
 	static double parameterScore(@Nonnull Type[] referenceParameters, @Nonnull Type[] candidateParameters) {
-		// Map parameters to tokenized descriptors.
-		List<String> referenceDescriptors = descriptors(referenceParameters);
-		List<String> candidateDescriptors = descriptors(candidateParameters);
+		// Normalize to sort-based tokens so renamed object owners do not sink similarity.
+		List<String> referenceDescriptors = normalizedDescriptors(referenceParameters);
+		List<String> candidateDescriptors = normalizedDescriptors(candidateParameters);
 		int maxCount = Math.max(Math.max(referenceDescriptors.size(), candidateDescriptors.size()), 1);
 
 		// Score ordered parameter matches.
@@ -199,14 +202,14 @@ public final class MethodSimilarityScorer {
 		for (int i = 0; i < Math.min(referenceDescriptors.size(), candidateDescriptors.size()); i++)
 			if (referenceDescriptors.get(i).equals(candidateDescriptors.get(i)))
 				orderedMatches++;
-		double orderedScore = referenceDescriptors.isEmpty() && candidateDescriptors.isEmpty() ? 1D : orderedMatches / (double) maxCount;
+		double orderedScore = referenceDescriptors.isEmpty() && candidateDescriptors.isEmpty() ? 1 : orderedMatches / (double) maxCount;
 
 		// Score any-order parameter matches by treating the descriptors as multisets and comparing their intersection size.
 		Object2IntMap<String> referenceMultiset = MethodInstructionNormalizer.multiset(referenceDescriptors);
 		Object2IntMap<String> candidateMultiset = MethodInstructionNormalizer.multiset(candidateDescriptors);
 		IntBox intersection = new IntBox(0);
 		referenceMultiset.forEach((k, v) -> intersection.increment(Math.min(v, candidateMultiset.getOrDefault(k, 0))));
-		double anyOrderScore = referenceDescriptors.isEmpty() && candidateDescriptors.isEmpty() ? 1D : intersection.get() / (double) maxCount;
+		double anyOrderScore = referenceDescriptors.isEmpty() && candidateDescriptors.isEmpty() ? 1 : intersection.get() / (double) maxCount;
 
 		return Math.max(orderedScore, anyOrderScore);
 	}
@@ -221,13 +224,15 @@ public final class MethodSimilarityScorer {
 	 *
 	 * @return Normalized similarity score, {@code [0.0, 1.0]}.
 	 */
-	static double returnScore(@Nonnull Type referenceReturnType,
-	                          @Nonnull Type candidateReturnType,
-	                          @Nonnull InheritanceGraph inheritanceGraph) {
+	double returnScore(@Nonnull Type referenceReturnType,
+	                   @Nonnull Type candidateReturnType,
+	                   @Nonnull InheritanceGraph inheritanceGraph) {
 		if (referenceReturnType.equals(candidateReturnType))
-			return 1D;
-		return areTypesAssignableEitherDirection(referenceReturnType, candidateReturnType, inheritanceGraph) ?
-				RETURN_ASSIGNABLE_SCORE : 0D;
+			return 1;
+		if (areTypesAssignableEitherDirection(referenceReturnType, candidateReturnType, inheritanceGraph))
+			return RETURN_ASSIGNABLE_SCORE;
+		return normalizedDescriptor(referenceReturnType).equals(normalizedDescriptor(candidateReturnType)) ?
+				RETURN_ASSIGNABLE_SCORE : 0;
 	}
 
 	/**
@@ -240,9 +245,9 @@ public final class MethodSimilarityScorer {
 	 *
 	 * @return {@code true} if either type can be assigned to the other. {@code false} otherwise.
 	 */
-	static boolean areTypesAssignableEitherDirection(@Nonnull Type left,
-	                                                 @Nonnull Type right,
-	                                                 @Nonnull InheritanceGraph inheritanceGraph) {
+	boolean areTypesAssignableEitherDirection(@Nonnull Type left,
+	                                          @Nonnull Type right,
+	                                          @Nonnull InheritanceGraph inheritanceGraph) {
 		return isAssignable(left, right, inheritanceGraph) || isAssignable(right, left, inheritanceGraph);
 	}
 
@@ -256,7 +261,7 @@ public final class MethodSimilarityScorer {
 	 *
 	 * @return {@code true} if the value type can be assigned to the target type, {@code false} otherwise.
 	 */
-	private static boolean isAssignable(@Nonnull Type left, @Nonnull Type right, @Nonnull InheritanceGraph inheritanceGraph) {
+	private boolean isAssignable(@Nonnull Type left, @Nonnull Type right, @Nonnull InheritanceGraph inheritanceGraph) {
 		if (left.equals(right))
 			return true;
 		if (Types.isPrimitive(left) || Types.isPrimitive(right))
@@ -267,7 +272,10 @@ public final class MethodSimilarityScorer {
 			return isArrayAssignable(left, right, inheritanceGraph);
 		if (left.getSort() != Type.OBJECT || right.getSort() != Type.OBJECT)
 			return false;
-		return inheritanceGraph.isAssignableFrom(left.getInternalName(), right.getInternalName());
+		if (Types.OBJECT_TYPE.equals(left))
+			return true; // Anything can be assigned to Object.
+		return assignabilityCache.computeIfAbsent(left.getInternalName() + ";" + right.getInternalName(), k ->
+				inheritanceGraph.isAssignableFrom(left.getInternalName(), right.getInternalName()));
 	}
 
 	/**
@@ -280,7 +288,7 @@ public final class MethodSimilarityScorer {
 	 *
 	 * @return {@code true} if the value type can be assigned to the target type, {@code false} otherwise.
 	 */
-	private static boolean isArrayAssignable(@Nonnull Type left, @Nonnull Type right, @Nonnull InheritanceGraph inheritanceGraph) {
+	private boolean isArrayAssignable(@Nonnull Type left, @Nonnull Type right, @Nonnull InheritanceGraph inheritanceGraph) {
 		if (left.equals(right))
 			return true;
 		if (left.getSort() == Type.OBJECT && right.getSort() == Type.ARRAY)
@@ -293,7 +301,7 @@ public final class MethodSimilarityScorer {
 		Type valueElement = right.getElementType();
 		if (Types.isPrimitive(targetElement) || Types.isPrimitive(valueElement))
 			return targetElement.equals(valueElement);
-		return inheritanceGraph.isAssignableFrom(targetElement.getInternalName(), valueElement.getInternalName());
+		return isAssignable(targetElement, valueElement, inheritanceGraph);
 	}
 
 	/**
@@ -309,7 +317,7 @@ public final class MethodSimilarityScorer {
 	 */
 	private static double jaccard(@Nonnull Set<String> left, @Nonnull Set<String> right) {
 		if (left.isEmpty() && right.isEmpty())
-			return 1D;
+			return 1;
 
 		Set<String> union = new HashSet<>(left);
 		union.addAll(right);
@@ -318,7 +326,16 @@ public final class MethodSimilarityScorer {
 		intersection.retainAll(right);
 
 		// Compute: intersection / union
-		return union.isEmpty() ? 1D : intersection.size() / (double) union.size();
+		return union.isEmpty() ? 1 : intersection.size() / (double) union.size();
+	}
+
+	private static double normalizedJaccard(@Nonnull Set<String> left, @Nonnull Set<String> right) {
+		if (left.isEmpty() && right.isEmpty())
+			return 1;
+		return jaccard(left.stream().map(MethodSimilarityScorer::normalizedInternalName)
+						.collect(java.util.stream.Collectors.toSet()),
+				right.stream().map(MethodSimilarityScorer::normalizedInternalName)
+						.collect(java.util.stream.Collectors.toSet()));
 	}
 
 	@Nonnull
@@ -326,5 +343,27 @@ public final class MethodSimilarityScorer {
 		return Stream.of(types)
 				.map(Type::getDescriptor)
 				.toList();
+	}
+
+	@Nonnull
+	private static List<String> normalizedDescriptors(@Nonnull Type[] types) {
+		return Stream.of(types)
+				.map(MethodSimilarityScorer::normalizedDescriptor)
+				.toList();
+	}
+
+	@Nonnull
+	private static String normalizedDescriptor(@Nonnull Type type) {
+		int sort = type.getSort();
+		if (sort == Type.ARRAY)
+			return "[".repeat(type.getDimensions()) + Types.getSortName(type.getElementType().getSort());
+		return Types.getSortName(sort);
+	}
+
+	@Nonnull
+	private static String normalizedInternalName(@Nonnull String internalName) {
+		if (internalName.startsWith("["))
+			return normalizedDescriptor(Type.getType(internalName));
+		return "object";
 	}
 }

@@ -7,7 +7,7 @@ import software.coley.recaf.services.search.SimilaritySearchService;
  * Options for {@link SimilaritySearchService} class searches.
  *
  * @param similarityThresholdPercent
- * 		Minimum similarity threshold in percent.
+ * 		Minimum similarity threshold in percent, {@code [0, 100]}.
  * @param parameterMatchMode
  * 		Method parameter matching mode.
  * @param returnMatchMode

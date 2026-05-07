@@ -102,6 +102,7 @@ public class SimilaritySearchService implements Service {
 		if (referenceFingerprint == null)
 			return List.of();
 
+		MethodSimilarityScorer methodSimilarityScorer = new MethodSimilarityScorer();
 		List<SimilarMethodSearchResult> matches = new ArrayList<>();
 		try {
 			for (WorkspaceResource resource : resolveMethodCandidateResources(workspace, options)) {
@@ -116,14 +117,14 @@ public class SimilaritySearchService implements Service {
 						ClassMemberPathNode methodPath = classPath.child(candidateMethod);
 						if (methodPath.equals(referenceMethodPath))
 							continue;
-						if (!MethodSimilarityScorer.passesPrefilters(referenceFingerprint, candidateMethod, options, inheritanceGraph))
+						if (!methodSimilarityScorer.passesPrefilters(referenceFingerprint, candidateMethod, options, inheritanceGraph))
 							continue;
 
 						MethodFingerprint candidateFingerprint = lookup.fingerprint(candidateMethod);
 						if (candidateFingerprint == null)
 							continue;
 
-						double similarity = MethodSimilarityScorer.score(referenceFingerprint, candidateFingerprint, inheritanceGraph);
+						double similarity = methodSimilarityScorer.score(referenceFingerprint, candidateFingerprint, inheritanceGraph);
 						if (similarity * 100D < options.similarityThresholdPercent())
 							continue;
 
@@ -174,6 +175,7 @@ public class SimilaritySearchService implements Service {
 
 		InheritanceGraph inheritanceGraph = inheritanceGraphService.getOrCreateInheritanceGraph(workspace);
 		ClassSimilarityScorer.ClassComparisonModel referenceClass = ClassSimilarityScorer.buildModel(referenceClassPath.getValue());
+		MethodSimilarityScorer methodSimilarityScorer = new MethodSimilarityScorer();
 
 		List<SimilarClassSearchResult> matches = new ArrayList<>();
 		try {
@@ -186,7 +188,7 @@ public class SimilaritySearchService implements Service {
 
 					ClassSimilarityScorer.ClassComparisonModel candidateClass = ClassSimilarityScorer.buildModel(classInfo);
 					SimilarClassScoreBreakdown breakdown = ClassSimilarityScorer.breakdown(referenceClass, candidateClass,
-							options, inheritanceGraph);
+							options, methodSimilarityScorer, inheritanceGraph);
 					double similarity = ClassSimilarityScorer.score(breakdown, options);
 					if (similarity * 100D < options.similarityThresholdPercent())
 						return true;

@@ -109,7 +109,7 @@ public class WorkspacePromotion {
 
 	@Nonnull
 	private static Map<String, AndroidClassBundle> cloneAndroidBundles(@Nonnull Map<String, AndroidClassBundle> bundles) {
-		Map<String, AndroidClassBundle> clone = new LinkedHashMap<>();
+		Map<String, AndroidClassBundle> clone = new TreeMap<>();
 		for (Map.Entry<String, AndroidClassBundle> entry : bundles.entrySet()) {
 			AndroidClassBundle bundle = entry.getValue();
 			BasicAndroidClassBundle bundleClone = new BasicAndroidClassBundle(bundle.getVersion(), bundle.getLinkData().clone());
@@ -130,7 +130,7 @@ public class WorkspacePromotion {
 
 	@Nonnull
 	private static Map<String, WorkspaceFileResource> cloneEmbeddedResources(@Nonnull Map<String, WorkspaceFileResource> embeddedResources) {
-		Map<String, WorkspaceFileResource> clone = new LinkedHashMap<>();
+		Map<String, WorkspaceFileResource> clone = new TreeMap<>();
 		for (Map.Entry<String, WorkspaceFileResource> entry : embeddedResources.entrySet()) {
 			clone.put(entry.getKey(), (WorkspaceFileResource) cloneResource(entry.getValue()));
 		}

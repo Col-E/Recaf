@@ -217,7 +217,7 @@ public class InheritanceVertex {
 	 * @return {@code true} if the vertex is of a child type to this vertex's {@link #getName() type}.
 	 */
 	public boolean isParentOf(@Nonnull InheritanceVertex vertex) {
-		return vertex.getAllParents().contains(this);
+		return vertex.allParents().anyMatch(v -> v == this);
 	}
 
 	/**
@@ -227,7 +227,7 @@ public class InheritanceVertex {
 	 * @return {@code true} if the vertex is of a parent type to this vertex's {@link #getName() type}.
 	 */
 	public boolean isChildOf(@Nonnull InheritanceVertex vertex) {
-		return getAllParents().contains(vertex);
+		return allParents().anyMatch(v -> v == vertex);
 	}
 
 	/**
@@ -288,11 +288,12 @@ public class InheritanceVertex {
 	 * @return {@code true} when this vertex has the given child.
 	 */
 	public boolean hasChild(@Nonnull String name) {
-		for (InheritanceVertex child : getAllChildren())
-			if (name.equals(child.getName()))
-				return true;
-
-		return false;
+		return allChildren().anyMatch(child -> {
+			ClassInfo childCls = child.getValue();
+			return name.equals(child.getName())
+					|| name.equals(childCls.getSuperName())
+					|| childCls.getInterfaces().contains(name);
+		});
 	}
 
 	/**

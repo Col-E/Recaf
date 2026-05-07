@@ -196,7 +196,7 @@ final class PluginGraph {
 	 * 		Map to store results in.
 	 */
 	private void collectDependants(@Nonnull LoadedPlugin plugin, @Nonnull Map<LoadedPlugin, Set<LoadedPlugin>> dependants) {
-		Set<LoadedPlugin> dependantsSet = dependants.computeIfAbsent(plugin, __ -> HashSet.newHashSet(4));
+		Set<LoadedPlugin> dependantsSet = dependants.computeIfAbsent(plugin, _ -> HashSet.newHashSet(4));
 		for (LoadedPlugin pl : plugins.values()) {
 			if (plugin == pl) continue;
 			if (pl.getDependencies().contains(plugin)) {

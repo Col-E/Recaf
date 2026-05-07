@@ -96,6 +96,13 @@ public interface Accessed {
 	}
 
 	/**
+	 * @return {@code true} when this item's access modifiers contains {@code record}.
+	 */
+	default boolean hasRecordModifier() {
+		return hasModifierMask(0x1000);
+	}
+
+	/**
 	 * @return {@code true} when this item's access modifiers contains {@code annotation}.
 	 */
 	default boolean hasAnnotationModifier() {

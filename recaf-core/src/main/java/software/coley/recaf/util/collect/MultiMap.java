@@ -27,7 +27,7 @@ public final class MultiMap<K, V, C extends Collection<V>> {
 	 */
 	private MultiMap(@Nonnull Map<K, C> backing, @Nonnull Supplier<? extends C> collectionSupplier) {
 		this.backing = backing;
-		this.collectionFunction = __ -> collectionSupplier.get();
+		this.collectionFunction = _ -> collectionSupplier.get();
 	}
 
 	/**

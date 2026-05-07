@@ -23,6 +23,7 @@ import software.coley.recaf.ui.config.RecentFilesConfig;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.window.MappingApplicationWindow;
 import software.coley.recaf.ui.window.MappingGeneratorWindow;
+import software.coley.recaf.ui.window.SimilarityMappingWindow;
 import software.coley.recaf.util.FileChooserBundle;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Lang;
@@ -54,6 +55,7 @@ public class MappingMenu extends WorkspaceAwareMenu {
 	                   @Nonnull MappingFormatManager formatManager,
 	                   @Nonnull MappingHelper mappingHelper,
 	                   @Nonnull Instance<MappingGeneratorWindow> generatorWindowProvider,
+	                   @Nonnull Instance<SimilarityMappingWindow> similarityWindowProvider,
 	                   @Nonnull Instance<MappingApplicationWindow> applyWindowProvider,
 	                   @Nonnull RecentFilesConfig recentFiles) {
 		super(workspaceManager);
@@ -91,6 +93,7 @@ public class MappingMenu extends WorkspaceAwareMenu {
 
 		getItems().addAll(apply, export,
 				action("menu.mappings.generate", CarbonIcons.LICENSE_MAINTENANCE, () -> openGenerate(generatorWindowProvider)),
+				action("menu.mappings.similarity", CarbonIcons.SEARCH, () -> openSimilarity(similarityWindowProvider)),
 				action("menu.mappings.view", CarbonIcons.VIEW, this::openView),
 				new SeparatorMenuItem(),
 				action("menu.mappings.apply-advanced", CarbonIcons.LICENSE_GLOBAL, () -> openApply(applyWindowProvider))
@@ -153,6 +156,14 @@ public class MappingMenu extends WorkspaceAwareMenu {
 		Stage window = windowManager.getMappingPreviewWindow();
 		window.show();
 		window.requestFocus();
+	}
+
+	private void openSimilarity(@Nonnull Instance<SimilarityMappingWindow> similarityWindowProvider) {
+		SimilarityMappingWindow window = similarityWindowProvider.get();
+		window.setOnCloseRequest(e -> similarityWindowProvider.destroy(window));
+		window.show();
+		window.requestFocus();
+		windowManager.registerAnonymous(window);
 	}
 
 	private void openApply(@Nonnull Instance<MappingApplicationWindow> applyWindowProvider) {
