@@ -1,11 +1,15 @@
 package software.coley.recaf.util;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import javafx.beans.binding.StringBinding;
 import javafx.beans.property.StringProperty;
 import javafx.beans.value.ObservableValue;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.config.ConfigGroups;
+import software.coley.recaf.services.plugin.PluginClassLoader;
+import software.coley.recaf.util.io.ByteSource;
 
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -304,10 +308,21 @@ public class Lang {
 	 * @param translationKey
 	 * 		Key name.
 	 *
-	 * @return {@code true} when the translation is present in the current translations.
+	 * @return {@code true} when the translation is present in the current + default translations.
 	 */
 	public static boolean has(String translationKey) {
-		return has(getCurrentTranslations(), translationKey);
+		String currentTranslations = getCurrentTranslations();
+		return has(currentTranslations, translationKey) || hasDefault(translationKey);
+	}
+
+	/**
+	 * @param translationKey
+	 * 		Key name.
+	 *
+	 * @return {@code true} when the translation is present in the default translations.
+	 */
+	public static boolean hasDefault(String translationKey) {
+		return has(DEFAULT_TRANSLATIONS, translationKey);
 	}
 
 	/**
@@ -337,7 +352,8 @@ public class Lang {
 			String translationName = StringUtil.cutOffAtFirst(translationPath.getFileName(), ".");
 			try {
 				load(translationName, translationPath.getURL().openStream());
-				translationKeys.add(translationName);
+				if (!translationKeys.contains(translationName))
+					translationKeys.add(translationName);
 				logger.info("Loaded translations '{}'", translationName);
 			} catch (Throwable t) {
 				logger.error("Failed to load translations '{}'", translationName, t);
@@ -352,6 +368,46 @@ public class Lang {
 	}
 
 	/**
+	 * Loads plugin-provided translations for the given set of supported locales.
+	 * <p>
+	 * Plugin UI keys should prefer a {@code plugin.<pluginId>.*} namespace to avoid collisions.
+	 * Plugin config labels should also use the {@link ConfigGroups#EXTERNAL} group.
+	 *
+	 * @param pluginId
+	 * 		Plugin identifier for logging.
+	 * @param classLoader
+	 * 		Plugin classloader to probe for translation resources.
+	 * @param localeKeys
+	 * 		Supported locale keys to probe under {@code translations/<locale>.lang}.
+	 */
+	public static void loadPlugin(@Nonnull String pluginId, @Nonnull ClassLoader classLoader, @Nonnull Iterable<String> localeKeys) {
+		// We use the plugin classloader's 'lookupResource' method to load translations since
+		// that avoids the standard classloader behavior of looking in parents for resources (and doing so first).
+		// This ensures we only ever load files from the plugin itself and not from our application classloader.
+		if (!(classLoader instanceof PluginClassLoader pluginLoader)) return;
+		for (String localeKey : localeKeys) {
+			String resourcePath = "translations/" + localeKey + ".lang";
+			ByteSource langSource = pluginLoader.lookupResource(resourcePath);
+			if (langSource == null)
+				continue;
+			try (InputStream in = langSource.openStream()) {
+				load(localeKey, in, (translationsMap, key, value) -> {
+					String existing = translationsMap.get(key);
+					if (existing == null) {
+						translationsMap.put(key, value);
+					} else if (!existing.equals(value)) {
+						logger.warn("Ignored translation override from plugin '{}' for locale '{}' and key '{}'",
+								pluginId, localeKey, key);
+					}
+				});
+				logger.info("Loaded plugin translations '{}' from plugin '{}'", localeKey, pluginId);
+			} catch (Exception ex) {
+				logger.error("Failed to load plugin translations '{}' from plugin '{}'", localeKey, pluginId, ex);
+			}
+		}
+	}
+
+	/**
 	 * Load translations from {@link InputStream}.
 	 *
 	 * @param translations
@@ -360,6 +416,21 @@ public class Lang {
 	 *        {@link InputStream} to load translations from.
 	 */
 	public static void load(String translations, InputStream in) {
+		load(translations, in, null);
+	}
+
+	/**
+	 * Load translations from {@link InputStream} with a custom entry consumer.
+	 *
+	 * @param translations
+	 * 		Target translations identifier. The key for {@link #getTranslations()}.
+	 * @param in
+	 *        {@link InputStream} to load translations from.
+	 * @param entryConsumer
+	 * 		Custom consumer for translation entries, allowing for custom handling of duplicate keys.
+	 * 		If {@code null}, entries will be added directly to the translations map.
+	 */
+	private static void load(String translations, InputStream in, @Nullable TranslationEntryConsumer entryConsumer) {
 		try {
 			Map<String, String> translationsMap = Lang.translations.computeIfAbsent(translations, l -> new HashMap<>());
 			String string = IOUtil.toString(in, UTF_8);
@@ -374,12 +445,20 @@ public class Lang {
 					String[] parts = line.split("=", 2);
 					String key = parts[0];
 					String value = parts[1];
-					translationsMap.put(key, value);
+					if (entryConsumer == null) {
+						translationsMap.put(key, value);
+					} else {
+						entryConsumer.accept(translationsMap, key, value);
+					}
 				}
 			}
 		} catch (Exception ex) {
 			throw new IllegalStateException("Failed to fetch language from input stream", ex);
 		}
 	}
-}
 
+	@FunctionalInterface
+	private interface TranslationEntryConsumer {
+		void accept(@Nonnull Map<String, String> translationsMap, @Nonnull String key, @Nonnull String value);
+	}
+}

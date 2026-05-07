@@ -127,6 +127,7 @@ public class Main {
 			initFxAccessAgent();
 			initTranslations();
 			initPlugins();
+			initPluginTranslations();
 			fireInitEvent();
 			initScale(); // Needs to init after the init-event so config is loaded
 			RecafApplication.launch(RecafApplication.class, launchArgs.getArgs());
@@ -266,6 +267,16 @@ public class Main {
 							.map(info -> info.name() + " - " + info.version())
 							.collect(Collectors.joining(split)));
 		}
+	}
+
+	/**
+	 * Load plugin-provided translations into the UI translation store.
+	 */
+	private static void initPluginTranslations() {
+		PluginManager pluginManager = recaf.get(PluginManager.class);
+		List<String> localeKeys = List.copyOf(Lang.getTranslationKeys());
+		for (PluginContainer<?> plugin : pluginManager.getPlugins())
+			Lang.loadPlugin(plugin.info().id(), plugin.plugin().getClass().getClassLoader(), localeKeys);
 	}
 
 	private static void initHandleInputs() {

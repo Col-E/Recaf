@@ -2,7 +2,6 @@ package software.coley.recaf.ui.pane;
 
 import jakarta.annotation.Nonnull;
 import software.coley.recaf.config.ConfigContainer;
-import software.coley.recaf.config.ConfigGroups;
 import software.coley.recaf.config.ConfigValue;
 import software.coley.recaf.util.Lang;
 
@@ -82,13 +81,7 @@ public class ConfigPaneSearch {
 		}
 
 		// Add container ID as a search token.
-		// For 3rd party configs, we only add the ID and not the group.
-		boolean isThirdPartyConfig = ConfigGroups.EXTERNAL.equals(container.getGroup());
-		if (isThirdPartyConfig) {
-			parts.add(container.getId());
-		} else {
-			addTranslatedOrLiteral(parts, container.getGroupAndId(), container.getId());
-		}
+		addTranslatedOrLiteral(parts, container.getGroupAndId(), container.getId());
 
 		// Add translated or literal value IDs as search tokens.
 		for (ConfigValue<?> value : container.getValues().values()) {
@@ -96,14 +89,7 @@ public class ConfigPaneSearch {
 			if (value.isHidden())
 				continue;
 
-			// TODO: There is no way for plugins to provide translations for their config values.
-			//  We should add support for this at some point, but for now we just add the literal ID as a search token.
-			//   - https://github.com/Col-E/Recaf/issues/874
-			if (isThirdPartyConfig) {
-				parts.add(value.getId());
-			} else {
-				addTranslatedOrLiteral(parts, container.getScopedId(value), value.getId());
-			}
+			addTranslatedOrLiteral(parts, container.getScopedId(value), value.getId());
 		}
 
 		return String.join("\n", parts).toLowerCase();

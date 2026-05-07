@@ -41,7 +41,6 @@ import org.slf4j.Logger;
 import software.coley.collections.Lists;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.config.ConfigContainer;
-import software.coley.recaf.config.ConfigGroups;
 import software.coley.recaf.config.ConfigValue;
 import software.coley.recaf.services.config.ConfigComponentFactory;
 import software.coley.recaf.services.config.ConfigComponentManager;
@@ -59,8 +58,6 @@ import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.SceneUtils;
 
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -212,9 +209,8 @@ public class ConfigPane extends BorderPane implements ManagedConfigListener {
 		ConfigTreeItem item = getItem(container, true);
 		if (item != null) {
 			String pageKey = item.getValue() + PACKAGE_SPLIT + container.getId();
-			String translationKey = ConfigGroups.EXTERNAL.equals(container.getGroup()) ? null : pageKey;
 			Ikon icon = iconManager.getContainerIcon(container);
-			ConfigTreeItem treeItem = new ConfigTreeItem(pageKey, translationKey, container.getId(), icon);
+			ConfigTreeItem treeItem = new ConfigTreeItem(pageKey, pageKey, container.getId(), icon);
 			addSortedChild(item, treeItem);
 
 			// Register page.
@@ -556,13 +552,8 @@ public class ConfigPane extends BorderPane implements ManagedConfigListener {
 	private class ContainerPane extends GridPane {
 		@SuppressWarnings({"rawtypes", "unchecked"})
 		private ContainerPane(@Nonnull ConfigContainer container) {
-			// Plugin configs are given special treatment.
-			// They are not expected to install additional translations, so their ID's will be used as literal names.
-			boolean isThirdPartyConfig = ConfigGroups.EXTERNAL.equals(container.getGroup());
-
 			// Title
-			Label title = isThirdPartyConfig ? new Label(container.getId()) :
-					new BoundLabel(getBinding(container.getGroupAndId()));
+			Label title = createTranslatedOrLiteralLabel(container.getGroupAndId(), container.getId());
 			title.getStyleClass().add(Styles.TITLE_4);
 			add(title, 0, 0, 2, 1);
 			add(new Separator(), 0, 1, 2, 1);
@@ -578,11 +569,7 @@ public class ConfigPane extends BorderPane implements ManagedConfigListener {
 					add(componentFactory.create(container, value), 0, row, 2, 1);
 				} else {
 					String key = container.getScopedId(value);
-					if (isThirdPartyConfig) {
-						add(new Label(value.getId()), 0, row);
-					} else {
-						add(new BoundLabel(getBinding(key)), 0, row);
-					}
+					add(createTranslatedOrLiteralLabel(key, value.getId()), 0, row);
 					add(componentFactory.create(container, value), 1, row);
 				}
 				row++;
@@ -596,6 +583,13 @@ public class ConfigPane extends BorderPane implements ManagedConfigListener {
 			ColumnConstraints columnEditor = new ColumnConstraints();
 			columnEditor.setHgrow(Priority.ALWAYS);
 			getColumnConstraints().addAll(columnLabel, columnEditor);
+		}
+
+		@Nonnull
+		private static Label createTranslatedOrLiteralLabel(@Nonnull String translationKey, @Nonnull String fallback) {
+			return Lang.has(translationKey) ?
+					new BoundLabel(getBinding(translationKey)) :
+					new Label(fallback);
 		}
 	}
 
