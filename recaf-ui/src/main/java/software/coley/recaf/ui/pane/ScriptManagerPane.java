@@ -3,7 +3,6 @@ package software.coley.recaf.ui.pane;
 import atlantafx.base.controls.Popover;
 import atlantafx.base.theme.Styles;
 import jakarta.annotation.Nonnull;
-import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
@@ -47,7 +46,13 @@ import software.coley.recaf.ui.control.richtext.problem.ProblemPhase;
 import software.coley.recaf.ui.control.richtext.problem.ProblemTracking;
 import software.coley.recaf.ui.control.richtext.search.SearchBar;
 import software.coley.recaf.ui.window.RecafScene;
-import software.coley.recaf.util.*;
+import software.coley.recaf.util.Animations;
+import software.coley.recaf.util.DesktopUtil;
+import software.coley.recaf.util.EscapeUtil;
+import software.coley.recaf.util.FileChooserBuilder;
+import software.coley.recaf.util.FxThreadUtil;
+import software.coley.recaf.util.Lang;
+import software.coley.recaf.util.StringUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -153,8 +158,6 @@ public class ScriptManagerPane extends BorderPane {
 	 * Opens a new script editor.
 	 */
 	public void newScript() {
-		// TODO: Editor save prompts file location to save to in scripts dir
-		//  - Add toggle in manager button list to create 'advanced' script using class model
 		String template = """
 				// ==Metadata==
 				// @name Name
@@ -162,9 +165,27 @@ public class ScriptManagerPane extends BorderPane {
 				// @version 1.0.0
 				// @author Author
 				// ==/Metadata==
-								
-				System.out.println("Hello world");
+				
+				@Dependent
+				class MyScript {
+					WorkspaceManager wm;
+				
+					@Inject
+					MyScript(WorkspaceManager wm) {
+						// Inject any services you need here.
+						// See: https://recaf.coley.software/dev/services/index.html
+						this.wm = wm;
+					}
+				
+				    void run() {
+				        if (!wm.hasCurrentWorkspace()) return;
+				
+				        // Do any script work here.
+				        Workspace workspace = workspaceManager.getCurrent();
+				    }
+				}
 				""";
+
 		ScriptEditor scriptEditor = new ScriptEditor(languageAssociation, template, searchBarProvider.get());
 		Scene scene = new RecafScene(scriptEditor, 750, 400);
 		windowFactory.createAnonymousStage(scene, getBinding("menu.scripting.editor"), 750, 400).show();
@@ -395,7 +416,6 @@ public class ScriptManagerPane extends BorderPane {
 			VBox actions = new VBox();
 			actions.setSpacing(4);
 			actions.setAlignment(Pos.CENTER_RIGHT);
-
 
 			ScriptEntry entry = this;
 			Path scriptKey = script.path();
