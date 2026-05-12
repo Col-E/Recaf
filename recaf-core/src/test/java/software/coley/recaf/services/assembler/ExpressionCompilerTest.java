@@ -17,6 +17,7 @@ import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.test.dummy.ClassWithFieldsAndMethods;
 import software.coley.recaf.test.dummy.ClassWithInnerAndMembers;
 import software.coley.recaf.test.dummy.ClassWithLambda;
+import software.coley.recaf.test.dummy.ClassWithNestedInners;
 import software.coley.recaf.test.dummy.ClassWithRequiredConstructor;
 import software.coley.recaf.test.dummy.ClassWithToString;
 import software.coley.recaf.test.dummy.DummyEnum;
@@ -42,6 +43,7 @@ class ExpressionCompilerTest extends TestBase {
 	static JvmClassInfo targetEnum;
 	static JvmClassInfo targetRecord;
 	static JvmClassInfo targetOuterWithInner;
+	static JvmClassInfo targetOuterWithNestedInners;
 	static JvmClassInfo targetClassWithLambda;
 
 	@BeforeAll
@@ -52,6 +54,7 @@ class ExpressionCompilerTest extends TestBase {
 		targetEnum = TestClassUtils.fromRuntimeClass(DummyEnum.class);
 		targetRecord = TestClassUtils.fromRuntimeClass(DummyRecord.class);
 		targetOuterWithInner = TestClassUtils.fromRuntimeClass(ClassWithInnerAndMembers.class);
+		targetOuterWithNestedInners = TestClassUtils.fromRuntimeClass(ClassWithNestedInners.class);
 		targetClassWithLambda = TestClassUtils.fromRuntimeClass(ClassWithLambda.class);
 		workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(targetClass, targetCtorClass, targetEnum));
 		workspaceManager.setCurrent(workspace);
@@ -179,6 +182,16 @@ class ExpressionCompilerTest extends TestBase {
 				System.out.println("bar: " + inner.bar);
 				inner.strings.add("something");
 				inner.innerToOuter();
+				""");
+		assertSuccess(result);
+	}
+
+	@Test
+	void classWithManyInnerReferences() {
+		ExpressionCompiler assembler = recaf.get(ExpressionCompiler.class);
+		assembler.setClassContext(targetOuterWithNestedInners);
+		ExpressionResult result = compile(assembler, """
+				// This just tests that the stubbing emits valid code.
 				""");
 		assertSuccess(result);
 	}

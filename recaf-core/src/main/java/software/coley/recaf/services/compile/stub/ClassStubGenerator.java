@@ -28,7 +28,9 @@ import software.coley.recaf.workspace.model.Workspace;
 
 import java.lang.reflect.Modifier;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
@@ -119,14 +121,25 @@ public abstract class ClassStubGenerator {
 	 */
 	protected void appendClassStructure(@Nonnull StringBuilder code) {
 		// Class structure
+		boolean isEnum = AccessFlag.isEnum(classAccess);
+		boolean isInterface = AccessFlag.isInterface(classAccess);
 		InheritanceVertex classVertex = inheritanceGraph.getVertex(className);
 		if (classVertex != null && classVertex.getParents().stream().anyMatch(this::isSealedType))
 			code.append("non-sealed ");
-		code.append(AccessFlag.isEnum(classAccess) ? "enum " : getLocalModifier() + " class ").append(getLocalName());
-		if (superName != null && !superName.equals("java/lang/Object") && !superName.equals("java/lang/Enum"))
-			code.append(" extends ").append(superName.replace('/', '.'));
+		if (isEnum) {
+			code.append("enum ").append(getLocalName());
+		} else {
+			String modifier = getLocalModifier();
+			if (!modifier.isBlank())
+				code.append(modifier).append(' ');
+			code.append(isInterface ? "interface " : "class ").append(getLocalName());
+		}
+		if (!isInterface && superName != null && !superName.equals("java/lang/Object") && !superName.equals("java/lang/Enum"))
+			code.append(" extends ").append(cleanType(superName));
 		if (implementing != null && !implementing.isEmpty())
-			code.append(" implements ").append(implementing.stream().map(s -> s.replace('/', '.')).collect(Collectors.joining(", "))).append(' ');
+			code.append(isInterface ? " extends " : " implements ").append(implementing.stream()
+					.map(ClassStubGenerator::cleanType)
+					.collect(Collectors.joining(", "))).append(' ');
 		code.append("{\n");
 	}
 
@@ -204,6 +217,7 @@ public abstract class ClassStubGenerator {
 	 */
 	protected void appendMethods(@Nonnull StringBuilder code) throws ExpressionCompileException {
 		boolean isEnum = AccessFlag.isEnum(classAccess);
+		boolean isInterface = AccessFlag.isInterface(classAccess);
 		for (MethodMember method : methods) {
 			// Skip stubbing compiler-generated methods.
 			if (method.hasBridgeModifier() || method.hasSyntheticModifier())
@@ -324,9 +338,19 @@ public abstract class ClassStubGenerator {
 							.orElse(null);
 					if (parentConstructor != null) {
 						code.append("super(");
-						parameterCount = parentConstructor.parameterTypes().size();
-						for (int i = 0; i < parameterCount; i++) {
-							ClassType type = parentConstructor.parameterTypes().get(i);
+
+						// Filter out any leading parameters that are the outer "this" reference of an inner class,
+						// since those are not actually passed by the caller in the source code.
+						List<ClassType> parentParameterTypes = parentConstructor.parameterTypes();
+						int startIndex = 0;
+						if (!parentParameterTypes.isEmpty()
+								&& parentParameterTypes.getFirst() instanceof ObjectType objectType
+								&& className.startsWith(objectType.internalName() + '$'))
+							startIndex = 1;
+
+						parameterCount = parentParameterTypes.size();
+						for (int i = startIndex; i < parameterCount; i++) {
+							ClassType type = parentParameterTypes.get(i);
 							if (type instanceof ObjectType) {
 								code.append("null");
 							} else {
@@ -360,6 +384,8 @@ public abstract class ClassStubGenerator {
 		for (InnerClassInfo innerClass : innerClasses) {
 			String innerClassName = innerClass.getInnerClassName();
 
+			// Skip duplicate inner classes.
+			if (!visited.add(innerClassName))
 				continue;
 
 			// If the inner class's outer class name is not an exact match, skip it.
@@ -430,6 +456,27 @@ public abstract class ClassStubGenerator {
 	@Nonnull
 	protected String getLocalName() {
 		return StringUtil.shortenPath(className);
+	}
+
+	/**
+	 * @param type
+	 * 		Some internal type name.
+	 *
+	 * @return Cleaned name for use in source.
+	 */
+	@Nonnull
+	protected static String cleanType(String type) {
+		return type.replace('/', '.').replace('$', '.');
+	}
+
+	/**
+	 * @param type
+	 * 		Some internal type name.
+	 *
+	 * @return {@code true} if the type is an inner class of the current class.
+	 */
+	protected boolean isInnerClassType(@Nonnull String type) {
+		return innerClasses.stream().anyMatch(c -> c.getInnerClassName().equals(type));
 	}
 
 	/**
@@ -612,7 +659,7 @@ public abstract class ClassStubGenerator {
 			if (componentReturnType instanceof PrimitiveType primitiveParameter) {
 				className = primitiveParameter.name();
 			} else if (componentReturnType instanceof InstanceType instanceType) {
-				className = instanceType.internalName().replace('/', '.').replace('$', '.');
+				className = cleanType(instanceType.internalName());
 			} else {
 				throw new ExpressionCompileException("Illegal component type: " + componentReturnType);
 			}
@@ -620,7 +667,7 @@ public abstract class ClassStubGenerator {
 			size = 1;
 		} else {
 			size = 1;
-			className = Types.instanceTypeFromDescriptor(descriptor).internalName().replace('/', '.').replace('$', '.');
+			className = cleanType(Types.instanceTypeFromDescriptor(descriptor).internalName());
 		}
 		return new NameType(size, name, className);
 	}
@@ -635,6 +682,5 @@ public abstract class ClassStubGenerator {
 	 * @param className
 	 * 		Variable class type name.
 	 */
-	protected record NameType(int size, @Nonnull String name, @Nonnull String className) {
-	}
+	protected record NameType(int size, @Nonnull String name, @Nonnull String className) {}
 }
