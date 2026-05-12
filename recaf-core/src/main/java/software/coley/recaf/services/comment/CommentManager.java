@@ -1,5 +1,6 @@
 package software.coley.recaf.services.comment;
 
+import com.google.common.hash.Hashing;
 import com.google.gson.Gson;
 import com.google.gson.TypeAdapter;
 import com.google.gson.TypeAdapterFactory;
@@ -37,12 +38,11 @@ import software.coley.recaf.services.mapping.Mappings;
 import software.coley.recaf.services.tutorial.TutorialWorkspaceResource;
 import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.util.StringUtil;
-import software.coley.recaf.util.TestEnvironment;
 import software.coley.recaf.workspace.model.Workspace;
 
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -63,6 +63,8 @@ public class CommentManager implements Service, CommentUpdateListener, CommentCo
 	private final Map<String, DelegatingWorkspaceComments> delegatingMap = new ConcurrentHashMap<>();
 	/** Map of workspace comment impls modeling only data. Used for persistence. */
 	private final Map<String, PersistWorkspaceComments> persistMap = new ConcurrentHashMap<>();
+	/** Set of workspace keys that have already been checked for persisted comments. */
+	private final Set<String> loadedWorkspaces = ConcurrentHashMap.newKeySet();
 	private final List<CommentUpdateListener> commentUpdateListeners = new CopyOnWriteArrayList<>();
 	private final List<CommentContainerListener> commentContainerListeners = new CopyOnWriteArrayList<>();
 	private final WorkspaceManager workspaceManager;
@@ -124,6 +126,7 @@ public class CommentManager implements Service, CommentUpdateListener, CommentCo
 				int i = codeLength;
 
 				// Get class comments container if it exists.
+				loadComments(workspace);
 				ClassPathNode classPath = workspace.findClass(classInfo.getName());
 				if (classPath == null)
 					return code;
@@ -209,9 +212,6 @@ public class CommentManager implements Service, CommentUpdateListener, CommentCo
 		};
 		decompilerManager.addJvmBytecodeFilter(keyInsertingFilter);
 		decompilerManager.addOutputTextFilter(keyReplacementFilter);
-
-		// Restore any saved comments from disk.
-		loadComments();
 
 		// Register mapping listeners so that when types & members are renamed the comments are migrated.
 		mappingListeners.addMappingApplicationListener(new MappingApplicationListener() {
@@ -312,26 +312,75 @@ public class CommentManager implements Service, CommentUpdateListener, CommentCo
 	}
 
 	/**
-	 * Loads comments from disk.
+	 * Loads comments for the given workspace.
+	 *
+	 * @param workspace
+	 * 		Workspace to load comments for.
 	 */
-	private void loadComments() {
-		// Skip loading in test environment
-		if (TestEnvironment.isTestEnv())
+	private void loadComments(@Nonnull Workspace workspace) {
+		// Skip if we've already attempted to load comments for this workspace.
+		String input = CommentKey.workspaceInput(workspace);
+		if (loadedWorkspaces.contains(input))
 			return;
 
-		try {
-			// TODO: Its not ideal having all comments across all workspaces loaded at once
-			//  - Not a big deal right now since I doubt most users will utilize this feature much
-			Gson gson = gsonProvider.getGson();
-			Path commentsDirectory = getCommentsDirectory();
-			Path store = commentsDirectory.resolve("comments.json");
-			if (Files.exists(store)) {
-				String json = Files.readString(store);
-				var deserialized = gson.fromJson(json, new TypeToken<Map<String, PersistWorkspaceComments>>() {});
-				persistMap.putAll(deserialized);
+		synchronized (loadedWorkspaces) {
+			// Skip if another thread loaded comments while we were waiting on the lock.
+			if (!loadedWorkspaces.add(input))
+				return;
+
+			try {
+				// Restore legacy comments if they exist, then load the per-workspace comment store.
+				Path legacyStore = getLegacyCommentsStore();
+				if (Files.exists(legacyStore))
+					migrateLegacyComments(legacyStore);
+
+				// Load comments for this workspace if they exist.
+				Path store = getWorkspaceCommentsPath(input);
+				if (Files.exists(store)) {
+					Gson gson = gsonProvider.getGson();
+					String json = Files.readString(store);
+					PersistWorkspaceComments comments = gson.fromJson(json, PersistWorkspaceComments.class);
+					if (comments != null)
+						persistMap.put(input, comments);
+				}
+			} catch (Throwable t) {
+				loadedWorkspaces.remove(input);
+				logger.error("Failed to load comments for workspace '{}'", input, t);
 			}
+		}
+	}
+
+	/**
+	 * Migrates the legacy monolithic comment store into the per-workspace layout.
+	 *
+	 * @param legacyStore
+	 * 		Path to the legacy comment store.
+	 */
+	private void migrateLegacyComments(@Nonnull Path legacyStore) {
+		// TODO: Remove this method after 1/1/2027 - 6 months should be enough time for anyone to migrate.
+		try {
+			Gson gson = gsonProvider.getGson();
+			String json = Files.readString(legacyStore);
+			Map<String, PersistWorkspaceComments> deserialized = gson.fromJson(json, new TypeToken<>() {});
+			if (deserialized != null) {
+				for (Map.Entry<String, PersistWorkspaceComments> entry : deserialized.entrySet()) {
+					String input = entry.getKey();
+
+					// Skip tutorial comments.
+					if (TutorialWorkspaceResource.COMMENT_KEY.equals(input))
+						continue;
+
+					// Skip workspace comment models if they are empty.
+					PersistWorkspaceComments comments = entry.getValue();
+					if (comments == null || isEmpty(comments))
+						continue;
+
+					writeWorkspaceComments(input, comments);
+				}
+			}
+			Files.deleteIfExists(legacyStore);
 		} catch (Throwable t) {
-			logger.error("Failed to load comments", t);
+			logger.error("Failed to migrate legacy comments", t);
 		}
 	}
 
@@ -340,40 +389,22 @@ public class CommentManager implements Service, CommentUpdateListener, CommentCo
 	 */
 	@PreDestroy
 	private void onShutdown() {
-		// Skip persist in test environment.
-		if (TestEnvironment.isTestEnv())
-			return;
-
-		// Do not persist the tutorial workspace comments.
-		persistMap.remove(TutorialWorkspaceResource.COMMENT_KEY);
-
-		// Remove entries that are empty.
-		Set<String> empty = new HashSet<>();
-		persistMap.forEach((key, workspaceComments) -> {
-			if (workspaceComments.classKeys().isEmpty()) {
-				empty.add(key);
-			} else {
-				boolean isEmpty = true;
-				for (ClassComments classComments : workspaceComments) {
-					if (classComments.hasComments()) {
-						isEmpty = false;
-						break;
-					}
-				}
-				if (isEmpty)
-					empty.add(key);
-			}
-		});
-		empty.forEach(persistMap::remove);
-
 		try {
-			Gson gson = gsonProvider.getGson();
-			String serialized = gson.toJson(persistMap);
-			Path commentsDirectory = getCommentsDirectory();
-			if (!Files.isDirectory(commentsDirectory))
-				Files.createDirectories(commentsDirectory);
-			Path store = commentsDirectory.resolve("comments.json");
-			Files.writeString(store, serialized);
+			// Ensure tutorial comments are never persisted.
+			Files.deleteIfExists(getWorkspaceCommentsPath(TutorialWorkspaceResource.COMMENT_KEY));
+			persistMap.remove(TutorialWorkspaceResource.COMMENT_KEY);
+			delegatingMap.remove(TutorialWorkspaceResource.COMMENT_KEY);
+			loadedWorkspaces.remove(TutorialWorkspaceResource.COMMENT_KEY);
+
+			// Write all other workspace comments, skipping empty comment models by deleting any existing stores for them.
+			for (Map.Entry<String, PersistWorkspaceComments> entry : persistMap.entrySet()) {
+				String input = entry.getKey();
+				PersistWorkspaceComments comments = entry.getValue();
+				if (isEmpty(comments))
+					Files.deleteIfExists(getWorkspaceCommentsPath(input));
+				else
+					writeWorkspaceComments(input, comments);
+			}
 		} catch (Throwable t) {
 			logger.error("Failed to save comments", t);
 		}
@@ -417,13 +448,15 @@ public class CommentManager implements Service, CommentUpdateListener, CommentCo
 	 */
 	@Nonnull
 	public WorkspaceComments getOrCreateWorkspaceComments(@Nonnull Workspace workspace) {
+		// Try and load comments for the given workspace, if any exist.
+		loadComments(workspace);
 		WorkspaceComments comments = getWorkspaceComments(workspace);
 		if (comments == null) {
 			// No existing comments found, lets create them.
 			// - One entry for persistence
 			// - One entry for listener callbacks, delegating to the persist model
 			String input = CommentKey.workspaceInput(workspace);
-			PersistWorkspaceComments persistComments = persistMap.computeIfAbsent(input, i -> new PersistWorkspaceComments());
+			PersistWorkspaceComments persistComments = persistMap.computeIfAbsent(input, PersistWorkspaceComments::new);
 			DelegatingWorkspaceComments delegatingComments = newDelegatingWorkspaceComments(workspace, persistComments);
 			delegatingMap.put(input, delegatingComments);
 
@@ -442,6 +475,10 @@ public class CommentManager implements Service, CommentUpdateListener, CommentCo
 	 */
 	@Nullable
 	public WorkspaceComments getWorkspaceComments(@Nonnull Workspace workspace) {
+		// Try and load comments for the given workspace, if any exist.
+		loadComments(workspace);
+
+		// Check if a persistent comment model exists (validates there comments do exist for this workspace).
 		String input = CommentKey.workspaceInput(workspace);
 		PersistWorkspaceComments persistComments = persistMap.get(input);
 		if (persistComments == null)
@@ -470,8 +507,23 @@ public class CommentManager implements Service, CommentUpdateListener, CommentCo
 	 * {@code false} if no comments existed for the workspace.
 	 */
 	public boolean removeWorkspaceComments(@Nonnull Workspace workspace) {
+		// Ensure comments for the given workspace are loaded if they exist.
+		loadComments(workspace);
+
+		// Remove the persistent and delegate map entries,
+		// then log that this workspace has been checked for comments so we don't try to load them again.
 		String input = CommentKey.workspaceInput(workspace);
-		return persistMap.remove(input) != null || delegatingMap.remove(input) != null;
+		boolean removedPersist = persistMap.remove(input) != null;
+		boolean removedDelegate = delegatingMap.remove(input) != null;
+		loadedWorkspaces.add(input);
+
+		// Delete the comment store for the workspace.
+		try {
+			Files.deleteIfExists(getWorkspaceCommentsPath(input));
+		} catch (Throwable t) {
+			logger.error("Failed to delete comments for workspace '{}'", input, t);
+		}
+		return removedPersist || removedDelegate;
 	}
 
 	/**
@@ -524,6 +576,29 @@ public class CommentManager implements Service, CommentUpdateListener, CommentCo
 	}
 
 	@Nonnull
+	private Path getLegacyCommentsStore() {
+		return getCommentsDirectory().resolve("comments.json");
+	}
+
+	@Nonnull
+	private Path getWorkspaceCommentsDirectory() {
+		return getCommentsDirectory().resolve("workspaces");
+	}
+
+	@Nonnull
+	private Path getWorkspaceCommentsPath(@Nonnull String workspaceKey) {
+		return getWorkspaceCommentsDirectory().resolve(hashWorkspaceKey(workspaceKey) + ".json");
+	}
+
+	private void writeWorkspaceComments(@Nonnull String workspaceInput, @Nonnull PersistWorkspaceComments comments) throws Exception {
+		Gson gson = gsonProvider.getGson();
+		Path commentsDirectory = getWorkspaceCommentsDirectory();
+		if (!Files.isDirectory(commentsDirectory))
+			Files.createDirectories(commentsDirectory);
+		Files.writeString(getWorkspaceCommentsPath(workspaceInput), gson.toJson(comments));
+	}
+
+	@Nonnull
 	private DelegatingWorkspaceComments newDelegatingWorkspaceComments(@Nonnull Workspace workspace,
 	                                                                   @Nonnull PersistWorkspaceComments persistComments) {
 		DelegatingWorkspaceComments delegatingComments = new DelegatingWorkspaceComments(this, persistComments);
@@ -536,5 +611,22 @@ public class CommentManager implements Service, CommentUpdateListener, CommentCo
 		}
 
 		return delegatingComments;
+	}
+
+	private static boolean isEmpty(@Nonnull PersistWorkspaceComments workspaceComments) {
+		if (workspaceComments.classKeys().isEmpty())
+			return true;
+
+		for (ClassComments classComments : workspaceComments)
+			if (classComments.hasComments())
+				return false;
+
+		return true;
+	}
+
+	@Nonnull
+	private static String hashWorkspaceKey(@Nonnull String workspaceKey) {
+		// From CommentKey, the actual key value may not be path-safe, so we hash it to ensure it is.
+		return Hashing.sha256().hashString(workspaceKey, StandardCharsets.UTF_8).toString();
 	}
 }

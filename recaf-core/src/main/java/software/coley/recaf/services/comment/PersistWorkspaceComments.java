@@ -4,10 +4,12 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import software.coley.collections.Unchecked;
 import software.coley.recaf.path.ClassPathNode;
+import software.coley.recaf.workspace.model.Workspace;
 
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -17,6 +19,22 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class PersistWorkspaceComments implements WorkspaceComments {
 	private final Map<String, PersistClassComments> classCommentsMap = new ConcurrentHashMap<>();
+	private String workspaceKey;
+
+	public PersistWorkspaceComments(@Nonnull String workspaceKey) {
+		this.workspaceKey = workspaceKey;
+	}
+
+	/**
+	 * @return The {@link CommentKey#workspaceInput(Workspace)} key of the associated workspace.
+	 */
+	@Nonnull
+	public String getWorkspaceKey() {
+		// This value may be null from deserialization if migrated from an older version where this field was not present.
+		if (workspaceKey == null)
+			workspaceKey = "legacy-" + UUID.randomUUID();
+		return workspaceKey;
+	}
 
 	/**
 	 * @return Names of classes with comment containers.
@@ -64,5 +82,10 @@ public class PersistWorkspaceComments implements WorkspaceComments {
 	@Override
 	public int hashCode() {
 		return classCommentsMap.hashCode();
+	}
+
+	@Override
+	public String toString() {
+		return getWorkspaceKey() + " [" + classCommentsMap.size() + " classes]";
 	}
 }
