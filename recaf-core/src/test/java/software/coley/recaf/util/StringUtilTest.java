@@ -455,6 +455,10 @@ class StringUtilTest {
 			result = StringUtil.decodeString("\0\1\2\3".getBytes(StandardCharsets.UTF_8));
 			assertFalse(result.couldDecode(), "Should fail to decode control category chars");
 
+			// Whitespace controls only
+			result = StringUtil.decodeString("\t\t\t\r\t\t\t\t\t\n\t\t\t\t\t".getBytes(StandardCharsets.UTF_8));
+			assertTrue(result.couldDecode(), "Failed to decode tabs in UTF8 as text");
+
 			// Format category only
 			result = StringUtil.decodeString("\u00AD\u0600\u202E\uFFFA".getBytes(StandardCharsets.UTF_8));
 			assertFalse(result.couldDecode(), "Should fail to decode format category chars");

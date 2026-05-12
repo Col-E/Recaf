@@ -1112,7 +1112,7 @@ public class StringUtil {
 					char c = charArray[i];
 					int type = Character.getType(c);
 					boolean isTextChar = switch (type) {
-						case Character.CONTROL -> (c == '\n' || c == '\r');
+						case Character.CONTROL -> (c == '\n' || c == '\r' || c == '\t');
 						case Character.FORMAT -> EscapeUtil.isWhitespaceChar(c);
 						case Character.PRIVATE_USE, Character.SURROGATE, Character.UNASSIGNED -> false;
 						default -> true;
