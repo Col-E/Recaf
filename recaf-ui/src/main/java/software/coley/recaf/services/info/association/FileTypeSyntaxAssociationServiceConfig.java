@@ -42,6 +42,9 @@ public class FileTypeSyntaxAssociationServiceConfig extends BasicConfigContainer
 				new Pair<>("xml", "xml"),
 				new Pair<>("html", "xml"),
 				new Pair<>("svg", "xml"),
+				new Pair<>("ini", "ini"),
+				new Pair<>("mf", "ini"),
+				new Pair<>("properties", "ini"),
 				new Pair<>("enigma", "enigma")
 		));
 		addValue(new BasicMapConfigValue<>("extensions-to-langs", Map.class, String.class, String.class, extensionsToLangKeys));

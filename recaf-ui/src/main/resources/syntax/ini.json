@@ -1,0 +1,62 @@
+{
+  "name": "INI language",
+  "regex": "",
+  "classes": [],
+  "sub-rules": [
+    {
+      "name": "CommentLine",
+      "regex": "(?m)^[\\t ]*[;#!].*$",
+      "classes": [
+        "comment-line"
+      ],
+      "sub-rules": []
+    },
+    {
+      "name": "Section",
+      "regex": "(?m)^[\\t ]*\\[[^\\]\\r\\n]+\\]",
+      "classes": [
+        "section"
+      ],
+      "sub-rules": []
+    },
+    {
+      "name": "Assignment",
+      "regex": "(?m)^[\\t ]*[^:=\\r\\n#;!][^:=\\r\\n]*\\s*[:=].*$",
+      "classes": [],
+      "sub-rules": [
+        {
+          "name": "Key",
+          "regex": "^[\\t ]*[^:=\\r\\n]+?(?=\\s*[:=])",
+          "classes": [
+            "key"
+          ],
+          "sub-rules": []
+        },
+        {
+          "name": "Separator",
+          "regex": "[:=]",
+          "classes": [
+            "operator"
+          ],
+          "sub-rules": []
+        },
+        {
+          "name": "Constants",
+          "regex": "\\b(?:true|false|yes|no|on|off|null)\\b|\\b0(?:[xX][0-9a-fA-F]+|b[01]+|[0-7]+)\\b|\\b(?:[\\d_]+\\.\\d+|[\\d_]+)(?:[eE]-?[\\d_]+)?[fFdDlL]?\\b",
+          "classes": [
+            "constant"
+          ],
+          "sub-rules": []
+        },
+        {
+          "name": "Strings",
+          "regex": "(?:\\\"(?:[^\\n\"\\\\]|\\\\.)*?\\\")|(?:\\'(?:[^'\\n\\\\]|\\\\.)*?\\')",
+          "classes": [
+            "string"
+          ],
+          "sub-rules": []
+        }
+      ]
+    }
+  ]
+}

@@ -21,6 +21,7 @@ public class LanguageStylesheets {
 	private static final Map<String, String> NAME_TO_PATH = new HashMap<>();
 	private static final String SHEET_JAVA;
 	private static final String SHEET_JASM;
+	private static final String SHEET_INI;
 	private static final String SHEET_JSON;
 	private static final String SHEET_XML;
 	private static final String SHEET_ENIGMA;
@@ -32,6 +33,7 @@ public class LanguageStylesheets {
 	static {
 		SHEET_JAVA = addLanguage("/syntax/java.css");
 		SHEET_JASM = addLanguage("/syntax/jasm.css");
+		SHEET_INI = addLanguage("/syntax/ini.css");
 		SHEET_JSON = addLanguage("/syntax/json.css");
 		SHEET_XML = addLanguage("/syntax/xml.css");
 		SHEET_ENIGMA = addLanguage("/syntax/enigma.css");
@@ -107,6 +109,16 @@ public class LanguageStylesheets {
 	@Nonnull
 	public static String getJasmStylesheet() {
 		return SHEET_JASM;
+	}
+
+	/**
+	 * @return Stylesheet for INI.
+	 *
+	 * @see RegexLanguages#getIniLanguage()
+	 */
+	@Nonnull
+	public static String getIniStylesheet() {
+		return SHEET_INI;
 	}
 
 	/**

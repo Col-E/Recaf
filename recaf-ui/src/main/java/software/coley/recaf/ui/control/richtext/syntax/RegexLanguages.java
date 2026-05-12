@@ -32,6 +32,7 @@ public class RegexLanguages {
 	private static final Map<String, RegexRule> NAME_TO_LANG = new HashMap<>();
 	private static final RegexRule LANG_JAVA;
 	private static final RegexRule LANG_JASM;
+	private static final RegexRule LANG_INI;
 	private static final RegexRule LANG_JSON;
 	private static final RegexRule LANG_XML;
 	private static final RegexRule LANG_ENGIMA_MAP;
@@ -44,6 +45,7 @@ public class RegexLanguages {
 		try {
 			LANG_JAVA = addLanguage("/syntax/java.json");
 			LANG_JASM = addLanguage("/syntax/jasm.json");
+			LANG_INI = addLanguage("/syntax/ini.json");
 			LANG_JSON = addLanguage("/syntax/json.json");
 			LANG_XML = addLanguage("/syntax/xml.json");
 			LANG_ENGIMA_MAP = addLanguage("/syntax/enigma.json");
@@ -143,6 +145,16 @@ public class RegexLanguages {
 	@Nonnull
 	public static RegexRule getJasmLanguage() {
 		return LANG_JASM;
+	}
+
+	/**
+	 * @return Root rule for INI regex matching.
+	 *
+	 * @see LanguageStylesheets#getIniStylesheet()
+	 */
+	@Nonnull
+	public static RegexRule getIniLanguage() {
+		return LANG_INI;
 	}
 
 	/**

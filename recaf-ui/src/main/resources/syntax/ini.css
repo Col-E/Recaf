@@ -1,0 +1,21 @@
+.code-area .comment-line {
+    -fx-fill: rgb(105, 135, 215);
+}
+
+.code-area .section {
+    -fx-fill: rgb(0, 215, 215);
+}
+
+.code-area .key {
+    -fx-fill: rgb(90, 160, 220);
+}
+
+.code-area .operator {}
+
+.code-area .string {
+    -fx-fill: rgb(175, 215, 223);
+}
+
+.code-area .constant {
+    -fx-fill: rgb(125, 215, 215);
+}
