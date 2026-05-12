@@ -348,7 +348,6 @@ public abstract class ClassStubGenerator {
 		}
 	}
 
-
 	/**
 	 * @param code
 	 * 		Class code to append the inner classes to.
@@ -357,13 +356,22 @@ public abstract class ClassStubGenerator {
 	 * 		When the inner classes could not be stubbed out.
 	 */
 	protected void appendInnerClasses(@Nonnull StringBuilder code) throws ExpressionCompileException {
+		Set<String> visited = new HashSet<>();
 		for (InnerClassInfo innerClass : innerClasses) {
 			String innerClassName = innerClass.getInnerClassName();
-			if (!innerClassName.startsWith(className))
+
 				continue;
-			if (innerClassName.length() <= className.length())
+
+			// If the inner class's outer class name is not an exact match, skip it.
+			// We will recursively visit nested inner classes, so if we have:
+			//  A$B$C
+			// Then we don't want to put C as a direct inner of A.
+			// We want to make B an inner of A, and C an inner of B.
+			if (!className.equals(innerClass.getOuterClassName()))
 				continue;
-			if (!isSafeClassName(innerClassName.replace('/', '.').replace('$', '.')))
+
+			// Skip stubbing of inner classes with illegal names.
+			if (!isSafeClassName(cleanType(innerClassName)))
 				continue;
 			ClassPathNode innerClassPath = workspace.findClass(innerClassName);
 			if (innerClassPath != null) {
