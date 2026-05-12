@@ -272,6 +272,8 @@ public abstract class ClassStubGenerator {
 				code.append("private ");
 			if (method.hasStaticModifier())
 				code.append("static ");
+			else if (isInterface && !method.hasAbstractModifier() && !method.hasPrivateModifier())
+				code.append("default ");
 
 			// Method name. Consider edge case for constructors.
 			if (isCtor)
@@ -296,7 +298,12 @@ public abstract class ClassStubGenerator {
 				if (i < parameterCount - 1)
 					code.append(", ");
 			}
-			code.append(") { ");
+			code.append(')');
+			if (isInterface && method.hasAbstractModifier() && !method.hasStaticModifier() && !method.hasPrivateModifier()) {
+				code.append(";\n");
+				continue;
+			}
+			code.append(" { ");
 			if (isCtor) {
 				// If we know the parent type, we need to properly implement the constructor.
 				// If we don't know the parent type, we cannot generate a valid constructor.
