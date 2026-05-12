@@ -40,6 +40,7 @@ public class FileTypeSyntaxAssociationServiceConfig extends BasicConfigContainer
 				new Pair<>("java", "java"),
 				new Pair<>("jasm", "jasm"),
 				new Pair<>("xml", "xml"),
+				new Pair<>("cot", "xml"),
 				new Pair<>("html", "xml"),
 				new Pair<>("svg", "xml"),
 				new Pair<>("ini", "ini"),
