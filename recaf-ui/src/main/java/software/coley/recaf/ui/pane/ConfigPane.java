@@ -581,15 +581,19 @@ public class ConfigPane extends BorderPane implements ManagedConfigListener {
 			setHgap(5);
 			ColumnConstraints columnLabel = new ColumnConstraints();
 			ColumnConstraints columnEditor = new ColumnConstraints();
+			columnLabel.setMinWidth(Region.USE_PREF_SIZE);
+			columnEditor.setFillWidth(true);
 			columnEditor.setHgrow(Priority.ALWAYS);
 			getColumnConstraints().addAll(columnLabel, columnEditor);
 		}
 
 		@Nonnull
 		private static Label createTranslatedOrLiteralLabel(@Nonnull String translationKey, @Nonnull String fallback) {
-			return Lang.has(translationKey) ?
+			Label label = Lang.has(translationKey) ?
 					new BoundLabel(getBinding(translationKey)) :
 					new Label(fallback);
+			label.setMinWidth(Region.USE_PREF_SIZE);
+			return label;
 		}
 	}
 
