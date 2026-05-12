@@ -58,7 +58,7 @@ public class InnerClassStubGenerator extends ClassStubGenerator {
 		String localName = super.getLocalName();
 
 		// We just want "TheInner"
-		int innerSplit = localName.indexOf('$');
+		int innerSplit = localName.lastIndexOf('$');
 		if (innerSplit > 0)
 			localName = localName.substring(innerSplit + 1);
 
