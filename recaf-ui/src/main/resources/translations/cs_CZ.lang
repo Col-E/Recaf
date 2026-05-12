@@ -234,7 +234,7 @@ assembler.analysis.stack=Stack
 assembler.analysis.name-column=Jméno
 assembler.analysis.value-column=Hodnota
 assembler.playground.title=Java do bytecodu
-assembler.playground.comment=Zde můžete psát běžnou Javu a nechat si ji přeložit do bytecodu.
+assembler.playground.comment=// Zde můžete psát běžnou Javu a nechat si ji přeložit do bytecodu.
 assembler.variables.title=Proměnné
 assembler.variables.empty=<Vyžaduje alespoň jednu kompilaci>
 

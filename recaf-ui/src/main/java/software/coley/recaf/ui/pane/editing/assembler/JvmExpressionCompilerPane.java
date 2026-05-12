@@ -130,7 +130,7 @@ public class JvmExpressionCompilerPane extends AstBuildConsumerComponent {
 
 		// TODO: The comment should reflect what contexts are active
 		//  - Should query expression compiler for this info
-		String text = Lang.get("assembler.playground.comment").replace("\\n", "\n") + '\n';
+		String text = Lang.get("assembler.playground.comment") + '\n';
 
 		switch (type) {
 			case CLASS, FIELD -> text += "return;";
