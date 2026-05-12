@@ -1,4 +1,4 @@
-package software.coley.recaf.ui.pane.editing.assembler;
+package software.coley.recaf.util.assembler;
 
 import jakarta.annotation.Nonnull;
 import me.darknet.assembler.ast.ASTElement;
@@ -23,10 +23,12 @@ import java.util.stream.Stream;
  * 		Name of label.
  * @param usage
  * 		Usages of the label in the AST.
+ *
+ * @author Matt Coley
  */
-public record LabelData(@Nonnull String name, @Nonnull AstUsages usage,
-                        @Nonnull Int2IntMap linesOnLinesMap,
-                        @Nonnull IntBox lineSlot, @Nonnull Box<List<LabelData>> overlapping) {
+public record JasmLabelData(@Nonnull String name, @Nonnull JasmAstUsages usage,
+                            @Nonnull Int2IntMap linesOnLinesMap,
+                            @Nonnull IntBox lineSlot, @Nonnull Box<List<JasmLabelData>> overlapping) {
 	@Nonnull
 	public Range range() {
 		IntSummaryStatistics summary = usage.readersAndWriters()
@@ -53,11 +55,11 @@ public record LabelData(@Nonnull String name, @Nonnull AstUsages usage,
 		return usage.readersAndWriters().filter(i -> i.location().line() == line);
 	}
 
-	public List<LabelData> computeOverlapping(@Nonnull Collection<LabelData> labelDatum) {
+	public List<JasmLabelData> computeOverlapping(@Nonnull Collection<JasmLabelData> labelDatum) {
 		return overlapping.computeIfAbsent(() -> {
 			Range range = range();
-			List<LabelData> overlap = new ArrayList<>();
-			for (LabelData data : labelDatum) {
+			List<JasmLabelData> overlap = new ArrayList<>();
+			for (JasmLabelData data : labelDatum) {
 				// Skip self
 				if (name.equals(data.name)) continue;
 
@@ -108,7 +110,7 @@ public record LabelData(@Nonnull String name, @Nonnull AstUsages usage,
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
 
-		LabelData labelData = (LabelData) o;
+		JasmLabelData labelData = (JasmLabelData) o;
 
 		return name.equals(labelData.name);
 	}

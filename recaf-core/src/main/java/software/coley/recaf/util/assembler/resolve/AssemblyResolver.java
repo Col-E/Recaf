@@ -1,18 +1,22 @@
-package software.coley.recaf.ui.pane.editing.assembler.resolve;
+package software.coley.recaf.util.assembler.resolve;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import me.darknet.assembler.ast.ASTElement;
+import me.darknet.assembler.ast.primitive.ASTArray;
 import me.darknet.assembler.ast.primitive.ASTIdentifier;
 import me.darknet.assembler.ast.primitive.ASTInstruction;
 import me.darknet.assembler.ast.primitive.ASTLabel;
+import me.darknet.assembler.ast.primitive.ASTObject;
 import me.darknet.assembler.ast.specific.ASTAnnotation;
 import me.darknet.assembler.ast.specific.ASTClass;
 import me.darknet.assembler.ast.specific.ASTException;
 import me.darknet.assembler.ast.specific.ASTField;
 import me.darknet.assembler.ast.specific.ASTInner;
 import me.darknet.assembler.ast.specific.ASTMethod;
+import me.darknet.assembler.util.ElementMap;
 import me.darknet.assembler.util.Range;
+import software.coley.recaf.util.assembler.JasmUtils;
 
 import java.util.List;
 
@@ -108,15 +112,10 @@ public class AssemblyResolver {
 					if (selectedInstruction instanceof ASTLabel label)
 						return new LabelDeclarationResolution(parentClassDec, method, label);
 					else if (selectedInstruction != null) {
-						// TODO: Some instructions may reference labels, and we'll want to support those cases here
-						//  - jumps
-						//  - switch
-
-						// TODO: Some instructions may reference variables as well
-
-						// TODO: Some instructions may have type references, method handles, etc
-
 						ASTInstruction insn = (ASTInstruction) selectedInstruction;
+						AssemblyResolution insnResolution = resolveInstructionSelection(position, parentClassDec, method, insn);
+						if (insnResolution != null)
+							return insnResolution;
 						return new InstructionResolution(parentClassDec, method, insn);
 					}
 
@@ -158,6 +157,83 @@ public class AssemblyResolver {
 			}
 		}
 		return null;
+	}
+
+	@Nullable
+	private static AssemblyResolution resolveInstructionSelection(int position, @Nullable ASTClass parentClassDec,
+	                                                             @Nonnull ASTMethod method, @Nonnull ASTInstruction instruction) {
+		ASTElement selected = instruction.pick(position);
+		if (!(selected instanceof ASTIdentifier identifier))
+			return null;
+
+		if (isLabelReference(instruction, identifier))
+			return new LabelReferenceResolution(parentClassDec, method, identifier);
+		if (isVariableReference(instruction, identifier))
+			return new VariableDeclarationResolution(parentClassDec, method, identifier);
+		if (isTypeReference(instruction, identifier))
+			return new TypeReferenceResolution(parentClassDec, method, identifier);
+
+		return null;
+	}
+
+	private static boolean isLabelReference(@Nonnull ASTInstruction instruction, @Nonnull ASTIdentifier selected) {
+		String name = instruction.identifier().content();
+		if (name == null)
+			return false;
+		if (JasmUtils.isFlowControlInstruction(name))
+			return isMatchingIdentifierArgument(instruction, 0, selected);
+		if ("tableswitch".equals(name))
+			return isTableSwitchLabelReference(instruction, selected);
+		if ("lookupswitch".equals(name))
+			return isLookupSwitchLabelReference(instruction, selected);
+		return false;
+	}
+
+	private static boolean isVariableReference(@Nonnull ASTInstruction instruction, @Nonnull ASTIdentifier selected) {
+		String name = instruction.identifier().content();
+		return JasmUtils.isVariableReferenceInstruction(name) && isMatchingIdentifierArgument(instruction, 0, selected);
+	}
+
+	private static boolean isTypeReference(@Nonnull ASTInstruction instruction, @Nonnull ASTIdentifier selected) {
+		String name = instruction.identifier().content();
+		return JasmUtils.isTypeReferenceInstruction(name) && isMatchingIdentifierArgument(instruction, 0, selected);
+	}
+
+	private static boolean isTableSwitchLabelReference(@Nonnull ASTInstruction instruction, @Nonnull ASTIdentifier selected) {
+		if (instruction.arguments().isEmpty() || !(instruction.arguments().getFirst() instanceof ASTObject switchObj))
+			return false;
+
+		ASTElement defaultCase = switchObj.value("default");
+		if (selected == defaultCase)
+			return true;
+
+		ASTArray cases = switchObj.value("cases");
+		return cases != null && cases.values().contains(selected);
+	}
+
+	private static boolean isLookupSwitchLabelReference(@Nonnull ASTInstruction instruction, @Nonnull ASTIdentifier selected) {
+		if (instruction.arguments().isEmpty() || !(instruction.arguments().getFirst() instanceof ASTObject switchObj))
+			return false;
+
+		ASTElement defaultCase = switchObj.value("default");
+		if (selected == defaultCase)
+			return true;
+
+		ElementMap<ASTIdentifier, ASTElement> values = switchObj.values();
+		for (int i = 0; i < values.size(); i++) {
+			ASTIdentifier key = values.key(i);
+			if ("default".equals(key.content()))
+				continue;
+			if (selected == values.get(i))
+				return true;
+		}
+		return false;
+	}
+
+	private static boolean isMatchingIdentifierArgument(@Nonnull ASTInstruction instruction, int argumentIndex,
+	                                                    @Nonnull ASTIdentifier selected) {
+		List<ASTElement> arguments = instruction.arguments();
+		return arguments.size() > argumentIndex && arguments.get(argumentIndex) == selected;
 	}
 
 	@Nullable

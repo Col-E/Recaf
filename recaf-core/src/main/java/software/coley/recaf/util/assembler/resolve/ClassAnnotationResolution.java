@@ -1,4 +1,4 @@
-package software.coley.recaf.ui.pane.editing.assembler.resolve;
+package software.coley.recaf.util.assembler.resolve;
 
 import jakarta.annotation.Nonnull;
 import me.darknet.assembler.ast.specific.ASTAnnotation;

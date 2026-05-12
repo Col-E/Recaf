@@ -17,13 +17,8 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.util.Duration;
 import me.darknet.assembler.ast.ASTElement;
-import me.darknet.assembler.ast.primitive.ASTArray;
-import me.darknet.assembler.ast.primitive.ASTCode;
 import me.darknet.assembler.ast.primitive.ASTInstruction;
 import me.darknet.assembler.ast.primitive.ASTLabel;
-import me.darknet.assembler.ast.primitive.ASTObject;
-import me.darknet.assembler.ast.specific.ASTClass;
-import me.darknet.assembler.ast.specific.ASTMethod;
 import me.darknet.assembler.util.Location;
 import org.reactfx.Change;
 import org.slf4j.Logger;
@@ -43,20 +38,19 @@ import software.coley.recaf.ui.control.richtext.linegraphics.AbstractTextBoundLi
 import software.coley.recaf.ui.control.richtext.linegraphics.LineContainer;
 import software.coley.recaf.util.Colors;
 import software.coley.recaf.util.FxThreadUtil;
+import software.coley.recaf.util.assembler.JasmAstUsages;
+import software.coley.recaf.util.assembler.JasmLabelData;
+import software.coley.recaf.util.assembler.JasmUtils;
 import software.coley.recaf.util.collect.primitive.Int2IntMap;
 import software.coley.recaf.util.threading.ThreadUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /**
@@ -67,16 +61,13 @@ import java.util.function.Consumer;
 @Dependent
 public class ControlFlowLines extends AstBuildConsumerComponent {
 	private static final Logger logger = Logging.get(ControlFlowLines.class);
-	private static final Set<String> FLOW_INSN_SET = Set.of("goto", "ifnull", "ifnonnull", "ifeq", "ifne", "ifle", "ifge", "iflt", "ifgt",
-			"if_acmpeq", "if_acmpne", "if_icmpeq", "if_icmpge", "if_icmpgt", "if_icmple", "if_icmplt", "if_icmpne", "jsr");
-	private static final Set<String> SWITCH_INSNS = Set.of("tableswitch", "lookupswitch");
 	private final Consumer<Change<Integer>> onCaretMove = this::onCaretMove;
 	private final ObservableObject<ASTInstruction> currentInstructionSelection = new ObservableObject<>(null);
 	private final ObservableBoolean drawLines = new ObservableBoolean(false);
 	private final ControlFlowLineFactory arrowFactory = new ControlFlowLineFactory();
 	private final ControlFlowLinesConfig config;
 	private final ListenerHost redrawListener = new ListenerHost();
-	private List<LabelData> model = Collections.emptyList();
+	private List<JasmLabelData> model = Collections.emptyList();
 
 	@Inject
 	public ControlFlowLines(@Nonnull ControlFlowLinesConfig config) {
@@ -138,7 +129,7 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 	@Override
 	protected void onPipelineOutputUpdate() {
 		// Keep a reference to the old model.
-		List<LabelData> oldModel = model;
+		List<JasmLabelData> oldModel = model;
 
 		// Update the model.
 		updateModel();
@@ -146,7 +137,7 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 		// If the model has changed, refresh the visible paragraph graphics.
 		// This can mean a new label as added, new reference to one, etc.
 		// This could result in new line shapes, so redrawing them all is wise.
-		List<LabelData> newModel = model;
+		List<JasmLabelData> newModel = model;
 		Editor editor = this.editor;
 		if (editor != null && !Objects.equals(oldModel, newModel))
 			FxThreadUtil.run(editor::redrawParagraphGraphics);
@@ -173,7 +164,7 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 				} else if (current != null) {
 					String insnName = current.identifier().content();
 					List<ASTElement> arguments = current.arguments();
-					if (!arguments.isEmpty() && FLOW_INSN_SET.contains(insnName) || SWITCH_INSNS.contains(insnName)) {
+					if ((!arguments.isEmpty() && JasmUtils.isFlowControlInstruction(insnName)) || JasmUtils.isSwitchInstruction(insnName)) {
 						hasSelection = true;
 					}
 				}
@@ -191,28 +182,7 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 		try {
 			int pos = editor.getCodeArea().getCaretPosition();
 			int line = editor.getCodeArea().getCurrentParagraph() + 1;
-			for (ASTElement element : astElements) {
-				if (element == null)
-					continue;
-				if (element.range().within(pos)) {
-					element.walk(ast -> {
-						if (ast instanceof ASTInstruction instruction) {
-							Location location = ast.location();
-							if (location != null && location.line() == line)
-								selected.set(instruction);
-							else {
-								String identifier = instruction.identifier().content();
-								if (("tableswitch".equals(identifier)
-										|| "lookupswitch".equals(identifier))
-										&& ast.range().within(pos)) {
-									selected.set(instruction);
-								}
-							}
-						}
-						return !selected.isSet();
-					});
-				}
-			}
+			selected.set(JasmUtils.findInstruction(astElements, pos, line));
 		} catch (Throwable t) {
 			logger.warn("Error finding selected AST element", t);
 		}
@@ -227,20 +197,20 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 		}
 
 		// Collect all label usage information from the AST.
-		Map<String, AstUsages> labelUsages = collectLabelReferences();
+		Map<String, JasmAstUsages> labelUsages = JasmUtils.collectLabelUsages(astElements, currentMethod.getName(), currentMethod.getDescriptor());
 		model = labelUsages.entrySet().stream()
 				.filter(e -> !e.getValue().readers().isEmpty()) // Must have a label declaration
-				.map(e -> new LabelData(e.getKey(), e.getValue(), new Int2IntMap(), new IntBox(-1), new Box<>()))
-				.sorted(Comparator.comparing(LabelData::name))
+				.map(e -> new JasmLabelData(e.getKey(), e.getValue(), new Int2IntMap(), new IntBox(-1), new Box<>()))
+				.sorted(Comparator.comparing(JasmLabelData::name))
 				.toList();
 		model.forEach(data -> {
-			List<LabelData> overlapping = data.computeOverlapping(model);
+			List<JasmLabelData> overlapping = data.computeOverlapping(model);
 			IntBox slot = data.lineSlot();
 			int slotIndex = 0;
 			while (true) {
 				incr:
 				{
-					for (LabelData d : overlapping) {
+					for (JasmLabelData d : overlapping) {
 						if (slotIndex == d.lineSlot().get()) {
 							slotIndex++;
 							break incr;
@@ -253,83 +223,13 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 		});
 	}
 
-	@Nonnull
-	private Map<String, AstUsages> collectLabelReferences() {
-		AstUsages emptyUsage = AstUsages.EMPTY_USAGE;
-		Map<String, List<ASTElement>> labelReads = new HashMap<>();
-		Map<String, List<ASTElement>> labelWrites = new HashMap<>();
-		BiConsumer<String, ASTElement> readUpdater = (name, element) -> labelReads.computeIfAbsent(name, n -> new ArrayList<>()).add(element);
-		BiConsumer<String, ASTElement> writeUpdater = (name, element) -> labelWrites.computeIfAbsent(name, n -> new ArrayList<>()).add(element);
-		if (astElements != null) {
-			Consumer<ASTMethod> methodConsumer = astMethod -> {
-				if (currentMethod != null && !Objects.equals(currentMethod.getName(), astMethod.getName().literal()))
-					return;
-				ASTCode code = astMethod.code();
-				if (code == null)
-					return;
-				for (ASTInstruction instruction : code.instructions()) {
-					if (instruction instanceof ASTLabel label) {
-						readUpdater.accept(label.identifier().content(), label);
-					} else {
-						String insnName = instruction.identifier().content();
-						List<ASTElement> arguments = instruction.arguments();
-						if (!arguments.isEmpty()) {
-							if (FLOW_INSN_SET.contains(insnName)) {
-								writeUpdater.accept(arguments.getLast().content(), instruction);
-							} else if ("tableswitch".equals(insnName)) {
-								if (!instruction.arguments().isEmpty() && instruction.arguments().getFirst() instanceof ASTObject switchObj) {
-									ASTArray cases = switchObj.value("cases");
-									ASTElement defaultCase = switchObj.value("default");
-									cases.values().forEach(caseAst -> writeUpdater.accept(caseAst.content(), caseAst));
-									writeUpdater.accept(defaultCase.content(), defaultCase);
-								}
-							} else if ("lookupswitch".equals(insnName)) {
-								if (!instruction.arguments().isEmpty() && instruction.arguments().getFirst() instanceof ASTObject switchObj) {
-									ASTElement defaultCase = switchObj.value("default");
-									writeUpdater.accept(defaultCase.content(), defaultCase);
-									switchObj.values().pairs().forEach(pair -> {
-										writeUpdater.accept(pair.second().content(), pair.first());
-									});
-								}
-							}
-						}
-					}
-				}
-			};
-			for (ASTElement astElement : astElements) {
-				if (astElement instanceof ASTMethod astMethod) {
-					methodConsumer.accept(astMethod);
-				} else if (astElement instanceof ASTClass astClass) {
-					for (ASTElement child : astClass.children()) {
-						if (child instanceof ASTMethod astMethod) {
-							methodConsumer.accept(astMethod);
-						}
-					}
-				}
-			}
-		}
-		Set<String> keys = new HashSet<>();
-		keys.addAll(labelReads.keySet());
-		keys.addAll(labelWrites.keySet());
-		Map<String, AstUsages> labelUsages = new HashMap<>();
-		for (String key : keys) {
-			List<ASTElement> reads = labelReads.get(key);
-			List<ASTElement> writes = labelWrites.get(key);
-			labelUsages.put(key, new AstUsages(
-					Objects.requireNonNullElse(reads, Collections.emptyList()),
-					Objects.requireNonNullElse(writes, Collections.emptyList()),
-					false));
-		}
-		return labelUsages;
-	}
-
 	private void clearData() {
 		model = Collections.emptyList();
 		currentMethod = null;
 	}
 
 	/**
-	 * Highlighter which shows read and write access of a {@link LabelData}.
+	 * Highlighter which shows read and write access of a {@link JasmLabelData}.
 	 */
 	private class ControlFlowLineFactory extends AbstractTextBoundLineGraphicFactory {
 		private static final int MASK_NORTH = 1;
@@ -351,7 +251,7 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 
 		@Override
 		public void apply(@Nonnull LineContainer container, int paragraph) {
-			List<LabelData> localModel = model;
+			List<JasmLabelData> localModel = model;
 
 			if (!drawLines.getValue() || localModel.isEmpty()) {
 				container.addHorizontal(new Spacer(0));
@@ -363,14 +263,14 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 
 		@Override
 		public void apply(@Nonnull StackPane container, int paragraph) {
-			List<LabelData> localModel = model;
+			List<JasmLabelData> localModel = model;
 
 			double indent = editor.computeWhitespacePrefixWidth(paragraph) - 3 /* padding so lines aren't right up against text */;
 			double width = containerWidth + Math.min(100, indent); // Limit dimensions of canvas
 			double height = containerHeight + 2;
 
 			PixelCanvas canvas = null;
-			for (LabelData labelData : localModel) {
+			for (JasmLabelData labelData : localModel) {
 				// Skip if there are no references to the current label.
 				List<ASTElement> labelReferrers = labelData.usage().writers();
 				if (labelReferrers.isEmpty()) continue;
@@ -384,7 +284,7 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 					if (value == null) {
 						// No current selection?  We can skip everything. Just return.
 						return;
-					} else if (SWITCH_INSNS.contains(value.identifier().literal())) {
+					} else if (JasmUtils.isSwitchInstruction(value.identifier().literal())) {
 						// If the selected item is a switch we want to draw all the lines to all destinations.
 						//
 						// The label data writers will be targeting the label identifier children in the AST

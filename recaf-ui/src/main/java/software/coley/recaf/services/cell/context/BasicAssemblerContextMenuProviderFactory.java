@@ -1,9 +1,12 @@
 package software.coley.recaf.services.cell.context;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import javafx.scene.control.ContextMenu;
+import javafx.scene.control.Menu;
+import me.darknet.assembler.ast.ASTElement;
 import me.darknet.assembler.ast.primitive.ASTIdentifier;
 import me.darknet.assembler.ast.primitive.ASTInstruction;
 import me.darknet.assembler.ast.primitive.ASTLabel;
@@ -16,6 +19,7 @@ import org.slf4j.Logger;
 import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.ClassInfo;
+import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.path.AssemblerPathData;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.IncompletePathException;
@@ -23,24 +27,28 @@ import software.coley.recaf.services.cell.icon.IconProviderService;
 import software.coley.recaf.services.cell.text.TextProviderService;
 import software.coley.recaf.services.navigation.Actions;
 import software.coley.recaf.ui.control.ActionMenuItem;
+import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.control.richtext.Editor;
-import software.coley.recaf.ui.pane.editing.assembler.resolve.AssemblyResolution;
-import software.coley.recaf.ui.pane.editing.assembler.resolve.ClassAnnotationResolution;
-import software.coley.recaf.ui.pane.editing.assembler.resolve.ClassExtends;
-import software.coley.recaf.ui.pane.editing.assembler.resolve.ClassImplements;
-import software.coley.recaf.ui.pane.editing.assembler.resolve.FieldAnnotationResolution;
-import software.coley.recaf.ui.pane.editing.assembler.resolve.FieldResolution;
-import software.coley.recaf.ui.pane.editing.assembler.resolve.IndependentAnnotationResolution;
-import software.coley.recaf.ui.pane.editing.assembler.resolve.InnerClassResolution;
-import software.coley.recaf.ui.pane.editing.assembler.resolve.InstructionResolution;
-import software.coley.recaf.ui.pane.editing.assembler.resolve.LabelDeclarationResolution;
-import software.coley.recaf.ui.pane.editing.assembler.resolve.LabelReferenceResolution;
-import software.coley.recaf.ui.pane.editing.assembler.resolve.MethodAnnotationResolution;
-import software.coley.recaf.ui.pane.editing.assembler.resolve.MethodResolution;
-import software.coley.recaf.ui.pane.editing.assembler.resolve.TypeReferenceResolution;
-import software.coley.recaf.ui.pane.editing.assembler.resolve.VariableDeclarationResolution;
+import software.coley.recaf.util.assembler.resolve.AssemblyResolution;
+import software.coley.recaf.util.assembler.resolve.ClassAnnotationResolution;
+import software.coley.recaf.util.assembler.resolve.ClassExtends;
+import software.coley.recaf.util.assembler.resolve.ClassImplements;
+import software.coley.recaf.util.assembler.resolve.FieldAnnotationResolution;
+import software.coley.recaf.util.assembler.resolve.FieldResolution;
+import software.coley.recaf.util.assembler.resolve.IndependentAnnotationResolution;
+import software.coley.recaf.util.assembler.resolve.InnerClassResolution;
+import software.coley.recaf.util.assembler.resolve.InstructionResolution;
+import software.coley.recaf.util.assembler.resolve.LabelDeclarationResolution;
+import software.coley.recaf.util.assembler.resolve.LabelReferenceResolution;
+import software.coley.recaf.util.assembler.resolve.MethodAnnotationResolution;
+import software.coley.recaf.util.assembler.resolve.MethodResolution;
+import software.coley.recaf.util.assembler.resolve.TypeReferenceResolution;
+import software.coley.recaf.util.assembler.resolve.VariableDeclarationResolution;
+import software.coley.recaf.util.assembler.JasmUtils;
+import software.coley.recaf.util.SVG;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.ClassBundle;
+import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.util.IdentityHashMap;
@@ -49,9 +57,12 @@ import java.util.Map;
 import java.util.Objects;
 
 import static org.kordamp.ikonli.carbonicons.CarbonIcons.ARROW_RIGHT;
+import static org.kordamp.ikonli.carbonicons.CarbonIcons.HEALTH_CROSS;
+import static org.kordamp.ikonli.carbonicons.CarbonIcons.LIST_BOXES;
 import static org.objectweb.asm.Opcodes.*;
 import static software.coley.collections.Unchecked.runnable;
 import static software.coley.recaf.util.Menus.action;
+import static software.coley.recaf.util.Menus.menu;
 
 /**
  * Basic implementation for {@link AssemblerContextMenuProviderFactory}.
@@ -106,33 +117,49 @@ public class BasicAssemblerContextMenuProviderFactory extends AbstractContextMen
 	static {
 		register(ClassImplements.class, (provider, menu, editor, workspace, resolution) -> {
 			ClassPathNode classPath = workspace.findClass(resolution.implemented().literal());
-			ActionMenuItem action = action("menu.goto.class", ARROW_RIGHT, () -> {
+			ActionMenuItem gotoAction = action("menu.goto.class", ARROW_RIGHT, () -> {
 				try {
 					provider.actions.gotoDeclaration(Objects.requireNonNull(classPath));
 				} catch (IncompletePathException ex) {
 					logger.error("Cannot go to class due to incomplete path", ex);
 				}
 			});
-			if (classPath == null) action.setDisable(true);
-			menu.getItems().add(action);
-
-			// TODO:
-			//  - Implement methods (for methods not already present in the ASTClass)
+			ActionMenuItem overrideAction = action("menu.edit.override.method", HEALTH_CROSS, () -> {
+				if (classPath == null)
+					return;
+				WorkspaceResource resource = classPath.getValueOfType(WorkspaceResource.class);
+				JvmClassBundle bundle = classPath.getValueOfType(JvmClassBundle.class);
+				JvmClassInfo cls = classPath.getValue().asJvmClass();
+				provider.actions.overrideClassMethod(workspace, resource, bundle, cls);
+			});
+			if (classPath == null) {
+				gotoAction.setDisable(true);
+				overrideAction.setDisable(true);
+			}
+			menu.getItems().addAll(gotoAction, overrideAction);
 		});
 		register(ClassExtends.class, (provider, menu, editor, workspace, resolution) -> {
 			ClassPathNode classPath = workspace.findClass(resolution.superName().literal());
-			ActionMenuItem action = action("menu.goto.class", ARROW_RIGHT, () -> {
+			ActionMenuItem gotoAction = action("menu.goto.class", ARROW_RIGHT, () -> {
 				try {
 					provider.actions.gotoDeclaration(Objects.requireNonNull(classPath));
 				} catch (IncompletePathException ex) {
 					logger.error("Cannot go to class due to incomplete path", ex);
 				}
 			});
-			if (classPath == null) action.setDisable(true);
-			menu.getItems().add(action);
-
-			// TODO:
-			//  - Override methods (for methods not already present in the ASTClass)
+			ActionMenuItem overrideAction = action("menu.edit.override.method", HEALTH_CROSS, () -> {
+				if (classPath == null)
+					return;
+				WorkspaceResource resource = classPath.getValueOfType(WorkspaceResource.class);
+				JvmClassBundle bundle = classPath.getValueOfType(JvmClassBundle.class);
+				JvmClassInfo cls = classPath.getValue().asJvmClass();
+				provider.actions.overrideClassMethod(workspace, resource, bundle, cls);
+			});
+			if (classPath == null) {
+				gotoAction.setDisable(true);
+				overrideAction.setDisable(true);
+			}
+			menu.getItems().addAll(gotoAction, overrideAction);
 		});
 		register(ClassAnnotationResolution.class, (provider, menu, editor, workspace, resolution) -> {
 			// No items
@@ -189,12 +216,38 @@ public class BasicAssemblerContextMenuProviderFactory extends AbstractContextMen
 			}
 		});
 		register(VariableDeclarationResolution.class, (provider, menu, editor, workspace, resolution) -> {
-			// TODO:
-			//  - Goto usage(s)
+			List<UsageTarget> usages = JasmUtils.collectVariableReferences(resolution.method(), resolution.variableName().literal()).stream()
+					.map(reference -> new UsageTarget(
+							formatUsageDescription(reference.element(), switch (reference.kind()) {
+								case READ -> "read";
+								case WRITE -> "write";
+								case INCREMENT -> "increment";
+							}),
+							reference.element(),
+							switch (reference.kind()) {
+								case READ -> SVG.REF_READ;
+								case WRITE, INCREMENT -> SVG.REF_WRITE;
+							}
+					))
+					.toList();
+			addUsageMenu(menu, editor, usages);
 		});
 		register(LabelDeclarationResolution.class, (provider, menu, editor, workspace, resolution) -> {
-			// TODO:
-			//  - Goto usage(s)
+			List<UsageTarget> usages = JasmUtils.collectLabelReferences(resolution.method(), resolution.label().identifier().literal()).stream()
+					.map(reference -> new UsageTarget(
+							formatUsageDescription(reference.element(), switch (reference.kind()) {
+								case FLOW -> Objects.requireNonNullElse(reference.context(), "flow");
+								case SWITCH_DEFAULT -> "default";
+								case SWITCH_CASE -> "case " + reference.context();
+								case TRY_START -> "try start";
+								case TRY_END -> "try end";
+								case HANDLER -> "handler";
+							}),
+							reference.element(),
+							null
+					))
+					.toList();
+			addUsageMenu(menu, editor, usages);
 		});
 		register(LabelReferenceResolution.class, (provider, menu, editor, workspace, resolution) -> {
 			String target = resolution.labelName().content();
@@ -218,18 +271,46 @@ public class BasicAssemblerContextMenuProviderFactory extends AbstractContextMen
 		});
 	}
 
-	private static void gotoLabelDeclaration(@Nonnull ASTMethod method, @Nonnull CodeArea area, @Nonnull String target) {
-		List<ASTInstruction> instructions = method.code().instructions();
-		for (ASTInstruction instruction : instructions) {
-			if (instruction instanceof ASTLabel label && Objects.equals(label.identifier().content(), target)) {
-				Range range = Objects.requireNonNull(label.range());
-				Location location = Objects.requireNonNull(label.location());
-				area.selectRange(range.start(), range.end());
-				area.showParagraphAtCenter(location.line());
-				break;
-			}
+	private static void addUsageMenu(@Nonnull ContextMenu menu, @Nonnull Editor editor, @Nonnull List<UsageTarget> usages) {
+		if (usages.isEmpty())
+			return;
+
+		Menu usageMenu = menu("assembler.variables.usage", LIST_BOXES);
+		CodeArea area = editor.getCodeArea();
+		for (UsageTarget usage : usages) {
+			usageMenu.getItems().add(new ActionMenuItem(
+					usage.description(),
+					usage.iconPath() == null ? new FontIconView(ARROW_RIGHT) : SVG.ofIconFile(usage.iconPath()),
+					() -> gotoAstElement(area, usage.element())
+			));
 		}
+		menu.getItems().add(usageMenu);
 	}
+
+	@Nonnull
+	private static String formatUsageDescription(@Nonnull ASTElement element, @Nonnull String context) {
+		Location location = element.location();
+		if (location == null)
+			return context;
+		return "Line %d (%s)".formatted(location.line(), context);
+	}
+
+	private static void gotoAstElement(@Nonnull CodeArea area, @Nonnull ASTElement element) {
+		Range range = element.range();
+		Location location = element.location();
+		if (location == null)
+			return;
+		area.selectRange(range.start(), range.end());
+		area.showParagraphAtCenter(location.line());
+	}
+
+	private static void gotoLabelDeclaration(@Nonnull ASTMethod method, @Nonnull CodeArea area, @Nonnull String target) {
+		ASTLabel label = JasmUtils.getLabelDeclaration(method, target);
+		if (label != null)
+			gotoAstElement(area, label);
+	}
+
+	private record UsageTarget(@Nonnull String description, @Nonnull ASTElement element, @Nullable String iconPath) {}
 
 	/**
 	 * @param <R>

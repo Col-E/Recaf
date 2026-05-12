@@ -2,6 +2,7 @@ package software.coley.recaf.test;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import me.darknet.assembler.ast.ASTElement;
 import me.darknet.assembler.compile.JavaClassRepresentation;
 import me.darknet.assembler.compile.visitor.JavaCompileResult;
 import me.darknet.assembler.error.Error;
@@ -35,6 +36,7 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResourceBuilder;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -176,12 +178,7 @@ public class CompilerTestBase extends TestBase {
 
 	@Nonnull
 	protected JvmClassInfo assemble(@Nonnull String body, boolean isFullBody) {
-		String assembly = isFullBody ? body : """
-				.super java/lang/Object
-				.class public super %NAME% {
-				%CODE%
-				}
-				""".replace("%NAME%", CLASS_NAME).replace("%CODE%", body);
+		String assembly = fillAssemblyTemplate(body, isFullBody);
 		WorkspaceResource resource = workspace.getPrimaryResource();
 		JvmClassBundle bundle = resource.getJvmClassBundle();
 		ClassPathNode path = PathNodes.classPath(workspace, resource, bundle, new StubClassInfo(CLASS_NAME).asJvmClass());
@@ -196,5 +193,29 @@ public class CompilerTestBase extends TestBase {
 		JvmClassInfo cls = new JvmClassInfoBuilder(representation.classFile()).build();
 		bundle.put(cls);
 		return cls;
+	}
+
+	@Nonnull
+	protected List<ASTElement> assembleAst(@Nonnull String body, boolean isFullBody) {
+		String assembly = fillAssemblyTemplate(body, isFullBody);
+		WorkspaceResource resource = workspace.getPrimaryResource();
+		JvmClassBundle bundle = resource.getJvmClassBundle();
+		ClassPathNode path = PathNodes.classPath(workspace, resource, bundle, new StubClassInfo(CLASS_NAME).asJvmClass());
+		Result<List<ASTElement>> result = assembler.tokenize(assembly, "<assembly>")
+				.flatMap(assembler::roughParse)
+				.flatMap(assembler::concreteParse);
+		if (!result.isOk())
+			fail("Errors parsing test input:\n - " + result.errors().stream().map(Error::toString).collect(Collectors.joining("\n - ")));
+		return result.get();
+	}
+
+	@Nonnull
+	private static String fillAssemblyTemplate(@Nonnull String body, boolean isFullBody) {
+		return isFullBody ? body : """
+				.super java/lang/Object
+				.class public super %NAME% {
+				%CODE%
+				}
+				""".replace("%NAME%", CLASS_NAME).replace("%CODE%", body);
 	}
 }

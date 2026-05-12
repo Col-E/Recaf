@@ -2,7 +2,7 @@ package software.coley.recaf.path;
 
 import jakarta.annotation.Nonnull;
 import software.coley.recaf.ui.control.richtext.Editor;
-import software.coley.recaf.ui.pane.editing.assembler.resolve.AssemblyResolution;
+import software.coley.recaf.util.assembler.resolve.AssemblyResolution;
 
 /**
  * Wrapper for data associated with an assembler.

@@ -1,4 +1,4 @@
-package software.coley.recaf.ui.pane.editing.assembler;
+package software.coley.recaf.util.assembler;
 
 import jakarta.annotation.Nonnull;
 import me.darknet.assembler.ast.ASTElement;
@@ -17,12 +17,14 @@ import java.util.stream.Stream;
  * 		Elements that write to the target item.
  * @param isParameter
  *        {@code true} when this variable is defined as a method parameter.
+ *
+ * @author Matt Coley
  */
-public record AstUsages(@Nonnull List<ASTElement> readers, @Nonnull List<ASTElement> writers, boolean isParameter) {
+public record JasmAstUsages(@Nonnull List<ASTElement> readers, @Nonnull List<ASTElement> writers, boolean isParameter) {
 	/**
 	 * Empty usage.
 	 */
-	public static final AstUsages EMPTY_USAGE = new AstUsages(Collections.emptyList(), Collections.emptyList(), false);
+	public static final JasmAstUsages EMPTY_USAGE = new JasmAstUsages(Collections.emptyList(), Collections.emptyList(), false);
 
 	/**
 	 * @return Stream of both readers and writers.
@@ -39,10 +41,10 @@ public record AstUsages(@Nonnull List<ASTElement> readers, @Nonnull List<ASTElem
 	 * @return Copy with added element.
 	 */
 	@Nonnull
-	public AstUsages withNewRead(@Nonnull ASTElement element) {
+	public JasmAstUsages withNewRead(@Nonnull ASTElement element) {
 		List<ASTElement> newReaders = new ArrayList<>(readers);
 		newReaders.add(element);
-		return new AstUsages(newReaders, writers, isParameter);
+		return new JasmAstUsages(newReaders, writers, isParameter);
 	}
 
 	/**
@@ -52,17 +54,17 @@ public record AstUsages(@Nonnull List<ASTElement> readers, @Nonnull List<ASTElem
 	 * @return Copy with added element.
 	 */
 	@Nonnull
-	public AstUsages withNewWrite(@Nonnull ASTElement element) {
+	public JasmAstUsages withNewWrite(@Nonnull ASTElement element) {
 		List<ASTElement> newWriters = new ArrayList<>(writers);
 		newWriters.add(element);
-		return new AstUsages(readers, newWriters, isParameter);
+		return new JasmAstUsages(readers, newWriters, isParameter);
 	}
 
 	/**
 	 * @return Copy with {@link #isParameter()} set to {@code true}.
 	 */
 	@Nonnull
-	public AstUsages asParameter() {
-		return new AstUsages(readers, writers, true);
+	public JasmAstUsages asParameter() {
+		return new JasmAstUsages(readers, writers, true);
 	}
 }

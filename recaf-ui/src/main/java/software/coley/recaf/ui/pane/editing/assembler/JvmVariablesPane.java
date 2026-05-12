@@ -20,11 +20,6 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.paint.Color;
 import me.darknet.assembler.ast.ASTElement;
-import me.darknet.assembler.ast.primitive.ASTCode;
-import me.darknet.assembler.ast.primitive.ASTIdentifier;
-import me.darknet.assembler.ast.primitive.ASTInstruction;
-import me.darknet.assembler.ast.specific.ASTClass;
-import me.darknet.assembler.ast.specific.ASTMethod;
 import me.darknet.assembler.compile.analysis.AnalysisResults;
 import me.darknet.assembler.compile.analysis.frame.Frame;
 import me.darknet.assembler.util.Location;
@@ -46,6 +41,9 @@ import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.linegraphics.AbstractLineGraphicFactory;
 import software.coley.recaf.ui.control.richtext.linegraphics.LineContainer;
 import software.coley.recaf.util.FxThreadUtil;
+import software.coley.recaf.util.assembler.JasmAstUsages;
+import software.coley.recaf.util.assembler.JasmUtils;
+import software.coley.recaf.util.assembler.JasmVariableData;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.SVG;
 import software.coley.recaf.workspace.model.Workspace;
@@ -53,14 +51,11 @@ import software.coley.recaf.workspace.model.Workspace;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
-import java.util.Objects;
 import java.util.TreeMap;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /**
@@ -73,7 +68,7 @@ public class JvmVariablesPane extends AstBuildConsumerComponent {
 	private static final ClassType INVALID_VAR_TYPE_MARKER = Types.VOID;
 	private static final Logger logger = Logging.get(JvmVariablesPane.class);
 	private final SimpleObjectProperty<Object> notifyQueue = new SimpleObjectProperty<>(new Object());
-	private final TableView<VariableData> table = new TableView<>();
+	private final TableView<JasmVariableData> table = new TableView<>();
 	private final Consumer<Change<Integer>> onCaretMove = this::onCaretMove;
 	private final VarHighlightLineFactory varHighlighter = new VarHighlightLineFactory();
 
@@ -84,9 +79,9 @@ public class JvmVariablesPane extends AstBuildConsumerComponent {
 	                        @Nonnull WorkspaceManager workspaceManager) {
 		Workspace workspace = workspaceManager.getCurrent();
 
-		TableColumn<VariableData, String> columnName = new TableColumn<>(Lang.get("assembler.variables.name"));
-		TableColumn<VariableData, ClassType> columnType = new TableColumn<>(Lang.get("assembler.variables.type"));
-		TableColumn<VariableData, AstUsages> columnUsage = new TableColumn<>(Lang.get("assembler.variables.usage"));
+		TableColumn<JasmVariableData, String> columnName = new TableColumn<>(Lang.get("assembler.variables.name"));
+		TableColumn<JasmVariableData, ClassType> columnType = new TableColumn<>(Lang.get("assembler.variables.type"));
+		TableColumn<JasmVariableData, JasmAstUsages> columnUsage = new TableColumn<>(Lang.get("assembler.variables.usage"));
 		columnName.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().name()));
 		columnType.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().type()));
 		columnUsage.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().usage()));
@@ -97,7 +92,7 @@ public class JvmVariablesPane extends AstBuildConsumerComponent {
 			}
 
 			@Override
-			protected void updateItem(AstUsages usages, boolean empty) {
+			protected void updateItem(JasmAstUsages usages, boolean empty) {
 				super.updateItem(usages, empty);
 				if (empty || usages == null) {
 					setText(null);
@@ -128,7 +123,7 @@ public class JvmVariablesPane extends AstBuildConsumerComponent {
 		table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
 		table.setOnMousePressed(e -> {
 			if (e.isPrimaryButtonDown()) {
-				VariableData selectedItem = table.getSelectionModel().getSelectedItem();
+				JasmVariableData selectedItem = table.getSelectionModel().getSelectedItem();
 				if (selectedItem == null) return;
 
 				// Collect ranges AST items where the variable is used.
@@ -213,9 +208,9 @@ public class JvmVariablesPane extends AstBuildConsumerComponent {
 		int pos = caretChange.getNewValue();
 
 		// Determine which variable is at the caret position
-		VariableData currentVarSelection = null;
-		for (VariableData item : table.getItems()) {
-			AstUsages usage = item.usage();
+		JasmVariableData currentVarSelection = null;
+		for (JasmVariableData item : table.getItems()) {
+			JasmAstUsages usage = item.usage();
 			ASTElement matchedAst = usage.readersAndWriters()
 					.filter(e -> e.range().within(pos))
 					.findFirst().orElse(null);
@@ -235,70 +230,18 @@ public class JvmVariablesPane extends AstBuildConsumerComponent {
 	}
 
 	private void updateTable() {
-		ObservableList<VariableData> items = table.getItems();
+		ObservableList<JasmVariableData> items = table.getItems();
 		items.clear();
 
 		// Collect all variable usage information from the AST.
-		AstUsages emptyUsage = AstUsages.EMPTY_USAGE;
-		Map<String, AstUsages> variableUsages = new HashMap<>();
-		BiConsumer<String, ASTElement> readUpdater = (name, element) -> {
-			AstUsages existing = variableUsages.getOrDefault(name, emptyUsage);
-			variableUsages.put(name, existing.withNewRead(element));
-		};
-		BiConsumer<String, ASTElement> writeUpdater = (name, element) -> {
-			AstUsages existing = variableUsages.getOrDefault(name, emptyUsage);
-			variableUsages.put(name, existing.withNewWrite(element));
-		};
-		if (astElements != null) {
-			Consumer<ASTMethod> methodConsumer = astMethod -> {
-				if (currentMethod != null && !Objects.equals(currentMethod.getName(), astMethod.getName().literal()))
-					return;
-				for (ASTIdentifier parameter : astMethod.parameters()) {
-					String literalName = parameter.literal();
-					variableUsages.putIfAbsent(literalName, emptyUsage.asParameter());
-				}
-				ASTCode code = astMethod.code();
-				if (code == null)
-					return;
-				for (ASTInstruction instruction : code.instructions()) {
-					String insnName = instruction.identifier().content();
-					if (insnName == null)
-						continue;
-					boolean isLoad = insnName.endsWith("load");
-					boolean isStore = insnName.endsWith("store");
-					if (((isLoad || isStore) && insnName.charAt(1) != 'a') || insnName.equals("iinc")) {
-						List<ASTElement> arguments = instruction.arguments();
-						if (!arguments.isEmpty()) {
-							ASTElement arg = arguments.get(0);
-							String varName = arg instanceof ASTIdentifier identifierArg ?
-									identifierArg.literal() : arg.content();
-							if (isLoad) {
-								readUpdater.accept(varName, instruction);
-							} else {
-								writeUpdater.accept(varName, instruction);
-							}
-						}
-					}
-				}
-			};
-			for (ASTElement astElement : astElements) {
-				if (astElement instanceof ASTMethod astMethod) {
-					methodConsumer.accept(astMethod);
-				} else if (astElement instanceof ASTClass astClass) {
-					for (ASTElement child : astClass.children()) {
-						if (child instanceof ASTMethod astMethod) {
-							methodConsumer.accept(astMethod);
-						}
-					}
-				}
-			}
-		}
+		JasmAstUsages emptyUsage = JasmAstUsages.EMPTY_USAGE;
+		Map<String, JasmAstUsages> variableUsages = JasmUtils.collectVariableUsages(astElements, currentMethod.getName(), currentMethod.getDescriptor());
 
 		// Populate the variables map from the stack analysis results.
 		AnalysisResults analysisResults = analysisLookup.results(currentMethod.getName(), currentMethod.getDescriptor());
 		if (analysisResults != null && !analysisResults.frames().isEmpty()) {
 			// Linked map for ordering
-			Map<String, VariableData> variables = new LinkedHashMap<>();
+			Map<String, JasmVariableData> variables = new LinkedHashMap<>();
 
 			// In JASM variables are un-scoped, so the last frame should have all entries.
 			analysisResults.frames().values().stream()
@@ -306,7 +249,7 @@ public class JvmVariablesPane extends AstBuildConsumerComponent {
 					.distinct()
 					.forEach(local -> {
 						String localName = local.name();
-						VariableData data = VariableData.adaptFrom(local, variableUsages.getOrDefault(localName, emptyUsage));
+						JasmVariableData data = JasmVariableData.adaptFrom(local, variableUsages.getOrDefault(localName, emptyUsage));
 						variables.put(localName, data);
 					});
 
@@ -315,7 +258,7 @@ public class JvmVariablesPane extends AstBuildConsumerComponent {
 			// Either way, reporting them here with a bogus type is good for diagnosing the issue.
 			variableUsages.forEach((name, usage) -> {
 				if (!variables.containsKey(name))
-					variables.put(name, new VariableData(name, INVALID_VAR_TYPE_MARKER, usage));
+					variables.put(name, new JasmVariableData(name, INVALID_VAR_TYPE_MARKER, usage));
 			});
 
 			// Add all found items to the table.
@@ -329,10 +272,10 @@ public class JvmVariablesPane extends AstBuildConsumerComponent {
 	}
 
 	/**
-	 * Highlighter which shows read and write access of a {@link VariableData}.
+	 * Highlighter which shows read and write access of a {@link JasmVariableData}.
 	 */
 	private class VarHighlightLineFactory extends AbstractLineGraphicFactory {
-		private VariableData variable;
+		private JasmVariableData variable;
 
 		private VarHighlightLineFactory() {
 			super(AbstractLineGraphicFactory.P_LINE_NUMBERS + 1);
@@ -342,8 +285,8 @@ public class JvmVariablesPane extends AstBuildConsumerComponent {
 		 * @param variable
 		 * 		New selected variable.
 		 */
-		public void setSelectedVariable(@Nullable VariableData variable) {
-			VariableData existing = this.variable;
+		public void setSelectedVariable(@Nullable JasmVariableData variable) {
+			JasmVariableData existing = this.variable;
 			if (existing == null) {
 				if (variable == null)
 					return;

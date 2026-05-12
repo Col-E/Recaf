@@ -1,4 +1,4 @@
-package software.coley.recaf.ui.pane.editing.assembler;
+package software.coley.recaf.util.assembler;
 
 import dev.xdark.blw.type.ClassType;
 import jakarta.annotation.Nonnull;
@@ -14,8 +14,10 @@ import me.darknet.assembler.compile.analysis.Local;
  * 		Type of variable.
  * @param usage
  * 		Usages of the variable in the AST.
+ *
+ * @author Matt Coley
  */
-public record VariableData(@Nonnull String name, @Nonnull ClassType type, @Nonnull AstUsages usage) {
+public record JasmVariableData(@Nonnull String name, @Nonnull ClassType type, @Nonnull JasmAstUsages usage) {
 	/**
 	 * @param local
 	 * 		blw variable declaration.
@@ -25,8 +27,8 @@ public record VariableData(@Nonnull String name, @Nonnull ClassType type, @Nonnu
 	 * @return Data from a blw variable, plus AST usage.
 	 */
 	@Nonnull
-	public static VariableData adaptFrom(@Nonnull Local local, @Nonnull AstUsages usage) {
-		return new VariableData(local.name(), local.safeType(), usage);
+	public static JasmVariableData adaptFrom(@Nonnull Local local, @Nonnull JasmAstUsages usage) {
+		return new JasmVariableData(local.name(), local.safeType(), usage);
 	}
 
 	/**
@@ -35,7 +37,7 @@ public record VariableData(@Nonnull String name, @Nonnull ClassType type, @Nonnu
 	 *
 	 * @return {@code true} if the variable held by this data is the same as the other.
 	 */
-	public boolean matchesNameType(@Nullable VariableData other) {
+	public boolean matchesNameType(@Nullable JasmVariableData other) {
 		if (other == null) return false;
 		return name.equals(other.name) && type.equals(other.type);
 	}

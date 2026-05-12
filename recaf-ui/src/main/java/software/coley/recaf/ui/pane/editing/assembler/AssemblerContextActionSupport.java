@@ -15,8 +15,8 @@ import software.coley.recaf.services.cell.context.ContextMenuProviderService;
 import software.coley.recaf.services.cell.context.ContextSource;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.source.JavaContextActionSupport;
-import software.coley.recaf.ui.pane.editing.assembler.resolve.AssemblyResolution;
-import software.coley.recaf.ui.pane.editing.assembler.resolve.AssemblyResolver;
+import software.coley.recaf.util.assembler.resolve.AssemblyResolution;
+import software.coley.recaf.util.assembler.resolve.AssemblyResolver;
 
 /**
  * Enables context actions on an {@link Editor} within an {@link AssemblerPane}.
