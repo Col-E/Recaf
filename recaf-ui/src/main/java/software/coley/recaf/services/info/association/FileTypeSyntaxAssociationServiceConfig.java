@@ -46,6 +46,9 @@ public class FileTypeSyntaxAssociationServiceConfig extends BasicConfigContainer
 				new Pair<>("ini", "ini"),
 				new Pair<>("mf", "ini"),
 				new Pair<>("properties", "ini"),
+				new Pair<>("toml", "ini"),
+				new Pair<>("json", "json"),
+				new Pair<>("mcmeta", "json"),
 				new Pair<>("enigma", "enigma")
 		));
 		addValue(new BasicMapConfigValue<>("extensions-to-langs", Map.class, String.class, String.class, extensionsToLangKeys));
