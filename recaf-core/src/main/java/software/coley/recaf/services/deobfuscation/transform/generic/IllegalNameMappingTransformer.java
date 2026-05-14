@@ -40,17 +40,17 @@ public class IllegalNameMappingTransformer implements JvmClassTransformer {
 		IntermediateMappings mappings = context.getMappings();
 		String ownerName = initialClassState.getName();
 		if (ILLEGAL_NAME_FILTER.shouldMapClass(initialClassState) && mappings.getMappedClassName(ownerName) == null)
-			mappings.addClass(ownerName, NAME_GENERATOR.mapClass(initialClassState));
+			mappings.addClass(ownerName, NAME_GENERATOR.mapClass(initialClassState, ILLEGAL_NAME_FILTER.shouldMapPackage(initialClassState)));
 		for (FieldMember field : initialClassState.getFields()) {
 			String fieldDesc = field.getDescriptor();
 			String fieldName = field.getName();
-			if (ILLEGAL_NAME_FILTER.shouldMapField(initialClassState, field) && mappings.getMappedFieldName(ownerName, fieldDesc, fieldName) == null)
+			if (ILLEGAL_NAME_FILTER.shouldMapField(initialClassState, field) && mappings.getMappedFieldName(ownerName, fieldName, fieldDesc) == null)
 				mappings.addField(ownerName, fieldDesc, field.getName(), NAME_GENERATOR.mapField(initialClassState, field));
 		}
 		for (MethodMember method : initialClassState.getMethods()) {
 			String methodDesc = method.getDescriptor();
 			String methodName = method.getName();
-			if (ILLEGAL_NAME_FILTER.shouldMapMethod(initialClassState, method) && mappings.getMappedMethodName(ownerName, methodDesc, methodName) == null)
+			if (ILLEGAL_NAME_FILTER.shouldMapMethod(initialClassState, method) && mappings.getMappedMethodName(ownerName, methodName, methodDesc) == null)
 				mappings.addMethod(ownerName, methodDesc, method.getName(), NAME_GENERATOR.mapMethod(initialClassState, method));
 		}
 	}

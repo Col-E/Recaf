@@ -32,6 +32,8 @@ import software.coley.recaf.services.mapping.gen.filter.IncludeNonAsciiNameFilte
 import software.coley.recaf.services.mapping.gen.filter.IncludeNonJavaIdentifierNameFilter;
 import software.coley.recaf.services.mapping.gen.filter.IncludeWhitespaceNameFilter;
 import software.coley.recaf.services.mapping.gen.filter.NameGeneratorFilter;
+import software.coley.recaf.services.mapping.gen.naming.AlphabetNameGenerator;
+import software.coley.recaf.services.mapping.gen.naming.IncrementingNameGenerator;
 import software.coley.recaf.services.mapping.gen.naming.NameGenerator;
 import software.coley.recaf.services.search.match.StringPredicate;
 import software.coley.recaf.services.search.match.StringPredicateProvider;
@@ -444,6 +446,10 @@ public class MappingGeneratorTest extends TestBase {
 			// Edge case: 'package-info' and 'module-info' are not keywords, but they contain the keyword 'package' and 'module' respectively.
 			assertFalse(filter.shouldMapClass(new StubClassInfo("package-info")));
 			assertFalse(filter.shouldMapClass(new StubClassInfo("module-info")));
+
+			// Only remap the package when the package path itself is the problem.
+			assertFalse(filter.shouldMapPackage(new StubClassInfo("com/example/class")));
+			assertTrue(filter.shouldMapPackage(new StubClassInfo("com/class/Example")));
 		}
 
 		@Test
@@ -458,6 +464,8 @@ public class MappingGeneratorTest extends TestBase {
 				assertTrue(filter.shouldMapClass(new StubClassInfo("com/_/Example".replace("_", space))));
 				assertTrue(filter.shouldMapClass(new StubClassInfo("_/example/Example".replace("_", space))));
 				assertTrue(filter.shouldMapClass(new StubClassInfo("_".replace("_", space))));
+				assertFalse(filter.shouldMapPackage(new StubClassInfo("com/example/Bad_".replace("_", space))));
+				assertTrue(filter.shouldMapPackage(new StubClassInfo("com/_/Example".replace("_", space))));
 			}
 		}
 
@@ -477,6 +485,10 @@ public class MappingGeneratorTest extends TestBase {
 
 			// Technically in the ASCII set, but still non-ASCII in the sense of Java identifiers, should be mapped.
 			assertTrue(filter.shouldMapClass(new StubClassInfo("\0")));
+
+			// Only remap the package when the package path itself is the problem.
+			assertFalse(filter.shouldMapPackage(new StubClassInfo("com/example/Exämple")));
+			assertTrue(filter.shouldMapPackage(new StubClassInfo("cöm/example/Example")));
 		}
 
 		@Test
@@ -497,11 +509,38 @@ public class MappingGeneratorTest extends TestBase {
 			// A package part that starts with a number is not valid, should be mapped.
 			assertTrue(filter.shouldMapClass(new StubClassInfo("com/1A/Example")));
 			assertFalse(filter.shouldMapClass(new StubClassInfo("com/A1/Example")));
+			assertFalse(filter.shouldMapPackage(new StubClassInfo("com/example/1Example")));
+			assertTrue(filter.shouldMapPackage(new StubClassInfo("com/1A/Example")));
 
 			// Edge case: 'package-info' and 'module-info' are not valid Java identifiers, but they are exempt
 			// from this filter since they have special meaning in Java.
 			assertFalse(filter.shouldMapClass(new StubClassInfo("package-info")));
 			assertFalse(filter.shouldMapClass(new StubClassInfo("module-info")));
+		}
+
+		@Test
+		void testIncrementingGeneratorPreservesLegalPackageForIllegalClassName() {
+			IncludeNonJavaIdentifierNameFilter filter = new IncludeNonJavaIdentifierNameFilter(null);
+			ClassInfo info = new StubClassInfo("pack/pack/1");
+			IncrementingNameGenerator generator = new IncrementingNameGenerator();
+
+			assertTrue(filter.shouldMapClass(info));
+			assertFalse(filter.shouldMapPackage(info));
+			assertEquals("pack/pack/Class1", generator.mapClass(info, filter.shouldMapPackage(info)));
+		}
+
+		@Test
+		void testAlphabetGeneratorPreservesLegalPackageForIllegalClassName() {
+			IncludeNonJavaIdentifierNameFilter filter = new IncludeNonJavaIdentifierNameFilter(null);
+			ClassInfo info = new StubClassInfo("pack/pack/1");
+			AlphabetNameGenerator generator = new AlphabetNameGenerator("abcdefghijklmnopqrstuvwxyz", 3);
+
+			assertTrue(filter.shouldMapClass(info));
+			assertFalse(filter.shouldMapPackage(info));
+
+			String mapped = generator.mapClass(info, filter.shouldMapPackage(info));
+			assertTrue(mapped.startsWith("pack/pack/"));
+			assertNotEquals(info.getName(), mapped);
 		}
 
 		@Test
