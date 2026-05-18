@@ -14,6 +14,8 @@ import static software.coley.recaf.config.ConfigGroups.getGroupPackages;
 
 /**
  * Search helpers for {@link ConfigPane}.
+ *
+ * @author Matt Coley
  */
 public class ConfigPaneSearch {
 	private ConfigPaneSearch() {}
