@@ -25,6 +25,8 @@ import software.coley.recaf.services.search.query.ReferenceQuery;
 import software.coley.recaf.services.search.query.StringQuery;
 import software.coley.recaf.services.search.result.ClassReference;
 import software.coley.recaf.services.search.result.ClassReferenceResult;
+import software.coley.recaf.services.search.result.MemberDeclaration;
+import software.coley.recaf.services.search.result.MemberDeclarationResult;
 import software.coley.recaf.services.search.result.MemberReference;
 import software.coley.recaf.services.search.result.MemberReferenceResult;
 import software.coley.recaf.services.search.result.NumberResult;
@@ -257,17 +259,14 @@ public class SearchService implements Service {
 
 	@Nonnull
 	private static Result<?> createResult(@Nonnull PathNode<?> path, @Nonnull Object value) {
-		if (value instanceof Number number)
-			return new NumberResult(path, number);
-		if (value instanceof String string)
-			return new StringResult(path, string);
-		if (value instanceof ClassReference reference)
-			return new ClassReferenceResult(path, reference);
-		if (value instanceof MemberReference reference)
-			return new MemberReferenceResult(path, reference);
-
-		// Unknown value type
-		throw new UnsupportedOperationException("Unsupported search result value type: " + value.getClass().getName());
+		return switch (value) {
+			case Number number -> new NumberResult(path, number);
+			case String string -> new StringResult(path, string);
+			case ClassReference reference -> new ClassReferenceResult(path, reference);
+			case MemberDeclaration declaration -> new MemberDeclarationResult(path, declaration);
+			case MemberReference reference -> new MemberReferenceResult(path, reference);
+			default -> throw new UnsupportedOperationException("Invalid result type: " + value.getClass().getName());
+		};
 	}
 
 	@Nonnull

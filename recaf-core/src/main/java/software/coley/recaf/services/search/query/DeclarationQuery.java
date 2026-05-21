@@ -10,7 +10,7 @@ import software.coley.recaf.services.search.AndroidClassSearchVisitor;
 import software.coley.recaf.services.search.JvmClassSearchVisitor;
 import software.coley.recaf.services.search.ResultSink;
 import software.coley.recaf.services.search.match.StringPredicate;
-import software.coley.recaf.services.search.result.MemberReference;
+import software.coley.recaf.services.search.result.MemberDeclaration;
 import software.coley.recaf.util.StringUtil;
 
 /**
@@ -68,7 +68,7 @@ public class DeclarationQuery implements JvmClassQuery, AndroidClassQuery {
 		};
 	}
 
-	private boolean isMemberRefMatch(@Nonnull String owner, @Nonnull String name, @Nonnull String desc) {
+	private boolean isMemberDeclarationMatch(@Nonnull String owner, @Nonnull String name, @Nonnull String desc) {
 		// If our query predicates are null, that field can skip comparison, and we move on to the next.
 		// If all of our non-null query arguments match the given parameters, we have a match.
 		if (ownerPredicate == null || StringUtil.isNullOrEmpty(owner) || ownerPredicate.match(owner))
@@ -84,15 +84,15 @@ public class DeclarationQuery implements JvmClassQuery, AndroidClassQuery {
 			String owner = classInfo.getName();
 			String name = field.getName();
 			String desc = field.getDescriptor();
-			if (isMemberRefMatch(owner, name, desc))
-				resultSink.accept(classPath.child(field), new MemberReference(owner, name, desc));
+			if (isMemberDeclarationMatch(owner, name, desc))
+				resultSink.accept(classPath.child(field), new MemberDeclaration(owner, name, desc, field.getAccess()));
 		}
 		for (MethodMember method : classInfo.getMethods()) {
 			String owner = classInfo.getName();
 			String name = method.getName();
 			String desc = method.getDescriptor();
-			if (isMemberRefMatch(owner, name, desc))
-				resultSink.accept(classPath.child(method), new MemberReference(owner, name, desc));
+			if (isMemberDeclarationMatch(owner, name, desc))
+				resultSink.accept(classPath.child(method), new MemberDeclaration(owner, name, desc, method.getAccess()));
 		}
 	}
 }

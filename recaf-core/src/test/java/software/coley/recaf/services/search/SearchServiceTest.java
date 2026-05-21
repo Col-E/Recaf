@@ -40,6 +40,7 @@ import software.coley.recaf.services.search.query.NumberQuery;
 import software.coley.recaf.services.search.query.Query;
 import software.coley.recaf.services.search.query.ReferenceQuery;
 import software.coley.recaf.services.search.query.StringQuery;
+import software.coley.recaf.services.search.result.MemberDeclarationResult;
 import software.coley.recaf.services.search.result.Result;
 import software.coley.recaf.services.search.result.Results;
 import software.coley.recaf.test.TestBase;
@@ -325,6 +326,11 @@ public class SearchServiceTest extends TestBase {
 					strMatchProvider.newEqualPredicate("I")
 			));
 			assertEquals(1, results.size());
+			assertInstanceOf(MemberDeclarationResult.class, results.getFirst());
+			MemberDeclarationResult fieldResult = (MemberDeclarationResult) results.getFirst();
+			assertTrue(fieldResult.getValue().isFieldDeclaration());
+			assertTrue(fieldResult.getValue().hasStaticModifier());
+			assertTrue(fieldResult.getValue().hasFinalModifier());
 
 			// Only 1 class in the provided workspace has an equals implemented
 			results = searchService.search(classesWorkspace, new DeclarationQuery(
@@ -333,6 +339,10 @@ public class SearchServiceTest extends TestBase {
 					null
 			));
 			assertEquals(1, results.size());
+			assertInstanceOf(MemberDeclarationResult.class, results.getFirst());
+			MemberDeclarationResult methodResult = (MemberDeclarationResult) results.getFirst();
+			assertTrue(methodResult.getValue().isMethodDeclaration());
+			assertFalse(methodResult.getValue().hasStaticModifier());
 		}
 	}
 
