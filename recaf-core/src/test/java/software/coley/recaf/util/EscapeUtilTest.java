@@ -36,6 +36,11 @@ class EscapeUtilTest {
 		);
 	}
 
+	@Test
+	void unescapeCyrillicUnicodeEscapes() {
+		assertEquals("Для работы", unescapeUnicode("\\u0414\\u043b\\u044f \\u0440\\u0430\\u0431\\u043e\\u0442\\u044b"));
+	}
+
 	void escapeUnescape(Case... cases) {
 		for (Case c : cases) {
 			// Escaping

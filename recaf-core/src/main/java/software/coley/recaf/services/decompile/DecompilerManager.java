@@ -14,11 +14,13 @@ import software.coley.observables.ObservableString;
 import software.coley.recaf.analytics.logging.DebuggingLogger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.AndroidClassInfo;
+import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.properties.builtin.CachedDecompileProperty;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.services.decompile.filter.JvmBytecodeFilter;
 import software.coley.recaf.services.decompile.filter.OutputTextFilter;
+import software.coley.recaf.services.decompile.filter.UnicodeUnescapeOutputTextFilter;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
 import software.coley.recaf.util.visitors.BogusNameRemovingVisitor;
 import software.coley.recaf.util.visitors.ClassHollowingVisitor;
@@ -52,6 +54,7 @@ public class DecompilerManager implements Service {
 	private static final NoopJvmDecompiler NO_OP_JVM = NoopJvmDecompiler.getInstance();
 	private static final NoopAndroidDecompiler NO_OP_ANDROID = NoopAndroidDecompiler.getInstance();
 	private final JvmBytecodeFilter layeredJvmFilter = new LayeredJvmBytecodeFilter();
+	private final OutputTextFilter layeredOutputTextFilter = new LayeredOutputTextFilter();
 	private final ExecutorService decompileThreadPool = ThreadPoolFactory.newFixedThreadPool(SERVICE_ID);
 	private final List<JvmBytecodeFilter> bytecodeFilters = new CopyOnWriteArrayList<>();
 	private final List<OutputTextFilter> outputTextFilters = new CopyOnWriteArrayList<>();
@@ -139,8 +142,12 @@ public class DecompilerManager implements Service {
 				// and only if the current config matches the one that yielded the cached result.
 				DecompileResult cachedResult = CachedDecompileProperty.get(classInfo, decompiler);
 				if (cachedResult != null) {
-					if (cachedResult.getConfigHash() == decompiler.getConfig().getHash())
-						return cachedResult;
+					if (cachedResult.getConfigHash() == decompiler.getConfig().getHash()) {
+						DecompileResult processed = postProcessOutput(workspace, classInfo, cachedResult);
+						if (doCache && processed != cachedResult)
+							CachedDecompileProperty.set(classInfo, decompiler, processed);
+						return processed;
+					}
 
 					// Config changed, void the cache.
 					CachedDecompileProperty.remove(classInfo);
@@ -153,14 +160,7 @@ public class DecompilerManager implements Service {
 			JvmClassInfo filteredClass = JvmBytecodeFilter.applyFilters(workspace, classInfo, Collections.singletonList(layeredJvmFilter));
 
 			// Decompile and cache the results.
-			DecompileResult result = decompiler.decompile(workspace, filteredClass);
-			String decompilation = result.getText();
-			if (decompilation != null && !outputTextFilters.isEmpty()) {
-				// Apply output filters and re-wrap the result with the new output text.
-				for (OutputTextFilter textFilter : outputTextFilters)
-					decompilation = textFilter.filter(workspace, classInfo, decompilation);
-				result = new DecompileResult(decompilation, result.getConfigHash());
-			}
+			DecompileResult result = postProcessOutput(workspace, classInfo, decompiler.decompile(workspace, filteredClass));
 			if (doCache)
 				CachedDecompileProperty.set(classInfo, decompiler, result);
 			return result;
@@ -237,6 +237,17 @@ public class DecompilerManager implements Service {
 	 */
 	public void removeOutputTextFilter(@Nonnull OutputTextFilter filter) {
 		outputTextFilters.remove(filter);
+	}
+
+	@Nonnull
+	private DecompileResult postProcessOutput(@Nonnull Workspace workspace, @Nonnull JvmClassInfo classInfo, @Nonnull DecompileResult result) {
+		String decompilation = result.getText();
+		if (decompilation == null)
+			return result;
+		String processed = layeredOutputTextFilter.filter(workspace, classInfo, decompilation);
+		if (processed.equals(decompilation))
+			return result;
+		return new DecompileResult(processed, result.getConfigHash());
 	}
 
 	/**
@@ -401,6 +412,19 @@ public class DecompilerManager implements Service {
 				logger.error("Error applying filters to class '{}'", initialClassInfo.getName(), t);
 				return bytecode;
 			}
+		}
+	}
+
+	private class LayeredOutputTextFilter implements OutputTextFilter {
+		private static final UnicodeUnescapeOutputTextFilter UNICODE_UNESCAPE = new UnicodeUnescapeOutputTextFilter();
+
+		@Nonnull
+		@Override
+		public String filter(@Nonnull Workspace workspace, @Nonnull ClassInfo classInfo, @Nonnull String code) {
+			String processed = UNICODE_UNESCAPE.filter(workspace, classInfo, code);
+			for (OutputTextFilter textFilter : outputTextFilters)
+				processed = textFilter.filter(workspace, classInfo, processed);
+			return processed;
 		}
 	}
 }

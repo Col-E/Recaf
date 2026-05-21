@@ -33,7 +33,7 @@ public class ProcyonConfig extends BaseDecompilerConfig {
 	private final ObservableBoolean excludeNestedTypes = new ObservableBoolean(false);
 	private final ObservableBoolean retainRedundantCasts = new ObservableBoolean(false);
 	private final ObservableBoolean retainPointlessSwitches = new ObservableBoolean(false);
-	private final ObservableBoolean isUnicodeOutputEnabled = new ObservableBoolean(false);
+	private final ObservableBoolean isUnicodeOutputEnabled = new ObservableBoolean(true);
 	private final ObservableBoolean includeErrorDiagnostics = new ObservableBoolean(true);
 	private final ObservableBoolean mergeVariables = new ObservableBoolean(false);
 	private final ObservableBoolean disableForEachTransforms = new ObservableBoolean(false);
