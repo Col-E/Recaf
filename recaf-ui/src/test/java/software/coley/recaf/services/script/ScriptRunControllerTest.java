@@ -5,6 +5,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
+import org.junit.jupiter.api.parallel.Isolated;
 import software.coley.recaf.test.TestBase;
 
 import java.nio.file.Path;
@@ -17,6 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * Tests for {@link ScriptRunController}.
  */
+@Isolated
 @Execution(ExecutionMode.SAME_THREAD) // Tests are not thread safe due to shared static state of the cancellation mechanism.
 class ScriptRunControllerTest extends TestBase {
 	static ScriptRunController controller;
@@ -37,7 +39,7 @@ class ScriptRunControllerTest extends TestBase {
 		CompletableFuture<ScriptResult> firstRun = controller.start(key, script);
 
 		// Wait for the script to start and write to the property a few times.
-		awaitCounter(counterProperty, 2);
+		awaitCounter(counterProperty, 2, firstRun);
 
 		// Verify the script is running and then request it to stop.
 		assertTrue(controller.isRunning(key));
@@ -50,7 +52,7 @@ class ScriptRunControllerTest extends TestBase {
 		// Start the script again and verify it can run after being stopped.
 		System.clearProperty(counterProperty);
 		CompletableFuture<ScriptResult> secondRun = controller.start(key, script);
-		awaitCounter(counterProperty, 2);
+		awaitCounter(counterProperty, 2, secondRun);
 		assertTrue(controller.isRunning(key));
 		controller.requestStop();
 
@@ -71,7 +73,7 @@ class ScriptRunControllerTest extends TestBase {
 		// Start the first script that writes to the given property.
 		System.clearProperty(counterProperty);
 		CompletableFuture<ScriptResult> firstRun = controller.start(firstKey, script);
-		awaitCounter(counterProperty, 2);
+		awaitCounter(counterProperty, 2, firstRun);
 
 		// Attempt to start a second script while the first is still running. This should fail.
 		CompletableFuture<ScriptResult> secondRun = controller.start(secondKey,
@@ -98,10 +100,21 @@ class ScriptRunControllerTest extends TestBase {
 	}
 
 	@SuppressWarnings("all")
-	private static void awaitCounter(String property, int min) throws InterruptedException {
-		long end = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(1);
-		while (Integer.parseInt(System.getProperty(property, "-1")) < min && System.currentTimeMillis() < end)
+	private static void awaitCounter(@Nonnull String property, int min, @Nonnull CompletableFuture<ScriptResult> run) throws Exception {
+		long end = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(5);
+		while (Integer.parseInt(System.getProperty(property, "-1")) < min && System.currentTimeMillis() < end) {
+			if (run.isDone()) {
+				ScriptResult result = run.getNow(null);
+				if (result != null && !result.wasCancelled()) {
+					if (result.wasCompileFailure())
+						throw new AssertionError("Script compile failed: " + result.getCompileDiagnostics());
+					if (result.wasRuntimeError())
+						throw new AssertionError("Script runtime error", result.getRuntimeThrowable());
+				}
+			}
 			Thread.sleep(10);
-		assertTrue(Integer.parseInt(System.getProperty(property, "-1")) >= min);
+		}
+		int value = Integer.parseInt(System.getProperty(property, "-1"));
+		assertTrue(value >= min, () -> "Expected " + property + " >= " + min + " but was " + value);
 	}
 }

@@ -9,6 +9,22 @@ public class UnicodeUnescapeOutputTextFilter implements OutputTextFilter {
 	@Nonnull
 	@Override
 	public String filter(@Nonnull Workspace workspace, @Nonnull ClassInfo classInfo, @Nonnull String code) {
-		return EscapeUtil.unescapeUnicode(code);
+		return EscapeUtil.unescapeUnicodeIf(code, UnicodeUnescapeOutputTextFilter::isSafeDisplayCodePoint);
+	}
+
+	static boolean isSafeDisplayCodePoint(int codePoint) {
+		if (codePoint <= 0 || codePoint == EscapeUtil.TERMINATOR || codePoint > Character.MAX_VALUE)
+			return false;
+		if (EscapeUtil.isWhitespaceChar((char) codePoint))
+			return false;
+		return switch (Character.getType((char) codePoint)) {
+			case Character.UPPERCASE_LETTER, Character.LOWERCASE_LETTER, Character.TITLECASE_LETTER,
+					Character.MODIFIER_LETTER, Character.OTHER_LETTER, Character.DECIMAL_DIGIT_NUMBER,
+					Character.LETTER_NUMBER, Character.OTHER_NUMBER, Character.DASH_PUNCTUATION,
+					Character.START_PUNCTUATION, Character.END_PUNCTUATION, Character.INITIAL_QUOTE_PUNCTUATION,
+					Character.FINAL_QUOTE_PUNCTUATION, Character.OTHER_PUNCTUATION, Character.MATH_SYMBOL,
+					Character.CURRENCY_SYMBOL, Character.MODIFIER_SYMBOL, Character.OTHER_SYMBOL -> true;
+			default -> false;
+		};
 	}
 }

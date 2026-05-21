@@ -49,7 +49,7 @@ public class CfrConfig extends BaseDecompilerConfig {
 	private final ObservableObject<BooleanOption> forbidmethodscopedclasses = new ObservableObject<>(BooleanOption.DEFAULT);
 	private final ObservableObject<BooleanOption> forbidanonymousclasses = new ObservableObject<>(BooleanOption.DEFAULT);
 	private final ObservableObject<BooleanOption> skipbatchinnerclasses = new ObservableObject<>(BooleanOption.DEFAULT);
-	private final ObservableObject<BooleanOption> hideutf = new ObservableObject<>(BooleanOption.FALSE);
+	private final ObservableObject<BooleanOption> hideutf = new ObservableObject<>(BooleanOption.DEFAULT);
 	private final ObservableObject<BooleanOption> hidelongstrings = new ObservableObject<>(BooleanOption.DEFAULT);
 	private final ObservableObject<BooleanOption> removeboilerplate = new ObservableObject<>(BooleanOption.DEFAULT);
 	private final ObservableObject<BooleanOption> removeinnerclasssynthetics = new ObservableObject<>(BooleanOption.DEFAULT);

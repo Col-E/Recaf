@@ -8,6 +8,7 @@ import software.coley.recaf.util.collect.primitive.Object2IntMap;
 import java.util.BitSet;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.IntPredicate;
 
 /**
  * Escape code replacement utility.
@@ -128,7 +129,19 @@ public final class EscapeUtil {
 	 * @return String with escaped characters.
 	 */
 	public static String unescapeUnicode(@Nullable String input) {
-		return visit(input, EscapeUtil::computeEscapeUnicode);
+		return unescapeUnicodeIf(input, codePoint -> true);
+	}
+
+	/**
+	 * @param input
+	 * 		Input text.
+	 * @param decodeFilter
+	 * 		Which code points to decode from {@code \\uXXXX} escapes.
+	 *
+	 * @return String with matching unicode escapes decoded.
+	 */
+	public static String unescapeUnicodeIf(@Nullable String input, @Nonnull IntPredicate decodeFilter) {
+		return visit(input, (in, cursor, builder) -> computeEscapeUnicode(in, cursor, builder, decodeFilter));
 	}
 
 	/**
@@ -251,6 +264,10 @@ public final class EscapeUtil {
 	}
 
 	private static int computeEscapeUnicode(String input, int cursor, StringBuilder builder) {
+		return computeEscapeUnicode(input, cursor, builder, codePoint -> true);
+	}
+
+	private static int computeEscapeUnicode(String input, int cursor, StringBuilder builder, IntPredicate decodeFilter) {
 		// Bounds check
 		if (cursor + 1 >= input.length()) {
 			return 0;
@@ -294,7 +311,10 @@ public final class EscapeUtil {
 				String unicode = input.substring(cursor + len, cursor + len + 4);
 				try {
 					int value = Integer.parseInt(unicode, 16);
-					builder.append(value != TERMINATOR ? (char) value : existing);
+					if (value == TERMINATOR || !decodeFilter.test(value))
+						builder.append(existing);
+					else
+						builder.append((char) value);
 				} catch (NumberFormatException ignored) {
 					return 0;
 				}

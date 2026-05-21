@@ -1693,7 +1693,7 @@ public class FoldingDeobfuscationTest extends TransformerTestBase {
 				}
 				""";
 		validateBeforeAfterDecompile(asm, List.of(CallResultInliningTransformer.class),
-				"System.out.println(Example.decrypt(\"㘯㘂㘋㘋㘈㙇㘐㘈㘕㘋㘃\", 13927));",
+				"System.out.println(Example.decrypt(\"\\u362f\\u3602\\u360b\\u360b\\u3608\\u3647\\u3610\\u3608\\u3615\\u360b\\u3603\", 13927));",
 				"System.out.println(\"Hello world\");");
 	}
 
