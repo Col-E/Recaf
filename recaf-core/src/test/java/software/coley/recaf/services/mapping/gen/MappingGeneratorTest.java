@@ -24,6 +24,7 @@ import software.coley.recaf.services.mapping.gen.filter.ExcludeExistingMappedFil
 import software.coley.recaf.services.mapping.gen.filter.ExcludeModifiersNameFilter;
 import software.coley.recaf.services.mapping.gen.filter.ExcludeNameFilter;
 import software.coley.recaf.services.mapping.gen.filter.IncludeClassesFilter;
+import software.coley.recaf.services.mapping.gen.filter.IncludeEmptyPackageNameFilter;
 import software.coley.recaf.services.mapping.gen.filter.IncludeKeywordNameFilter;
 import software.coley.recaf.services.mapping.gen.filter.IncludeLongNameFilter;
 import software.coley.recaf.services.mapping.gen.filter.IncludeModifiersNameFilter;
@@ -459,6 +460,17 @@ public class MappingGeneratorTest extends TestBase {
 				assertTrue(filter.shouldMapClass(new StubClassInfo("_/example/Example".replace("_", space))));
 				assertTrue(filter.shouldMapClass(new StubClassInfo("_".replace("_", space))));
 			}
+		}
+
+		@Test
+		void testIncludeEmptyPackageNameFilter() {
+			IncludeEmptyPackageNameFilter filter = new IncludeEmptyPackageNameFilter(null);
+
+			// A class with a normal package should not be mapped.
+			assertFalse(filter.shouldMapClass(new StubClassInfo("com/example/Example")));
+
+			// A class with a zero-width package should be mapped.
+			assertTrue(filter.shouldMapClass(new StubClassInfo("com//Example")));
 		}
 
 		@Test

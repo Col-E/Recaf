@@ -64,6 +64,7 @@ import software.coley.recaf.services.mapping.gen.filter.ExcludeExistingMappedFil
 import software.coley.recaf.services.mapping.gen.filter.ExcludeModifiersNameFilter;
 import software.coley.recaf.services.mapping.gen.filter.ExcludeNameFilter;
 import software.coley.recaf.services.mapping.gen.filter.IncludeClassesFilter;
+import software.coley.recaf.services.mapping.gen.filter.IncludeEmptyPackageNameFilter;
 import software.coley.recaf.services.mapping.gen.filter.IncludeKeywordNameFilter;
 import software.coley.recaf.services.mapping.gen.filter.IncludeLongNameFilter;
 import software.coley.recaf.services.mapping.gen.filter.IncludeModifiersNameFilter;
@@ -415,6 +416,7 @@ public class MappingGeneratorPane extends StackPane {
 				typeSetAction(nodeSupplier, dropdownText, "mapgen.filter.includeclasses", IncludeClasses::new),
 				typeSetAction(nodeSupplier, dropdownText, "mapgen.filter.includemodifier", IncludeModifiers::new),
 				typeSetAction(nodeSupplier, dropdownText, "mapgen.filter.includewhitespacenames", IncludeWhitespaceNames::new),
+				typeSetAction(nodeSupplier, dropdownText, "mapgen.filter.includeemptypackagenames", IncludeEmptyPackageNames::new),
 				typeSetAction(nodeSupplier, dropdownText, "mapgen.filter.includenonasciinames", IncludeNonAsciiNames::new),
 				typeSetAction(nodeSupplier, dropdownText, "mapgen.filter.includenonjavaidentifiers", IncludeNonJavaIdentifierNames::new),
 				typeSetAction(nodeSupplier, dropdownText, "mapgen.filter.includekeywords", IncludeKeywordNames::new)
@@ -1013,8 +1015,27 @@ public class MappingGeneratorPane extends StackPane {
 		}
 
 		@Override
-		protected void fillConfigurator(@Nonnull BiConsumer<StringBinding, Node> sink) {
+		protected void fillConfigurator(@Nonnull BiConsumer<StringBinding, Node> sink) {}
+	}
+
+	/**
+	 * Config node for {@link IncludeEmptyPackageNameFilter}.
+	 */
+	public static class IncludeEmptyPackageNames extends FilterWithConfigNode<IncludeEmptyPackageNameFilter> {
+		@Nonnull
+		@Override
+		public ObservableValue<String> display() {
+			return Lang.getBinding("mapgen.filter.includeemptypackagenames");
 		}
+
+		@Nonnull
+		@Override
+		protected Function<NameGeneratorFilter, IncludeEmptyPackageNameFilter> makeProvider() {
+			return IncludeEmptyPackageNameFilter::new;
+		}
+
+		@Override
+		protected void fillConfigurator(@Nonnull BiConsumer<StringBinding, Node> sink) {}
 	}
 
 	/**
