@@ -67,13 +67,12 @@ public class WorkspaceInformationPane extends StackPane implements Navigable {
 		content.setPadding(new Insets(10));
 		content.prefWidthProperty().bind(widthProperty().subtract(10));
 		ScrollPane scroll = new AutoScrollPane(content);
-		getChildren().addAll(modal, scroll);
+		getChildren().addAll(scroll, modal);
 		getStyleClass().add("background");
 
 		// Set up a "loading..." overlay while the summary is still being generated
 		RingProgressIndicator ring = new RingProgressIndicator(ProgressIndicator.INDETERMINATE_PROGRESS);
-		VBox box = new VBox(ring,
-				new BoundLabel(Lang.getBinding("workspace.info-progress")));
+		VBox box = new VBox(ring, new BoundLabel(Lang.getBinding("workspace.info-progress")));
 		box.setAlignment(Pos.CENTER);
 		box.setSpacing(20);
 		FxThreadUtil.delayedRun(1, () -> modal.show(new Group(box)));
