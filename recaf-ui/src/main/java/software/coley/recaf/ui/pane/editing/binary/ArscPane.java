@@ -51,6 +51,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static software.coley.recaf.util.android.AndroidXmlUtil.*;
+
 /**
  * Displays the contents of a {@link ArscFileInfo}. These resource bundles are generally glorified KV pairs, but they
  * can also point to other files in the workspace. In such cases, we will display them here when selected.
@@ -171,9 +173,9 @@ public class ArscPane extends BorderPane implements FileNavigable, UpdatableNavi
 		TableColumn<ResourceEntry, String> valueColumn = new TableColumn<>("Value");
 
 		nameColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().name()));
-		hexIdColumn.setCellValueFactory(param -> new SimpleStringProperty(formatId(param.getValue().id())));
+		hexIdColumn.setCellValueFactory(param -> new SimpleStringProperty(formatResourceId(param.getValue().id())));
 		decimalIdColumn.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().id()));
-		valueColumn.setCellValueFactory(param -> new SimpleStringProperty(formatValue(resources, param.getValue())));
+		valueColumn.setCellValueFactory(param -> new SimpleStringProperty(formatMaybeComplexValue(resources, param.getValue())));
 
 		nameColumn.setPrefWidth(180);
 		hexIdColumn.setPrefWidth(100);
@@ -264,7 +266,7 @@ public class ArscPane extends BorderPane implements FileNavigable, UpdatableNavi
 		imageView.setSmooth(true);
 
 		Label name = new Label(entry.name());
-		Label id = new Label(formatId(entry.id()));
+		Label id = new Label(formatResourceId(entry.id()));
 		id.getStyleClass().add(Styles.TEXT_SUBTLE);
 
 		VBox tile = new VBox(6, imageView, name, id);
@@ -308,44 +310,11 @@ public class ArscPane extends BorderPane implements FileNavigable, UpdatableNavi
 	}
 
 	@Nonnull
-	private static String formatValue(@Nonnull AndroidRes resources, @Nonnull ResourceEntry entry) {
+	private static String formatMaybeComplexValue(@Nonnull AndroidRes resources, @Nonnull ResourceEntry entry) {
 		if (entry.isComplex())
 			return entry.complexValues().size() + " " + Lang.get("arscviewer.complex-entries-suffix");
 		BinaryResourceValue value = entry.simpleValue();
-		if (value == null)
-			return "";
-		String stringValue = entry.stringValue();
-		if (stringValue != null)
-			return stringValue;
-		String path = entry.resourcePath();
-		if (path != null)
-			return path;
 		return formatBinaryValue(resources, value);
-	}
-
-	@Nonnull
-	private static String formatBinaryValue(@Nonnull AndroidRes resources, @Nonnull BinaryResourceValue value) {
-		return switch (value.type()) {
-			case REFERENCE, DYNAMIC_REFERENCE -> {
-				String name = resources.getResName(value.data());
-				yield name == null ? "@" + formatId(value.data()) : "@" + name + " (" + formatId(value.data()) + ")";
-			}
-			case ATTRIBUTE, DYNAMIC_ATTRIBUTE -> {
-				String name = resources.getResName(value.data());
-				yield name == null ? "?" + formatId(value.data()) : "?" + name + " (" + formatId(value.data()) + ")";
-			}
-			case INT_BOOLEAN -> value.data() == 0 ? "false" : "true";
-			case INT_HEX -> formatId(value.data());
-			case INT_COLOR_ARGB8, INT_COLOR_RGB8, INT_COLOR_ARGB4, INT_COLOR_RGB4 ->
-					"#" + Integer.toHexString(value.data());
-			default -> value.type() + ": " + value.data();
-		};
-	}
-
-	@Nonnull
-	private static String formatComplexKey(@Nonnull AndroidRes resources, int key) {
-		String name = resources.getResName(key);
-		return name == null ? formatId(key) : name + " (" + formatId(key) + ")";
 	}
 
 	@Nonnull
@@ -355,11 +324,6 @@ public class ArscPane extends BorderPane implements FileNavigable, UpdatableNavi
 			return "";
 		return resolve(workspace, entry).path() == null ?
 				resourcePath + " " + Lang.get("arscviewer.unknown-resource") : resourcePath;
-	}
-
-	@Nonnull
-	private static String formatId(int id) {
-		return "0x%08X".formatted(id);
 	}
 
 	@Nonnull

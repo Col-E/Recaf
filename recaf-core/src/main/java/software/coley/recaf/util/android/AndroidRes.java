@@ -43,6 +43,7 @@ import java.util.TreeSet;
 public class AndroidRes implements AndroidResourceProvider {
 	private static final AndroidRes EMPTY = new AndroidRes();
 	private static final AndroidRes ANDROID_BASE;
+	private final List<String> tableStrings;
 	private final Int2ObjectMap<String> resIdToName;
 	private final Object2IntMap<String> resNameToId;
 	private final Map<String, String> attrToFormat;
@@ -56,6 +57,7 @@ public class AndroidRes implements AndroidResourceProvider {
 	private final Int2ObjectMap<ResourceEntry> entriesById;
 
 	private AndroidRes() {
+		this.tableStrings = Collections.emptyList();
 		this.resIdToName = new Int2ObjectMap<>(0);
 		this.resNameToId = new Object2IntMap<>(0);
 		this.attrToFormat = Collections.emptyMap();
@@ -70,6 +72,7 @@ public class AndroidRes implements AndroidResourceProvider {
 	}
 
 	private AndroidRes(@Nonnull Int2ObjectMap<String> resIdToName,
+	                   @Nonnull List<String> tableStrings,
 	                   @Nonnull Object2IntMap<String> resNameToId,
 	                   @Nonnull Map<String, String> attrToFormat,
 	                   @Nonnull Map<String, Object2LongMap<String>> attrToEnum,
@@ -81,6 +84,7 @@ public class AndroidRes implements AndroidResourceProvider {
 	                   @Nonnull Map<String, ResourceEntry> entriesByName,
 	                   @Nonnull Int2ObjectMap<ResourceEntry> entriesById) {
 		this.resIdToName = resIdToName;
+		this.tableStrings = tableStrings;
 		this.resNameToId = resNameToId;
 		this.attrToFormat = attrToFormat;
 		this.attrToEnum = attrToEnum;
@@ -99,6 +103,19 @@ public class AndroidRes implements AndroidResourceProvider {
 	@Nonnull
 	public Int2ObjectMap<String> getResIdToName() {
 		return resIdToName;
+	}
+
+	/**
+	 * @param index
+	 * 		Resource-table string pool index.
+	 *
+	 * @return String from the string pool, or {@code null} when unavailable.
+	 */
+	@Nullable
+	public String getString(int index) {
+		if (index < 0 || index >= tableStrings.size())
+			return null;
+		return tableStrings.get(index);
 	}
 
 	/**
@@ -199,6 +216,7 @@ public class AndroidRes implements AndroidResourceProvider {
 
 		// Maps to collect data into.
 		Int2ObjectMap<String> resIdToName = new Int2ObjectMap<>();
+		List<String> tableStrings = Collections.emptyList();
 		Object2IntMap<String> resNameToId = new Object2IntMap<>();
 		Map<String, String> attrToFormat = new TreeMap<>();
 		Map<String, Object2LongMap<String>> attrToEnum = new TreeMap<>();
@@ -214,6 +232,12 @@ public class AndroidRes implements AndroidResourceProvider {
 		for (Chunk chunk : chunks) {
 			if (chunk instanceof ResourceTableChunk resourceTableChunk) {
 				StringPoolChunk stringPool = resourceTableChunk.getStringPool();
+				if (tableStrings.isEmpty() && stringPool != null) {
+					List<String> strings = new ArrayList<>(stringPool.getStringCount());
+					for (int i = 0; i < stringPool.getStringCount(); i++)
+						strings.add(stringPool.getString(i));
+					tableStrings = Collections.unmodifiableList(strings);
+				}
 				for (PackageChunk packageChunk : resourceTableChunk.getPackages()) {
 					int packageId = packageChunk.getId();
 					for (TypeChunk typeChunk : packageChunk.getTypeChunks()) {
@@ -255,7 +279,7 @@ public class AndroidRes implements AndroidResourceProvider {
 		entriesByType.replaceAll((type, entries) -> Collections.unmodifiableList(entries.stream()
 				.sorted((a, b) -> a.name().compareToIgnoreCase(b.name()))
 				.toList()));
-		return new AndroidRes(resIdToName, resNameToId, attrToFormat, attrToEnum, attrToFlags,
+		return new AndroidRes(resIdToName, tableStrings, resNameToId, attrToFormat, attrToEnum, attrToFlags,
 				attrToSimpleResource, attrToComplexResource, formatToAttrs,
 				Collections.unmodifiableMap(entriesByType), Collections.unmodifiableMap(entriesByName), entriesById);
 	}
@@ -473,7 +497,7 @@ public class AndroidRes implements AndroidResourceProvider {
 
 			JsonObject tree = (JsonObject) JsonParser.parseReader(new InputStreamReader(AndroidRes.class.getResourceAsStream("/android/attrs.json")));
 			visit(formatToAttrs, attrToFormat, attrToEnum, attrToFlags, tree);
-			ANDROID_BASE = new AndroidRes(resIdToName, resNameToId,
+			ANDROID_BASE = new AndroidRes(resIdToName, Collections.emptyList(), resNameToId,
 					attrToFormat, attrToEnum, attrToFlags, Collections.emptyMap(), Collections.emptyMap(), formatToAttrs,
 					Collections.emptyMap(), Collections.emptyMap(), new Int2ObjectMap<>(0));
 		} catch (IOException ex) {
