@@ -5,11 +5,8 @@ import jakarta.enterprise.context.Dependent;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
+import software.coley.recaf.services.analysis.antitamper.IllegalNameAntiReversalAnalyzer;
 import software.coley.recaf.services.mapping.IntermediateMappings;
-import software.coley.recaf.services.mapping.gen.filter.IncludeKeywordNameFilter;
-import software.coley.recaf.services.mapping.gen.filter.IncludeNonAsciiNameFilter;
-import software.coley.recaf.services.mapping.gen.filter.IncludeNonJavaIdentifierNameFilter;
-import software.coley.recaf.services.mapping.gen.filter.IncludeWhitespaceNameFilter;
 import software.coley.recaf.services.mapping.gen.filter.NameGeneratorFilter;
 import software.coley.recaf.services.mapping.gen.naming.IncrementingNameGenerator;
 import software.coley.recaf.services.mapping.gen.naming.NameGenerator;
@@ -27,8 +24,7 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
  */
 @Dependent
 public class IllegalNameMappingTransformer implements JvmClassTransformer {
-	private static final NameGeneratorFilter ILLEGAL_NAME_FILTER =
-			new IncludeWhitespaceNameFilter(new IncludeNonAsciiNameFilter(new IncludeKeywordNameFilter(new IncludeNonJavaIdentifierNameFilter(null))));
+	private static final NameGeneratorFilter ILLEGAL_NAME_FILTER = IllegalNameAntiReversalAnalyzer.getIllegalNameFilter();
 	private static final NameGenerator NAME_GENERATOR = new IncrementingNameGenerator();
 
 	@Override

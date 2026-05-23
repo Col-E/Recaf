@@ -10,6 +10,7 @@ import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.info.builder.FileInfoBuilder;
 import software.coley.recaf.info.builder.JvmClassInfoBuilder;
 import software.coley.recaf.workspace.model.BasicWorkspace;
 import software.coley.recaf.workspace.model.Workspace;
@@ -23,7 +24,6 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResourceBuilder;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -192,5 +192,21 @@ public class TestClassUtils {
 		if (consumer != null) consumer.accept(node);
 		node.accept(cw);
 		return new JvmClassInfoBuilder(cw.toByteArray()).build();
+	}
+
+	/**
+	 * @param name
+	 * 		File name.
+	 * @param content
+	 * 		File contents.
+	 *
+	 * @return Info of binary file.
+	 */
+	@Nonnull
+	public static FileInfo createFile(@Nonnull String name, @Nonnull byte[] content) {
+		return new FileInfoBuilder<>()
+				.withName(name)
+				.withRawContent(content)
+				.build();
 	}
 }

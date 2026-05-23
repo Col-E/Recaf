@@ -2,7 +2,6 @@ package software.coley.recaf.services.info.summary.builtin;
 
 import atlantafx.base.theme.Styles;
 import jakarta.annotation.Nonnull;
-import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
@@ -14,26 +13,14 @@ import javafx.scene.layout.HBox;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
-import software.coley.recaf.info.JvmClassInfo;
-import software.coley.recaf.info.member.FieldMember;
-import software.coley.recaf.info.member.MethodMember;
-import software.coley.recaf.services.deobfuscation.transform.generic.CycleClassRemovingTransformer;
-import software.coley.recaf.services.deobfuscation.transform.generic.DuplicateAnnotationRemovingTransformer;
-import software.coley.recaf.services.deobfuscation.transform.generic.IllegalAnnotationRemovingTransformer;
-import software.coley.recaf.services.deobfuscation.transform.generic.IllegalSignatureRemovingTransformer;
-import software.coley.recaf.services.deobfuscation.transform.generic.LongAnnotationRemovingTransformer;
-import software.coley.recaf.services.deobfuscation.transform.generic.LongExceptionRemovingTransformer;
+import software.coley.recaf.services.analysis.antitamper.AntiReversalAnalysisService;
+import software.coley.recaf.services.analysis.antitamper.IllegalNameAnalysis;
+import software.coley.recaf.services.analysis.antitamper.IllegalNameAntiReversalAnalyzer;
+import software.coley.recaf.services.analysis.antitamper.TransformerImpactAnalysis;
+import software.coley.recaf.services.analysis.antitamper.TransformerImpactAntiReversalAnalyzer;
 import software.coley.recaf.services.info.summary.ResourceSummarizer;
 import software.coley.recaf.services.info.summary.SummaryConsumer;
-import software.coley.recaf.services.mapping.gen.filter.IncludeKeywordNameFilter;
-import software.coley.recaf.services.mapping.gen.filter.IncludeNonAsciiNameFilter;
-import software.coley.recaf.services.mapping.gen.filter.IncludeNonJavaIdentifierNameFilter;
-import software.coley.recaf.services.mapping.gen.filter.IncludeWhitespaceNameFilter;
-import software.coley.recaf.services.mapping.gen.filter.NameGeneratorFilter;
 import software.coley.recaf.services.transform.JvmTransformResult;
-import software.coley.recaf.services.transform.TransformationApplierService;
-import software.coley.recaf.services.transform.TransformationException;
-import software.coley.recaf.services.window.WindowFactory;
 import software.coley.recaf.ui.control.ActionButton;
 import software.coley.recaf.ui.control.BoundLabel;
 import software.coley.recaf.ui.pane.MappingGeneratorPane;
@@ -44,12 +31,6 @@ import software.coley.recaf.util.threading.ThreadPoolFactory;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 
@@ -61,37 +42,39 @@ import java.util.concurrent.ExecutorService;
 @ApplicationScoped
 public class AntiDecompilationSummarizer implements ResourceSummarizer {
 	private static final int BUTTON_WIDTH = 210;
-	private static final NameGeneratorFilter ILLEGAL_NAME_FILTER =
-			new IncludeWhitespaceNameFilter(new IncludeNonAsciiNameFilter(new IncludeKeywordNameFilter(new IncludeNonJavaIdentifierNameFilter(null))));
 	private static final Logger logger = Logging.get(AntiDecompilationSummarizer.class);
-	private final TransformationApplierService transformationApplierService;
+	private final AntiReversalAnalysisService antiReversalAnalysisService;
 	private final Instance<MappingGeneratorWindow> generatorWindowProvider;
-	private final WindowFactory windowFactory;
 
 	@Inject
-	public AntiDecompilationSummarizer(@Nonnull TransformationApplierService transformationApplierService,
-	                                   @Nonnull Instance<MappingGeneratorWindow> generatorWindowProvider,
-	                                   @Nonnull WindowFactory windowFactory) {
+	public AntiDecompilationSummarizer(@Nonnull AntiReversalAnalysisService antiReversalAnalysisService,
+	                                   @Nonnull Instance<MappingGeneratorWindow> generatorWindowProvider) {
+		this.antiReversalAnalysisService = antiReversalAnalysisService;
 		this.generatorWindowProvider = generatorWindowProvider;
-		this.transformationApplierService = transformationApplierService;
-		this.windowFactory = windowFactory;
 	}
 
 	@Override
 	public boolean summarize(@Nonnull Workspace workspace,
 	                         @Nonnull WorkspaceResource resource,
 	                         @Nonnull SummaryConsumer consumer) {
-		// Transform workspace with a number of strictly anti-crasher transformers.
-		// Let the user determine if they want to apply the results.
-		JvmTransformResult transformResult = computeTransformations(workspace);
+		TransformerImpactAnalysis transformAnalysis =
+				antiReversalAnalysisService.analyze(workspace, resource, TransformerImpactAntiReversalAnalyzer.class);
+		IllegalNameAnalysis illegalNameAnalysis =
+				antiReversalAnalysisService.analyze(workspace, resource, IllegalNameAntiReversalAnalyzer.class);
 
-		// Detect if we should show the prompt to show the pre-populated mapping generator panel for illegally named classes.
-		int illegalNameCount = computeIllegalNames(resource);
+		// TODO: We let the AntiReversalAnalysisService register custom analyzers but we don't have a way to really
+		//  handle them here in a way that lets us produce a nice UI for them unless we know about them ahead of time
+		//  like the existing core analyzers. For now, plugins will need to provide their own summarizer rather than
+		//  be included here even if they offer the same intent.
 
 		// Skip if there is no anti-decompilation work to be done.
+		JvmTransformResult transformResult = transformAnalysis.jvm().result();
+		if (transformResult == null)
+			return false;
+		int illegalNameCount = illegalNameAnalysis.classesWithIllegalNames().size();
+		int transformCount = transformResult.getTransformedClasses().size() + transformResult.getClassesToRemove().size();
 		boolean hasIllegalNames = illegalNameCount > 0;
-		boolean hasTransformations = (transformResult != null &&
-				(!transformResult.getClassesToRemove().isEmpty() || !transformResult.getTransformedClasses().isEmpty()));
+		boolean hasTransformations = transformCount > 0;
 		if (!hasIllegalNames && !hasTransformations)
 			return false;
 
@@ -102,7 +85,6 @@ public class AntiDecompilationSummarizer implements ResourceSummarizer {
 			title.getStyleClass().addAll(Styles.TITLE_4);
 			consumer.appendSummary(title);
 			if (hasTransformations) {
-				int transformCount = transformResult.getTransformedClasses().size() + transformResult.getClassesToRemove().size();
 				Label label = new BoundLabel(Lang.format("service.analysis.anti-decompile.label-patch", transformCount));
 				Button action = new ActionButton(CarbonIcons.CLEAN, Lang.format("service.analysis.anti-decompile.illegal-attr", transformCount), transformResult::apply)
 						.width(BUTTON_WIDTH).once().async(service);
@@ -134,82 +116,6 @@ public class AntiDecompilationSummarizer implements ResourceSummarizer {
 			}
 		});
 		return true;
-	}
-
-	@Nullable
-	private JvmTransformResult computeTransformations(@Nonnull Workspace workspace) {
-		JvmTransformResult transformResult;
-		try {
-			return transformationApplierService.newApplier(workspace).transformJvm(List.of(
-					// Remove classes with cycles in inheritance
-					CycleClassRemovingTransformer.class,
-
-					// Remove illegally formed annotations
-					IllegalAnnotationRemovingTransformer.class,
-
-					// Remove illegally formed generic signatures
-					IllegalSignatureRemovingTransformer.class,
-
-					// Remove bogus duplicate annotations
-					DuplicateAnnotationRemovingTransformer.class,
-
-					// Remove annoying long annotations
-					LongAnnotationRemovingTransformer.class,
-
-					// Remove annoying long exceptions
-					LongExceptionRemovingTransformer.class
-			));
-		} catch (TransformationException ex) {
-			logger.error("Failed applying anti-decompilation transformers", ex);
-			return null;
-		}
-	}
-
-	private int computeIllegalNames(@Nonnull WorkspaceResource resource) {
-		Set<JvmClassInfo> classesWithIllegalNames = Collections.newSetFromMap(new IdentityHashMap<>());
-		try (ExecutorService service = ThreadPoolFactory.newFixedThreadPool("illegal-name-summary")) {
-			List<Callable<Void>> tasks = new ArrayList<>();
-			resource.jvmAllClassBundleStreamRecursive().forEach(bundle -> {
-				bundle.forEach(cls -> {
-					// While this task is 'simple' it can be a lot of work for workspaces with 1000's of classes
-					// hence why each class is checked in parallel.
-					tasks.add(() -> {
-						if (ILLEGAL_NAME_FILTER.shouldMapClass(cls)) {
-							synchronized (classesWithIllegalNames) {
-								classesWithIllegalNames.add(cls);
-							}
-							return null;
-						}
-						for (FieldMember field : cls.getFields()) {
-							if (ILLEGAL_NAME_FILTER.shouldMapField(cls, field)) {
-								synchronized (classesWithIllegalNames) {
-									classesWithIllegalNames.add(cls);
-								}
-								return null;
-							}
-						}
-						for (MethodMember method : cls.getMethods()) {
-							if (ILLEGAL_NAME_FILTER.shouldMapMethod(cls, method)) {
-								synchronized (classesWithIllegalNames) {
-									classesWithIllegalNames.add(cls);
-								}
-								return null;
-							}
-						}
-						return null;
-					});
-				});
-			});
-
-			// Wait for all classes to be processed
-			try {
-				service.invokeAll(tasks);
-			} catch (InterruptedException ex) {
-				logger.error("Interrupted illegal name computation", ex);
-				return 0;
-			}
-		}
-		return classesWithIllegalNames.size();
 	}
 
 	@Nonnull

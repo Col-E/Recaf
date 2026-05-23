@@ -1,7 +1,6 @@
 package software.coley.recaf.services.info.summary.builtin;
 
 import atlantafx.base.theme.Styles;
-import com.google.common.hash.Hashing;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -21,8 +20,10 @@ import javafx.scene.layout.VBox;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.path.FilePathNode;
-import software.coley.recaf.path.PathNodes;
 import software.coley.recaf.services.cell.CellConfigurationService;
+import software.coley.recaf.services.analysis.metadata.FileHashResult;
+import software.coley.recaf.services.analysis.metadata.FileMetadataAnalysisService;
+import software.coley.recaf.services.analysis.metadata.HashAlgorithm;
 import software.coley.recaf.services.info.summary.ResourceSummarizer;
 import software.coley.recaf.services.info.summary.SummaryConsumer;
 import software.coley.recaf.ui.control.ActionButton;
@@ -31,7 +32,6 @@ import software.coley.recaf.util.Animations;
 import software.coley.recaf.util.ClipboardUtil;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.workspace.model.Workspace;
-import software.coley.recaf.workspace.model.resource.WorkspaceFileResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.util.ArrayList;
@@ -45,10 +45,13 @@ import java.util.List;
 @ApplicationScoped
 public class HashSummarizer implements ResourceSummarizer {
 	private final CellConfigurationService configurationService;
+	private final FileMetadataAnalysisService fileMetadataAnalysisService;
 
 	@Inject
-	public HashSummarizer(@Nonnull CellConfigurationService configurationService) {
+	public HashSummarizer(@Nonnull CellConfigurationService configurationService,
+	                      @Nonnull FileMetadataAnalysisService fileMetadataAnalysisService) {
 		this.configurationService = configurationService;
+		this.fileMetadataAnalysisService = fileMetadataAnalysisService;
 	}
 
 	@Override
@@ -56,10 +59,8 @@ public class HashSummarizer implements ResourceSummarizer {
 	                         @Nonnull WorkspaceResource resource,
 	                         @Nonnull SummaryConsumer consumer) {
 		List<Node> grids = new ArrayList<>();
-		if (resource instanceof WorkspaceFileResource fileResource)
-			grids.add(generateHashDisplay(workspace, fileResource));
-		for (WorkspaceFileResource embedded : resource.getEmbeddedResources().values())
-			grids.add(generateHashDisplay(workspace, embedded));
+		for (FileHashResult result : fileMetadataAnalysisService.computeHashes(workspace, resource))
+			grids.add(generateHashDisplay(result));
 
 		// Skip if no file resources were found.
 		if (grids.isEmpty())
@@ -76,23 +77,16 @@ public class HashSummarizer implements ResourceSummarizer {
 	}
 
 	@Nonnull
-	@SuppressWarnings("deprecation")
-	private Node generateHashDisplay(@Nonnull Workspace workspace, @Nonnull WorkspaceFileResource fileResource) {
-		FileInfo fileInfo = fileResource.getFileInfo();
-		String name = fileInfo.getName();
-		byte[] content = fileInfo.getRawContent();
-		String md5 = Hashing.md5().hashBytes(content).toString();
-		String sha1 = Hashing.sha1().hashBytes(content).toString();
-		String sha256 = Hashing.sha256().hashBytes(content).toString();
-		String sha512 = Hashing.sha512().hashBytes(content).toString();
+	private Node generateHashDisplay(@Nonnull FileHashResult result) {
+		FilePathNode path = result.filePath();
+		FileInfo fileInfo = path.getValue();
 
 		// Generate a TableView of the hash information.
-		FilePathNode path = PathNodes.filePath(workspace, fileResource, fileResource.getFileBundle(), fileInfo);
 		VBox container = new VBox();
 		container.setSpacing(10);
 
 		// Skip file title when the resource is the primary resource of the workspace, as that is already shown in the header.
-		if (fileResource != workspace.getPrimaryResource()) {
+		if (path.getValueOfType(WorkspaceResource.class) != path.getValueOfType(Workspace.class).getPrimaryResource()) {
 			HBox fileTitle = new HBox(configurationService.graphicOf(path), new Label(configurationService.textOf(path)));
 			fileTitle.setAlignment(Pos.CENTER_LEFT);
 			fileTitle.setSpacing(10);
@@ -165,10 +159,10 @@ public class HashSummarizer implements ResourceSummarizer {
 
 		// Add hash entries
 		ObservableList<HashEntry> hashEntries = FXCollections.observableArrayList(
-				new HashEntry("MD5", md5),
-				new HashEntry("SHA-1", sha1),
-				new HashEntry("SHA-256", sha256),
-				new HashEntry("SHA-512", sha512)
+				new HashEntry("MD5", result.hashes().get(HashAlgorithm.MD5)),
+				new HashEntry("SHA-1", result.hashes().get(HashAlgorithm.SHA1)),
+				new HashEntry("SHA-256", result.hashes().get(HashAlgorithm.SHA256)),
+				new HashEntry("SHA-512", result.hashes().get(HashAlgorithm.SHA512))
 		);
 		tableView.setItems(hashEntries);
 		tableView.prefHeightProperty().bind(tableView.fixedCellSizeProperty().multiply(Bindings.size(tableView.getItems()).add(1.05)));
