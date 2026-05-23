@@ -73,6 +73,9 @@
 .background-dark {
     -fx-background-color: -color-bg-overlay !important;
 }
+.background-dark-transparent {
+    -fx-background-color: rgba(0, 0, 0, 0.25) !important;
+}
 
 /* Tweak the larger titles to not be bold (which looks rather ugly in most cases) */
 .title-1 {

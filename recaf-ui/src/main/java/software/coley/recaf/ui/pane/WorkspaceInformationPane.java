@@ -1,6 +1,5 @@
 package software.coley.recaf.ui.pane;
 
-import atlantafx.base.controls.ModalPane;
 import atlantafx.base.controls.RingProgressIndicator;
 import atlantafx.base.theme.Styles;
 import jakarta.annotation.Nonnull;
@@ -8,7 +7,6 @@ import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
@@ -62,20 +60,24 @@ public class WorkspaceInformationPane extends StackPane implements Navigable {
 		path = PathNodes.workspacePath(workspace);
 
 		// Adding content
-		ModalPane modal = new ModalPane();
 		Grid content = new Grid();
 		content.setPadding(new Insets(10));
 		content.prefWidthProperty().bind(widthProperty().subtract(10));
 		ScrollPane scroll = new AutoScrollPane(content);
-		getChildren().addAll(scroll, modal);
+		StackPane loadingOverlay = new StackPane();
+		getChildren().addAll(scroll, loadingOverlay);
 		getStyleClass().add("background");
+		loadingOverlay.getStyleClass().add("background-dark-transparent");
 
 		// Set up a "loading..." overlay while the summary is still being generated
 		RingProgressIndicator ring = new RingProgressIndicator(ProgressIndicator.INDETERMINATE_PROGRESS);
 		VBox box = new VBox(ring, new BoundLabel(Lang.getBinding("workspace.info-progress")));
 		box.setAlignment(Pos.CENTER);
 		box.setSpacing(20);
-		FxThreadUtil.delayedRun(1, () -> modal.show(new Group(box)));
+		loadingOverlay.getChildren().add(box);
+		loadingOverlay.setVisible(true);
+		loadingOverlay.setManaged(true);
+		StackPane.setAlignment(box, Pos.CENTER);
 
 		// Populate summary data for each resource.
 		List<CompletableFuture<Void>> summaryFutures = new ArrayList<>();
@@ -111,7 +113,8 @@ public class WorkspaceInformationPane extends StackPane implements Navigable {
 		// When the summary is done, clear the "loading..." overlay.
 		CompletableFuture.allOf(summaryFutures.toArray(CompletableFuture[]::new))
 				.whenCompleteAsync((ignored, error) -> FxThreadUtil.delayedRun(100, () -> {
-					modal.hide(true);
+					loadingOverlay.setVisible(false);
+					loadingOverlay.setManaged(false);
 
 					// AtlantaFX's ring progress in the 'indeterminate' state uses the JavaFX 'RotateTransition' animation
 					// which leaks memory if not explicitly stopped. This results in any workspace content never being GC'd.
