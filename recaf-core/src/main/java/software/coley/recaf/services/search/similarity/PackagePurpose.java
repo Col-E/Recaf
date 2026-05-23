@@ -61,7 +61,9 @@ public class PackagePurpose {
 		addBucket(packageBucketTree, "com/alibaba/fastjson", BUCKET_UTIL);
 		addBucket(packageBucketTree, "com/android/net", BUCKET_NETWORKING);
 		addBucket(packageBucketTree, "com/android/okhttp", BUCKET_NETWORKING);
+		addBucket(packageBucketTree, "com/carrotdata/cache", BUCKET_ENTERPRISE); // Newer caching library
 		addBucket(packageBucketTree, "com/fasterxml", BUCKET_UTIL);
+		addBucket(packageBucketTree, "com/github/benmanes/caffeine", BUCKET_ENTERPRISE); // Caching library often used in enterprise apps.
 		addBucket(packageBucketTree, "com/google/common", BUCKET_UTIL);
 		addBucket(packageBucketTree, "com/google/common/codec", BUCKET_IO);
 		addBucket(packageBucketTree, "com/google/common/collections", BUCKET_UTIL);
@@ -70,10 +72,13 @@ public class PackagePurpose {
 		addBucket(packageBucketTree, "com/google/common/reflect", BUCKET_REFLECTION);
 		addBucket(packageBucketTree, "com/google/gson", BUCKET_UTIL);
 		addBucket(packageBucketTree, "com/google/protobuf", BUCKET_IO);
+		addBucket(packageBucketTree, "com/ibatis", BUCKET_ENTERPRISE); // ORM
 		addBucket(packageBucketTree, "com/mojang/authlib", BUCKET_NETWORKING);
-		addBucket(packageBucketTree, "com/squareup/moshi", BUCKET_UTIL);
+		addBucket(packageBucketTree, "com/rabbitmq", BUCKET_NETWORKING); // Messaging library
+		addBucket(packageBucketTree, "com/squareup/moshi", BUCKET_UTIL); // JSON library
 		addBucket(packageBucketTree, "com/sun/javafx", BUCKET_UI);
 		addBucket(packageBucketTree, "com/sun/jna", BUCKET_NATIVE);
+		addBucket(packageBucketTree, "com/sun/security", BUCKET_SECURITY);
 		addBucket(packageBucketTree, "dalvik/system", BUCKET_REFLECTION); // Had a bunch of classloaders for dex files.
 		addBucket(packageBucketTree, "io/netty", BUCKET_NETWORKING);
 		addBucket(packageBucketTree, "it/unimi", BUCKET_UTIL); // Primitive collections.
@@ -100,10 +105,18 @@ public class PackagePurpose {
 		addBucket(packageBucketTree, "javafx", BUCKET_UI);
 		addBucket(packageBucketTree, "javax/crypto", BUCKET_SECURITY);
 		addBucket(packageBucketTree, "javax/enterprise", BUCKET_ENTERPRISE);
+		addBucket(packageBucketTree, "javax/imageio", BUCKET_IO);
+		addBucket(packageBucketTree, "javax/management", BUCKET_UTIL); // JMX for monitoring and management
+		addBucket(packageBucketTree, "javax/naming", BUCKET_ENTERPRISE); // JNDI for directory and naming services, often used in enterprise environments.
 		addBucket(packageBucketTree, "javax/persistence", BUCKET_ENTERPRISE);
+		addBucket(packageBucketTree, "javax/rmi", BUCKET_NETWORKING); // Remote Method Invocation for distributed computing.
 		addBucket(packageBucketTree, "javax/security", BUCKET_SECURITY);
+		addBucket(packageBucketTree, "javax/servlet", BUCKET_ENTERPRISE);
+		addBucket(packageBucketTree, "javax/sound", BUCKET_IO);
+		addBucket(packageBucketTree, "javax/sql", BUCKET_ENTERPRISE); // JDBC for database access, often used in enterprise applications.
 		addBucket(packageBucketTree, "javax/swing", BUCKET_UI);
 		addBucket(packageBucketTree, "javax/xml", BUCKET_UTIL);
+		addBucket(packageBucketTree, "kafka", BUCKET_ENTERPRISE); // Distributed event streaming platform.
 		addBucket(packageBucketTree, "kotlin", BUCKET_UTIL);
 		addBucket(packageBucketTree, "kotlin/io", BUCKET_IO);
 		addBucket(packageBucketTree, "kotlin/reflect", BUCKET_REFLECTION);
@@ -111,6 +124,7 @@ public class PackagePurpose {
 		addBucket(packageBucketTree, "kotlinx/serialization", BUCKET_IO);
 		addBucket(packageBucketTree, "net/bytebuddy", BUCKET_BYTECODE);
 		addBucket(packageBucketTree, "net/objenesis", BUCKET_REFLECTION);
+		addBucket(packageBucketTree, "net/sf/ehcache", BUCKET_ENTERPRISE); // Caching library often used in enterprise apps.
 		addBucket(packageBucketTree, "okhttp3", BUCKET_NETWORKING);
 		addBucket(packageBucketTree, "okio", BUCKET_IO);
 		addBucket(packageBucketTree, "org/apache/commons/codec", BUCKET_IO);
@@ -121,26 +135,34 @@ public class PackagePurpose {
 		addBucket(packageBucketTree, "org/apache/commons/io", BUCKET_IO);
 		addBucket(packageBucketTree, "org/apache/commons/lang3", BUCKET_UTIL);
 		addBucket(packageBucketTree, "org/apache/commons/lang3/reflect", BUCKET_REFLECTION);
+		addBucket(packageBucketTree, "org/apache/hadoop", BUCKET_ENTERPRISE); // Big-data processing
 		addBucket(packageBucketTree, "org/apache/hc", BUCKET_NETWORKING); // Apache HttpClient
+		addBucket(packageBucketTree, "org/apache/ibatis", BUCKET_ENTERPRISE); // ORM
+		addBucket(packageBucketTree, "org/apache/kafka", BUCKET_ENTERPRISE); // Distributed event streaming platform.
+		addBucket(packageBucketTree, "org/apache/kerby", BUCKET_SECURITY); // Kerberos authentication, often used in enterprise environments.
 		addBucket(packageBucketTree, "org/apache/logging", BUCKET_UTIL);
 		addBucket(packageBucketTree, "org/bouncycastle", BUCKET_SECURITY);
+		addBucket(packageBucketTree, "org/ehcache", BUCKET_ENTERPRISE); // Caching library often used in enterprise apps.
 		addBucket(packageBucketTree, "org/esotericsoftware/kryo", BUCKET_IO);
 		addBucket(packageBucketTree, "org/esotericsoftware/reflectasm", BUCKET_REFLECTION);
 		addBucket(packageBucketTree, "org/fxmisc", BUCKET_UI); // JavaFX misc libraries
 		addBucket(packageBucketTree, "org/hibernate", BUCKET_ENTERPRISE);
+		addBucket(packageBucketTree, "org/ietf/jgss", BUCKET_ENTERPRISE); // GSS-API for secure authentication, often used in enterprise environments.
 		addBucket(packageBucketTree, "org/jboss", BUCKET_ENTERPRISE); // JBoss has lots of stuff, but this is an umbrella.
 		addBucket(packageBucketTree, "org/joml", BUCKET_UTIL); // Math
 		addBucket(packageBucketTree, "org/json", BUCKET_UTIL);
 		addBucket(packageBucketTree, "org/lwjgl", BUCKET_UI); // OpenGL bindings
 		addBucket(packageBucketTree, "org/objectweb/asm", BUCKET_BYTECODE);
+		addBucket(packageBucketTree, "org/omg", BUCKET_ENTERPRISE); // CORBA + other OMG standards often seen in enterprise environments.
 		addBucket(packageBucketTree, "org/reflections", BUCKET_REFLECTION);
 		addBucket(packageBucketTree, "org/slf4j", BUCKET_UTIL);
 		addBucket(packageBucketTree, "org/spongepowered/asm", BUCKET_BYTECODE);
 		addBucket(packageBucketTree, "org/spongepowered/tools", BUCKET_BYTECODE);
 		addBucket(packageBucketTree, "org/springframework", BUCKET_ENTERPRISE);
 		addBucket(packageBucketTree, "org/yaml", BUCKET_UTIL);
-		addBucket(packageBucketTree, "oshi", BUCKET_NATIVE);
-		addBucket(packageBucketTree, "retrofit2", BUCKET_NETWORKING);
+		addBucket(packageBucketTree, "oshi", BUCKET_NATIVE); // OS and hardware information
+		addBucket(packageBucketTree, "reactor", BUCKET_UTIL); // Reactive streams
+		addBucket(packageBucketTree, "retrofit2", BUCKET_NETWORKING); // REST client
 
 		// Specific class overrides for classes that are in otherwise generic packages.
 		addBucket(classBucketTree, "java/lang/Class", BUCKET_REFLECTION);
@@ -176,6 +198,14 @@ public class PackagePurpose {
 		}
 
 		// No bucket found, return default.
+		return DEFAULT_BUCKET;
+	}
+
+	/**
+	 * @return Default bucket name used when no purpose match is found.
+	 */
+	@Nonnull
+	public static String defaultBucket() {
 		return DEFAULT_BUCKET;
 	}
 
