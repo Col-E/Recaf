@@ -448,19 +448,37 @@ public class MappingProgressPane extends BorderPane implements ResourceJvmClassL
 				wrapper.setOnMouseExited(e -> wrapper.setEffect(null));
 
 				// Track number of mapped members
-				int fields = 0;
+
+				// Aggregate mappings are keyed by original class names -> resolve the original name in case a class was renamed
+				String mappingOwner = OriginalClassNameProperty.map(classInfo);
+
+				List<FieldMember> classFields = classInfo.getFields();
+				int fields = classFields.size();
 				int mappedFields = 0;
-				for (FieldMember field : classInfo.getFields()) {
-					fields++;
-					if (mappings != null && mappings.getMappedFieldName(classInfo, field) != null)
-						mappedFields++;
+				if (mappings != null) {
+					for (var fieldMapping : mappings.getClassFieldMappings(mappingOwner)) {
+						// The workspace has the renamed member names but the key is the original name, so instead match against newName
+						for (var field : classFields) {
+							if (fieldMapping.getNewName().equals(field.getName()) && (fieldMapping.getDesc() == null || fieldMapping.getDesc().equals(field.getDescriptor()))) {
+								mappedFields++;
+								break;
+							}
+						}
+					}
 				}
-				int methods = 0;
+
+				List<MethodMember> classMethods = classInfo.getMethods();
+				int methods = classMethods.size();
 				int mappedMethods = 0;
-				for (MethodMember method : classInfo.getMethods()) {
-					methods++;
-					if (mappings != null && mappings.getMappedMethodName(classInfo, method) != null)
-						mappedMethods++;
+				if (mappings != null) {
+					for (var methodMapping : mappings.getClassMethodMappings(mappingOwner)) {
+						for (var method : classMethods) {
+							if (methodMapping.getNewName().equals(method.getName()) && methodMapping.getDesc().equals(method.getDescriptor())) {
+								mappedMethods++;
+								break;
+							}
+						}
+					}
 				}
 
 				boolean hasMappedRefs = HasMappedReferenceProperty.get(classInfo);
