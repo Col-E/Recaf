@@ -473,7 +473,7 @@ public class MappingProgressPane extends BorderPane implements ResourceJvmClassL
 				if (mappings != null) {
 					for (var methodMapping : mappings.getClassMethodMappings(mappingOwner)) {
 						for (var method : classMethods) {
-							if (methodMapping.getNewName().equals(method.getName()) && methodMapping.getDesc().equals(method.getDescriptor())) {
+							if (methodMapping.getNewName().equals(method.getName()) && (methodMapping.getDesc() == null || methodMapping.getDesc().equals(method.getDescriptor()))) {
 								mappedMethods++;
 								break;
 							}
