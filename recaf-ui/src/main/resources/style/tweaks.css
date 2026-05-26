@@ -76,6 +76,9 @@
 .background-dark-transparent {
     -fx-background-color: rgba(0, 0, 0, 0.25) !important;
 }
+.background-inset {
+    -fx-background-color: -color-bg-inset !important;
+}
 
 /* Tweak the larger titles to not be bold (which looks rather ugly in most cases) */
 .title-1 {

@@ -7,6 +7,8 @@ import software.coley.collections.tree.SortedTreeImpl;
 import software.coley.collections.tree.Tree;
 import software.coley.recaf.util.StringUtil;
 
+import java.util.List;
+
 /**
  * Utility for determining the "purpose" of a package or class based on its name.
  *
@@ -15,16 +17,18 @@ import software.coley.recaf.util.StringUtil;
 public class PackagePurpose {
 	private static final Tree<String, String> packageBucketTree = new SortedTreeImpl<>();
 	private static final Tree<String, String> classBucketTree = new SortedTreeImpl<>();
-	private static final String DEFAULT_BUCKET = "MISC";
-	private static final String BUCKET_BYTECODE = "BYTECODE";
-	private static final String BUCKET_ENTERPRISE = "ENTERPRISE";
-	private static final String BUCKET_IO = "IO";
-	private static final String BUCKET_NATIVE = "NATIVE";
-	private static final String BUCKET_NETWORKING = "NETWORKING";
-	private static final String BUCKET_REFLECTION = "REFLECTION";
-	private static final String BUCKET_SECURITY = "SECURITY";
-	private static final String BUCKET_UI = "UI";
-	private static final String BUCKET_UTIL = "UTIL";
+
+	// Bucket groups.
+	public static final String DEFAULT_BUCKET = "MISC";
+	public static final String BUCKET_BYTECODE = "BYTECODE";
+	public static final String BUCKET_ENTERPRISE = "ENTERPRISE";
+	public static final String BUCKET_IO = "IO";
+	public static final String BUCKET_NATIVE = "NATIVE";
+	public static final String BUCKET_NETWORKING = "NETWORKING";
+	public static final String BUCKET_REFLECTION = "REFLECTION";
+	public static final String BUCKET_SECURITY = "SECURITY";
+	public static final String BUCKET_UI = "UI";
+	public static final String BUCKET_UTIL = "UTIL";
 
 	static {
 		addBucket(packageBucketTree, "android/animation", BUCKET_UI);
@@ -202,11 +206,45 @@ public class PackagePurpose {
 	}
 
 	/**
-	 * @return Default bucket name used when no purpose match is found.
+	 * @param bucket
+	 * 		Bucket name.
+	 *
+	 * @return Human-friendly bucket name for display purposes.
 	 */
 	@Nonnull
-	public static String defaultBucket() {
-		return DEFAULT_BUCKET;
+	public static String toString(@Nonnull String bucket) {
+		return switch (bucket) {
+			case BUCKET_BYTECODE -> "Bytecode Manipulation";
+			case BUCKET_ENTERPRISE -> "Enterprise";
+			case BUCKET_IO -> "Input/Output";
+			case BUCKET_NATIVE -> "Native/OS";
+			case BUCKET_NETWORKING -> "Networking";
+			case BUCKET_REFLECTION -> "Reflection/Introspection";
+			case BUCKET_SECURITY -> "Security/Cryptography";
+			case BUCKET_UI -> "User Interface";
+			case BUCKET_UTIL -> "Utilities";
+			case DEFAULT_BUCKET -> "Miscellaneous";
+			default -> bucket;
+		};
+	}
+
+	/**
+	 * @return All known bucket names in display order.
+	 */
+	@Nonnull
+	public static List<String> buckets() {
+		return List.of(
+				BUCKET_BYTECODE,
+				BUCKET_ENTERPRISE,
+				BUCKET_IO,
+				BUCKET_NATIVE,
+				BUCKET_NETWORKING,
+				BUCKET_REFLECTION,
+				BUCKET_SECURITY,
+				BUCKET_UI,
+				BUCKET_UTIL,
+				DEFAULT_BUCKET
+		);
 	}
 
 	@Nullable

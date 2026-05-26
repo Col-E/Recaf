@@ -120,6 +120,6 @@ public class FlowAnalysisService implements Service {
 		// - static void main()
 		// - void main(String[] args)
 		// - void main()
-		return descriptor.equals("([Ljava/lang/String);)V") || descriptor.equals("()V");
+		return descriptor.equals("([Ljava/lang/String;)V") || descriptor.equals("()V");
 	}
 }
