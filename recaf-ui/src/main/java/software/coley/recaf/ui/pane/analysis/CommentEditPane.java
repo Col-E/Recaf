@@ -1,4 +1,4 @@
-package software.coley.recaf.ui.pane;
+package software.coley.recaf.ui.pane.analysis;
 
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;

@@ -23,7 +23,7 @@ import software.coley.recaf.services.info.summary.SummaryConsumer;
 import software.coley.recaf.services.transform.JvmTransformResult;
 import software.coley.recaf.ui.control.ActionButton;
 import software.coley.recaf.ui.control.BoundLabel;
-import software.coley.recaf.ui.pane.MappingGeneratorPane;
+import software.coley.recaf.ui.pane.mapping.MappingGeneratorPane;
 import software.coley.recaf.ui.window.MappingGeneratorWindow;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Lang;

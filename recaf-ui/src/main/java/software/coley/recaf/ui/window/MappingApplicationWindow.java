@@ -3,9 +3,7 @@ package software.coley.recaf.ui.window;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
-import software.coley.recaf.ui.pane.MappingApplicationPane;
+import software.coley.recaf.ui.pane.mapping.MappingApplicationPane;
 import software.coley.recaf.util.Lang;
 
 /**

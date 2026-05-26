@@ -3,11 +3,7 @@ package software.coley.recaf.ui.window;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.layout.BorderPane;
-import software.coley.recaf.services.window.WindowManager;
-import software.coley.recaf.ui.pane.MappingGeneratorPane;
-import software.coley.recaf.ui.pane.SystemInformationPane;
+import software.coley.recaf.ui.pane.mapping.MappingGeneratorPane;
 import software.coley.recaf.util.Lang;
 
 /**

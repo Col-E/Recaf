@@ -1,4 +1,4 @@
-package software.coley.recaf.ui.pane;
+package software.coley.recaf.ui.pane.mapping;
 
 import atlantafx.base.controls.ModalPane;
 import atlantafx.base.controls.Popover;

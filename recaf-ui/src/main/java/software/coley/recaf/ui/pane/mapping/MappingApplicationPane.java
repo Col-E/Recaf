@@ -1,4 +1,4 @@
-package software.coley.recaf.ui.pane;
+package software.coley.recaf.ui.pane.mapping;
 
 import atlantafx.base.controls.Spacer;
 import jakarta.annotation.Nonnull;

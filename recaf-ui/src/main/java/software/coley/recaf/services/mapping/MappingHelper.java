@@ -10,7 +10,7 @@ import software.coley.recaf.services.mapping.aggregate.AggregatedMappings;
 import software.coley.recaf.services.mapping.format.InvalidMappingException;
 import software.coley.recaf.services.mapping.format.MappingFileFormat;
 import software.coley.recaf.ui.menubar.MappingMenu;
-import software.coley.recaf.ui.pane.MappingApplicationPane;
+import software.coley.recaf.ui.pane.mapping.MappingApplicationPane;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
 
 import java.io.IOException;

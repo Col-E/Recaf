@@ -1,4 +1,4 @@
-package software.coley.recaf.ui.pane;
+package software.coley.recaf.ui.pane.analysis;
 
 import atlantafx.base.theme.Styles;
 import jakarta.annotation.Nonnull;

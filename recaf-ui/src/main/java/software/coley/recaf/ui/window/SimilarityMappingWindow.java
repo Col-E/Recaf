@@ -3,7 +3,7 @@ package software.coley.recaf.ui.window;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
-import software.coley.recaf.ui.pane.SimilarityMappingPane;
+import software.coley.recaf.ui.pane.mapping.SimilarityMappingPane;
 import software.coley.recaf.util.Lang;
 
 /**
