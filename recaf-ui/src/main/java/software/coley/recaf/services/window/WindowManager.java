@@ -5,6 +5,8 @@ import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
+import javafx.scene.Scene;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import org.slf4j.Logger;
@@ -17,6 +19,7 @@ import software.coley.recaf.util.NodeEvents;
 import java.util.Collection;
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -46,6 +49,7 @@ public class WindowManager implements Service {
 	private final WindowManagerConfig config;
 	private final ObservableList<Stage> activeWindows = new ObservableList<>();
 	private final Map<String, Stage> windowMappings = new HashMap<>();
+	private final Map<Stage, Screen> lastStageScreen = new IdentityHashMap<>();
 
 	@Inject
 	public WindowManager(@Nonnull WindowStyling windowStyling, @Nonnull WindowManagerConfig config,
@@ -98,12 +102,35 @@ public class WindowManager implements Service {
 			NodeEvents.runOnceIfPresentOrOnChange(stage.sceneProperty(),
 					scene -> scene.getStylesheets().addAll(windowStyling.getStylesheetUris()));
 
+		// When a window is about to show, check if the main window has moved to a different screen since the last time
+		// this subwindow was visible. If so, center the subwindow on the main window.
+		stage.addEventFilter(WindowEvent.WINDOW_SHOWING, e -> {
+			Stage mainWindow = windowMappings.get(WIN_MAIN);
+			if (mainWindow == null || stage == mainWindow)
+				return;
+
+			Screen mainScreen = getScreenForStage(mainWindow);
+			if (mainScreen == null)
+				return;
+
+			Screen lastScreen = lastStageScreen.get(stage);
+			if (lastScreen == null || mainScreen != lastScreen) {
+				Scene scene = stage.getScene();
+				var stageWidth = stage.getWidth() > 0 ? stage.getWidth() : scene.getWidth();
+				var stageHeight = stage.getHeight() > 0 ? stage.getHeight() : scene.getHeight();
+
+				stage.setX(mainWindow.getX() + ((mainWindow.getWidth() - stageWidth) / 2));
+				stage.setY(mainWindow.getY() + ((mainWindow.getHeight() - stageHeight) / 2));
+			}
+		});
+
 		// Record when windows are 'active' based on visibility.
 		// We're using event filters so users can still do things like 'stage.setOnShown(...)' and not interfere with
 		// our window tracking logic in here
 		stage.addEventFilter(WindowEvent.WINDOW_SHOWN, e -> {
 			logger.trace("Stage showing: {}", id);
 			activeWindows.add(stage);
+			lastStageScreen.put(stage, getScreenForStage(stage));
 		});
 		stage.addEventFilter(WindowEvent.WINDOW_HIDDEN, e -> {
 			logger.trace("Stage hiding: {}", id);
@@ -114,6 +141,7 @@ public class WindowManager implements Service {
 			if (id.startsWith(ANON_PREFIX)) {
 				logger.trace("Stage pruned: {} ({})", id, stage.getTitle());
 				windowMappings.remove(id);
+				lastStageScreen.remove(stage);
 			}
 		});
 
@@ -215,5 +243,25 @@ public class WindowManager implements Service {
 	@Override
 	public WindowManagerConfig getServiceConfig() {
 		return config;
+	}
+
+	/**
+	 * Determines which {@link Screen} the given stage's center is on.
+	 *
+	 * @param stage Stage to find the screen for.
+	 *
+	 * @return Screen containing the stage's center point.
+	 */
+	@Nullable
+	private Screen getScreenForStage(@Nonnull Stage stage) {
+		var centerX = stage.getX() + (stage.getWidth() / 2);
+		var centerY = stage.getY() + (stage.getHeight() / 2);
+
+		for (var screen : Screen.getScreens()) {
+			if (screen.getBounds().contains(centerX, centerY))
+				return screen;
+		}
+
+		return null;
 	}
 }
