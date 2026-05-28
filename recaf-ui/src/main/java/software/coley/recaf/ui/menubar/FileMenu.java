@@ -187,13 +187,13 @@ public class FileMenu extends WorkspaceAwareMenu {
 	 */
 	private void openWorkspace() {
 		RecafStage stage = new RecafStage().hideOnEscape();
+		windowManager.registerAnonymous(stage);
 		WorkspaceBuilderPane root = new WorkspaceBuilderPane(pathLoadingManager, recentFilesConfig, () -> FxThreadUtil.run(stage::close));
 		stage.titleProperty().bind(Lang.getBinding("dialog.title.create-workspace"));
 		stage.setScene(new RecafScene(root));
 		stage.setMinWidth(650);
 		stage.setMinHeight(400);
 		stage.show();
-		windowManager.registerAnonymous(stage);
 	}
 
 	/**
@@ -203,13 +203,13 @@ public class FileMenu extends WorkspaceAwareMenu {
 		if (!workspaceManager.hasCurrentWorkspace())
 			return;
 		RecafStage stage = new RecafStage().hideOnEscape();
+		windowManager.registerAnonymous(stage);
 		WorkspaceBuilderPane root = new WorkspaceBuilderPane(pathLoadingManager, recentFilesConfig, workspaceManager.getCurrent(), () -> FxThreadUtil.run(stage::close));
 		stage.titleProperty().bind(Lang.getBinding("menu.file.addtoworkspace"));
 		stage.setScene(new RecafScene(root));
 		stage.setMinWidth(650);
 		stage.setMinHeight(400);
 		stage.show();
-		windowManager.registerAnonymous(stage);
 	}
 
 	/**
