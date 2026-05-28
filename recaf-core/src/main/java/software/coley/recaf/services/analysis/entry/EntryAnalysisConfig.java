@@ -1,4 +1,4 @@
-package software.coley.recaf.services.analysis.structure;
+package software.coley.recaf.services.analysis.entry;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -7,14 +7,14 @@ import software.coley.recaf.config.ConfigGroups;
 import software.coley.recaf.services.ServiceConfig;
 
 /**
- * Config for {@link FlowAnalysisService}.
+ * Config for {@link EntryAnalysisService}.
  *
  * @author Matt Coley
  */
 @ApplicationScoped
-public class FlowAnalysisConfig extends BasicConfigContainer implements ServiceConfig {
+public class EntryAnalysisConfig extends BasicConfigContainer implements ServiceConfig {
 	@Inject
-	public FlowAnalysisConfig() {
-		super(ConfigGroups.SERVICE_ANALYSIS, FlowAnalysisService.SERVICE_ID + CONFIG_SUFFIX);
+	public EntryAnalysisConfig() {
+		super(ConfigGroups.SERVICE_ANALYSIS, EntryAnalysisService.SERVICE_ID + CONFIG_SUFFIX);
 	}
 }

@@ -55,6 +55,7 @@ import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.PathNodes;
 import software.coley.recaf.services.Service;
+import software.coley.recaf.services.analysis.entry.EntryAnalysisService;
 import software.coley.recaf.services.search.similarity.PackagePurpose;
 import software.coley.recaf.util.Types;
 import software.coley.recaf.workspace.model.Workspace;
@@ -107,13 +108,13 @@ public class AreaAnalysisService implements Service {
 	private static final int MERGE_INCOMING_DOMINANCE_PERCENT = 65;
 
 	private final AreaAnalysisConfig config;
-	private final FlowAnalysisService flowAnalysisService;
+	private final EntryAnalysisService entryAnalysisService;
 
 	@Inject
 	public AreaAnalysisService(@Nonnull AreaAnalysisConfig config,
-	                           @Nonnull FlowAnalysisService flowAnalysisService) {
+	                           @Nonnull EntryAnalysisService entryAnalysisService) {
 		this.config = config;
-		this.flowAnalysisService = flowAnalysisService;
+		this.entryAnalysisService = entryAnalysisService;
 	}
 
 	/**
@@ -140,8 +141,9 @@ public class AreaAnalysisService implements Service {
 		}
 
 		// Mark entry point classes based on flow analysis results.
-		flowAnalysisService.findEntryPointGroups(workspace, resource).stream()
-				.map(group -> group.classPath().getValue().getName())
+		entryAnalysisService.findEntryPoints(workspace, resource).stream()
+				.map(entry -> entry.classPath().getValue().getName())
+				.distinct()
 				.forEach(name -> {
 					Node node = graph.nodes.get(name);
 					if (node != null)

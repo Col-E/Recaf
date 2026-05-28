@@ -10,8 +10,8 @@ import javafx.scene.control.Label;
 import software.coley.recaf.path.ClassMemberPathNode;
 import software.coley.recaf.path.IncompletePathException;
 import software.coley.recaf.path.PathNode;
-import software.coley.recaf.services.analysis.structure.EntryPointGroup;
-import software.coley.recaf.services.analysis.structure.FlowAnalysisService;
+import software.coley.recaf.services.analysis.entry.EntryPoint;
+import software.coley.recaf.services.analysis.entry.EntryAnalysisService;
 import software.coley.recaf.services.cell.CellConfigurationService;
 import software.coley.recaf.services.info.summary.ResourceSummarizer;
 import software.coley.recaf.services.info.summary.SummaryConsumer;
@@ -30,15 +30,15 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
  */
 @ApplicationScoped
 public class EntryPointSummarizer implements ResourceSummarizer {
-	private final FlowAnalysisService flowAnalysisService;
+	private final EntryAnalysisService entryAnalysisService;
 	private final CellConfigurationService cellConfigurationService;
 	private final Actions actions;
 
 	@Inject
-	public EntryPointSummarizer(@Nonnull FlowAnalysisService flowAnalysisService,
+	public EntryPointSummarizer(@Nonnull EntryAnalysisService entryAnalysisService,
 	                            @Nonnull CellConfigurationService cellConfigurationService,
 	                            @Nonnull Actions actions) {
-		this.flowAnalysisService = flowAnalysisService;
+		this.entryAnalysisService = entryAnalysisService;
 		this.cellConfigurationService = cellConfigurationService;
 		this.actions = actions;
 	}
@@ -47,16 +47,21 @@ public class EntryPointSummarizer implements ResourceSummarizer {
 	public boolean summarize(@Nonnull Workspace workspace,
 	                         @Nonnull WorkspaceResource resource,
 	                         @Nonnull SummaryConsumer consumer) {
-		var entryPoints = flowAnalysisService.findEntryPointGroups(workspace, resource);
+		var entryPoints = entryAnalysisService.findEntryPoints(workspace, resource);
 		Batch batch = FxThreadUtil.batch();
 		batch.add(() -> {
 			Label title = new BoundLabel(Lang.getBinding("service.analysis.entry-points"));
 			title.getStyleClass().addAll(Styles.TITLE_4);
 			consumer.appendSummary(title);
 		});
-		for (EntryPointGroup group : entryPoints) {
-			batch.add(() -> consumer.appendSummary(pathLabel(group.classPath(), 0)));
-			for (ClassMemberPathNode memberPath : group.memberEntryPoints())
+
+		// TODO: We now have a more flexible entry-point system, so we should look into being more descriptive
+		//  with what kind of entry-point we are showing. For basic 'main' methods what we have is fine, but
+		//  we should be able to differentiate between a JVM main method, an Android activity, or a Minecraft mod init method.
+		for (EntryPoint entry : entryPoints) {
+			batch.add(() -> consumer.appendSummary(pathLabel(entry.classPath(), 0)));
+			ClassMemberPathNode memberPath = entry.memberPath();
+			if (memberPath != null)
 				batch.add(() -> consumer.appendSummary(pathLabel(memberPath, 15)));
 		}
 
