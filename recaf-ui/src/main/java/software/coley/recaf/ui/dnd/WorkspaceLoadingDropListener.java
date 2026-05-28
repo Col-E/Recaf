@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import static software.coley.recaf.util.Lang.getBinding;
 
@@ -57,7 +58,8 @@ public class WorkspaceLoadingDropListener implements FileDropListener {
 			Path primary = files.getFirst();
 			List<Path> supporting = files.size() > 1 ? files.subList(1, files.size()) : Collections.emptyList();
 			pathLoadingManager.asyncNewWorkspace(primary, supporting, err -> {
-				logger.error("Failed to create new workspace from dropped files", err);
+				logger.error("Failed to create new workspace from dropped files: {}",
+						Objects.requireNonNull(err.getMessage(), "(See log file - or try a different ZIP import config)"), err);
 				ErrorDialogs.show(
 						getBinding("dialog.error.loadworkspace.title"),
 						getBinding("dialog.error.loadworkspace.header"),
@@ -68,7 +70,8 @@ public class WorkspaceLoadingDropListener implements FileDropListener {
 		} else if (workspaceManager.hasCurrentWorkspace() && config.appendOnDragDrop()) {
 			// Append files to current workspace
 			pathLoadingManager.asyncAddSupportingResourcesToWorkspace(workspaceManager.getCurrent(), files, err -> {
-				logger.error("Failed to add supporting resources from dropped files", err);
+				logger.error("Failed to add supporting resources from dropped files: {}",
+						Objects.requireNonNull(err.getMessage(), "(See log file - or try a different ZIP import config)"), err);
 				ErrorDialogs.show(
 						getBinding("dialog.error.loadworkspace.title"),
 						getBinding("dialog.error.loadworkspace.header"),
