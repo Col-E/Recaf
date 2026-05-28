@@ -57,6 +57,7 @@ import software.coley.recaf.path.PathNodes;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.services.analysis.entry.EntryAnalysisService;
 import software.coley.recaf.services.search.similarity.PackagePurpose;
+import software.coley.recaf.util.Handles;
 import software.coley.recaf.util.Types;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
@@ -363,9 +364,15 @@ public class AreaAnalysisService implements Service {
 					@Override
 					public void visitInvokeDynamicInsn(String name, String descriptor, Handle bootstrapMethodHandle, Object... bootstrapMethodArguments) {
 						addMethodDescriptorReferences(graph, node, descriptor, WEIGHT_METHOD_TYPE);
-						addHandleReferences(graph, node, bootstrapMethodHandle, WEIGHT_BOOTSTRAP);
+
 						for (Object argument : bootstrapMethodArguments)
 							addJvmConstantReferences(graph, node, argument, WEIGHT_BOOTSTRAP);
+
+						// We want to skip the standard lambda metafactory handle since it has many references to
+						// classes normally associated with reflection, even when in source form it has no such relation.
+						if (!Handles.META_FACTORY.equals(bootstrapMethodHandle))
+							addHandleReferences(graph, node, bootstrapMethodHandle, WEIGHT_BOOTSTRAP);
+
 						super.visitInvokeDynamicInsn(name, descriptor, bootstrapMethodHandle, bootstrapMethodArguments);
 					}
 
