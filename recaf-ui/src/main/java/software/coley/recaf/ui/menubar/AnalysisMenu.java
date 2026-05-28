@@ -65,6 +65,6 @@ public class AnalysisMenu extends WorkspaceAwareMenu {
 		deobfuscationWindow.show();
 		deobfuscationWindow.requestFocus();
 		deobfuscationWindow.setOnCloseRequest(e -> deobfuscationWindowProvider.destroy(deobfuscationWindow));
-		windowManager.register("deobfuscation-" + UUID.randomUUID(), deobfuscationWindow);
+		windowManager.registerAnonymous(deobfuscationWindow);
 	}
 }

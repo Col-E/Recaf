@@ -169,7 +169,7 @@ public class DockingManager {
 		// Stages created via our docking framework need to be tracked in the window manager.
 		bento.stageBuilding().setStageFactory(originScene -> {
 			DragDropStage stage = new DragDropStage(true);
-			windowManager.register("dnd-" + UUID.randomUUID(), stage);
+			windowManager.registerAnonymous(stage);
 			return stage;
 		});
 		bento.stageBuilding().setSceneFactory((sourceScene, content, width, height) -> {
