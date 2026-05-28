@@ -76,9 +76,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.TreeSet;
 
 /**
  * Service for grouping classes into logical application areas.
@@ -960,7 +960,7 @@ public class AreaAnalysisService implements Service {
 	@Nonnull
 	private MergeState buildMergeState(@Nonnull List<Component> initialComponents, @Nonnull AreaGraph graph) {
 		Map<String, String> classToRoot = new HashMap<>();
-		Map<String, MergedGroup> groups = new LinkedHashMap<>();
+		Map<String, MergedGroup> groups = new HashMap<>();
 
 		// Initialize:
 		// - Groups from initial components
@@ -1037,7 +1037,9 @@ public class AreaAnalysisService implements Service {
 		if (!config.getMergeSccGroups().getValue())
 			return;
 
-		while (true) {
+		// Limit merges to prevent seemingly endless merging in large graphs.
+		int remaining = config.getMaxMerges().getValue();
+		while (remaining-- > 0) {
 			List<MergedGroup> orderedGroups = mergeState.orderedGroups();
 			List<MergedGroup> order = mergeState.topologicalOrder(orderedGroups);
 
@@ -1070,6 +1072,8 @@ public class AreaAnalysisService implements Service {
 	private MergeCandidate findMergeCandidate(@Nonnull List<MergedGroup> order,
 	                                          @Nonnull MergeState mergeState,
 	                                          @Nonnull Map<String, Integer> groupOrder) {
+		int maxGroupSize = config.getMaxMergedChildSize().getValue();
+
 		// For each group in the given order, try and find a suitable edge to another group that meets the criteria for merging.
 		for (MergedGroup source : order) {
 			// Sort edges by topological order of the target group (prefer closer groups), then by target group name for determinism.
@@ -1087,7 +1091,7 @@ public class AreaAnalysisService implements Service {
 					continue;
 
 				// Skip if the target group is too large.
-				if (target.memberCount > config.getMaxMergedChildSize().getValue())
+				if (target.memberCount > maxGroupSize)
 					continue;
 
 				// Skip if the edge weight is too small to justify merging.
@@ -1137,8 +1141,9 @@ public class AreaAnalysisService implements Service {
 		// For each group, add links for its outgoing edges to other groups,
 		// using the assigned group IDs for source and target.
 		for (MergedGroup source : orderedGroups) {
-			TreeMap<String, EdgeAccumulator> ordered = new TreeMap<>(source.outgoing);
-			for (Map.Entry<String, EdgeAccumulator> edgeEntry : ordered.entrySet()) {
+			List<Map.Entry<String, EdgeAccumulator>> ordered = new ArrayList<>(source.outgoing.entrySet());
+			ordered.sort(Map.Entry.comparingByKey());
+			for (Map.Entry<String, EdgeAccumulator> edgeEntry : ordered) {
 				Integer sourceId = rootToGroupId.get(source.rootName);
 				Integer targetId = rootToGroupId.get(edgeEntry.getKey());
 				if (sourceId == null || targetId == null)
@@ -1461,6 +1466,7 @@ public class AreaAnalysisService implements Service {
 
 		// Internal name of root group -> MergedGroup
 		private final Map<String, MergedGroup> groups;
+		private List<MergedGroup> orderedGroupsCache;
 
 		private MergeState(@Nonnull Map<String, MergedGroup> groups) {
 			this.groups = groups;
@@ -1471,9 +1477,11 @@ public class AreaAnalysisService implements Service {
 		 */
 		@Nonnull
 		private List<MergedGroup> orderedGroups() {
-			return groups.values().stream()
-					.sorted(GROUP_ORDER)
-					.toList();
+			if (orderedGroupsCache != null)
+				return orderedGroupsCache;
+			orderedGroupsCache = new ArrayList<>(groups.values());
+			orderedGroupsCache.sort(GROUP_ORDER);
+			return orderedGroupsCache;
 		}
 
 		/**
@@ -1488,32 +1496,38 @@ public class AreaAnalysisService implements Service {
 		 */
 		@Nonnull
 		private List<MergedGroup> topologicalOrder(@Nonnull List<MergedGroup> orderedGroups) {
+			if (orderedGroups.size() < 2)
+				return orderedGroups;
+
 			// Compute in-degrees based on outgoing edges.
-			Map<String, Integer> indegree = new HashMap<>();
-			for (MergedGroup group : orderedGroups)
-				indegree.put(group.rootName, 0);
-			for (MergedGroup group : orderedGroups)
-				group.outgoing.keySet().forEach(target -> indegree.computeIfPresent(target, (key, value) -> value + 1));
+			Map<String, Integer> groupIndex = new HashMap<>();
+			for (int i = 0; i < orderedGroups.size(); i++)
+				groupIndex.put(orderedGroups.get(i).rootName, i);
+			int[] indegree = new int[orderedGroups.size()];
+			for (MergedGroup group : orderedGroups) {
+				for (String target : group.outgoing.keySet()) {
+					Integer targetIndex = groupIndex.get(target);
+					if (targetIndex != null)
+						indegree[targetIndex]++;
+				}
+			}
 
 			// Compute topological order using Kahn's algorithm, with ties broken by the given pre-sorted order of groups.
-			TreeSet<MergedGroup> ready = new TreeSet<>(GROUP_ORDER);
-			for (MergedGroup group : orderedGroups)
-				if (indegree.getOrDefault(group.rootName, 0) == 0)
-					ready.add(group);
+			PriorityQueue<Integer> ready = new PriorityQueue<>();
+			for (int i = 0; i < orderedGroups.size(); i++)
+				if (indegree[i] == 0)
+					ready.add(i);
 
 			// Continually take groups with zero in-degree, and reduce the in-degrees of their targets
 			// until we've processed all groups, or we find a cycle.
 			List<MergedGroup> result = new ArrayList<>(orderedGroups.size());
 			while (!ready.isEmpty()) {
-				MergedGroup group = ready.pollFirst();
+				MergedGroup group = orderedGroups.get(ready.remove());
 				result.add(group);
-				for (String target : new TreeSet<>(group.outgoing.keySet())) {
-					int newValue = indegree.computeIfPresent(target, (key, value) -> value - 1);
-					if (newValue == 0) {
-						MergedGroup targetGroup = groups.get(target);
-						if (targetGroup != null)
-							ready.add(targetGroup);
-					}
+				for (String target : group.outgoing.keySet()) {
+					Integer targetIndex = groupIndex.get(target);
+					if (targetIndex != null && --indegree[targetIndex] == 0)
+						ready.add(targetIndex);
 				}
 			}
 
@@ -1539,6 +1553,7 @@ public class AreaAnalysisService implements Service {
 			MergedGroup target = groups.get(targetRoot);
 			if (source == null || target == null || source == target)
 				return;
+			removeFromOrderedGroups(source, target);
 
 			// Disconnect source and target from each other and absorb their internal edge weight if they were connected,
 			// since that edge becomes internal to the merged group and no longer contributes to outgoing/incoming weights.
@@ -1580,6 +1595,39 @@ public class AreaAnalysisService implements Service {
 			// Delete the merged target group from the groups
 			// map now that the source absorbed all of its members and edges.
 			groups.remove(targetRoot);
+			insertIntoOrderedGroups(source);
+		}
+
+		/**
+		 * Removes the given groups from the ordered groups cache.
+		 *
+		 * @param source
+		 * 		Old source group of the edge to remove.
+		 * @param target
+		 * 		Old target group of the edge to remove.
+		 */
+		private void removeFromOrderedGroups(@Nonnull MergedGroup source, @Nonnull MergedGroup target) {
+			if (orderedGroupsCache == null)
+				return;
+			orderedGroupsCache.remove(source);
+			orderedGroupsCache.remove(target);
+		}
+
+		/**
+		 * Inserts the given group into the ordered groups cache in the correct position based on the group order comparator.
+		 *
+		 * @param source
+		 * 		New group to insert into the ordered groups cache after merging.
+		 */
+		private void insertIntoOrderedGroups(@Nonnull MergedGroup source) {
+			if (orderedGroupsCache == null)
+				return;
+
+			// Mind you, caching may seem like "extra" work, but it *really* pays off on large workspaces.
+			int index = Collections.binarySearch(orderedGroupsCache, source, GROUP_ORDER);
+			if (index < 0)
+				index = -index - 1;
+			orderedGroupsCache.add(index, source);
 		}
 
 		/**

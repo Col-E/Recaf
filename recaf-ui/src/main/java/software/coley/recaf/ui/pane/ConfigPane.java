@@ -553,7 +553,7 @@ public class ConfigPane extends BorderPane implements ManagedConfigListener {
 		@SuppressWarnings({"rawtypes", "unchecked"})
 		private ContainerPane(@Nonnull ConfigContainer container) {
 			// Title
-			Label title = createTranslatedOrLiteralLabel(container.getGroupAndId(), container.getId());
+			Label title = createTranslatedLabel(container.getGroupAndId(), container.getId());
 			title.getStyleClass().add(Styles.TITLE_4);
 			add(title, 0, 0, 2, 1);
 			add(new Separator(), 0, 1, 2, 1);
@@ -569,7 +569,7 @@ public class ConfigPane extends BorderPane implements ManagedConfigListener {
 					add(componentFactory.create(container, value), 0, row, 2, 1);
 				} else {
 					String key = container.getScopedId(value);
-					add(createTranslatedOrLiteralLabel(key, value.getId()), 0, row);
+					add(createTranslatedLabel(key, value.getId()), 0, row);
 					add(componentFactory.create(container, value), 1, row);
 				}
 				row++;
@@ -588,10 +588,8 @@ public class ConfigPane extends BorderPane implements ManagedConfigListener {
 		}
 
 		@Nonnull
-		private static Label createTranslatedOrLiteralLabel(@Nonnull String translationKey, @Nonnull String fallback) {
-			Label label = Lang.has(translationKey) ?
-					new BoundLabel(getBinding(translationKey)) :
-					new Label(fallback);
+		private static Label createTranslatedLabel(@Nonnull String translationKey, @Nonnull String fallback) {
+			Label label = new BoundLabel(getBinding(translationKey));
 			label.setMinWidth(Region.USE_PREF_SIZE);
 			return label;
 		}

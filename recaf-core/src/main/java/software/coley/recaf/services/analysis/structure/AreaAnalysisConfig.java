@@ -29,6 +29,7 @@ public class AreaAnalysisConfig extends BasicConfigContainer implements ServiceC
 	private final ObservableBoolean includeExternalReferenceScores = new ObservableBoolean(true);
 	private final ObservableBoolean mergeSccGroups = new ObservableBoolean(true);
 	private final ObservableInteger maxMergedChildSize = new ObservableInteger(10);
+	private final ObservableInteger maxMerges = new ObservableInteger(1000);
 	private final ObservableInteger spaghettiThresholdPercent = new ObservableInteger(75);
 
 	@Inject
@@ -37,6 +38,7 @@ public class AreaAnalysisConfig extends BasicConfigContainer implements ServiceC
 		addValue(new BasicConfigValue<>("include-external-reference-scores", boolean.class, includeExternalReferenceScores));
 		addValue(new BasicConfigValue<>("merge-scc-groups", boolean.class, mergeSccGroups));
 		addValue(new BasicConfigValue<>("max-merged-child-size", int.class, maxMergedChildSize));
+		addValue(new BasicConfigValue<>("max-merge-operations", int.class, maxMerges));
 		addValue(new BasicConfigValue<>("spaghetti-threshold-percent", int.class, spaghettiThresholdPercent));
 	}
 
@@ -97,6 +99,17 @@ public class AreaAnalysisConfig extends BasicConfigContainer implements ServiceC
 	@Nonnull
 	public ObservableInteger getMaxMergedChildSize() {
 		return maxMergedChildSize;
+	}
+
+	/**
+	 * Maximum number of SCC merge operations allowed during the merge pass.
+	 * This is a safety limit to prevent excessive computations on large workspaces.
+	 *
+	 * @return Maximum number of merge operations allowed during the merge pass.
+	 */
+	@Nonnull
+	public ObservableInteger getMaxMerges() {
+		return maxMerges;
 	}
 
 	/**
