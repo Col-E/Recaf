@@ -611,6 +611,11 @@ public class Actions implements Service {
 		CommentListPane content = commentListPaneProvider.get();
 		Dockable dockable = dockingManager.newTranslatableDockable("menu.analysis.list-comments", CarbonIcons.CHAT, content);
 		dockable.addCloseListener((_, _) -> commentListPaneProvider.destroy(content));
+		dockable.setContextMenuFactory(d -> {
+			ContextMenu menu = new ContextMenu();
+			addCloseActions(menu, d);
+			return menu;
+		});
 		container.addDockable(dockable);
 
 		container.selectDockable(dockable);
@@ -621,8 +626,10 @@ public class Actions implements Service {
 	 * Display the application area analysis pane using the primary resource.
 	 */
 	public void openAreaAnalysis() {
+		if (!workspaceManager.hasCurrentWorkspace())
+			return;
 		Workspace workspace = workspaceManager.getCurrent();
-		openAreaAnalysis(workspace == null ? null : workspace.getPrimaryResource());
+		openAreaAnalysis(workspace.getPrimaryResource());
 	}
 
 	/**
@@ -670,6 +677,11 @@ public class Actions implements Service {
 		AreaAnalysisPane content = areaAnalysisPaneProvider.get();
 		Dockable dockable = createDockable(container, getBinding("service.analysis.areas"),
 				d -> new FontIconView(CarbonIcons.CHART_CUSTOM), content);
+		dockable.setContextMenuFactory(d -> {
+			ContextMenu menu = new ContextMenu();
+			addCloseActions(menu, d);
+			return menu;
+		});
 		dockable.addCloseListener((_, _) -> areaAnalysisPaneProvider.destroy(content));
 		if (result != null)
 			content.setResult(target, result);
