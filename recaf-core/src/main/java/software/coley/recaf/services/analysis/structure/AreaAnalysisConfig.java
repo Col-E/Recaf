@@ -28,7 +28,7 @@ import software.coley.recaf.services.ServiceConfig;
 public class AreaAnalysisConfig extends BasicConfigContainer implements ServiceConfig {
 	private final ObservableBoolean includeExternalReferenceScores = new ObservableBoolean(true);
 	private final ObservableBoolean mergeSccGroups = new ObservableBoolean(true);
-	private final ObservableInteger maxMergedChildSize = new ObservableInteger(5);
+	private final ObservableInteger maxMergedChildSize = new ObservableInteger(10);
 	private final ObservableInteger spaghettiThresholdPercent = new ObservableInteger(75);
 
 	@Inject
