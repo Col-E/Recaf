@@ -485,6 +485,34 @@ class WorkspaceTreeNodeTest {
 		assertEquals(6, visitedNodes.size(), "Expected 6 unique bundle nodes for versions: baseline, 9, 11, 16, 21, 25");
 	}
 
+	@Test
+	void dynamicallyAddedSupportingResourcesCreateDistinctResourceNodes() {
+		// Ensure that when there are dynamically added supporting resources they properly get represented in the tree.
+		WorkspaceResource primary = resourceWithFile("primary.txt");
+		WorkspaceResource supportingA = resourceWithFile("support-a.txt");
+		WorkspaceResource supportingB = resourceWithFile("support-b.txt");
+
+		// Start with just the primary resource.
+		BasicWorkspace workspace = new BasicWorkspace(primary, Collections.emptyList(), false);
+		WorkspacePathNode rootPath = PathNodes.workspacePath(workspace);
+		TestWorkspaceRootTreeNode root = new TestWorkspaceRootTreeNode(new WorkspaceExplorerConfig(), rootPath);
+
+		// We should see the primary resource, but not the supporting resources.
+		root.build();
+		assertNotNull(root.getNodeByPath(rootPath.child(primary)), "Primary resource should be visible after build");
+
+		// Add a supporting resources and validate they get their own nodes in the tree.
+		workspace.addSupportingResource(supportingA);
+		root.visitResourcePublic(supportingA);
+		assertNotNull(root.getNodeByPath(rootPath.child(supportingA)), "First supporting resource should have its own node");
+
+		// Add another supporting resource and validate it also gets its own node and that the prior nodes are not affected.
+		workspace.addSupportingResource(supportingB);
+		root.visitResourcePublic(supportingB);
+		assertNotNull(root.getNodeByPath(rootPath.child(supportingB)), "Second supporting resource should have its own node");
+		assertEquals(3, root.getSourceChildren().size(), "Expected distinct tree nodes for primary and both supporting resources");
+	}
+
 	/**
 	 * The named path sorter was getting confused when checking "does 'a' have 'b' as a parent-directory" if either
 	 * String was empty, which is the case for classes in the default package. This led to inconsistent return value
@@ -706,6 +734,13 @@ class WorkspaceTreeNodeTest {
 				.withFileInfo(new StubFileInfo(sourceName)));
 	}
 
+	@Nonnull
+	private static WorkspaceResource resourceWithFile(@Nonnull String fileName) {
+		BasicFileBundle fileBundle = new BasicFileBundle();
+		fileBundle.put(new StubFileInfo(fileName));
+		return new WorkspaceResourceBuilder(new BasicJvmClassBundle(), fileBundle).build();
+	}
+
 	/**
 	 * A resource that throws an exception if its equality or hash code is checked.
 	 */
@@ -722,6 +757,16 @@ class WorkspaceTreeNodeTest {
 		@Override
 		public int hashCode() {
 			throw new AssertionError("Embedded resource comparison should not use hashCode");
+		}
+	}
+
+	private static class TestWorkspaceRootTreeNode extends WorkspaceRootTreeNode {
+		private TestWorkspaceRootTreeNode(@Nonnull WorkspaceExplorerConfig explorerConfig, @Nonnull WorkspacePathNode rootPath) {
+			super(explorerConfig, rootPath);
+		}
+
+		private void visitResourcePublic(@Nonnull WorkspaceResource resource) {
+			visitResource(resource);
 		}
 	}
 

@@ -95,6 +95,7 @@ public class BasicWorkspace implements Workspace {
 	@Override
 	public void addSupportingResource(@Nonnull WorkspaceResource resource) {
 		cachedAllResources = null;
+		cachedAllResourcesNoInternal = null;
 		supporting.add(resource);
 		Unchecked.checkedForEach(modificationListeners, listener -> listener.onAddLibrary(this, resource),
 				(listener, t) -> logger.error("Exception thrown when adding supporting resource", t));
@@ -105,6 +106,7 @@ public class BasicWorkspace implements Workspace {
 		boolean remove = supporting.remove(resource);
 		if (remove) {
 			cachedAllResources = null;
+			cachedAllResourcesNoInternal = null;
 			Unchecked.checkedForEach(modificationListeners, listener -> listener.onRemoveLibrary(this, resource),
 					(listener, t) -> logger.error("Exception thrown when removing supporting resource", t));
 		}

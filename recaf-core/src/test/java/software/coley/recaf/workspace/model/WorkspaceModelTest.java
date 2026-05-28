@@ -122,6 +122,26 @@ class WorkspaceModelTest {
 			streamResult = workspace.allResourcesStream(true).toList();
 			assertEquals(List.of(primary, supporting1, supporting2, RuntimeWorkspaceResource.getInstance()), streamResult);
 		}
+
+		@Test
+		void getAllResourcesUpdatesAfterSupportingResourceAdded() {
+			// Test that the list returned by getAllResources reflects changes to the workspace's resources.
+			WorkspaceResource primary = new WorkspaceResourceBuilder().build();
+			WorkspaceResource supporting1 = new WorkspaceResourceBuilder().build();
+			WorkspaceResource supporting2 = new WorkspaceResourceBuilder().build();
+
+			// Start with just the primary resource and no supporting resources.
+			Workspace workspace = new BasicWorkspace(primary, Collections.emptyList(), false);
+			assertEquals(List.of(primary), workspace.getAllResources(false));
+
+			// Add one supporting resource and check that it's reflected in the list.
+			workspace.addSupportingResource(supporting1);
+			assertEquals(List.of(primary, supporting1), workspace.getAllResources(false));
+
+			// Add another supporting resource and check that it's reflected in the list.
+			workspace.addSupportingResource(supporting2);
+			assertEquals(List.of(primary, supporting1, supporting2), workspace.getAllResources(false));
+		}
 	}
 
 	@Nested
@@ -183,7 +203,6 @@ class WorkspaceModelTest {
 			ClassPathNode result = findClass(workspace, AccessibleFields.class, false);
 			assertNotNull(result);
 
-
 			// The path should have:
 			// - The resource be the embedded one
 			// - The bundle be the embedded one's jvm bundle
@@ -218,7 +237,6 @@ class WorkspaceModelTest {
 									).build())
 							).build())
 					);
-
 
 			// Build the workspace
 			//  - using the basic workspace with 'false' parameter so that we include only our resources

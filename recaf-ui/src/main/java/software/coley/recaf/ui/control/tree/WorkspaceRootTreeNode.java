@@ -501,14 +501,24 @@ public class WorkspaceRootTreeNode extends WorkspaceTreeNode {
 
 		@Override
 		public void onAddLibrary(@Nonnull Workspace workspace, @Nonnull WorkspaceResource library) {
-			if (isTargetWorkspace(workspace))
+			if (isTargetWorkspace(workspace)) {
+				// When we add a new library resource we should subscribe to any changes to it.
+				library.addListener(this);
+
+				// Add contents to the tree on the FX thread.
 				FxThreadUtil.run(() -> visitResource(library));
+			}
 		}
 
 		@Override
 		public void onRemoveLibrary(@Nonnull Workspace workspace, @Nonnull WorkspaceResource library) {
-			if (isTargetWorkspace(workspace))
+			if (isTargetWorkspace(workspace)) {
+				// Clean up listeners on the removed library resource.
+				library.removeListener(this);
+
+				// Add contents to the tree on the FX thread.
 				FxThreadUtil.run(() -> removeNodeByPath(rootPath.child(library)));
+			}
 		}
 
 		@Override
