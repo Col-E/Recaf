@@ -8,9 +8,11 @@ import javafx.geometry.Insets;
 import javafx.scene.Cursor;
 import javafx.scene.control.Label;
 import software.coley.recaf.path.ClassMemberPathNode;
+import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.IncompletePathException;
 import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.analysis.entry.EntryPoint;
+import software.coley.recaf.services.analysis.entry.EntryPointKind;
 import software.coley.recaf.services.analysis.entry.EntryAnalysisService;
 import software.coley.recaf.services.cell.CellConfigurationService;
 import software.coley.recaf.services.info.summary.ResourceSummarizer;
@@ -22,6 +24,13 @@ import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.threading.Batch;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * Summarizer that shows entry-points.
@@ -55,22 +64,48 @@ public class EntryPointSummarizer implements ResourceSummarizer {
 			consumer.appendSummary(title);
 		});
 
-		// TODO: We now have a more flexible entry-point system, so we should look into being more descriptive
-		//  with what kind of entry-point we are showing. For basic 'main' methods what we have is fine, but
-		//  we should be able to differentiate between a JVM main method, an Android activity, or a Minecraft mod init method.
-		for (EntryPoint entry : entryPoints) {
-			batch.add(() -> consumer.appendSummary(pathLabel(entry.classPath(), 0)));
-			ClassMemberPathNode memberPath = entry.memberPath();
-			if (memberPath != null)
-				batch.add(() -> consumer.appendSummary(pathLabel(memberPath, 15)));
-		}
-
-		if (entryPoints.isEmpty())
+		if (entryPoints.isEmpty()) {
 			batch.add(() -> consumer.appendSummary(new BoundLabel(Lang.getBinding("service.analysis.entry-points.none"))));
+		} else {
+			// Group entry-points by:
+			//  - kind -> class -> members
+			for (var kindEntry : groupEntries(entryPoints).entrySet()) {
+				EntryPointKind kind = kindEntry.getKey();
+				batch.add(() -> consumer.appendSummary(kindLabel(kind)));
+				for (var classEntry : kindEntry.getValue().entrySet()) {
+					batch.add(() -> consumer.appendSummary(pathLabel(classEntry.getKey(), 15)));
+					for (ClassMemberPathNode memberPath : classEntry.getValue())
+						batch.add(() -> consumer.appendSummary(pathLabel(memberPath, 30)));
+				}
+			}
+		}
 
 		batch.execute();
 
 		return true;
+	}
+
+	@Nonnull
+	private static Map<EntryPointKind, Map<ClassPathNode, List<ClassMemberPathNode>>> groupEntries(@Nonnull List<EntryPoint> entryPoints) {
+		Map<EntryPointKind, Map<ClassPathNode, List<ClassMemberPathNode>>> grouped = new TreeMap<>(Comparator.comparing(EntryPointKind::id));
+		for (EntryPoint entry : entryPoints) {
+			Map<ClassPathNode, List<ClassMemberPathNode>> classes = grouped.computeIfAbsent(entry.kind(), ignored -> new TreeMap<>());
+			List<ClassMemberPathNode> members = classes.computeIfAbsent(entry.classPath(), ignored -> new ArrayList<>());
+			ClassMemberPathNode memberPath = entry.memberPath();
+			if (memberPath != null && !members.contains(memberPath))
+				members.add(memberPath);
+		}
+		return grouped;
+	}
+
+	@Nonnull
+	private Label kindLabel(@Nonnull EntryPointKind kind) {
+		String translationKey = "service.analysis.entry-points.kind." + kind.id();
+		Label label = Lang.has(translationKey) ?
+				new BoundLabel(Lang.getBinding(translationKey)) :
+				new Label(kind.displayName());
+		label.getStyleClass().add(Styles.TEXT_BOLD);
+		return label;
 	}
 
 	@Nonnull

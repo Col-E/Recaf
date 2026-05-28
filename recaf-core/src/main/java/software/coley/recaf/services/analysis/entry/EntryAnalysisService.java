@@ -82,7 +82,6 @@ public class EntryAnalysisService implements Service {
 			WorkspaceResource currentResource = resourceQueue.remove();
 			for (EntryPointDiscovery discovery : discoveries)
 				entries.addAll(discovery.findEntryPoints(workspace, currentResource));
-
 			resourceQueue.addAll(currentResource.getEmbeddedResources().values());
 		}
 		return entries;

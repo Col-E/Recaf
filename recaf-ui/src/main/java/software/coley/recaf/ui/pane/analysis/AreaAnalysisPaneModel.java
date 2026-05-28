@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.TreeMap;
 import java.util.function.Predicate;
 
 /**
@@ -69,9 +70,9 @@ class AreaAnalysisPaneModel {
 	private final ReadOnlyObjectWrapper<AreaViewMode> viewMode = new ReadOnlyObjectWrapper<>(AreaViewMode.OVERVIEW);
 	private final ReadOnlyObjectWrapper<ScopedGraphResult> scopedGraph = new ReadOnlyObjectWrapper<>(ScopedGraphResult.empty());
 	private final ReadOnlyBooleanWrapper ungroupedSelection = new ReadOnlyBooleanWrapper(false);
-	private final Map<Integer, AreaGroup> groupsById = new LinkedHashMap<>();
-	private final Map<Integer, List<AreaLink>> inboundLinksByGroup = new LinkedHashMap<>();
-	private final Map<Integer, List<AreaLink>> outboundLinksByGroup = new LinkedHashMap<>();
+	private final Map<Integer, AreaGroup> groupsById = new TreeMap<>();
+	private final Map<Integer, List<AreaLink>> inboundLinksByGroup = new TreeMap<>();
+	private final Map<Integer, List<AreaLink>> outboundLinksByGroup = new TreeMap<>();
 	private String searchQuery = "";
 	private boolean entryPointsOnly;
 	private boolean largeGroupsOnly;
@@ -371,7 +372,7 @@ class AreaAnalysisPaneModel {
 		List<AreaLink> inbound = inboundLinksByGroup.getOrDefault(group.id(), List.of());
 		List<AreaLink> outbound = outboundLinksByGroup.getOrDefault(group.id(), List.of());
 		List<AreaLink> visibleLinks = new ArrayList<>();
-		Map<Integer, AreaGroup> visibleGroups = new LinkedHashMap<>();
+		Map<Integer, AreaGroup> visibleGroups = new TreeMap<>();
 		visibleGroups.put(group.id(), group);
 
 		switch (mode) {

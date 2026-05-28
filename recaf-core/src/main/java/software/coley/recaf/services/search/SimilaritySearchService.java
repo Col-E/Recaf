@@ -34,6 +34,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.BiPredicate;
 
 /**
@@ -260,7 +261,7 @@ public class SimilaritySearchService implements Service {
 	private static List<WorkspaceResource> resolveClassCandidateResources(@Nonnull Workspace workspace,
 	                                                                      @Nonnull WorkspaceResource referenceResource,
 	                                                                      @Nonnull SimilarClassSearchScope scope) {
-		LinkedHashSet<WorkspaceResource> resources = new LinkedHashSet<>();
+		Set<WorkspaceResource> resources = new LinkedHashSet<>();
 		switch (scope.mode()) {
 			case SELF_RESOURCE -> resources.add(referenceResource);
 			case ALL_NON_INTERNAL -> workspace.getAllResources(false).stream()
