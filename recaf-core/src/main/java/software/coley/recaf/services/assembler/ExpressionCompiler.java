@@ -1,7 +1,5 @@
 package software.coley.recaf.services.assembler;
 
-import dev.xdark.blw.type.MethodType;
-import dev.xdark.blw.type.Types;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
@@ -9,6 +7,7 @@ import me.darknet.assembler.printer.JvmClassPrinter;
 import me.darknet.assembler.printer.MethodPrinter;
 import me.darknet.assembler.printer.PrintContext;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 import org.slf4j.Logger;
 import regexodus.Pattern;
 import software.coley.recaf.analytics.logging.Logging;
@@ -61,7 +60,7 @@ public class ExpressionCompiler {
 	private List<MethodMember> methods;
 	private List<InnerClassInfo> innerClasses;
 	private String methodName;
-	private MethodType methodType;
+	private Type methodType;
 	private int methodFlags;
 	private List<LocalVariable> methodVariables;
 
@@ -90,7 +89,7 @@ public class ExpressionCompiler {
 		methods = Collections.emptyList();
 		innerClasses = Collections.emptyList();
 		methodName = "generated";
-		methodType = Types.methodType("()V");
+		methodType = Type.getMethodType("()V");
 		methodFlags = Opcodes.ACC_STATIC | Opcodes.ACC_BRIDGE; // Bridge used to denote default state.
 		methodVariables = Collections.emptyList();
 	}
@@ -134,7 +133,7 @@ public class ExpressionCompiler {
 	 */
 	public void setMethodContext(@Nonnull MethodMember method) {
 		methodName = method.getName();
-		methodType = Types.methodType(method.getDescriptor());
+		methodType = Type.getMethodType(method.getDescriptor());
 		methodFlags = method.getAccess();
 		methodVariables = method.getLocalVariables();
 	}

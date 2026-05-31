@@ -1,12 +1,12 @@
 package software.coley.recaf.services.assembler;
 
-import dev.xdark.blw.code.instruction.FieldInstruction;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import me.darknet.assembler.compile.analysis.Value;
 import me.darknet.assembler.compile.analysis.Values;
 import me.darknet.assembler.compile.analysis.jvm.FieldValueLookup;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.tree.FieldInsnNode;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.workspace.model.Workspace;
@@ -35,11 +35,11 @@ public class WorkspaceFieldValueLookup implements FieldValueLookup {
 
 	@Override
 	@Nullable
-	public Value accept(@Nonnull FieldInstruction fieldRef, @Nullable Value.ObjectValue context) {
-		if (fieldRef.opcode() == Opcodes.GETSTATIC) {
-			ClassPathNode owner = workspace.findClass(fieldRef.owner().internalName());
+	public Value accept(@Nonnull FieldInsnNode fieldRef, @Nullable Value.ObjectValue context) {
+		if (fieldRef.getOpcode() == Opcodes.GETSTATIC) {
+			ClassPathNode owner = workspace.findClass(fieldRef.owner);
 			if (owner != null) {
-				FieldMember field = owner.getValue().getDeclaredField(fieldRef.name(), fieldRef.type().descriptor());
+				FieldMember field = owner.getValue().getDeclaredField(fieldRef.name, fieldRef.desc);
 				if (field != null) {
 					Object value = field.getDefaultValue();
 					if (value instanceof Integer v)

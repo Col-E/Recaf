@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
+import me.darknet.assembler.printer.JvmPrinterUtil;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.IincInsnNode;
@@ -23,7 +24,6 @@ import software.coley.recaf.services.transform.ClassTransformer;
 import software.coley.recaf.services.transform.JvmClassTransformer;
 import software.coley.recaf.services.transform.JvmTransformerContext;
 import software.coley.recaf.services.transform.TransformationException;
-import software.coley.recaf.util.BlwUtil;
 import software.coley.recaf.util.analysis.ReFrame;
 import software.coley.recaf.util.analysis.eval.EvaluationResult;
 import software.coley.recaf.util.analysis.eval.EvaluationYieldResult;
@@ -1100,10 +1100,10 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 
 		@Override
 		public String toString() {
-			String string = BlwUtil.toString(insn);
+			String string = JvmPrinterUtil.toString(insn);
 			if (intermediates.isEmpty())
 				return string;
-			return string + "\n - " + intermediates.stream().map(BlwUtil::toString).collect(Collectors.joining("\n - "));
+			return string + "\n - " + intermediates.stream().map(JvmPrinterUtil::toString).collect(Collectors.joining("\n - "));
 		}
 
 		/**

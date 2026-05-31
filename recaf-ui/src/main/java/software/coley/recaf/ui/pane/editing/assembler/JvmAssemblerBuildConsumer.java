@@ -1,9 +1,7 @@
 package software.coley.recaf.ui.pane.editing.assembler;
 
 import jakarta.annotation.Nonnull;
-import me.darknet.assembler.compile.JavaClassRepresentation;
-import me.darknet.assembler.compile.visitor.JavaCompileResult;
-import me.darknet.assembler.compiler.ClassRepresentation;
+import me.darknet.assembler.compile.JavaCompileResult;
 import me.darknet.assembler.compiler.ClassResult;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;

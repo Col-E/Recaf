@@ -2,8 +2,6 @@ package software.coley.recaf.ui.pane.editing.assembler;
 
 import atlantafx.base.theme.Styles;
 import atlantafx.base.theme.Tweaks;
-import dev.xdark.blw.type.ClassType;
-import dev.xdark.blw.type.Types;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.Dependent;
@@ -27,6 +25,7 @@ import me.darknet.assembler.parser.Token;
 import me.darknet.assembler.parser.TokenType;
 import me.darknet.assembler.util.Location;
 import me.darknet.assembler.util.Range;
+import org.objectweb.asm.Type;
 import org.reactfx.EventStreams;
 import org.slf4j.Logger;
 import software.coley.collections.Lists;
@@ -37,6 +36,7 @@ import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Lang;
+import software.coley.recaf.util.Types;
 import software.coley.recaf.workspace.model.Workspace;
 
 import java.time.Duration;
@@ -63,7 +63,7 @@ public class JvmStackAnalysisPane extends AstBuildConsumerComponent {
 		Workspace workspace = workspaceManager.getCurrent();
 
 		TableColumn<JvmVariableState, String> columnName = new TableColumn<>(Lang.get("assembler.variables.name"));
-		TableColumn<JvmVariableState, ClassType> columnType = new TableColumn<>(Lang.get("assembler.variables.type"));
+		TableColumn<JvmVariableState, Type> columnType = new TableColumn<>(Lang.get("assembler.variables.type"));
 		TableColumn<JvmVariableState, ValueTableCell.ValueWrapper> columnValue = new TableColumn<>(Lang.get("assembler.variables.value"));
 		columnName.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().name));
 		columnType.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().value instanceof Value.NullValue ? TypeTableCell.NULL_TYPE : param.getValue().type));
@@ -72,7 +72,7 @@ public class JvmStackAnalysisPane extends AstBuildConsumerComponent {
 		columnValue.setCellFactory(param -> new ValueTableCell<>());
 		varTable.getColumns().addAll(columnName, columnType, columnValue);
 
-		TableColumn<JvmStackState, ClassType> columnTypeStack = new TableColumn<>(Lang.get("assembler.analysis.type"));
+		TableColumn<JvmStackState, Type> columnTypeStack = new TableColumn<>(Lang.get("assembler.analysis.type"));
 		TableColumn<JvmStackState, ValueTableCell.ValueWrapper> columnValueStack = new TableColumn<>(Lang.get("assembler.analysis.value"));
 		columnTypeStack.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().value instanceof Value.NullValue ? TypeTableCell.NULL_TYPE : param.getValue().type));
 		columnValueStack.setCellValueFactory(param -> new SimpleObjectProperty<>(new ValueTableCell.ValueWrapper(param.getValue().value, param.getValue().priorValue)));
@@ -155,7 +155,7 @@ public class JvmStackAnalysisPane extends AstBuildConsumerComponent {
 		Frame thisFrame = entry.getValue();
 		if (thisFrame instanceof TypedFrame typedFrame) {
 			// Type-only analysis is basic
-			for (ClassType classType : typedFrame.getStack())
+			for (Type classType : typedFrame.getStack())
 				stackItems.add(new JvmStackState(classType, Values.valueOf(classType), null));
 			for (Local local : typedFrame.getLocals().values())
 				varItems.add(new JvmVariableState(local.name(), local.safeType(), Values.valueOf(local.safeType()), null));
@@ -169,7 +169,7 @@ public class JvmStackAnalysisPane extends AstBuildConsumerComponent {
 			for (int i = 0; i < stack.length; i++) {
 				Value lastValue = i <= lastStack.length - 1 ? lastStack[i] : null;
 				Value value = stack[i];
-				stackItems.add(new JvmStackState(Objects.requireNonNullElse(value.type(), Types.OBJECT), value, lastValue));
+				stackItems.add(new JvmStackState(Objects.requireNonNullElse(value.type(), Types.OBJECT_TYPE), value, lastValue));
 			}
 
 			// And fill out the variables.
@@ -267,7 +267,7 @@ public class JvmStackAnalysisPane extends AstBuildConsumerComponent {
 	 * @param priorValue
 	 * 		Prior state in previous frame, if known.
 	 */
-	private record JvmVariableState(@Nonnull String name, @Nonnull ClassType type, @Nonnull Value value,
+	private record JvmVariableState(@Nonnull String name, @Nonnull Type type, @Nonnull Value value,
 	                                @Nullable Value priorValue) {}
 
 	/**
@@ -280,5 +280,5 @@ public class JvmStackAnalysisPane extends AstBuildConsumerComponent {
 	 * @param priorValue
 	 * 		Prior state in previous frame, if known.
 	 */
-	private record JvmStackState(@Nonnull ClassType type, @Nonnull Value value, @Nullable Value priorValue) {}
+	private record JvmStackState(@Nonnull Type type, @Nonnull Value value, @Nullable Value priorValue) {}
 }

@@ -7,8 +7,8 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.paint.Color;
 import me.darknet.assembler.ast.ASTElement;
 import me.darknet.assembler.ast.primitive.ASTCode;
-import me.darknet.assembler.util.BlwOpcodes;
 import me.darknet.assembler.util.EscapeUtil;
+import me.darknet.assembler.util.JvmOpcodes;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.model.PlainTextChange;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
@@ -312,7 +312,7 @@ public class AssemblerTabCompleter implements TabCompleter<AssemblerTabCompleter
 		private static final SortedSet<String> opcodes = new TreeSet<>();
 
 		static {
-			opcodes.addAll(BlwOpcodes.getFilteredOpcodes().keySet());
+			opcodes.addAll(JvmOpcodes.getFilteredOpcodes().keySet());
 			opcodes.removeIf(op -> (op.contains("store") || op.contains("load")) && op.indexOf('_') > -1);
 		}
 

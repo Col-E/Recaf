@@ -23,6 +23,15 @@ public class Types {
 	public static final Type OBJECT_TYPE = Type.getObjectType("java/lang/Object");
 	public static final Type CLASS_TYPE = Type.getObjectType("java/lang/Class");
 	public static final Type STRING_TYPE = Type.getObjectType("java/lang/String");
+	public static final Type BOX_VOID = Type.getObjectType("java/lang/Void");
+	public static final Type BOX_BOOLEAN = Type.getObjectType("java/lang/Boolean");
+	public static final Type BOX_CHAR = Type.getObjectType("java/lang/Character");
+	public static final Type BOX_BYTE = Type.getObjectType("java/lang/Byte");
+	public static final Type BOX_SHORT = Type.getObjectType("java/lang/Short");
+	public static final Type BOX_INT = Type.getObjectType("java/lang/Integer");
+	public static final Type BOX_FLOAT = Type.getObjectType("java/lang/Float");
+	public static final Type BOX_LONG = Type.getObjectType("java/lang/Long");
+	public static final Type BOX_DOUBLE = Type.getObjectType("java/lang/Double");
 	public static final Type METHOD_HANDLE_TYPE = Type.getObjectType("java/lang/invoke/MethodHandle");
 	public static final Type ARRAY_1D_BOOLEAN = Type.getObjectType("[Z");
 	public static final Type ARRAY_1D_CHAR = Type.getObjectType("[C");

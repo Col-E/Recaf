@@ -11,7 +11,30 @@ import me.darknet.assembler.ast.primitive.ASTIdentifier;
 import me.darknet.assembler.ast.primitive.ASTInstruction;
 import me.darknet.assembler.ast.primitive.ASTLabel;
 import me.darknet.assembler.ast.specific.ASTMethod;
-import me.darknet.assembler.util.BlwOpcodes;
+import me.darknet.assembler.query.AssemblyQueries;
+import me.darknet.assembler.query.AssemblyUtils;
+import me.darknet.assembler.query.LabelQueryResult;
+import me.darknet.assembler.query.LabelReferenceKind;
+import me.darknet.assembler.query.LabelUsage;
+import me.darknet.assembler.query.VariableQueryResult;
+import me.darknet.assembler.query.VariableUsage;
+import me.darknet.assembler.query.resolution.ClassAnnotationResolution;
+import me.darknet.assembler.query.resolution.ClassExtends;
+import me.darknet.assembler.query.resolution.ClassImplements;
+import me.darknet.assembler.query.resolution.FieldAnnotationResolution;
+import me.darknet.assembler.query.resolution.FieldResolution;
+import me.darknet.assembler.query.resolution.IndependentAnnotationResolution;
+import me.darknet.assembler.query.resolution.InnerClassResolution;
+import me.darknet.assembler.query.resolution.InstructionResolution;
+import me.darknet.assembler.query.resolution.LabelDeclarationResolution;
+import me.darknet.assembler.query.resolution.LabelReferenceResolution;
+import me.darknet.assembler.query.resolution.MethodAnnotationResolution;
+import me.darknet.assembler.query.resolution.MethodResolution;
+import me.darknet.assembler.query.resolution.Resolution;
+import me.darknet.assembler.query.resolution.TypeReferenceResolution;
+import me.darknet.assembler.query.resolution.VariableDeclarationResolution;
+import me.darknet.assembler.query.resolution.VariableReferenceResolution;
+import me.darknet.assembler.util.JvmOpcodes;
 import me.darknet.assembler.util.Location;
 import me.darknet.assembler.util.Range;
 import org.fxmisc.richtext.CodeArea;
@@ -29,28 +52,13 @@ import software.coley.recaf.services.navigation.Actions;
 import software.coley.recaf.ui.control.ActionMenuItem;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.control.richtext.Editor;
-import software.coley.recaf.util.assembler.resolve.AssemblyResolution;
-import software.coley.recaf.util.assembler.resolve.ClassAnnotationResolution;
-import software.coley.recaf.util.assembler.resolve.ClassExtends;
-import software.coley.recaf.util.assembler.resolve.ClassImplements;
-import software.coley.recaf.util.assembler.resolve.FieldAnnotationResolution;
-import software.coley.recaf.util.assembler.resolve.FieldResolution;
-import software.coley.recaf.util.assembler.resolve.IndependentAnnotationResolution;
-import software.coley.recaf.util.assembler.resolve.InnerClassResolution;
-import software.coley.recaf.util.assembler.resolve.InstructionResolution;
-import software.coley.recaf.util.assembler.resolve.LabelDeclarationResolution;
-import software.coley.recaf.util.assembler.resolve.LabelReferenceResolution;
-import software.coley.recaf.util.assembler.resolve.MethodAnnotationResolution;
-import software.coley.recaf.util.assembler.resolve.MethodResolution;
-import software.coley.recaf.util.assembler.resolve.TypeReferenceResolution;
-import software.coley.recaf.util.assembler.resolve.VariableDeclarationResolution;
-import software.coley.recaf.util.assembler.JasmUtils;
 import software.coley.recaf.util.SVG;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.ClassBundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
+import java.util.Comparator;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -59,7 +67,11 @@ import java.util.Objects;
 import static org.kordamp.ikonli.carbonicons.CarbonIcons.ARROW_RIGHT;
 import static org.kordamp.ikonli.carbonicons.CarbonIcons.HEALTH_CROSS;
 import static org.kordamp.ikonli.carbonicons.CarbonIcons.LIST_BOXES;
-import static org.objectweb.asm.Opcodes.*;
+import static org.objectweb.asm.Opcodes.CHECKCAST;
+import static org.objectweb.asm.Opcodes.IFEQ;
+import static org.objectweb.asm.Opcodes.INSTANCEOF;
+import static org.objectweb.asm.Opcodes.JSR;
+import static org.objectweb.asm.Opcodes.NEW;
 import static software.coley.collections.Unchecked.runnable;
 import static software.coley.recaf.util.Menus.action;
 import static software.coley.recaf.util.Menus.menu;
@@ -72,7 +84,7 @@ import static software.coley.recaf.util.Menus.menu;
 @ApplicationScoped
 public class BasicAssemblerContextMenuProviderFactory extends AbstractContextMenuProviderFactory implements AssemblerContextMenuProviderFactory {
 	private static final Logger logger = Logging.get(BasicAssemblerContextMenuProviderFactory.class);
-	private static final Map<Class<? extends AssemblyResolution>, ResolutionMenuFiller<AssemblyResolution>> fillers = new IdentityHashMap<>();
+	private static final Map<Class<? extends Resolution>, ResolutionMenuFiller<Resolution>> fillers = new IdentityHashMap<>();
 
 	@Inject
 	public BasicAssemblerContextMenuProviderFactory(@Nonnull TextProviderService textService,
@@ -91,9 +103,9 @@ public class BasicAssemblerContextMenuProviderFactory extends AbstractContextMen
 	                                                    @Nonnull AssemblerPathData assemblerData) {
 		return () -> {
 			ContextMenu menu = new ContextMenu();
-			AssemblyResolution resolution = assemblerData.resolution();
+			Resolution resolution = assemblerData.resolution();
 			Editor editor = assemblerData.editor();
-			ResolutionMenuFiller<AssemblyResolution> filler = fillers.get(resolution.getClass());
+			ResolutionMenuFiller<Resolution> filler = fillers.get(resolution.getClass());
 			if (filler != null) filler.accept(this, menu, editor, workspace, resolution);
 			if (menu.getItems().isEmpty()) return null;
 			return menu;
@@ -104,13 +116,13 @@ public class BasicAssemblerContextMenuProviderFactory extends AbstractContextMen
 	 * Helper to register {@link ResolutionMenuFiller} instances.
 	 *
 	 * @param type
-	 * 		Subtype of {@link AssemblyResolution}.
+	 * 		Subtype of {@link Resolution}.
 	 * @param filler
 	 * 		Filler for the given subtype.
 	 * @param <T>
-	 * 		Subtype of {@link AssemblyResolution}.
+	 * 		Subtype of {@link Resolution}.
 	 */
-	private static <T extends AssemblyResolution> void register(@Nonnull Class<T> type, @Nonnull ResolutionMenuFiller<T> filler) {
+	private static <T extends Resolution> void register(@Nonnull Class<T> type, @Nonnull ResolutionMenuFiller<T> filler) {
 		fillers.put(type, Unchecked.cast(filler));
 	}
 
@@ -191,14 +203,12 @@ public class BasicAssemblerContextMenuProviderFactory extends AbstractContextMen
 			ASTInstruction instruction = resolution.instruction();
 			ASTIdentifier identifier = instruction.identifier();
 			if (identifier != null && identifier.content() != null) {
-				int opcode = BlwOpcodes.opcode(identifier.content());
+				int opcode = JvmOpcodes.opcode(identifier.content());
 				if (opcode >= IFEQ && opcode <= JSR && !instruction.arguments().isEmpty()) {
 					String labelName = instruction.arguments().getLast().content();
 					if (labelName != null)
-						menu.getItems().add(action("menu.goto.label", ARROW_RIGHT, () -> {
-							CodeArea area = editor.getCodeArea();
-							gotoLabelDeclaration(resolution.method(), editor.getCodeArea(), labelName);
-						}));
+						menu.getItems().add(action("menu.goto.label", ARROW_RIGHT, () ->
+								gotoLabelDeclaration(resolution.method(), editor.getCodeArea(), labelName)));
 				} else if (opcode == NEW || opcode == CHECKCAST || opcode == INSTANCEOF) {
 					if (instruction.arguments().getLast() instanceof ASTIdentifier typeIdentifier) {
 						String typeName = typeIdentifier.content();
@@ -215,50 +225,20 @@ public class BasicAssemblerContextMenuProviderFactory extends AbstractContextMen
 				}
 			}
 		});
-		register(VariableDeclarationResolution.class, (provider, menu, editor, workspace, resolution) -> {
-			List<UsageTarget> usages = JasmUtils.collectVariableReferences(resolution.method(), resolution.variableName().literal()).stream()
-					.map(reference -> new UsageTarget(
-							formatUsageDescription(reference.element(), switch (reference.kind()) {
-								case READ -> "read";
-								case WRITE -> "write";
-								case INCREMENT -> "increment";
-							}),
-							reference.element(),
-							switch (reference.kind()) {
-								case READ -> SVG.REF_READ;
-								case WRITE, INCREMENT -> SVG.REF_WRITE;
-							}
-					))
-					.toList();
-			addUsageMenu(menu, editor, usages);
-		});
-		register(LabelDeclarationResolution.class, (provider, menu, editor, workspace, resolution) -> {
-			List<UsageTarget> usages = JasmUtils.collectLabelReferences(resolution.method(), resolution.label().identifier().literal()).stream()
-					.map(reference -> new UsageTarget(
-							formatUsageDescription(reference.element(), switch (reference.kind()) {
-								case FLOW -> Objects.requireNonNullElse(reference.context(), "flow");
-								case SWITCH_DEFAULT -> "default";
-								case SWITCH_CASE -> "case " + reference.context();
-								case TRY_START -> "try start";
-								case TRY_END -> "try end";
-								case HANDLER -> "handler";
-							}),
-							reference.element(),
-							null
-					))
-					.toList();
-			addUsageMenu(menu, editor, usages);
-		});
+		register(VariableDeclarationResolution.class, (provider, menu, editor, workspace, resolution) ->
+				addUsageMenu(menu, editor, variableUsageTargets(resolution.method(), resolution.variable().identity().name())));
+		register(VariableReferenceResolution.class, (provider, menu, editor, workspace, resolution) ->
+				addUsageMenu(menu, editor, variableUsageTargets(resolution.method(), resolution.usage().name())));
+		register(LabelDeclarationResolution.class, (provider, menu, editor, workspace, resolution) ->
+				addUsageMenu(menu, editor, labelUsageTargets(resolution.method(), resolution.label().name())));
 		register(LabelReferenceResolution.class, (provider, menu, editor, workspace, resolution) -> {
-			String target = resolution.labelName().content();
+			String target = resolution.reference().content();
 			if (target != null)
-				menu.getItems().add(action("menu.goto.label", ARROW_RIGHT, () -> {
-					CodeArea area = editor.getCodeArea();
-					gotoLabelDeclaration(resolution.method(), area, target);
-				}));
+				menu.getItems().add(action("menu.goto.label", ARROW_RIGHT, () ->
+						gotoLabelDeclaration(resolution.method(), editor.getCodeArea(), target)));
 		});
 		register(TypeReferenceResolution.class, (provider, menu, editor, workspace, resolution) -> {
-			ClassPathNode classPath = workspace.findClass(resolution.typeName().literal());
+			ClassPathNode classPath = workspace.findClass(resolution.type().literal());
 			ActionMenuItem action = action("menu.goto.class", ARROW_RIGHT, () -> {
 				try {
 					provider.actions.gotoDeclaration(Objects.requireNonNull(classPath));
@@ -269,6 +249,46 @@ public class BasicAssemblerContextMenuProviderFactory extends AbstractContextMen
 			if (classPath == null) action.setDisable(true);
 			menu.getItems().add(action);
 		});
+	}
+
+	@Nonnull
+	private static List<UsageTarget> variableUsageTargets(@Nonnull ASTMethod method, @Nonnull String variableName) {
+		VariableQueryResult queryResult = AssemblyQueries.variables(method);
+		return queryResult.usagesOf(variableName).stream()
+				.sorted(Comparator.comparing(usage -> usage.reference().location()))
+				.map(usage -> new UsageTarget(
+						formatUsageDescription(usage.reference(), switch (usage.kind()) {
+							case READ -> "read";
+							case WRITE -> "write";
+							case INCREMENT -> "increment";
+						}),
+						usage.reference(),
+						switch (usage.kind()) {
+							case READ -> SVG.REF_READ;
+							case WRITE, INCREMENT -> SVG.REF_WRITE;
+						}
+				))
+				.toList();
+	}
+
+	@Nonnull
+	private static List<UsageTarget> labelUsageTargets(@Nonnull ASTMethod method, @Nonnull String labelName) {
+		LabelQueryResult queryResult = AssemblyQueries.labels(method);
+		return queryResult.usagesOf(labelName).stream()
+				.sorted(Comparator.comparing(usage -> usage.reference().location()))
+				.map(usage -> new UsageTarget(
+						formatUsageDescription(usage.reference(), switch (usage.kind()) {
+							case FLOW -> Objects.requireNonNullElse(usage.context(), "flow");
+							case SWITCH_DEFAULT -> "default";
+							case SWITCH_CASE -> "case " + usage.context();
+							case TRY_START -> "try start";
+							case TRY_END -> "try end";
+							case HANDLER -> "handler";
+						}),
+						usage.reference(),
+						null
+				))
+				.toList();
 	}
 
 	private static void addUsageMenu(@Nonnull ContextMenu menu, @Nonnull Editor editor, @Nonnull List<UsageTarget> usages) {
@@ -305,7 +325,7 @@ public class BasicAssemblerContextMenuProviderFactory extends AbstractContextMen
 	}
 
 	private static void gotoLabelDeclaration(@Nonnull ASTMethod method, @Nonnull CodeArea area, @Nonnull String target) {
-		ASTLabel label = JasmUtils.getLabelDeclaration(method, target);
+		ASTLabel label = AssemblyUtils.findLabelDeclaration(method, target);
 		if (label != null)
 			gotoAstElement(area, label);
 	}
@@ -316,7 +336,7 @@ public class BasicAssemblerContextMenuProviderFactory extends AbstractContextMen
 	 * @param <R>
 	 * 		Resolution impl type.
 	 */
-	private interface ResolutionMenuFiller<R extends AssemblyResolution> {
+	private interface ResolutionMenuFiller<R extends Resolution> {
 		void accept(@Nonnull AbstractContextMenuProviderFactory provider, @Nonnull ContextMenu menu, @Nonnull Editor editor,
 		            @Nonnull Workspace workspace, @Nonnull R resolution);
 	}

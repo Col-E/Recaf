@@ -2,7 +2,8 @@ package software.coley.recaf.util;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
-import me.darknet.assembler.util.BlwOpcodes;
+import me.darknet.assembler.printer.JvmPrinterUtil;
+import me.darknet.assembler.util.JvmOpcodes;
 import me.darknet.dex.tree.definitions.code.Code;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
@@ -48,7 +49,7 @@ public class AsmInsnUtil implements Opcodes {
 	private static final Map<Integer, String> opcodeToName = new HashMap<>();
 
 	static {
-		BlwOpcodes.getOpcodes().forEach((name, op) -> opcodeToName.put(op, name));
+		JvmOpcodes.getOpcodes().forEach((name, op) -> opcodeToName.put(op, name));
 	}
 
 	/**
@@ -588,7 +589,7 @@ public class AsmInsnUtil implements Opcodes {
 	}
 
 	/**
-	 * Primarily used for debugging and passing to {@link BlwUtil#toString(Iterable)}.
+	 * Primarily used for debugging and passing to {@link JvmPrinterUtil#toString(Iterable)}.
 	 *
 	 * @param insn
 	 * 		Midpoint instruction.

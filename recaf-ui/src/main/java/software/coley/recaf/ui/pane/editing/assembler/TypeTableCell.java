@@ -1,46 +1,46 @@
 package software.coley.recaf.ui.pane.editing.assembler;
 
-import dev.xdark.blw.type.*;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import javafx.scene.Node;
 import javafx.scene.control.TableCell;
 import javafx.scene.input.MouseButton;
-import me.darknet.assembler.compile.analysis.AnalysisUtils;
+import org.objectweb.asm.Type;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.services.cell.CellConfigurationService;
 import software.coley.recaf.services.cell.context.ContextMenuProvider;
 import software.coley.recaf.services.text.TextFormatConfig;
 import software.coley.recaf.util.Icons;
+import software.coley.recaf.util.Types;
 import software.coley.recaf.workspace.model.Workspace;
 
 import java.util.UUID;
 
 /**
- * Cell for rendering {@link ClassType}.
+ * Cell for rendering {@link Type}.
  *
  * @param <S>
  * 		Table-view generic type.
  *
  * @author Matt Coley
  */
-public class TypeTableCell<S> extends TableCell<S, ClassType> {
+public class TypeTableCell<S> extends TableCell<S, Type> {
 	/** Special value used to represent null types. Randomized to prevent abuse. */
-	static final ClassType NULL_TYPE = Types.instanceTypeFromInternalName(UUID.randomUUID().toString());
+	static final Type NULL_TYPE = Type.getObjectType(UUID.randomUUID().toString());
 	private final CellConfigurationService cellConfigurationService;
 	private final TextFormatConfig formatConfig;
 	private final Workspace workspace;
 
 	public TypeTableCell(@Nonnull CellConfigurationService cellConfigurationService,
-						 @Nonnull TextFormatConfig formatConfig,
-						 @Nonnull Workspace workspace) {
+	                     @Nonnull TextFormatConfig formatConfig,
+	                     @Nonnull Workspace workspace) {
 		this.cellConfigurationService = cellConfigurationService;
 		this.formatConfig = formatConfig;
 		this.workspace = workspace;
 	}
 
 	@Override
-	protected void updateItem(ClassType type, boolean empty) {
+	protected void updateItem(Type type, boolean empty) {
 		super.updateItem(type, empty);
 		if (empty || type == null) {
 			setText(null);
@@ -50,7 +50,7 @@ public class TypeTableCell<S> extends TableCell<S, ClassType> {
 		}
 	}
 
-	private void configureType(@Nonnull ClassType type) {
+	private void configureType(@Nonnull Type type) {
 		CellData data = getTypeData(type);
 		setGraphic(data.graphic);
 		setText(data.text);
@@ -64,7 +64,7 @@ public class TypeTableCell<S> extends TableCell<S, ClassType> {
 	}
 
 	@Nonnull
-	private CellData getTypeData(@Nullable ClassType type) {
+	private CellData getTypeData(@Nullable Type type) {
 		Node graphic;
 		String text;
 		ContextMenuProvider contextSupplier = null;
@@ -72,16 +72,15 @@ public class TypeTableCell<S> extends TableCell<S, ClassType> {
 		if (type == NULL_TYPE || type == null) {
 			graphic = Icons.getIconView(Icons.UNINITIALIZED);
 			text = "null";
-		} else if (type == Types.VOID || type == Types.BOX_VOID) {
+		} else if (type.getSort() == Type.VOID || Types.BOX_VOID.equals(type)) {
 			disabled = true;
 			graphic = Icons.getIconView(Icons.UNINITIALIZED);
 			text = "void";
-		} else if (type instanceof PrimitiveType primitiveType) {
-			disabled = primitiveType.kind() == PrimitiveKind.T_VOID;
+		} else if (Types.isPrimitive(type)) {
 			graphic = Icons.getIconView(Icons.PRIMITIVE);
-			text = primitiveType.name();
-		} else if (type instanceof InstanceType instanceType) {
-			String typeName = instanceType.internalName();
+			text = type.getClassName();
+		} else if (type.getSort() == Type.OBJECT) {
+			String typeName = type.getInternalName();
 			ClassPathNode classPath = workspace.findClass(typeName);
 			if (classPath != null) {
 				graphic = cellConfigurationService.graphicOf(classPath);
@@ -91,11 +90,11 @@ public class TypeTableCell<S> extends TableCell<S, ClassType> {
 				graphic = Icons.getIconView(Icons.CLASS);
 				text = formatConfig.filter(typeName);
 			}
-		} else if (type instanceof ArrayType arrayType) {
-			CellData componentModel = getTypeData(arrayType.componentType());
+		} else if (type.getSort() == Type.ARRAY) {
+			CellData elementModel = getTypeData(type.getElementType());
 			graphic = Icons.getIconView(Icons.ARRAY);
-			text = componentModel.text + "[]".repeat(arrayType.dimensions());
-			contextSupplier = componentModel.contextSupplier;
+			text = elementModel.text + "[]".repeat(type.getDimensions());
+			contextSupplier = elementModel.contextSupplier;
 		} else {
 			text = null;
 			graphic = null;

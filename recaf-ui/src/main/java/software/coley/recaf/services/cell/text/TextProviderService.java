@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import me.darknet.assembler.printer.DalvikCodePrinter;
+import me.darknet.assembler.printer.JvmPrinterUtil;
 import me.darknet.assembler.printer.PrintContext;
 import me.darknet.dex.tree.definitions.instructions.Instruction;
 import me.darknet.dex.tree.simulation.ExecutionEngine;
@@ -24,8 +25,6 @@ import software.coley.recaf.services.phantom.GeneratedPhantomWorkspaceResource;
 import software.coley.recaf.ui.config.MemberDisplayFormatConfig;
 import software.coley.recaf.services.text.TextFormatConfig;
 import software.coley.recaf.ui.control.tree.WorkspaceTreeCell;
-import software.coley.recaf.util.BlwUtil;
-import software.coley.recaf.util.EscapeUtil;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.util.Types;
@@ -238,7 +237,7 @@ public class TextProviderService implements Service {
 	                                               @Nonnull ClassInfo declaringClass,
 	                                               @Nonnull MethodMember declaringMethod,
 	                                               @Nonnull AbstractInsnNode insn) {
-		return () -> formatConfig.filterMaxLength(BlwUtil.toString(insn));
+		return () -> formatConfig.filterMaxLength(JvmPrinterUtil.toString(insn));
 	}
 
 	/**

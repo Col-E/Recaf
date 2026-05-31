@@ -2,6 +2,7 @@ package software.coley.recaf.util.analysis.eval;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import me.darknet.assembler.printer.JvmPrinterUtil;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ConstantDynamic;
 import org.objectweb.asm.Handle;
@@ -26,7 +27,6 @@ import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.util.AccessFlag;
-import software.coley.recaf.util.BlwUtil;
 import software.coley.recaf.util.analysis.Nullness;
 import software.coley.recaf.util.analysis.ReFrame;
 import software.coley.recaf.util.analysis.ReInterpreter;
@@ -265,7 +265,7 @@ public class Evaluator {
 					return new EvaluationYieldResult(retVal);
 				}
 			} catch (AnalyzerException e) {
-				return EvaluationResult.cannotEvaluate("Failed executing instruction: " + BlwUtil.toString(pc), e);
+				return EvaluationResult.cannotEvaluate("Failed executing instruction: " + JvmPrinterUtil.toString(pc), e);
 			} catch (NoNextException e) {
 				return EvaluationResult.cannotEvaluate("Execution falls through end", e);
 			}
@@ -309,7 +309,7 @@ public class Evaluator {
 				if (frame.returnValue != null)
 					return new EvaluationYieldResult(frame.returnValue);
 			} catch (AnalyzerException e) {
-				return EvaluationResult.cannotEvaluate("Failed executing instruction: " + BlwUtil.toString(pc), e);
+				return EvaluationResult.cannotEvaluate("Failed executing instruction: " + JvmPrinterUtil.toString(pc), e);
 			} catch (NoNextException e) {
 				// If there is no next instruction from the given block, then control flow has exited the block.
 				// The intended use case for this is to be given incomplete segments of code and see what's on the

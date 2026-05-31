@@ -26,7 +26,7 @@ class AndroidXmlUtilTest {
 		when(resources.getResName(appResId)).thenReturn("layout/main");
 
 		// References are: @path/to/resource (raw-hex-id)
-		assertEquals("@layout/main (" + appResId + ")", formatBinaryValue(resources, value(Type.REFERENCE, appResId)));
+		assertEquals("@layout/main (0x" + Integer.toHexString(appResId).toUpperCase() + ")", formatBinaryValue(resources, value(Type.REFERENCE, appResId)));
 
 		int frameworkAttrId = AndroidRes.getAndroidBase().getResId("attr/theme");
 		assertNotEquals(-1, frameworkAttrId);

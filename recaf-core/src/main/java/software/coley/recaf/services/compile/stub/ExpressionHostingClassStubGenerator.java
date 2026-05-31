@@ -1,13 +1,8 @@
 package software.coley.recaf.services.compile.stub;
 
-import dev.xdark.blw.type.ArrayType;
-import dev.xdark.blw.type.ClassType;
-import dev.xdark.blw.type.InstanceType;
-import dev.xdark.blw.type.MethodType;
-import dev.xdark.blw.type.PrimitiveType;
-import dev.xdark.blw.type.Types;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import org.objectweb.asm.Type;
 import org.slf4j.Logger;
 import regexodus.Matcher;
 import regexodus.Pattern;
@@ -23,6 +18,7 @@ import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.inheritance.InheritanceVertex;
 import software.coley.recaf.util.AccessFlag;
 import software.coley.recaf.util.RegexUtil;
+import software.coley.recaf.util.Types;
 import software.coley.recaf.workspace.model.Workspace;
 
 import java.util.HashSet;
@@ -40,7 +36,7 @@ public class ExpressionHostingClassStubGenerator extends ClassStubGenerator {
 	private static final Pattern IMPORT_EXTRACT_PATTERN = RegexUtil.pattern("^\\s*(import \\w.+;)");
 	private final int methodFlags;
 	private final String methodName;
-	private final MethodType methodType;
+	private final Type methodType;
 	private final List<LocalVariable> methodVariables;
 	private final String expression;
 
@@ -85,7 +81,7 @@ public class ExpressionHostingClassStubGenerator extends ClassStubGenerator {
 	                                           @Nonnull List<InnerClassInfo> innerClasses,
 	                                           int methodFlags,
 	                                           @Nonnull String methodName,
-	                                           @Nonnull MethodType methodType,
+	                                           @Nonnull Type methodType,
 	                                           @Nonnull List<LocalVariable> methodVariables,
 	                                           @Nonnull String expression) {
 		super(workspace, inheritanceGraph, classAccess, className, superName, implementing, fields, methods, innerClasses);
@@ -127,7 +123,7 @@ public class ExpressionHostingClassStubGenerator extends ClassStubGenerator {
 	}
 
 	@Override
-	protected boolean doSkipMethod(@Nonnull String name, @Nonnull MethodType type) {
+	protected boolean doSkipMethod(@Nonnull String name, @Nonnull Type type) {
 		// We want to skip generating a stub of the method our expression will reside within.
 		return methodName.equals(name) && methodType.equals(type);
 	}
@@ -194,26 +190,26 @@ public class ExpressionHostingClassStubGenerator extends ClassStubGenerator {
 			parameterVarIndex++;
 
 		// Add the return type.
-		ClassType returnType = methodType.returnType();
-		if (returnType instanceof PrimitiveType primitiveReturn) {
-			code.append(primitiveReturn.name()).append(' ');
-		} else if (returnType instanceof InstanceType instanceType) {
-			code.append(instanceType.internalName().replace('/', '.')).append(' ');
-		} else if (returnType instanceof ArrayType arrayReturn) {
-			ClassType componentReturnType = arrayReturn.componentType();
-			if (componentReturnType instanceof PrimitiveType primitiveReturn) {
-				code.append(primitiveReturn.name());
-			} else if (componentReturnType instanceof InstanceType instanceType) {
-				code.append(instanceType.internalName().replace('/', '.'));
+		Type returnType = methodType.getReturnType();
+		if (Types.isPrimitive(returnType)) {
+			code.append(returnType.getClassName()).append(' ');
+		} else if (returnType.getSort() == Type.OBJECT) {
+			code.append(returnType.getInternalName().replace('/', '.')).append(' ');
+		} else if (returnType.getSort() == Type.ARRAY) {
+			Type componentReturnType = returnType.getElementType();
+			if (Types.isPrimitive(componentReturnType)) {
+				code.append(componentReturnType.getClassName());
+			} else  {
+				code.append(componentReturnType.getInternalName().replace('/', '.'));
 			}
-			code.append("[]".repeat(arrayReturn.dimensions()));
+			code.append("[]".repeat(returnType.getDimensions()));
 		}
 
 		// Now the method name.
 		code.append(' ').append(methodName).append('(');
 
 		// And now the parameters.
-		int parameterCount = methodType.parameterTypes().size();
+		int parameterCount = methodType.getArgumentCount();
 		Set<String> usedVariables = new HashSet<>();
 		for (int i = 0; i < parameterCount; i++) {
 			// Lookup the parameter variable
@@ -271,7 +267,7 @@ public class ExpressionHostingClassStubGenerator extends ClassStubGenerator {
 		// If the method is a library method (something we cannot control, like Object.toString()) then
 		// unfortunately we cannot add the 'throws'.
 		InheritanceVertex classVertex = inheritanceGraph.getVertex(className);
-		if (classVertex != null && classVertex.isLibraryMethod(methodName, methodType.descriptor()))
+		if (classVertex != null && classVertex.isLibraryMethod(methodName, methodType.getDescriptor()))
 			code.append(") { " + ExpressionCompiler.EXPR_MARKER + " \n");
 		else
 			code.append(") throws Throwable { " + ExpressionCompiler.EXPR_MARKER + " \n");
@@ -291,7 +287,7 @@ public class ExpressionHostingClassStubGenerator extends ClassStubGenerator {
 	public String methodDescriptorWithVariables() throws ExpressionCompileException {
 		StringBuilder sb = new StringBuilder("(");
 		int parameterVarIndex = AccessFlag.isStatic(methodFlags) ? 0 : 1;
-		int parameterCount = methodType.parameterTypes().size();
+		int parameterCount = methodType.getArgumentCount();
 		Set<String> usedVariables = new HashSet<>();
 		for (int i = 0; i < parameterCount; i++) {
 			LocalVariable parameterVariable = getParameterVariable(parameterVarIndex, i);
@@ -317,7 +313,7 @@ public class ExpressionHostingClassStubGenerator extends ClassStubGenerator {
 				continue;
 			sb.append(descriptor);
 		}
-		sb.append(')').append(methodType.returnType().descriptor());
+		sb.append(')').append(methodType.getReturnType().getDescriptor());
 		return sb.toString();
 	}
 
@@ -347,15 +343,15 @@ public class ExpressionHostingClassStubGenerator extends ClassStubGenerator {
 	private LocalVariable getParameterVariable(int parameterVarIndex, int parameterIndex) {
 		LocalVariable parameterVariable = findVar(parameterVarIndex);
 		if (parameterVariable == null) {
-			List<ClassType> parameterTypes = methodType.parameterTypes();
-			ClassType parameterType;
-			if (parameterIndex < parameterTypes.size()) {
-				parameterType = parameterTypes.get(parameterIndex);
+			Type[] parameterTypes = methodType.getArgumentTypes();
+			Type parameterType;
+			if (parameterIndex < parameterTypes.length) {
+				parameterType = parameterTypes[parameterIndex];
 			} else {
 				logger.warn("Could not resolve parameter variable (pVar={}, pIndex={}) in {}", parameterVarIndex, parameterIndex, methodName);
-				parameterType = Types.OBJECT;
+				parameterType = Types.OBJECT_TYPE;
 			}
-			parameterVariable = new BasicLocalVariable(parameterVarIndex, "p" + parameterIndex, parameterType.descriptor(), null);
+			parameterVariable = new BasicLocalVariable(parameterVarIndex, "p" + parameterIndex, parameterType.getDescriptor(), null);
 
 		}
 		return parameterVariable;

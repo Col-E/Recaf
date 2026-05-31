@@ -11,7 +11,7 @@ import software.coley.recaf.info.InnerClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
-import software.coley.recaf.util.assembler.resolve.AssemblyResolution;
+import me.darknet.assembler.query.resolution.Resolution;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.Bundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -21,7 +21,7 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
  *
  * @author Matt Coley
  * @see AnnotationContextMenuProviderFactory For annotations on classes and their members.
- * @see AssemblerContextMenuProviderFactory For {@link AssemblyResolution} data in an assembler UI.
+ * @see AssemblerContextMenuProviderFactory For {@link Resolution} data in an assembler UI.
  * @see ClassContextMenuProviderFactory For {@link JvmClassInfo} and {@link AndroidClassBundle} entries.
  * @see InnerClassContextMenuProviderFactory For {@link InnerClassInfo} entries.
  * @see FieldContextMenuProviderFactory For {@link FieldMember} entries.

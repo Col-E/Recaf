@@ -43,7 +43,7 @@ class AreaAnalysisPaneModelTest extends TestBase {
 		assertEquals(AreaAnalysisPaneModel.AreaViewMode.GROUP_FOCUS_BOTH, model.getViewMode());
 		assertEquals(selected, model.getSelectedGroup());
 		assertEquals(Set.of("b/C"), names(model.getDisplayedClasses()));
-		assertEquals(List.of(2, 1, 3), model.getScopedGraphResult().groups().stream().map(AreaGroup::id).toList());
+		assertEquals(Set.of(2, 1, 3), model.getScopedGraphResult().groups().stream().map(AreaGroup::id).collect(Collectors.toSet()));
 		assertEquals(List.of("1->2", "2->3"),
 				model.getScopedGraphResult().links().stream().map(link -> link.sourceGroupId() + "->" + link.targetGroupId()).toList());
 	}

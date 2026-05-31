@@ -4,6 +4,8 @@ import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import javafx.scene.control.ContextMenu;
+import me.darknet.assembler.query.AssemblyQueries;
+import me.darknet.assembler.query.resolution.Resolution;
 import org.fxmisc.richtext.CharacterHit;
 import org.fxmisc.richtext.CodeArea;
 import software.coley.recaf.analytics.logging.DebuggingLogger;
@@ -15,8 +17,6 @@ import software.coley.recaf.services.cell.context.ContextMenuProviderService;
 import software.coley.recaf.services.cell.context.ContextSource;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.source.JavaContextActionSupport;
-import software.coley.recaf.util.assembler.resolve.AssemblyResolution;
-import software.coley.recaf.util.assembler.resolve.AssemblyResolver;
 
 /**
  * Enables context actions on an {@link Editor} within an {@link AssemblerPane}.
@@ -28,7 +28,6 @@ import software.coley.recaf.util.assembler.resolve.AssemblyResolver;
 @Dependent
 public class AssemblerContextActionSupport extends AstBuildConsumerComponent {
 	private static final DebuggingLogger logger = Logging.get(AssemblerContextActionSupport.class);
-	private final AssemblyResolver resolver = new AssemblyResolver();
 	private final CellConfigurationService cellConfigurationService;
 	private ContextMenu menu;
 
@@ -60,7 +59,7 @@ public class AssemblerContextActionSupport extends AstBuildConsumerComponent {
 			area.moveTo(hit.getInsertionIndex());
 
 			// Create menu
-			AssemblyResolution resolution = resolver.resolveAt(hit.getInsertionIndex());
+			Resolution resolution = AssemblyQueries.resolveAt(astElements, hit.getInsertionIndex());
 			AssemblerPathData data = new AssemblerPathData(editor, resolution);
 			menu = cellConfigurationService.contextMenuOf(ContextSource.DECLARATION, new AssemblerPathNode(path, data));
 
@@ -78,10 +77,5 @@ public class AssemblerContextActionSupport extends AstBuildConsumerComponent {
 	public void uninstall(@Nonnull Editor editor) {
 		super.uninstall(editor);
 		editor.getCodeArea().setOnContextMenuRequested(null);
-	}
-
-	@Override
-	protected void onPipelineOutputUpdate() {
-		resolver.setAst(astElements);
 	}
 }

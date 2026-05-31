@@ -1,8 +1,8 @@
 package software.coley.recaf.path;
 
 import jakarta.annotation.Nonnull;
+import me.darknet.assembler.query.resolution.Resolution;
 import software.coley.recaf.ui.control.richtext.Editor;
-import software.coley.recaf.util.assembler.resolve.AssemblyResolution;
 
 /**
  * Wrapper for data associated with an assembler.
@@ -14,5 +14,5 @@ import software.coley.recaf.util.assembler.resolve.AssemblyResolution;
  *
  * @author Matt Coley
  */
-public record AssemblerPathData(@Nonnull Editor editor, @Nonnull AssemblyResolution resolution) {
+public record AssemblerPathData(@Nonnull Editor editor, @Nonnull Resolution resolution) {
 }

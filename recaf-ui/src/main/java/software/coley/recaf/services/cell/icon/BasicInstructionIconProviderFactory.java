@@ -1,10 +1,10 @@
 package software.coley.recaf.services.cell.icon;
 
-import dev.xdark.blw.code.Instruction;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import javafx.scene.paint.Color;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
+import org.objectweb.asm.tree.AbstractInsnNode;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.ui.control.FontIconView;
@@ -28,7 +28,7 @@ public class BasicInstructionIconProviderFactory implements InstructionIconProvi
 	                                               @Nonnull ClassBundle<? extends ClassInfo> bundle,
 	                                               @Nonnull ClassInfo declaringClass,
 	                                               @Nonnull MethodMember declaringMethod,
-	                                               @Nonnull Instruction instruction) {
+	                                               @Nonnull AbstractInsnNode instruction) {
 		return () -> new FontIconView(CarbonIcons.CODE, INSN_COLOR);
 	}
 

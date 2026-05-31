@@ -1,8 +1,8 @@
 package software.coley.recaf.services.compile.stub;
 
-import dev.xdark.blw.type.MethodType;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import org.objectweb.asm.Type;
 import software.coley.recaf.info.InnerClassInfo;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
@@ -97,7 +97,7 @@ public class InnerClassStubGenerator extends ClassStubGenerator {
 	}
 
 	@Override
-	protected boolean doSkipMethod(@Nonnull String name, @Nonnull MethodType type) {
+	protected boolean doSkipMethod(@Nonnull String name, @Nonnull Type type) {
 		// Do not skip any methods
 		return false;
 	}

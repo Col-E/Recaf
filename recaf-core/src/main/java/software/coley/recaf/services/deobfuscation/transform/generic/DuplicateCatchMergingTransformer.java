@@ -2,6 +2,7 @@ package software.coley.recaf.services.deobfuscation.transform.generic;
 
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
+import me.darknet.assembler.printer.JvmPrinterUtil;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InsnList;
@@ -13,7 +14,6 @@ import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.transform.JvmClassTransformer;
 import software.coley.recaf.services.transform.JvmTransformerContext;
 import software.coley.recaf.services.transform.TransformationException;
-import software.coley.recaf.util.BlwUtil;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -150,7 +150,7 @@ public class DuplicateCatchMergingTransformer implements JvmClassTransformer {
 			this.instructions = instructions;
 			this.disassembled = instructions.stream()
 					.skip(1) // Skip first label, which will always be unique
-					.map(BlwUtil::toString)
+					.map(JvmPrinterUtil::toString)
 					.collect(Collectors.joining("\n"));
 			this.index = indexOf(instructions.getFirst());
 		}

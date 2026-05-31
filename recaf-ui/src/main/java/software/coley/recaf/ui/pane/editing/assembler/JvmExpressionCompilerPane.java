@@ -1,9 +1,5 @@
 package software.coley.recaf.ui.pane.editing.assembler;
 
-import dev.xdark.blw.type.ClassType;
-import dev.xdark.blw.type.ObjectType;
-import dev.xdark.blw.type.PrimitiveType;
-import dev.xdark.blw.type.Types;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Instance;
@@ -11,6 +7,7 @@ import jakarta.inject.Inject;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.scene.control.SplitPane;
+import org.objectweb.asm.Type;
 import software.coley.collections.Lists;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.services.assembler.ExpressionCompileException;
@@ -22,7 +19,10 @@ import software.coley.recaf.ui.LanguageStylesheets;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.bracket.BracketMatchGraphicFactory;
 import software.coley.recaf.ui.control.richtext.bracket.SelectedBracketTracking;
-import software.coley.recaf.ui.control.richtext.problem.*;
+import software.coley.recaf.ui.control.richtext.problem.Problem;
+import software.coley.recaf.ui.control.richtext.problem.ProblemLevel;
+import software.coley.recaf.ui.control.richtext.problem.ProblemPhase;
+import software.coley.recaf.ui.control.richtext.problem.ProblemTracking;
 import software.coley.recaf.ui.control.richtext.search.SearchBar;
 import software.coley.recaf.ui.control.richtext.syntax.RegexLanguages;
 import software.coley.recaf.ui.control.richtext.syntax.RegexSyntaxHighlighter;
@@ -33,7 +33,11 @@ import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
 
 import java.time.Duration;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -135,11 +139,11 @@ public class JvmExpressionCompilerPane extends AstBuildConsumerComponent {
 		switch (type) {
 			case CLASS, FIELD -> text += "return;";
 			case METHOD -> {
-				ClassType returnType = Types.methodType(currentMethod.getDescriptor()).returnType();
-				if (returnType instanceof ObjectType ot) {
+				Type returnType = Type.getMethodType(currentMethod.getDescriptor()).getReturnType();
+				if (returnType.getSort() >= Type.ARRAY) {
 					text += "return null;";
-				} else if (returnType instanceof PrimitiveType pt) {
-					switch (pt.descriptor().charAt(0)) {
+				} else {
+					switch (returnType.getDescriptor().charAt(0)) {
 						case 'V':
 							text += "return;";
 							break;
