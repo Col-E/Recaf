@@ -60,7 +60,9 @@ public class Icons {
 	public static final String ACCESS_PACKAGE = "icons/modifier/package.png";
 	public static final String ACCESS_PRIVATE = "icons/modifier/private.png";
 	public static final String ACCESS_FINAL = "icons/modifier/final.png";
+	public static final String ACCESS_FINAL_FULL = "icons/modifier/final-full.png";
 	public static final String ACCESS_STATIC = "icons/modifier/static.png";
+	public static final String ACCESS_STATIC_FULL = "icons/modifier/static-full.png";
 	// Folders
 	public static final String FOLDER_SRC = "icons/file/folder-source.png";
 	public static final String FOLDER_RES = "icons/file/folder-resource.png";

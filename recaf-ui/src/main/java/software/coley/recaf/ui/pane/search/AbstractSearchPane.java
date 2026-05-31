@@ -55,6 +55,7 @@ import java.util.Collections;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 /**
  * Common base capabilities for search panels.
@@ -215,8 +216,12 @@ public abstract class AbstractSearchPane extends BorderPane implements Navigable
 		content.setVgap(5);
 
 		int row = 0;
-		content.add(new BoundCheckBox(Lang.getBinding("dialog.search.options.search-classes"),
-				searchOptions.searchClassesProperty()), 0, row++, 2, 1);
+		row = addCustomSearchOptions(content, row);
+		if (supportsFileSearchOptions()) {
+			// Can only disable class searching if file searching is enabled.
+			content.add(new BoundCheckBox(Lang.getBinding("dialog.search.options.search-classes"),
+					searchOptions.searchClassesProperty()), 0, row++, 2, 1);
+		}
 		row = addTextOption(content, row, "dialog.search.options.include-packages",
 				"dialog.search.options.package-prefixes.tooltip", searchOptions.includedPackagesProperty());
 		row = addTextOption(content, row, "dialog.search.options.exclude-packages",
@@ -257,6 +262,20 @@ public abstract class AbstractSearchPane extends BorderPane implements Navigable
 		content.add(new BoundLabel(Lang.getBinding(labelKey)), 0, row);
 		content.add(fixed(field), 1, row);
 		return row + 1;
+	}
+
+	/**
+	 * Hook for search pane children to add custom search controls to the options popover.
+	 *
+	 * @param content
+	 * 		Grid to add options to.
+	 * @param row
+	 * 		Grid row to begin at.
+	 *
+	 * @return Next row index after the added options.
+	 */
+	protected int addCustomSearchOptions(@Nonnull GridPane content, int row) {
+		return row;
 	}
 
 	/**
@@ -302,6 +321,24 @@ public abstract class AbstractSearchPane extends BorderPane implements Navigable
 	protected abstract Query buildQuery();
 
 	/**
+	 * @return Predicate that determines which search results are accepted for the current search run.
+	 */
+	@Nonnull
+	protected Predicate<Result<?>> createResultFilter() {
+		return this::doAcceptResult;
+	}
+
+	/**
+	 * @param result
+	 * 		Result to consider.
+	 *
+	 * @return {@code true} when the result should be accepted.
+	 */
+	protected boolean doAcceptResult(@Nonnull Result<?> result) {
+		return true;
+	}
+
+	/**
 	 * Initiates the search with current search inputs. Updates the output display.
 	 */
 	protected final void search() {
@@ -330,15 +367,16 @@ public abstract class AbstractSearchPane extends BorderPane implements Navigable
 
 		// Run new search.
 		SearchOptions.Snapshot optionsSnapshot = searchOptions.snapshot();
+		Predicate<Result<?>> resultFilter = createResultFilter();
 		CancellableSearchFeedback feedback;
 		if (liveResults.get()) {
-			feedback = new LiveOnlySearchFeedback(optionsSnapshot, result -> {
+			feedback = new LiveOnlySearchFeedback(optionsSnapshot, resultFilter, result -> {
 				WorkspaceTreeNode node = WorkspaceTreeNode.getOrInsertIntoTree(root, result.getPath());
 				TreeItems.expandParents(node);
 			});
 			CompletableFuture.runAsync(() -> searchService.search(workspace, query, feedback));
 		} else {
-			feedback = new FilteringSearchFeedback(optionsSnapshot);
+			feedback = new FilteringSearchFeedback(optionsSnapshot, resultFilter);
 			CompletableFuture.supplyAsync(() -> searchService.search(workspace, query, feedback))
 					.thenAccept(this::handleSearchResults);
 		}
@@ -370,11 +408,14 @@ public abstract class AbstractSearchPane extends BorderPane implements Navigable
 	/**
 	 * Feedback that filters which workspace items are visited.
 	 */
-	private static class FilteringSearchFeedback extends CancellableSearchFeedback {
+	private class FilteringSearchFeedback extends CancellableSearchFeedback {
 		private final SearchOptions.Snapshot optionsSnapshot;
+		private final Predicate<Result<?>> resultFilter;
 
-		private FilteringSearchFeedback(@Nonnull SearchOptions.Snapshot optionsSnapshot) {
+		private FilteringSearchFeedback(@Nonnull SearchOptions.Snapshot optionsSnapshot,
+		                                @Nonnull Predicate<Result<?>> resultFilter) {
 			this.optionsSnapshot = optionsSnapshot;
+			this.resultFilter = resultFilter;
 		}
 
 		@Override
@@ -386,6 +427,11 @@ public abstract class AbstractSearchPane extends BorderPane implements Navigable
 		public boolean doVisitFile(@Nonnull FileInfo file) {
 			return optionsSnapshot.shouldVisitFile(file);
 		}
+
+		@Override
+		public boolean doAcceptResult(@Nonnull Result<?> result) {
+			return resultFilter.test(result);
+		}
 	}
 
 	/**
@@ -395,7 +441,7 @@ public abstract class AbstractSearchPane extends BorderPane implements Navigable
 	 * Since this is for live-only feedback, we won't use the resulting collection anyways, so we don't need to do
 	 * the extra work.
 	 */
-	private static class LiveOnlySearchFeedback extends FilteringSearchFeedback {
+	private class LiveOnlySearchFeedback extends FilteringSearchFeedback {
 		private final Batch batch = FxThreadUtil.batch();
 		private final AnimationTimer batchTimer = new AnimationTimer() {
 			private static final long BATCH_INTERVAL_MS = 1000 / 4;
@@ -412,14 +458,17 @@ public abstract class AbstractSearchPane extends BorderPane implements Navigable
 		private final Consumer<Result<?>> resultConsumer;
 
 		private LiveOnlySearchFeedback(@Nonnull SearchOptions.Snapshot optionsSnapshot,
+		                               @Nonnull Predicate<Result<?>> resultFilter,
 		                               @Nonnull Consumer<Result<?>> resultConsumer) {
-			super(optionsSnapshot);
+			super(optionsSnapshot, resultFilter);
 			this.resultConsumer = resultConsumer;
 			batchTimer.start();
 		}
 
 		@Override
 		public boolean doAcceptResult(@Nonnull Result<?> result) {
+			if (!super.doAcceptResult(result))
+				return false;
 			batch.add(() -> resultConsumer.accept(result));
 			return false;
 		}
