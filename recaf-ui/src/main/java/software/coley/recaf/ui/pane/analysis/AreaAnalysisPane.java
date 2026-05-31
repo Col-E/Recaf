@@ -623,6 +623,17 @@ public class AreaAnalysisPane extends StackPane implements Navigable {
 		rightLeaf.addDockable(createDockable(Lang.get("service.analysis.areas.details"), CarbonIcons.INFORMATION, createDetailsPanel()));
 		rightLeaf.addDockable(createDockable(Lang.get("service.analysis.areas.classes"), CarbonIcons.LIST_BOXES, createClassesPanel()));
 
+		// TODO: User would like to be able to add 'notes/comments' to groups, but these results aren't persisted anywhere.
+		//  - We can create a Property on the ClassInfo model to hold data like this, but it would be lost on refresh.
+		//  - For comments we should find a way to improve our CommentManager model to also allow these sort of comments that aren't attached to specific classes.
+		//    - We can have an abstract "block/group" comment notion where a comment is inherited by all classes in the group
+		//    - The comment inserting visitor can then inject this inherited comment at the start of a class's comment (and add a separator if a actual class comment exists for separation)
+		//  - Similar notion, allow creating mappings for groups at a time (putting them into user-defined packages)
+		//    - We dont give each class a new name, just move them into a new package.
+		//    - Once happy with the results, users can then apply the mappings to the workspace and these groupings will be persisted as package moves.
+		//  - We should add an indicator on the group nodes that they have been mapped
+		//  - We should also add another indicator on the group nodes that they have been annotated
+		//    - Both of these indicators can be something simple like the entry-point indicator, just a small icon in the corner of the node.
 		DockContainerRootBranch root = builder.root();
 		root.addContainer(leftLeaf);
 		root.addContainer(centerLeaf);
