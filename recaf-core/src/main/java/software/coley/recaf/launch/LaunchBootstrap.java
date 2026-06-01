@@ -31,6 +31,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -70,7 +71,7 @@ public class LaunchBootstrap {
 	 * Register the startup input/script handler bean for the current launch mode.
 	 *
 	 * @param headless
-	 * 		{@code true} when running without the UI.
+	 *        {@code true} when running without the UI.
 	 */
 	public void setupLaunchHandler(boolean headless) {
 		// Set up the launch-handler bean to load inputs if specified by the launch arguments.
@@ -92,6 +93,7 @@ public class LaunchBootstrap {
 		initLogging();
 		initPlugins();
 		fireInitEvent();
+		blockIfIdle();
 	}
 
 	/**
@@ -196,6 +198,19 @@ public class LaunchBootstrap {
 		return recaf;
 	}
 
+	private void blockIfIdle() {
+		if (!launchCommand.isIdle())
+			return;
+
+		logger.info("Headless idle mode enabled, waiting for shutdown");
+		try {
+			awaitIdleShutdown();
+		} catch (InterruptedException ex) {
+			Thread.currentThread().interrupt();
+			logger.warn("Headless idle wait interrupted", ex);
+		}
+	}
+
 	private void handleInputs() {
 		try {
 			File input = launchArgs.getInput();
@@ -234,5 +249,10 @@ public class LaunchBootstrap {
 	private static void addIfMissing(@Nonnull List<Bean<?>> beans, @Nonnull Bean<?> bean) {
 		if (!beans.contains(bean))
 			beans.add(bean);
+	}
+
+	private static void awaitIdleShutdown() throws InterruptedException {
+		// Just block the main thread indefinitely until the process is killed.
+		new CountDownLatch(1).await();
 	}
 }

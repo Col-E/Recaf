@@ -36,8 +36,10 @@ public class LaunchCommand implements Callable<Boolean> {
 	private File dataDir;
 	@Option(names = {"-r", "--extraplugins"}, description = "Point to an external location to load additional plugins.")
 	private File extraPluginDirectory;
-	@Option(names = {"-h", "--headless"}, description = "Flag to skip over initializing the UI. Should be paired with -i or -s.")
+	@Option(names = {"-h", "--headless"}, description = "Flag to skip over initializing the UI. Should be paired with -i, -s, or --idle.")
 	private boolean headless;
+	@Option(names = {"--idle"}, description = "Keep headless Recaf running after startup for plugin-hosted services.")
+	private boolean idle;
 	@Option(names = {"-q", "--silent"}, description = "Disable slf4j logging to std-out.")
 	private boolean silent;
 	@Option(names = {"-v", "--version"}, description = "Display the version information.")
@@ -120,5 +122,12 @@ public class LaunchCommand implements Callable<Boolean> {
 	 */
 	public boolean isHeadless() {
 		return headless;
+	}
+
+	/**
+	 * @return Flag to keep headless Recaf running after startup.
+	 */
+	public boolean isIdle() {
+		return idle;
 	}
 }

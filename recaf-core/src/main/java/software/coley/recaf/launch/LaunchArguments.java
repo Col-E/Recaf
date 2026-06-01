@@ -91,4 +91,12 @@ public class LaunchArguments {
 		if (command == null) return false;
 		return command.isHeadless();
 	}
+
+	/**
+	 * @return Flag to keep headless Recaf running after startup.
+	 */
+	public boolean isIdle() {
+		if (command == null) return false;
+		return command.isIdle();
+	}
 }
