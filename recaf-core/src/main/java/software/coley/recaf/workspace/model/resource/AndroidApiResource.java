@@ -45,7 +45,7 @@ public class AndroidApiResource extends BasicPropertyContainer implements Worksp
 			try {
 				// We provide our own archive containing Android API classes.
 				JvmClassBundle bundle = new BasicJvmClassBundle();
-				byte[] jar = AndroidApiResource.class.getResourceAsStream("/android/api-outline-30.jar").readAllBytes();
+				byte[] jar = AndroidApiResource.class.getResourceAsStream("/android/api-outline-37.jar").readAllBytes();
 				ZipArchive archive = ZipIO.readJvm(jar);
 				for (LocalFileHeader fileEntry : archive.getLocalFiles()) {
 					String name = fileEntry.getFileNameAsString();
