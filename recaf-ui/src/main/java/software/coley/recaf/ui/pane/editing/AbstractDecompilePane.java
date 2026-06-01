@@ -3,17 +3,14 @@ package software.coley.recaf.ui.pane.editing;
 import atlantafx.base.controls.Spacer;
 import atlantafx.base.theme.Styles;
 import jakarta.annotation.Nonnull;
-import javafx.animation.Transition;
 import javafx.collections.ObservableList;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
-import javafx.scene.control.Labeled;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
-import javafx.util.Duration;
 import org.fxmisc.richtext.CodeArea;
 import org.slf4j.Logger;
 import software.coley.observables.ObservableBoolean;
@@ -41,6 +38,7 @@ import software.coley.recaf.services.source.AstService;
 import software.coley.recaf.services.source.ResolverAdapter;
 import software.coley.recaf.services.tutorial.TutorialConfig;
 import software.coley.recaf.ui.control.BoundLabel;
+import software.coley.recaf.ui.control.animation.LabelByteAnimationTransition;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.bracket.SelectedBracketTracking;
 import software.coley.recaf.ui.control.richtext.problem.ProblemTracking;
@@ -51,7 +49,6 @@ import software.coley.recaf.ui.pane.editing.jvm.DecompilerPaneConfig;
 import software.coley.recaf.ui.pane.editing.jvm.JvmDecompilerPane;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Lang;
-import software.coley.recaf.util.SceneUtils;
 import software.coley.recaf.util.StringDiff;
 import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.workspace.model.Workspace;
@@ -373,7 +370,7 @@ public class AbstractDecompilePane extends BorderPane implements ClassNavigable,
 			setAlignment(Pos.CENTER);
 
 			// Setup transition to play whenever decompilation is in progress.
-			BytecodeTransition transition = new BytecodeTransition(text);
+			LabelByteAnimationTransition transition = new LabelByteAnimationTransition(text);
 			decompileInProgress.addAsyncChangeListener((ob, old, cur) -> {
 				setVisible(cur);
 				if (cur) {
@@ -384,58 +381,5 @@ public class AbstractDecompilePane extends BorderPane implements ClassNavigable,
 			}, FxThreadUtil.executor());
 		}
 
-		private static class BytecodeTransition extends Transition {
-			private final Labeled labeled;
-			private byte[] bytecode;
-
-			/**
-			 * @param labeled
-			 * 		Target label.
-			 */
-			public BytecodeTransition(@Nonnull Labeled labeled) {
-				this.labeled = labeled;
-			}
-
-			/**
-			 * @param info
-			 * 		Class to show bytecode of.
-			 */
-			public void update(@Nonnull JvmClassInfo info) {
-				this.bytecode = info.getBytecode();
-				setCycleDuration(Duration.millis(bytecode.length));
-			}
-
-			@Override
-			protected void interpolate(double fraction) {
-				int bytecodeSize = bytecode.length;
-				int textLength = 18;
-				int middle = (int) (fraction * bytecodeSize);
-				int start = middle - (textLength / 2);
-				int end = middle + (textLength / 2);
-
-				// We have two rows, top for hex, bottom for text.
-				StringBuilder sbHex = new StringBuilder();
-				StringBuilder sbText = new StringBuilder();
-				for (int i = start; i < end; i++) {
-					if (i < 0) {
-						sbHex.append("   ");
-						sbText.append("   ");
-					} else if (i >= bytecodeSize) {
-						sbHex.append(" ..");
-						sbText.append(" ..");
-					} else {
-						short b = (short) (bytecode[i] & 0xFF);
-						char c = (char) b;
-						if (Character.isWhitespace(c)) c = ' ';
-						else if (c < 32) c = '?';
-						String hex = StringUtil.limit(Integer.toHexString(b).toUpperCase(), 2);
-						if (hex.length() == 1) hex = "0" + hex;
-						sbHex.append(StringUtil.fillLeft(3, " ", hex));
-						sbText.append(StringUtil.fillLeft(3, " ", String.valueOf(c)));
-					}
-				}
-				labeled.setText(sbHex + "\n" + sbText);
-			}
-		}
 	}
 }

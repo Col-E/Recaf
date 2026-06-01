@@ -664,6 +664,8 @@ arscviewer.unknown-resource=(unresolved)
 arscviewer.no-resources-placeholder=No resource entries were decoded.
 arscviewer.no-complex-values-placeholder=Select a complex resource to inspect its map entries.
 arscviewer.xml-placeholder=Select an XML resource to preview its content.
+arscviewer.loading=Decoding Android resources...
+binaryxml.loading=Decoding binary XML...
 
 ##### Tree
 tree.classes=Classes

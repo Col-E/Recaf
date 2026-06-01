@@ -25,14 +25,19 @@ import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.bracket.BracketMatchGraphicFactory;
 import software.coley.recaf.ui.control.richtext.bracket.SelectedBracketTracking;
 import software.coley.recaf.ui.control.richtext.search.SearchBar;
+import software.coley.recaf.ui.pane.editing.ByteLoadingOverlay;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.util.android.AndroidRes;
+import software.coley.recaf.util.threading.ThreadUtil;
 import software.coley.recaf.workspace.model.Workspace;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Displays a {@link TextFileInfo} via a configured {@link Editor}.
@@ -43,7 +48,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class DecodingXmlPane extends BorderPane implements FileNavigable, UpdatableNavigable {
 	private static final Logger logger = Logging.get(DecodingXmlPane.class);
 	protected final AtomicBoolean updateLock = new AtomicBoolean();
+	private final AtomicInteger loadGeneration = new AtomicInteger();
 	protected final Editor editor;
+	private final ByteLoadingOverlay loadingOverlay = new ByteLoadingOverlay("binaryxml.loading");
 	protected FilePathNode path;
 
 	@Inject
@@ -55,6 +62,7 @@ public class DecodingXmlPane extends BorderPane implements FileNavigable, Updata
 		languageAssociation.configureEditorSyntax("xml", editor);
 		editor.getCodeArea().setEditable(false);
 		searchBar.install(editor);
+		editor.getPrimaryStack().getChildren().add(loadingOverlay);
 
 		// Layout
 		setCenter(editor);
@@ -65,7 +73,11 @@ public class DecodingXmlPane extends BorderPane implements FileNavigable, Updata
 	 * 		Text to set in the editor.
 	 */
 	public void setText(@Nonnull String text) {
-		FxThreadUtil.run(() -> editor.setText("<!-----------------------\n\n" + text + "\n\n------------------------>"));
+		loadGeneration.incrementAndGet();
+		FxThreadUtil.run(() -> {
+			hideLoading();
+			editor.setText("<!-----------------------\n\n" + text + "\n\n------------------------>");
+		});
 	}
 
 	@Nonnull
@@ -82,8 +94,10 @@ public class DecodingXmlPane extends BorderPane implements FileNavigable, Updata
 
 	@Override
 	public void disable() {
+		loadGeneration.incrementAndGet();
 		setDisable(true);
 		setOnKeyPressed(null);
+		hideLoading();
 		editor.close();
 	}
 
@@ -99,23 +113,37 @@ public class DecodingXmlPane extends BorderPane implements FileNavigable, Updata
 			FileInfo info = filePath.getValue();
 			if (info instanceof BinaryXmlFileInfo binaryXml) {
 				this.path = filePath;
-				try {
-					// Check if we cached the decoded XML already. If so, use it.
-					String cachedXml = BinaryXmlDecodedProperty.get(binaryXml);
-					if (cachedXml != null) {
-						FxThreadUtil.run(() -> editor.setText(cachedXml));
-						return;
-					}
+				int currentGeneration = loadGeneration.incrementAndGet();
 
-					// If not cached, decode the XML and cache it for next time.
-					Workspace workspace = path.getValueOfType(Workspace.class);
-					String decodedXml = decode(workspace, binaryXml.getChunkModel());
-					BinaryXmlDecodedProperty.set(binaryXml, decodedXml);
-				} catch (Exception ex) {
-					FxThreadUtil.run(() -> editor.setText("<!-- Failed to decode XML:\n" +
-							"Message: " + ex.getMessage() + "\n" +
-							StringUtil.traceToString(ex) + "\n--->"));
+				// Check if we cached the decoded XML already. If so, use it.
+				String cachedXml = BinaryXmlDecodedProperty.get(binaryXml);
+				if (cachedXml != null) {
+					FxThreadUtil.run(() -> {
+						if (currentGeneration != loadGeneration.get() || this.path != filePath)
+							return;
+						hideLoading();
+						editor.setText(cachedXml);
+					});
+					return;
 				}
+
+				// If not cached, decode the XML and cache it for next time.
+				Workspace workspace = path.getValueOfType(Workspace.class);
+				showLoading(binaryXml);
+				CompletableFuture.supplyAsync(() -> decode(workspace, binaryXml.getChunkModel()), ThreadUtil.executor())
+						.whenCompleteAsync((decodedXml, throwable) -> {
+							if (currentGeneration != loadGeneration.get() || this.path != filePath)
+								return;
+
+							hideLoading();
+							if (throwable != null) {
+								editor.setText(toFailureText(unwrap(throwable)));
+								return;
+							}
+
+							BinaryXmlDecodedProperty.set(binaryXml, decodedXml);
+							editor.setText(decodedXml);
+						}, FxThreadUtil.executor());
 			}
 		}
 	}
@@ -142,10 +170,32 @@ public class DecodingXmlPane extends BorderPane implements FileNavigable, Updata
 			}
 		}
 
-		// Decode XML and update the editor text.
+		// Decode XML.
 		AndroidResourceProvider arscResources = arscFile == null ? null : arscFile.getResourceInfo();
-		String decodedXml = XmlDecoder.decode(chunkModel, AndroidRes.getAndroidBase(), arscResources);
-		FxThreadUtil.run(() -> editor.setText(decodedXml));
-		return decodedXml;
+		return XmlDecoder.decode(chunkModel, AndroidRes.getAndroidBase(), arscResources);
+	}
+
+	private void showLoading(@Nonnull BinaryXmlFileInfo info) {
+		editor.setMouseTransparent(true);
+		loadingOverlay.show(info);
+	}
+
+	private void hideLoading() {
+		editor.setMouseTransparent(false);
+		loadingOverlay.hide();
+	}
+
+	@Nonnull
+	private static String toFailureText(@Nonnull Throwable throwable) {
+		return "<!-- Failed to decode XML:\n" +
+				"Message: " + throwable.getMessage() + "\n" +
+				StringUtil.traceToString(throwable) + "\n--->";
+	}
+
+	@Nonnull
+	private static Throwable unwrap(@Nonnull Throwable throwable) {
+		if (throwable instanceof CompletionException completionException && completionException.getCause() != null)
+			return completionException.getCause();
+		return throwable;
 	}
 }

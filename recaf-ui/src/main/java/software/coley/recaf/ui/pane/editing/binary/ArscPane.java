@@ -26,7 +26,10 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import org.slf4j.Logger;
+import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.ArscFileInfo;
 import software.coley.recaf.info.BinaryXmlFileInfo;
 import software.coley.recaf.info.FileInfo;
@@ -37,10 +40,12 @@ import software.coley.recaf.services.navigation.FileNavigable;
 import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
 import software.coley.recaf.ui.control.BoundLabel;
+import software.coley.recaf.ui.pane.editing.ByteLoadingOverlay;
 import software.coley.recaf.util.Animations;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.android.AndroidRes;
 import software.coley.recaf.util.android.AndroidRes.ResourceEntry;
+import software.coley.recaf.util.threading.ThreadUtil;
 import software.coley.recaf.workspace.model.Workspace;
 
 import java.io.ByteArrayInputStream;
@@ -48,8 +53,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static software.coley.recaf.util.android.AndroidXmlUtil.*;
 
@@ -61,12 +69,17 @@ import static software.coley.recaf.util.android.AndroidXmlUtil.*;
  */
 @Dependent
 public class ArscPane extends BorderPane implements FileNavigable, UpdatableNavigable {
+	private static final Logger logger = Logging.get(ArscPane.class);
 	private final Instance<DecodingXmlPane> xmlPaneProvider;
+	private final AtomicInteger loadGeneration = new AtomicInteger();
+	private final BorderPane content = new BorderPane();
+	private final ByteLoadingOverlay loadingOverlay = new ByteLoadingOverlay("arscviewer.loading");
 	private FilePathNode path;
 
 	@Inject
 	public ArscPane(@Nonnull Instance<DecodingXmlPane> xmlPaneProvider) {
 		this.xmlPaneProvider = xmlPaneProvider;
+		setCenter(new StackPane(content, loadingOverlay));
 	}
 
 	@Nonnull
@@ -83,7 +96,9 @@ public class ArscPane extends BorderPane implements FileNavigable, UpdatableNavi
 
 	@Override
 	public void disable() {
+		loadGeneration.incrementAndGet();
 		setDisable(true);
+		hideLoading();
 	}
 
 	@Override
@@ -97,17 +112,41 @@ public class ArscPane extends BorderPane implements FileNavigable, UpdatableNavi
 	}
 
 	private void refresh(@Nonnull ArscFileInfo arscInfo) {
-		AndroidRes resources = arscInfo.getResourceInfo();
+		int currentGeneration = loadGeneration.incrementAndGet();
+		Workspace workspace = path.getValueOfType(Workspace.class);
+		showLoading(arscInfo);
+		CompletableFuture.supplyAsync(() -> loadContent(arscInfo), ThreadUtil.executor())
+				.whenCompleteAsync((loadResult, throwable) -> {
+					if (currentGeneration != loadGeneration.get() || path == null || path.getValue() != arscInfo)
+						return;
 
+					hideLoading();
+					if (throwable != null) {
+						logger.error("Failed to decode '{}'", arscInfo.getName(), throwable);
+						content.setCenter(new BoundLabel(Lang.getBinding("arscviewer.no-resources-placeholder")));
+						return;
+					}
+
+					content.setCenter(createTabs(workspace, loadResult.resources(), loadResult.entriesByType()));
+				}, software.coley.recaf.util.FxThreadUtil.executor());
+	}
+
+	@Nonnull
+	private ArscLoadResult loadContent(@Nonnull ArscFileInfo arscInfo) {
+		AndroidRes resources = arscInfo.getResourceInfo();
+		Map<String, List<ResourceEntry>> entriesByType = new LinkedHashMap<>(resources.getEntriesByType());
+		return new ArscLoadResult(resources, entriesByType);
+	}
+
+	@Nonnull
+	private Node createTabs(@Nullable Workspace workspace,
+	                        @Nonnull AndroidRes resources,
+	                        @Nonnull Map<String, List<ResourceEntry>> entriesByType) {
 		// Group entries by type and fill a placeholder if there are no resources.
-		Map<String, List<ResourceEntry>> entriesByType = resources.getEntriesByType();
-		if (entriesByType.isEmpty()) {
-			setCenter(new BoundLabel(Lang.getBinding("arscviewer.no-resources-placeholder")));
-			return;
-		}
+		if (entriesByType.isEmpty())
+			return new BoundLabel(Lang.getBinding("arscviewer.no-resources-placeholder"));
 
 		// Create a tab for each resource type.
-		Workspace workspace = path.getValueOfType(Workspace.class);
 		TabPane tabs = new TabPane();
 		entriesByType.forEach((type, entries) -> {
 			Tab tab = new Tab(type);
@@ -115,7 +154,17 @@ public class ArscPane extends BorderPane implements FileNavigable, UpdatableNavi
 			tab.setContent(createTypeContent(workspace, resources, entries));
 			tabs.getTabs().add(tab);
 		});
-		setCenter(tabs);
+		return tabs;
+	}
+
+	private void showLoading(@Nonnull ArscFileInfo arscInfo) {
+		content.setMouseTransparent(true);
+		loadingOverlay.show(arscInfo);
+	}
+
+	private void hideLoading() {
+		content.setMouseTransparent(false);
+		loadingOverlay.hide();
 	}
 
 	@Nonnull
@@ -355,4 +404,14 @@ public class ArscPane extends BorderPane implements FileNavigable, UpdatableNavi
 	 * 		Resolved file path in the workspace for the entry's content, if it could be found.
 	 */
 	private record ResolvedEntry(@Nonnull ResourceEntry entry, @Nullable FilePathNode path) {}
+
+	/**
+	 * Plain load result for ARSC parsing work completed off the FX thread.
+	 *
+	 * @param resources
+	 * 		Decoded resource model.
+	 * @param entriesByType
+	 * 		Resource entries grouped by type.
+	 */
+	private record ArscLoadResult(@Nonnull AndroidRes resources, @Nonnull Map<String, List<ResourceEntry>> entriesByType) {}
 }
