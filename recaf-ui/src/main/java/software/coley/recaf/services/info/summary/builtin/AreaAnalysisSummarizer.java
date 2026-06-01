@@ -79,6 +79,11 @@ public class AreaAnalysisSummarizer implements ResourceSummarizer {
 		return true;
 	}
 
+	@Override
+	public int getPriority() {
+		return PRIORITY_AREA_ANALYSIS;
+	}
+
 	@Nonnull
 	private static String formatCounts(@Nonnull AreaAnalysisResult result) {
 		String text = String.format(Lang.get("service.analysis.areas.status"),

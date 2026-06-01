@@ -113,4 +113,9 @@ public class JarSigningSummarizer implements ResourceSummarizer {
 		// Indicate we have emitted our summary
 		return true;
 	}
+
+	@Override
+	public int getPriority() {
+		return PRIORITY_JAR_SIGNATURES;
+	}
 }

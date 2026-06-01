@@ -85,6 +85,11 @@ public class AndroidPermissionSummarizer implements ResourceSummarizer {
 		return true;
 	}
 
+	@Override
+	public int getPriority() {
+		return PRIORITY_ANDROID_PERMISSIONS;
+	}
+
 	@Nonnull
 	private Map<FilePathNode, Map<String, Collection<PermissionDisplay>>> groupPermissions(@Nonnull List<AndroidPermissionDetails> permissionDetails) {
 		// Paths are instance-unique.

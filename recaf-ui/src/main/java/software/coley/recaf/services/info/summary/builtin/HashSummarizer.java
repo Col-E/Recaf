@@ -76,6 +76,11 @@ public class HashSummarizer implements ResourceSummarizer {
 		return true;
 	}
 
+	@Override
+	public int getPriority() {
+		return PRIORITY_FILE_HASH;
+	}
+
 	@Nonnull
 	private Node generateHashDisplay(@Nonnull FileHashResult result) {
 		FilePathNode path = result.filePath();

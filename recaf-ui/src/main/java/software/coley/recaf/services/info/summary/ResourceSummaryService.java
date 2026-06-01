@@ -59,8 +59,9 @@ public class ResourceSummaryService implements Service {
 	public CompletableFuture<Void> summarizeTo(@Nonnull Workspace workspace,
 	                                           @Nonnull WorkspaceResource resource,
 	                                           @Nonnull SummaryConsumer consumer) {
-		// Run async so we do not block the UI thread
+		// Run async so we do not block the UI thread.
 		return CompletableFuture.runAsync(() -> {
+			// Summarizers run in sorted order (by priority, then by id if any have the same priority).
 			boolean lastSummarizerAppended = false;
 			for (ResourceSummarizer summarizer : new TreeSet<>(summarizers.values())) {
 				if (lastSummarizerAppended)

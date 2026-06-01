@@ -85,6 +85,11 @@ public class EntryPointSummarizer implements ResourceSummarizer {
 		return true;
 	}
 
+	@Override
+	public int getPriority() {
+		return PRIORITY_ENTRY_POINT;
+	}
+
 	@Nonnull
 	private static Map<EntryPointKind, Map<ClassPathNode, List<ClassMemberPathNode>>> groupEntries(@Nonnull List<EntryPoint> entryPoints) {
 		Map<EntryPointKind, Map<ClassPathNode, List<ClassMemberPathNode>>> grouped = new TreeMap<>(Comparator.comparing(EntryPointKind::id));

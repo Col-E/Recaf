@@ -161,6 +161,11 @@ public class AntiDecompilationSummarizer implements ResourceSummarizer {
 		return true;
 	}
 
+	@Override
+	public int getPriority() {
+		return PRIORITY_ANTI_DECOMPILATION;
+	}
+
 	@Nonnull
 	private static Node box(@Nonnull Node left, @Nonnull Node right) {
 		HBox box = new HBox(left, right);
