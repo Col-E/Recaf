@@ -52,7 +52,8 @@ public class ClassSource implements ClassFileSource {
 
 	@Override
 	public Pair<byte[], String> getClassFileContent(String inputPath) {
-		String className = inputPath.substring(0, inputPath.indexOf(".class"));
+		int endIndex = inputPath.indexOf(".class");
+		String className = endIndex > 0 ? inputPath.substring(0, endIndex) : inputPath;
 		byte[] code;
 		if (className.equals(targetClassName)) {
 			code = targetClassBytecode;
