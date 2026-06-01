@@ -49,6 +49,10 @@ public class ClasspathUtil {
 	 */
 	private static volatile Tree<String, String> classpathClassTree;
 	/**
+	 * Cache of all classpath classes represented as a set.
+	 */
+	private static volatile NavigableSet<String> classpathClassSet;
+	/**
 	 * Cached list of available system packages.
 	 */
 	private static volatile List<String> systemPackages;
@@ -179,6 +183,52 @@ public class ClasspathUtil {
 			}
 		}
 		return classTree;
+	}
+
+	/**
+	 * @return Set of all classes available on the application classpath.
+	 */
+	@Nonnull
+	public static NavigableSet<String> getClasspathClassSet() {
+		if (classpathClassSet == null) {
+			synchronized (ClasspathUtil.class) {
+				if (classpathClassSet == null) {
+					NavigableSet<String> set = new TreeSet<>();
+					String classPath = System.getProperty("java.class.path", "");
+					for (String entry : classPath.split(File.pathSeparator)) {
+						if (entry.isBlank())
+							continue;
+
+						Path path = Path.of(entry);
+						if (Files.isDirectory(path)) {
+							try (Stream<Path> stream = Files.walk(path)) {
+								stream.filter(Files::isRegularFile)
+										.map(path::relativize)
+										.map(StringUtil::pathToString)
+										.map(name -> name.replace('\\', '/'))
+										.filter(name -> name.endsWith(".class") && name.indexOf('-') == -1)
+										.map(name -> name.substring(0, name.length() - 6))
+										.forEach(set::add);
+							} catch (Exception ex) {
+								throw new UncheckedIOException(new java.io.IOException("Failed to scan classpath directory: " + path, ex));
+							}
+						} else if (Files.isRegularFile(path) && entry.endsWith(".jar")) {
+							try (JarFile jar = new JarFile(path.toFile())) {
+								jar.stream()
+										.map(ZipEntry::getName)
+										.filter(name -> name.endsWith(".class") && name.indexOf('-') == -1)
+										.map(name -> name.substring(0, name.length() - 6))
+										.forEach(set::add);
+							} catch (Exception ex) {
+								throw new UncheckedIOException(new java.io.IOException("Failed to scan classpath jar: " + path, ex));
+							}
+						}
+					}
+					classpathClassSet = set;
+				}
+			}
+		}
+		return classpathClassSet;
 	}
 
 	/**
