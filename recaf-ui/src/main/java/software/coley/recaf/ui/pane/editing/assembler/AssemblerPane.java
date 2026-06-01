@@ -43,7 +43,7 @@ import software.coley.recaf.ui.control.richtext.problem.ProblemLevel;
 import software.coley.recaf.ui.control.richtext.problem.ProblemPhase;
 import software.coley.recaf.ui.control.richtext.problem.ProblemTracking;
 import software.coley.recaf.ui.control.richtext.search.SearchBar;
-import software.coley.recaf.ui.control.richtext.suggest.AssemblerTabCompleter;
+import software.coley.recaf.ui.control.richtext.suggest.assembler.AssemblerTabCompleter;
 import software.coley.recaf.ui.control.richtext.suggest.TabCompletionConfig;
 import software.coley.recaf.ui.control.richtext.syntax.RegexLanguages;
 import software.coley.recaf.ui.control.richtext.syntax.RegexSyntaxHighlighter;

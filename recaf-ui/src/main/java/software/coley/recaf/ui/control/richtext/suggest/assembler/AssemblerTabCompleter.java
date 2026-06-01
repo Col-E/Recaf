@@ -1,4 +1,4 @@
-package software.coley.recaf.ui.control.richtext.suggest;
+package software.coley.recaf.ui.control.richtext.suggest.assembler;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
@@ -22,6 +22,9 @@ import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.inheritance.InheritanceVertex;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.control.richtext.Editor;
+import software.coley.recaf.ui.control.richtext.suggest.CompletionPopup;
+import software.coley.recaf.ui.control.richtext.suggest.TabCompleter;
+import software.coley.recaf.ui.control.richtext.suggest.TabCompletionConfig;
 import software.coley.recaf.ui.pane.editing.assembler.AssemblerPane;
 import software.coley.recaf.util.Icons;
 import software.coley.recaf.util.RegexUtil;

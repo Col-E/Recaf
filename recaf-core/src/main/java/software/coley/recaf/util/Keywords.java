@@ -4,8 +4,9 @@ import jakarta.annotation.Nonnull;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 /**
  * Java language keywords.
@@ -14,23 +15,47 @@ import java.util.Set;
  */
 public class Keywords {
 	private static final Set<String> keywords;
+	private static final Set<String> keywordsWithoutVarSafe;
 
 	/**
-	 * @return Set of reserved keywords.
+	 * @return Set of Java keywords.
 	 */
 	@Nonnull
 	public static Set<String> getKeywords() {
 		return keywords;
 	}
 
-	// Commented out items are 'keywords' but can be used as names.
+	/**
+	 * @return Set of Java reserved keywords that cannot be used as variable names. This is a subset of {@link #getKeywords()}.
+	 */
+	@Nonnull
+	public static Set<String> getKeywordsWithoutVarSafe() {
+		return keywordsWithoutVarSafe;
+	}
+
 	static {
+		// Edge cases that can be used as variable names.
+		// Mostly module system words and a few underlying JVM constructs like bridge and synthetic.
+		Set<String> allowedVarNames = new TreeSet<>(Arrays.asList(
+				"bridge",
+				"mandated",
+				"module",
+				"open",
+				"permits",
+				"record",
+				"sealed",
+				"synthetic",
+				"transitive",
+				"var",
+				"varargs",
+				"yield"
+		));
+
 		// Misc language constructs
-		Set<String> words = new HashSet<>();
+		Set<String> words = new TreeSet<>();
 		words.addAll(Arrays.asList(
 				"assert",
 				"break",
-				// "bridge",
 				"case",
 				"catch",
 				"class",
@@ -49,27 +74,31 @@ public class Keywords {
 				"import",
 				"instanceof",
 				"interface",
-				// "mandated",
-				// "module",
+				"mandated",
+				"module",
 				"new",
-				// "open",
+				"non-sealed",
+				"open",
 				"package",
+				"permits",
 				"record",
 				"return",
+				"sealed",
 				"super",
 				"switch",
 				"try",
 				"this",
 				"throw",
-				"throws"
-				// "var",
-				// "varargs",
-				// "yield"
+				"throws",
+				"var",
+				"varargs",
+				"yield"
 		));
 
-		// Modifiers
+		// Modifiers - Commented out are not reserved but represent underlying JVM constructs.
 		words.addAll(Arrays.asList(
 				"abstract",
+				// "bridge",
 				"const",
 				"final",
 				"native",
@@ -106,5 +135,8 @@ public class Keywords {
 		));
 
 		keywords = Collections.unmodifiableSet(words);
+		keywordsWithoutVarSafe = words.stream()
+				.filter(k -> !allowedVarNames.contains(k))
+				.collect(Collectors.toUnmodifiableSet());
 	}
 }

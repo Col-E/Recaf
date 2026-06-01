@@ -15,7 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static software.coley.recaf.util.Keywords.getKeywords;
+import static software.coley.recaf.util.Keywords.getKeywordsWithoutVarSafe;
 
 /**
  * Visitor for renaming bogus names. This is for legibility improvements only and does not ensure the
@@ -149,7 +149,7 @@ public class BogusNameRemovingVisitor extends ClassVisitor {
 
 		@Nonnull
 		private static String replaceKeyword(@Nonnull String name) {
-			if (getKeywords().contains(name))
+			if (getKeywordsWithoutVarSafe().contains(name))
 				return StringUtil.uppercaseFirstChar(name);
 			return name;
 		}

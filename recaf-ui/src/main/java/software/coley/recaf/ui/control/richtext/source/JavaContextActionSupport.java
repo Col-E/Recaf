@@ -48,6 +48,7 @@ import software.coley.recaf.ui.control.richtext.EditorComponent;
 import software.coley.recaf.ui.control.richtext.inheritance.Inheritance;
 import software.coley.recaf.ui.control.richtext.inheritance.InheritanceGutterGraphicFactory;
 import software.coley.recaf.ui.control.richtext.inheritance.InheritanceTracking;
+import software.coley.recaf.ui.control.richtext.suggest.java.JavaCompletionContext;
 import software.coley.recaf.ui.pane.editing.ToolsContainerComponent;
 import software.coley.recaf.ui.pane.editing.assembler.AssemblerContextActionSupport;
 import software.coley.recaf.ui.pane.editing.tabs.FieldsAndMethodsPane;
@@ -64,6 +65,7 @@ import software.coley.sourcesolver.model.MethodModel;
 import software.coley.sourcesolver.model.VariableModel;
 import software.coley.sourcesolver.resolve.result.DescribableResolution;
 import software.coley.sourcesolver.resolve.result.MethodResolution;
+import software.coley.sourcesolver.resolve.result.Resolution;
 import software.coley.sourcesolver.util.Range;
 
 import java.time.Duration;
@@ -89,7 +91,7 @@ import java.util.concurrent.Future;
  * @see JavaContextActionManager Manager for adding select/resolve listeners.
  */
 @Dependent
-public class JavaContextActionSupport implements EditorComponent, UpdatableNavigable, Closing {
+public class JavaContextActionSupport implements EditorComponent, UpdatableNavigable, Closing, JavaCompletionContext {
 	private static final DebuggingLogger logger = Logging.get(JavaContextActionSupport.class);
 	private static final long REPARSE_ELAPSED_TIME = 2_000L;
 	private final ExecutorService parseThreadPool = ThreadPoolFactory.newSingleThreadExecutor("java-parse");
@@ -148,12 +150,22 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 		return astAvailabilityButton;
 	}
 
-	/**
-	 * @return Current AST for the class.
-	 */
 	@Nullable
+	@Override
 	public CompilationUnitModel getUnit() {
 		return unit;
+	}
+
+	@Nonnull
+	@Override
+	public Workspace getWorkspace() {
+		return workspace;
+	}
+
+	@Nullable
+	@Override
+	public ResolverAdapter getResolver() {
+		return resolver;
 	}
 
 	/**
@@ -289,6 +301,17 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 		return resolvePosition(pos, true);
 	}
 
+	@Override
+	public int mapCurrentPositionToAst(int pos) {
+		return offset(pos);
+	}
+
+	@Nullable
+	@Override
+	public Resolution resolveRawPositionSilently(int pos) {
+		return resolveRawPositionSilently(pos, true);
+	}
+
 	@Nullable
 	private AstResolveResult resolvePosition(int pos, boolean doOffset) {
 		if (unit == null || resolver == null) return null;
@@ -301,6 +324,17 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 					(listener, t) -> logger.error("Exception thrown on resolve listener '{}'", listener.getClass(), t));
 		}
 		return result;
+	}
+
+	@Nullable
+	private Resolution resolveRawPositionSilently(int pos, boolean doOffset) {
+		CompilationUnitModel localUnit = unit;
+		ResolverAdapter localResolver = resolver;
+		if (localUnit == null || localResolver == null)
+			return null;
+		if (doOffset)
+			pos = offset(pos);
+		return localResolver.resolveAt(pos, null);
 	}
 
 	/**

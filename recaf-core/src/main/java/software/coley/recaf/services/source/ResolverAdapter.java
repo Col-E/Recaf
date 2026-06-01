@@ -21,10 +21,12 @@ import software.coley.sourcesolver.model.VariableModel;
 import software.coley.sourcesolver.resolve.BasicResolver;
 import software.coley.sourcesolver.resolve.entry.ClassEntry;
 import software.coley.sourcesolver.resolve.entry.ClassMemberPair;
+import software.coley.sourcesolver.resolve.entry.DescribableEntry;
 import software.coley.sourcesolver.resolve.entry.EntryPool;
 import software.coley.sourcesolver.resolve.entry.FieldEntry;
 import software.coley.sourcesolver.resolve.entry.MethodEntry;
 import software.coley.sourcesolver.resolve.result.ClassResolution;
+import software.coley.sourcesolver.resolve.result.DescribableResolution;
 import software.coley.sourcesolver.resolve.result.FieldResolution;
 import software.coley.sourcesolver.resolve.result.MethodResolution;
 import software.coley.sourcesolver.resolve.result.MultiClassResolution;
@@ -54,6 +56,14 @@ public class ResolverAdapter extends BasicResolver {
 	public ResolverAdapter(@Nonnull Workspace workspace, @Nonnull CompilationUnitModel unit, @Nonnull EntryPool pool) {
 		super(unit, pool);
 		this.workspace = workspace;
+	}
+
+	/**
+	 * @return Backing entry pool used for source resolution.
+	 */
+	@Nonnull
+	public EntryPool getEntryPool() {
+		return getPool();
 	}
 
 	/**
@@ -220,6 +230,50 @@ public class ResolverAdapter extends BasicResolver {
 		//  local variable solver for similar capabilities. This would let us create mappings
 		//  in the UI for variables which would be nice.
 
+		return null;
+	}
+
+	/**
+	 * @param variable
+	 * 		Field or variable to get the descriptor of.
+	 *
+	 * @return Descriptor of the variable's type, or {@code null} if it cannot be resolved to a describable entry.
+	 */
+	@Nullable
+	public String descriptorOf(@Nonnull VariableModel variable) {
+		return descriptorOf(variable.getType().resolve(this));
+	}
+
+	/**
+	 * @param method
+	 * 		Method to get the descriptor of.
+	 *
+	 * @return Descriptor of the method, or {@code null} if it cannot be resolved to a method entry.
+	 */
+	@Nullable
+	public String descriptorOf(@Nonnull MethodModel method) {
+		Resolution resolution = method.resolve(this);
+		if (resolution instanceof MethodResolution methodResolution)
+			return methodResolution.getMethodEntry().getDescriptor();
+
+		StringBuilder descriptor = new StringBuilder("(");
+		for (VariableModel parameter : method.getParameters()) {
+			String parameterDescriptor = descriptorOf(parameter.getType().resolve(this));
+			if (parameterDescriptor == null)
+				return null;
+			descriptor.append(parameterDescriptor);
+		}
+		DescribableEntry returnType = method.getReturnType().resolve(this) instanceof DescribableResolution returnResolution ?
+				returnResolution.getDescribableEntry() : null;
+		if (returnType == null)
+			return null;
+		return descriptor.append(')').append(returnType.getDescriptor()).toString();
+	}
+
+	@Nullable
+	private static String descriptorOf(@Nonnull Resolution resolution) {
+		if (resolution instanceof DescribableResolution describableResolution)
+			return describableResolution.getDescribableEntry().getDescriptor();
 		return null;
 	}
 }

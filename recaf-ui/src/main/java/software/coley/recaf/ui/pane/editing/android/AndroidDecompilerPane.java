@@ -9,6 +9,7 @@ import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.path.IncompletePathException;
 import software.coley.recaf.services.decompile.DecompilerManager;
+import software.coley.recaf.services.cell.CellConfigurationService;
 import software.coley.recaf.services.info.association.FileTypeSyntaxAssociationService;
 import software.coley.recaf.services.navigation.Actions;
 import software.coley.recaf.services.source.AstResolveResult;
@@ -17,6 +18,8 @@ import software.coley.recaf.services.tutorial.TutorialConfig;
 import software.coley.recaf.ui.config.KeybindingConfig;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.search.SearchBar;
+import software.coley.recaf.ui.control.richtext.suggest.TabCompletionConfig;
+import software.coley.recaf.ui.control.richtext.suggest.java.typeindex.JavaTypeIndexService;
 import software.coley.recaf.ui.control.richtext.source.JavaContextActionSupport;
 import software.coley.recaf.ui.pane.editing.AbstractDecompilePane;
 import software.coley.recaf.ui.pane.editing.ToolsContainerComponent;
@@ -39,10 +42,14 @@ public class AndroidDecompilerPane extends AbstractDecompilePane {
 	                             @Nonnull ToolsContainerComponent toolsContainer,
 	                             @Nonnull AstService astService,
 	                             @Nonnull JavaContextActionSupport contextActionSupport,
+	                             @Nonnull CellConfigurationService cellConfigurationService,
 	                             @Nonnull FileTypeSyntaxAssociationService languageAssociation,
 	                             @Nonnull DecompilerManager decompilerManager,
+	                             @Nonnull JavaTypeIndexService javaTypeIndexService,
+	                             @Nonnull TabCompletionConfig tabCompletionConfig,
 	                             @Nonnull Actions actions) {
-		super(decompilerConfig, tutorialConfig, searchBar, astService, contextActionSupport, languageAssociation, decompilerManager);
+		super(decompilerConfig, tutorialConfig, searchBar, astService, contextActionSupport, cellConfigurationService,
+				languageAssociation, decompilerManager, javaTypeIndexService, tabCompletionConfig);
 
 		// Install tools container with configurator
 		new AndroidDecompilerPaneConfigurator(toolsContainer, decompilerConfig, decompiler, decompilerManager);

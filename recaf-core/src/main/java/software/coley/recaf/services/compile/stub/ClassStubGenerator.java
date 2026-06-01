@@ -578,7 +578,7 @@ public abstract class ClassStubGenerator {
 		}
 
 		// Cannot be a reserved keyword.
-		return !Keywords.getKeywords().contains(name);
+		return !Keywords.getKeywordsWithoutVarSafe().contains(name);
 	}
 
 	/**

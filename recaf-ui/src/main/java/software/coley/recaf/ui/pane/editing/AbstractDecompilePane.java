@@ -27,6 +27,7 @@ import software.coley.recaf.services.decompile.DecompileResult;
 import software.coley.recaf.services.decompile.DecompilerManager;
 import software.coley.recaf.services.decompile.JvmDecompiler;
 import software.coley.recaf.services.decompile.NoopJvmDecompiler;
+import software.coley.recaf.services.cell.CellConfigurationService;
 import software.coley.recaf.services.info.association.FileTypeSyntaxAssociationService;
 import software.coley.recaf.services.mapping.MappingResults;
 import software.coley.recaf.services.mapping.Mappings;
@@ -43,6 +44,9 @@ import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.bracket.SelectedBracketTracking;
 import software.coley.recaf.ui.control.richtext.problem.ProblemTracking;
 import software.coley.recaf.ui.control.richtext.search.SearchBar;
+import software.coley.recaf.ui.control.richtext.suggest.java.JavaTabCompleter;
+import software.coley.recaf.ui.control.richtext.suggest.java.typeindex.JavaTypeIndexService;
+import software.coley.recaf.ui.control.richtext.suggest.TabCompletionConfig;
 import software.coley.recaf.ui.control.richtext.source.JavaContextActionSupport;
 import software.coley.recaf.ui.pane.editing.android.AndroidDecompilerPane;
 import software.coley.recaf.ui.pane.editing.jvm.DecompilerPaneConfig;
@@ -90,8 +94,11 @@ public class AbstractDecompilePane extends BorderPane implements ClassNavigable,
 	                                @Nonnull SearchBar searchBar,
 	                                @Nonnull AstService astService,
 	                                @Nonnull JavaContextActionSupport contextActionSupport,
+	                                @Nonnull CellConfigurationService cellConfigurationService,
 	                                @Nonnull FileTypeSyntaxAssociationService languageAssociation,
-	                                @Nonnull DecompilerManager decompilerManager) {
+	                                @Nonnull DecompilerManager decompilerManager,
+	                                @Nonnull JavaTypeIndexService javaTypeIndexService,
+	                                @Nonnull TabCompletionConfig tabCompletionConfig) {
 		this.astService = astService;
 		this.contextActionSupport = contextActionSupport;
 		this.decompilerManager = decompilerManager;
@@ -108,6 +115,8 @@ public class AbstractDecompilePane extends BorderPane implements ClassNavigable,
 		editor.setProblemTracking(problemTracking);
 		editor.getRootLineGraphicFactory().addDefaultCodeGraphicFactories();
 		contextActionSupport.install(editor);
+		if (tabCompletionConfig.isEnabledInJavaSource())
+			editor.setTabCompleter(new JavaTabCompleter(contextActionSupport, cellConfigurationService, javaTypeIndexService, tabCompletionConfig));
 		searchBar.install(editor);
 
 		// Add overlay for when decompilation is in-progress

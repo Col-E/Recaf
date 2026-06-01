@@ -102,6 +102,25 @@ public final class ReflectUtil {
 	/**
 	 * @param instance
 	 * 		Field owner instance.
+	 * @param fieldName
+	 * 		Name of the field to set value of.
+	 * @param value
+	 * 		Value to set.
+	 * @param <T>
+	 * 		Assumed field type.
+	 */
+	public static <T> void quietSet(Object instance, String fieldName, T value) {
+		try {
+			Field field = getDeclaredField(instance.getClass(), fieldName);
+			quietSet(instance, field, value);
+		} catch (NoSuchFieldException ex) {
+			throw new IllegalStateException("No such field: " + instance.getClass() + "." + fieldName, ex);
+		}
+	}
+
+	/**
+	 * @param instance
+	 * 		Field owner instance.
 	 * @param field
 	 * 		Field to set value of.
 	 * @param value
@@ -116,6 +135,25 @@ public final class ReflectUtil {
 			setter.set(field, instance, value);
 		} catch (IllegalAccessException ex) {
 			throw new IllegalStateException("Setter failure: " + instance.getClass() + "." + field.getName(), ex);
+		}
+	}
+
+	/**
+	 * @param instance
+	 * 		Field owner instance.
+	 * @param fieldName
+	 * 		Name of the field to get value from.
+	 * @param <T>
+	 * 		Assumed field type.
+	 *
+	 * @return Value.
+	 */
+	public static <T> T quietGet(Object instance, String fieldName) {
+		try {
+			Field field = getDeclaredField(instance.getClass(), fieldName);
+			return quietGet(instance, field);
+		} catch (NoSuchFieldException ex) {
+			throw new IllegalStateException("No such field: " + instance.getClass() + "." + fieldName, ex);
 		}
 	}
 

@@ -11,7 +11,7 @@ import software.coley.recaf.util.StringUtil;
 import java.util.List;
 import java.util.Set;
 
-import static software.coley.recaf.util.Keywords.getKeywords;
+import static software.coley.recaf.util.Keywords.getKeywordsWithoutVarSafe;
 
 /**
  * Filter that includes names that contain <i>(when split by boundary characters)</i> reserved Java keywords.
@@ -63,7 +63,7 @@ public class IncludeKeywordNameFilter extends NameGeneratorFilter {
 	}
 
 	private static boolean containsKeyword(@Nonnull String name) {
-		Set<String> keywords = getKeywords();
+		Set<String> keywords = getKeywordsWithoutVarSafe();
 		String filtered = name.indexOf('-') > 0 ?
 				name.replace("package-info", "package_info").replace("module-info", "module_info") :
 				name;

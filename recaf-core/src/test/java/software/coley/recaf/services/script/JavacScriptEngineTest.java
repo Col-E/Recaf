@@ -192,12 +192,12 @@ public class JavacScriptEngineTest extends TestBase {
 					@Dependent
 					public class Test implements Runnable {
 						private final JavacCompiler compiler;
-										
+					
 						@Inject
 						public Test(JavacCompiler compiler) {
 							this.compiler = compiler;
 						}
-						
+					
 						@Override
 						public void run() {
 							System.out.println("hello: " + compiler);
@@ -214,7 +214,7 @@ public class JavacScriptEngineTest extends TestBase {
 					public class Test implements Runnable {
 						@Inject
 						JavacCompiler compiler;
-						
+					
 						@Override
 						public void run() {
 							System.out.println("hello: " + compiler);
@@ -230,7 +230,7 @@ public class JavacScriptEngineTest extends TestBase {
 					public class Test implements Runnable {
 						@Inject
 						JavacCompiler compiler;
-						
+					
 						@Override
 						public void run() {
 							System.out.println("hello: " + compiler);

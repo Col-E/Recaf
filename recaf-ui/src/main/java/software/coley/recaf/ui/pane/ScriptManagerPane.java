@@ -26,6 +26,7 @@ import javafx.stage.FileChooser;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.services.cell.CellConfigurationService;
 import software.coley.recaf.services.compile.CompilerDiagnostic;
 import software.coley.recaf.services.file.RecafDirectoriesConfig;
 import software.coley.recaf.services.info.association.FileTypeSyntaxAssociationService;
@@ -45,6 +46,10 @@ import software.coley.recaf.ui.control.richtext.problem.Problem;
 import software.coley.recaf.ui.control.richtext.problem.ProblemPhase;
 import software.coley.recaf.ui.control.richtext.problem.ProblemTracking;
 import software.coley.recaf.ui.control.richtext.search.SearchBar;
+import software.coley.recaf.ui.control.richtext.suggest.TabCompletionConfig;
+import software.coley.recaf.ui.control.richtext.suggest.java.JavaTabCompleter;
+import software.coley.recaf.ui.control.richtext.suggest.java.typeindex.JavaTypeIndexService;
+import software.coley.recaf.ui.control.richtext.suggest.java.ScriptJavaCompletionSupport;
 import software.coley.recaf.ui.window.RecafScene;
 import software.coley.recaf.util.Animations;
 import software.coley.recaf.util.DesktopUtil;
@@ -82,6 +87,10 @@ public class ScriptManagerPane extends BorderPane {
 	private final RecafDirectoriesConfig directories;
 	private final KeybindingConfig keys;
 	private final Instance<SearchBar> searchBarProvider;
+	private final Instance<ScriptJavaCompletionSupport> scriptCompletionSupportProvider;
+	private final CellConfigurationService cellConfigurationService;
+	private final JavaTypeIndexService javaTypeIndexService;
+	private final TabCompletionConfig tabCompletionConfig;
 
 	@Inject
 	public ScriptManagerPane(@Nonnull ScriptManagerConfig config,
@@ -90,18 +99,27 @@ public class ScriptManagerPane extends BorderPane {
 	                         @Nonnull ScriptRunController scriptRunController,
 	                         @Nonnull FileTypeSyntaxAssociationService languageAssociation,
 	                         @Nonnull WindowFactory windowFactory,
+	                         @Nonnull CellConfigurationService cellConfigurationService,
+	                         @Nonnull JavaTypeIndexService javaTypeIndexService,
+	                         @Nonnull TabCompletionConfig tabCompletionConfig,
 	                         @Nonnull RecafDirectoriesConfig directories,
 	                         @Nonnull KeybindingConfig keys,
-	                         @Nonnull Instance<SearchBar> searchBarProvider) {
+	                         @Nonnull Instance<SearchBar> searchBarProvider,
+	                         @Nonnull Instance<ScriptJavaCompletionSupport> scriptCompletionSupportProvider
+	) {
 		this.windowFactory = windowFactory;
 		this.scriptManager = scriptManager;
 		this.config = config;
 		this.engine = engine;
 		this.scriptRunController = scriptRunController;
 		this.languageAssociation = languageAssociation;
+		this.cellConfigurationService = cellConfigurationService;
+		this.javaTypeIndexService = javaTypeIndexService;
+		this.tabCompletionConfig = tabCompletionConfig;
 		this.directories = directories;
 		this.keys = keys;
 		this.searchBarProvider = searchBarProvider;
+		this.scriptCompletionSupportProvider = scriptCompletionSupportProvider;
 
 		scriptManager.getScriptFiles().addChangeListener((ob, old, cur) -> refreshScripts());
 		refreshScripts();
@@ -208,15 +226,21 @@ public class ScriptManagerPane extends BorderPane {
 	private class ScriptEditor extends BorderPane {
 		private final ProblemTracking problemTracking = new ProblemTracking();
 		private final Editor editor = new Editor();
+		private final ScriptJavaCompletionSupport completionSupport;
 		private Path scriptPath;
 
 		private ScriptEditor(@Nonnull FileTypeSyntaxAssociationService associationService, @Nonnull String initialText, @Nonnull SearchBar searchBar) {
+			completionSupport = scriptCompletionSupportProvider.get();
 			editor.setText(initialText);
 			editor.getCodeArea().getUndoManager().forgetHistory();
 			associationService.configureEditorSyntax("java", editor);
 			editor.setSelectedBracketTracking(new SelectedBracketTracking());
 			editor.setProblemTracking(problemTracking);
 			editor.getRootLineGraphicFactory().addDefaultCodeGraphicFactories();
+			completionSupport.install(editor);
+			if (tabCompletionConfig.isEnabledInJavaSource())
+				editor.setTabCompleter(new JavaTabCompleter(completionSupport,
+						cellConfigurationService, javaTypeIndexService, tabCompletionConfig));
 
 			// Add extra components
 			searchBar.install(editor);
@@ -230,6 +254,20 @@ public class ScriptManagerPane extends BorderPane {
 
 			// Layout
 			setCenter(editor);
+
+			// When this editor is closed, ensure we clean up editor resources
+			sceneProperty().addListener((ob, old, cur) -> {
+				if (cur != null) {
+					cur.windowProperty().addListener((windowOb, oldWindow, newWindow) -> {
+						if (newWindow != null) {
+							newWindow.setOnHidden(e -> {
+								editor.close();
+								completionSupport.close();
+							});
+						}
+					});
+				}
+			});
 		}
 
 		/**
