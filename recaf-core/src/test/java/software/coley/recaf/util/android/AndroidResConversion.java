@@ -14,6 +14,7 @@ public class AndroidResConversion {
 
 	public static void main(String[] args) throws Exception {
 		// We just want to merge these two XML files into one model and then slap it back into JSON
+		// - Original files found in: Android/Sdk/platforms/android-XYZ/data/res/values/
 		JsonNode tree1 = MAPPER.readTree(AndroidRes.class.getResourceAsStream("/android/attrs_manifest.xml"));
 		JsonNode tree2 = MAPPER.readTree(AndroidRes.class.getResourceAsStream("/android/attrs.xml"));
 		ObjectNode merged = MAPPER.createObjectNode();
