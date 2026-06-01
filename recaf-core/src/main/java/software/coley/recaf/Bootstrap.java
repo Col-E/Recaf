@@ -8,7 +8,14 @@ import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.cdi.EagerInitializationExtension;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import static software.coley.recaf.RecafBuildConfig.*;
 
@@ -19,8 +26,10 @@ import static software.coley.recaf.RecafBuildConfig.*;
  */
 public class Bootstrap {
 	private static final Logger logger = Logging.get(Bootstrap.class);
+	private static final String RESOURCE_PATH = "META-INF/recaf-core-beans.txt";
 	private static Recaf instance;
 	private static Consumer<Weld> weldConsumer;
+	private static boolean coreOnlyDiscovery;
 
 	/**
 	 * @return Recaf instance.
@@ -59,6 +68,14 @@ public class Bootstrap {
 		weldConsumer = consumer;
 	}
 
+	/**
+	 * Restrict bean discovery to the core module's CDI beans.
+	 * Must be called before invoking {@link #get()}.
+	 */
+	public static void enableCoreOnlyDiscovery() {
+		coreOnlyDiscovery = true;
+	}
+
 	@Nonnull
 	private static SeContainer createContainer() {
 		logger.info("Creating Recaf CDI container...");
@@ -70,8 +87,13 @@ public class Bootstrap {
 		weld.addExtension(EagerInitializationExtension.getInstance());
 
 		// Setup bean discovery
-		logger.info("CDI: Registering bean packages");
-		weld.addPackage(true, Recaf.class);
+		if (coreOnlyDiscovery) {
+			logger.info("CDI: Registering core bean archive");
+			configureCoreBeans(weld);
+		} else {
+			logger.info("CDI: Registering bean packages");
+			weld.addPackage(true, Recaf.class);
+		}
 
 		// Handle user-defined action
 		if (weldConsumer != null) {
@@ -81,6 +103,47 @@ public class Bootstrap {
 		}
 
 		logger.info("CDI: Initializing...");
-		return weld.initialize();
+		try {
+			return weld.initialize();
+		} finally {
+			coreOnlyDiscovery = false;
+		}
+	}
+
+	/**
+	 * Disable classpath discovery and register the core bean archive explicitly.
+	 *
+	 * @param weld
+	 * 		Weld container builder.
+	 */
+	public static void configureCoreBeans(@Nonnull Weld weld) {
+		ClassLoader classLoader = Bootstrap.class.getClassLoader();
+		weld.disableDiscovery();
+		for (String beanClassName : loadBeanClassNames(classLoader))
+			weld.addBeanClass(loadBeanClass(classLoader, beanClassName));
+	}
+
+	@Nonnull
+	private static List<String> loadBeanClassNames(@Nonnull ClassLoader classLoader) {
+		try (InputStream stream = classLoader.getResourceAsStream(RESOURCE_PATH)) {
+			if (stream == null)
+				throw new IllegalStateException("Missing core bean index: " + RESOURCE_PATH);
+			try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
+				return reader.lines()
+						.filter(line -> !line.isBlank())
+						.collect(Collectors.toList());
+			}
+		} catch (IOException ex) {
+			throw new IllegalStateException("Failed reading core bean index: " + RESOURCE_PATH, ex);
+		}
+	}
+
+	@Nonnull
+	private static Class<?> loadBeanClass(@Nonnull ClassLoader classLoader, @Nonnull String className) {
+		try {
+			return Class.forName(className, false, classLoader);
+		} catch (ClassNotFoundException ex) {
+			throw new IllegalStateException("Failed to load core bean class: " + className, ex);
+		}
 	}
 }

@@ -4,6 +4,8 @@ plugins {
     alias(libs.plugins.peterabeles.gversion)
 }
 
+def generatedCoreBeanResourcesDir = layout.buildDirectory.dir('generated/resources/coreBeans')
+
 apply plugin: 'java-library'
 apply plugin: 'java-test-fixtures'
 
@@ -69,12 +71,55 @@ sourceSets {
         java {
             srcDirs 'src/generated/java', 'src/main/java'
         }
+        resources {
+            srcDir generatedCoreBeanResourcesDir
+        }
     }
 }
 
 clean {
     // Delete the generated gversion class when cleaning
     delete 'src/generated'
+}
+
+// To facilitate headless mode we need to know all core-provided CDI bean classes at runtime.
+// This list will be used by Weld to create a container that only includes these core beans and
+// no beans from the UI module since that would initialize JavaFX, which is not desired in headless mode.
+tasks.register('generateCoreBeanIndex') {
+    inputs.dir('src/main/java')
+    outputs.dir(generatedCoreBeanResourcesDir)
+
+    doLast {
+        File outputDir = generatedCoreBeanResourcesDir.get().asFile
+        File outputFile = new File(outputDir, 'META-INF/recaf-core-beans.txt')
+        List<String> beanClasses = []
+
+        fileTree('src/main/java/software/coley/recaf') {
+            include '**/*.java'
+        }.files.each { File sourceFile ->
+            // Check if the file has a CDI scope annotation
+            String text = sourceFile.getText('UTF-8')
+            if (!(text =~ /(?m)^\s*@(ApplicationScoped|Dependent)\b/))
+                return
+
+            // Must not be in the default package
+            def packageMatcher = text =~ /(?m)^package\s+([a-zA-Z0-9_.]+);/
+            if (!packageMatcher.find())
+                return
+
+            String packageName = packageMatcher.group(1)
+            String className = sourceFile.name[0..-6]
+            beanClasses.add(packageName + '.' + className)
+        }
+
+        // Write list of all CDI bean classes to a resource file for later use.
+        outputFile.parentFile.mkdirs()
+        outputFile.setText(beanClasses.sort().join(System.lineSeparator()) + System.lineSeparator(), 'UTF-8')
+    }
+}
+
+tasks.named('processResources') {
+    dependsOn 'generateCoreBeanIndex'
 }
 
 private boolean isBuildConfigUpToDate() {

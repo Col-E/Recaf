@@ -17,5 +17,7 @@ public class ExitCodes {
 	public static final int INTELLIJ_TERMINATION = 130;
 	public static final int ERR_CDI_INIT_FAILURE = 150;
 	public static final int ERR_NOT_A_JDK = 160;
+	public static final int ERR_LAUNCH_NO_UI_MODULE = 170;
+	public static final int ERR_LAUNCH_UI_INIT = 171;
 
 }
