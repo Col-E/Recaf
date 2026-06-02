@@ -52,6 +52,7 @@ import software.coley.recaf.ui.pane.editing.SideTabsInjector;
 import software.coley.recaf.ui.pane.editing.tabs.FieldsAndMethodsPane;
 import software.coley.recaf.util.Animations;
 import software.coley.recaf.util.FxThreadUtil;
+import software.coley.recaf.util.threading.ThreadUtil;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.Bundle;
 
@@ -336,7 +337,7 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 	@Nonnull
 	private CompletableFuture<Result<String>> disassemble() {
 		problemTracking.removeByPhase(ProblemPhase.LINT);
-		return CompletableFuture.supplyAsync(() -> pipeline.disassemble(path))
+		return CompletableFuture.supplyAsync(() -> pipeline.disassemble(path), ThreadUtil.executor())
 				.orTimeout(10, TimeUnit.SECONDS)
 				.whenCompleteAsync((result, error) -> {
 					if (result != null)
