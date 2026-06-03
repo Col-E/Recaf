@@ -44,7 +44,7 @@ public abstract class AbstractTextBoundLineGraphicFactory extends AbstractLineGr
 	public void apply(@Nonnull LineContainer container, int paragraph) {
 		// To keep the ordering of the line graphic factory priority we need to add the stack pane now
 		// since the rest of the work is done async below. We want this to have zero width so that it doesn't
-		// shit the editor around when the content becomes active/inactive.
+		// shift the editor around when the content becomes active/inactive.
 		StackPane stack = new StackPane();
 		stack.setManaged(false);
 		stack.setPrefWidth(0);
