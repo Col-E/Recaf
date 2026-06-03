@@ -24,6 +24,7 @@ import software.coley.recaf.ui.control.richtext.suggest.java.typeindex.JavaTypeI
 import software.coley.recaf.workspace.model.EmptyWorkspace;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.sourcesolver.model.CompilationUnitModel;
+import software.coley.sourcesolver.model.VariableModel;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -105,6 +106,31 @@ class JavaTabCompleterTest extends TestBase {
 		int caret = source.indexOf("wm.") + "wm.".length();
 		List<JavaCompletion> completions = completions(context, new JavaLexicalContextParser().parse(source, caret));
 		assertContainsMethod(completions, "getCurrent()");
+	}
+
+	@Test
+	void memberCompletionsUseResolvedScriptFieldMetadataFromImplicitWildcardImports() {
+		String source = """
+				public class Demo {
+					WorkspaceManager wm;
+					List<String> list;
+				
+					void run() {
+						wm.
+						list.
+					}
+				}
+				""";
+		JavaCompletionContext.DeclaredClassInfo declaredClassInfo = resolvedScriptDeclaredClassInfo(source);
+		JavaCompletionContext context = scriptContext(source, declaredClassInfo);
+
+		int wmCaret = source.indexOf("wm.") + "wm.".length();
+		List<JavaCompletion> wmCompletions = completions(context, new JavaLexicalContextParser().parse(source, wmCaret));
+		assertContainsMethod(wmCompletions, "getCurrent()");
+
+		int listCaret = source.indexOf("list.") + "list.".length();
+		List<JavaCompletion> listCompletions = completions(context, new JavaLexicalContextParser().parse(source, listCaret));
+		assertContainsMethod(listCompletions, "size()");
 	}
 
 	@Test
@@ -484,6 +510,33 @@ class JavaTabCompleterTest extends TestBase {
 				return augmented.mapOriginalToAugmented(pos);
 			}
 		};
+	}
+
+	@Nonnull
+	private JavaCompletionContext.DeclaredClassInfo resolvedScriptDeclaredClassInfo(@Nonnull String source) {
+		AstService astService = recaf.get(AstService.class);
+		AugmentedSource augmented = ScriptSourceAugmentation.augmentClassScript(source);
+		CompilationUnitModel unit;
+		synchronized (astService.getSharedJavaParser()) {
+			unit = astService.getSharedJavaParser().parse(augmented.augmentedSource());
+		}
+
+		ResolverAdapter resolver = astService.newJavaResolver(EmptyWorkspace.get(), unit);
+		String internalName = augmented.packageInternalName() + "/" + unit.getDeclaredClasses().getFirst().getName();
+		List<FieldMember> fields = new ArrayList<>();
+		for (VariableModel field : unit.getDeclaredClasses().getFirst().getFields()) {
+			String descriptor = resolver.descriptorOf(field);
+			assertNotNull(descriptor, "Expected script field descriptor to resolve for " + field.getName());
+			fields.add(new BasicFieldMember(field.getName(), descriptor, null, 0, null));
+		}
+
+		return new JavaCompletionContext.DeclaredClassInfo(
+				internalName,
+				Opcodes.ACC_PUBLIC,
+				List.copyOf(fields),
+				List.of(),
+				List.of()
+		);
 	}
 
 	@Nonnull

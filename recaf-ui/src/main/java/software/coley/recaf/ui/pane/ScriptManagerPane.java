@@ -199,7 +199,7 @@ public class ScriptManagerPane extends BorderPane {
 				        if (!wm.hasCurrentWorkspace()) return;
 				
 				        // Do any script work here.
-				        Workspace workspace = workspaceManager.getCurrent();
+				        Workspace workspace = wm.getCurrent();
 				    }
 				}
 				""";

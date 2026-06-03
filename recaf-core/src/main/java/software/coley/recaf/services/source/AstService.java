@@ -17,6 +17,7 @@ import software.coley.recaf.services.mapping.Mappings;
 import software.coley.recaf.services.workspace.WorkspaceCloseListener;
 import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.services.workspace.WorkspaceOpenListener;
+import software.coley.recaf.util.ClasspathUtil;
 import software.coley.recaf.util.ReflectUtil;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
@@ -37,13 +38,15 @@ import software.coley.sourcesolver.resolve.entry.MethodEntry;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableSet;
 import java.util.Objects;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
 
 /**
  * Service for tracking shared data for AST parsing.
@@ -261,6 +264,7 @@ public class AstService implements Service {
 	 */
 	private static class WorkspaceBackedEntryPool implements EntryPool, ResourceJvmClassListener, ResourceAndroidClassListener {
 		private final Map<String, ClassEntry> cache = new ConcurrentHashMap<>();
+		private final Set<String> hydratedRuntimePackages = ConcurrentHashMap.newKeySet();
 		private final Workspace workspace;
 
 		private WorkspaceBackedEntryPool(@Nonnull Workspace workspace) {
@@ -285,11 +289,76 @@ public class AstService implements Service {
 		@Nonnull
 		@Override
 		public List<ClassEntry> getClassesInPackage(@Nullable String packageName) {
-			Stream<ClassEntry> workspaceEntries = workspace.findClasses(c -> Objects.equals(packageName, c.getPackageName())).stream()
-					.map(p -> computeEntry(p.getValue(), DEFAULT_TTL));
-			Stream<ClassEntry> cacheEntries = cache.values().stream()
-					.filter(e -> Objects.equals(packageName, e.getPackageName()));
-			return Stream.concat(workspaceEntries, cacheEntries).toList();
+			Map<String, ClassEntry> entries = new LinkedHashMap<>();
+			workspace.findClasses(c -> Objects.equals(packageName, c.getPackageName())).forEach(path -> {
+				ClassEntry entry = computeEntry(path.getValue(), DEFAULT_TTL);
+				if (entry != null)
+					entries.put(entry.getName(), entry);
+			});
+
+			// For classes available in the runtime classpath (IE, for script writing support) we want
+			// to fill in the dozens of 'service.*' imports and such.
+			hydrateRuntimePackage(packageName);
+
+			cache.values().stream()
+					.filter(e -> Objects.equals(packageName, e.getPackageName()))
+					.forEach(entry -> entries.putIfAbsent(entry.getName(), entry));
+			return List.copyOf(entries.values());
+		}
+
+		/**
+		 * Add classes from the runtime classpath to the pool, if we can access them.
+		 *
+		 * @param packageName
+		 * 		Name of package to pull classes from, or {@code null} for the default package.
+		 */
+		private void hydrateRuntimePackage(@Nullable String packageName) {
+			String packageKey = packageName == null ? "" : packageName;
+			if (!hydratedRuntimePackages.add(packageKey))
+				return;
+
+			// Add system classes, then our own classpath classes.
+			hydrateRuntimePackage(packageName, ClasspathUtil.getSystemClassSet());
+			hydrateRuntimePackage(packageName, ClasspathUtil.getClasspathClassSet());
+		}
+
+		/**
+		 * Add classes from the runtime classpath to the pool, if we can access them.
+		 *
+		 * @param packageName
+		 * 		Name of package to pull classes from, or {@code null} for the default package.
+		 * @param classNames
+		 * 		Set of class names to pull from.
+		 */
+		private void hydrateRuntimePackage(@Nullable String packageName, @Nonnull NavigableSet<String> classNames) {
+			// There isn't anything we need to support in the default package.
+			if (packageName == null || packageName.isEmpty())
+				return;
+
+			// Because the class names are stored in a sorted set,
+			// we can do a quick range query to pull out all classes in the package.
+			String prefix = packageName + "/";
+			for (String className : classNames.tailSet(prefix, true)) {
+				if (!className.startsWith(prefix))
+					break;
+				if (className.indexOf('/', prefix.length()) >= 0)
+					continue;
+				hydrateRuntimeClass(className);
+			}
+		}
+
+		/**
+		 * Add a class from the runtime classpath to the pool, if we can access it.
+		 *
+		 * @param className
+		 * 		Name of class to hydrate.
+		 */
+		private void hydrateRuntimeClass(@Nonnull String className) {
+			// Workspace will always allow us to pull classes from the runtime classpath,
+			// so we can just ask it for the class and if it's there we'll add it to the pool.
+			ClassPathNode path = workspace.findClass(className);
+			if (path != null)
+				computeEntry(path.getValue(), DEFAULT_TTL);
 		}
 
 		/**
