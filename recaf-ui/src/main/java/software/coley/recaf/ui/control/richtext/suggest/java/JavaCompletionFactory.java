@@ -92,8 +92,19 @@ public final class JavaCompletionFactory {
 	@Nonnull
 	public static JavaCompletion methodCompletion(@Nonnull String name, @Nonnull String descriptor, int rank,
 	                                              @Nullable ClassMemberPathNode path, boolean insertMethodCall) {
-		boolean appendStatementTerminator = insertMethodCall &&
-				Type.getMethodType(descriptor).getReturnType().getSort() == Type.VOID;
+		Type methodType = Type.getMethodType(descriptor);
+
+		// If the method has parameters, we want to have the caret end up inside the parentheses
+		// so the user can fill them in. Otherwise, if there are no parameters, the caret should appear after them.
+		boolean hasParameters = methodType.getArgumentTypes().length > 0;
+
+		// If the method returns 'void' there's no possibility of chaining calls, so we can also put the ';' afterwards.
+		boolean appendStatementTerminator = insertMethodCall && methodType.getReturnType().getSort() == Type.VOID;
+
+		int caretBacktrack = 0;
+		if (insertMethodCall)
+			caretBacktrack = hasParameters ? (appendStatementTerminator ? 2 : 1) : (appendStatementTerminator ? 1 : 0);
+
 		return new JavaCompletion(
 				CompletionKind.METHOD,
 				displayMethod(name, descriptor),
@@ -101,7 +112,7 @@ public final class JavaCompletionFactory {
 				rank,
 				path,
 				name,
-				insertMethodCall ? (appendStatementTerminator ? 2 : 1) : 0,
+				caretBacktrack,
 				appendStatementTerminator ? ";" : ""
 		);
 	}

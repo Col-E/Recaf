@@ -355,7 +355,7 @@ class JavaTabCompleterTest extends TestBase {
 				CompletionKind.METHOD, "publicMethod()");
 		assertNotNull(voidMethod);
 		assertEquals(";", voidMethod.trailingSuffix());
-		assertEquals(2, voidMethod.caretBacktrack());
+		assertEquals(1, voidMethod.caretBacktrack());
 		assertEquals("publicMethod();", voidMethod.fullInsertionText());
 
 		JavaCompletionContext nonVoidContext = new TestCompletionContext(workspace, null, null, fieldsAndMethodsPath, null, true);
@@ -364,8 +364,21 @@ class JavaTabCompleterTest extends TestBase {
 				CompletionKind.METHOD, "plusTwo()");
 		assertNotNull(nonVoidMethod);
 		assertEquals("", nonVoidMethod.trailingSuffix());
-		assertEquals(1, nonVoidMethod.caretBacktrack());
+		assertEquals(0, nonVoidMethod.caretBacktrack());
 		assertEquals("plusTwo()", nonVoidMethod.fullInsertionText());
+
+		JavaCompletion voidMethodWithParameters = JavaCompletionFactory.methodCompletion("methodWithParameters",
+				"(Ljava/lang/String;JFDLjava/util/List;)V", 0, null, true);
+		assertNotNull(voidMethodWithParameters);
+		assertEquals(";", voidMethodWithParameters.trailingSuffix());
+		assertEquals(2, voidMethodWithParameters.caretBacktrack());
+		assertEquals("methodWithParameters();", voidMethodWithParameters.fullInsertionText());
+
+		JavaCompletion nonVoidMethodWithParameters = JavaCompletionFactory.methodCompletion("substring",
+				"(II)Ljava/lang/String;", 0, null, true);
+		assertEquals("", nonVoidMethodWithParameters.trailingSuffix());
+		assertEquals(1, nonVoidMethodWithParameters.caretBacktrack());
+		assertEquals("substring()", nonVoidMethodWithParameters.fullInsertionText());
 	}
 
 	@Test
