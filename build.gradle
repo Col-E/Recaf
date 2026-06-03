@@ -81,6 +81,9 @@ subprojects {
 
         // Required for Mockito in newer JDK's which disable useful features by default for 'integrity' reasons.
         jvmArgs '-XX:+EnableDynamicAgentLoading'
+		
+		minHeapSize = '512m'
+        maxHeapSize = '2048m'
 
         systemProperty 'junit.jupiter.execution.parallel.enabled', true
         systemProperty 'junit.jupiter.execution.parallel.mode.default', 'concurrent'
