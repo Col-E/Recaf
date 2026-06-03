@@ -37,6 +37,14 @@ class JavaLexicalContextParserTest {
 	}
 
 	@Test
+	void parsesMemberContextAfterMethodInvocation() {
+		JavaLexicalContext context = parser.parse("strings.getFirst().sub", "strings.getFirst().sub".length());
+		assertEquals(ContextKind.MEMBER, context.kind());
+		assertEquals("strings.getFirst()", context.receiverText());
+		assertEquals("sub", context.partialText());
+	}
+
+	@Test
 	void parsesMethodReferenceContext() {
 		JavaLexicalContext context = parser.parse("stream::ma", "stream::ma".length());
 		assertEquals(ContextKind.METHOD_REFERENCE, context.kind());

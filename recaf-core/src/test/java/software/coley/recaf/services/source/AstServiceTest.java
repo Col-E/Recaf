@@ -38,6 +38,10 @@ import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.BasicJvmClassBundle;
 import software.coley.sourcesolver.Parser;
 import software.coley.sourcesolver.model.CompilationUnitModel;
+import software.coley.sourcesolver.model.VariableModel;
+import software.coley.sourcesolver.resolve.result.FieldResolution;
+import software.coley.sourcesolver.resolve.result.MethodResolution;
+import software.coley.sourcesolver.resolve.result.Resolution;
 
 import java.io.IOException;
 import java.util.function.Consumer;
@@ -287,13 +291,13 @@ public class AstServiceTest extends TestBase {
 		void testMethodReference_SyntheticEnumMethod() {
 			String source = """
 					package software.coley.recaf.test.dummy;
-					     
+					
 					public class DummyEnumPrinter {
 						public static void main(String[] args) {
 							for (DummyEnum enumConstant : DummyEnum.class.getEnumConstants()) {
 								String name = enumConstant.name();
 								System.out.println(name);
-								
+					
 								Supplier<String> supplier = enumConstant::name;
 								System.out.println(supplier.get());
 							}
@@ -322,7 +326,7 @@ public class AstServiceTest extends TestBase {
 		void testStaticMethodCall() {
 			String source = """
 					package software.coley.recaf.test.dummy;
-					  										
+					
 					class HelloWorld {
 						static void main(String[] args) {
 							ClassWithExceptions.readInt(args[0]);
@@ -345,7 +349,7 @@ public class AstServiceTest extends TestBase {
 		void testStaticMethodCall_JavaLangSystem() {
 			String source = """
 					package software.coley.recaf.test.dummy;
-					  										
+					
 					class HelloWorld {
 						static void main(String[] args) {
 							System.loadLibrary("nativelibname");
@@ -365,7 +369,7 @@ public class AstServiceTest extends TestBase {
 		void testStaticFieldRef() {
 			String source = """
 					package software.coley.recaf.test.dummy;
-					  										
+					
 					class HelloWorld {
 						static void main(String[] args) {
 							ClassWithStaticInit.i = 0;
@@ -485,20 +489,19 @@ public class AstServiceTest extends TestBase {
 
 		@Test
 		void testResolveThis() {
-			// OpenRewrite can be funky about how it treats 'this'.
-			// So we want to have a test to make sure it gets resolved correctly.
+			// We should be able to resolve 'this' references to the containing class.
 			String source = """
 					package software.coley.recaf.test.dummy;
-										
+					
 					import java.util.ArrayList;
 					import java.util.Arrays;
 					import java.util.LinkedHashSet;
 					import java.util.Set;
-										
+					
 					public class StringList extends ArrayList<String> {
 						public Set<String> unique() {
 							Object string = this.toString();
-							
+					
 							return new LinkedHashSet<>(this);
 						}
 					}
@@ -516,6 +519,131 @@ public class AstServiceTest extends TestBase {
 				});
 			});
 		}
+
+		@Test
+		void testGenericMethodResolution_ListGetReturnsString() {
+			// If we have some basic generic type like 'List<T>' we should be able to resolve
+			// generic methods like 'T get(int)' to T return values. In this case, a String.
+			String source = """
+					package software.coley.recaf.test.dummy;
+
+					import java.util.ArrayList;
+					import java.util.List;
+
+					public class HelloWorld {
+						public static void main(String[] args) {
+							List<String> foo = new ArrayList<>();
+							String value = foo.get(0);
+						}
+					}
+					""";
+			handleUnit(source, unit -> {
+				ResolverAdapter resolver = service.newJavaResolver(unit);
+				int position = source.indexOf("get(0)") + 1;
+				Resolution resolution = resolver.resolveAt(position, null);
+				MethodResolution methodResolution = assertInstanceOf(MethodResolution.class, resolution);
+				assertEquals("(I)Ljava/lang/Object;", methodResolution.getMethodEntry().getDescriptor());
+				assertEquals("Ljava/lang/String;", methodResolution.getResolvedReturnType().getDescriptor());
+			});
+		}
+
+		@Test
+		void testGenericMethodResolution_ListGetFirstReturnsString() {
+			// Same idea but with 'T getFirst()'
+			String source = """
+					package software.coley.recaf.test.dummy;
+
+					import java.util.List;
+
+					public class HelloWorld {
+						public static void main(String[] args) {
+							List<String> foo = List.of("A");
+							String value = foo.getFirst();
+						}
+					}
+					""";
+			handleUnit(source, unit -> {
+				ResolverAdapter resolver = service.newJavaResolver(unit);
+				int position = source.indexOf("getFirst()") + 1;
+				Resolution resolution = resolver.resolveAt(position, null);
+				MethodResolution methodResolution = assertInstanceOf(MethodResolution.class, resolution);
+				assertEquals("()Ljava/lang/Object;", methodResolution.getMethodEntry().getDescriptor());
+				assertEquals("Ljava/lang/String;", methodResolution.getResolvedReturnType().getDescriptor());
+			});
+		}
+
+		@Test
+		void testVarInferenceFromGenericMethodReturn() {
+			// Even if we use 'var' for a variable we should be able to infer its a String.
+			String source = """
+					package software.coley.recaf.test.dummy;
+
+					import java.util.ArrayList;
+					import java.util.List;
+
+					public class HelloWorld {
+						public static void main(String[] args) {
+							List<String> foo = new ArrayList<>();
+							var value = foo.get(0);
+						}
+					}
+					""";
+			handleUnit(source, unit -> {
+				ResolverAdapter resolver = service.newJavaResolver(unit);
+				VariableModel variable = unit.getRecursiveChildrenOfType(VariableModel.class).stream()
+						.filter(candidate -> "value".equals(candidate.getName()))
+						.findFirst()
+						.orElseThrow();
+				assertEquals("Ljava/lang/String;", resolver.descriptorOf(variable));
+			});
+		}
+
+		@Test
+		void testInheritedGenericMethodResolution_StringListGetReturnsString() {
+			// Our StringList class extends ArrayList<String> and does not declare its own get(int) method.
+			// We should still be able to resolve the inherited get(int) method to return String.
+			String source = """
+					package software.coley.recaf.test.dummy;
+
+					public class HelloWorld {
+						public static void main(String[] args) {
+							StringList list = StringList.of("foo");
+							String value = list.get(0);
+						}
+					}
+					""";
+			handleUnit(source, unit -> {
+				ResolverAdapter resolver = service.newJavaResolver(unit);
+				int position = source.indexOf("get(0)") + 1;
+				Resolution resolution = resolver.resolveAt(position, null);
+				MethodResolution methodResolution = assertInstanceOf(MethodResolution.class, resolution);
+				assertEquals("(I)Ljava/lang/Object;", methodResolution.getMethodEntry().getDescriptor());
+				assertEquals("Ljava/lang/String;", methodResolution.getResolvedReturnType().getDescriptor());
+			});
+		}
+
+		@Test
+		void testNoSignatureFallbackStillResolvesFields() {
+			// Mostly a regression test.
+			// If the field isn't generic and has no signature we should still be able to resolve it.
+			String source = """
+					package software.coley.recaf.test.dummy;
+
+					public class HelloWorld {
+						public static void main(String[] args) {
+							AccessibleFields fields = new AccessibleFields();
+							int value = fields.publicField;
+						}
+					}
+					""";
+			handleUnit(source, unit -> {
+				ResolverAdapter resolver = service.newJavaResolver(unit);
+				int position = source.indexOf("publicField") + 1;
+				Resolution resolution = resolver.resolveAt(position, null);
+				FieldResolution fieldResolution = assertInstanceOf(FieldResolution.class, resolution);
+				assertEquals("I", fieldResolution.getResolvedFieldType().getDescriptor());
+			});
+		}
 	}
 
 	@Nested
@@ -524,7 +652,7 @@ public class AstServiceTest extends TestBase {
 		void renameClass_ReplacesPackage() {
 			String source = """
 					package software.coley.recaf.test.dummy;
-										
+					
 					enum DummyEnum {
 						ONE, TWO, THREE
 					}
@@ -543,7 +671,7 @@ public class AstServiceTest extends TestBase {
 		void renameField_EnumConst() {
 			String source = """
 					package software.coley.recaf.test.dummy;
-										
+					
 					enum DummyEnum {
 						ONE, TWO, THREE
 					}
@@ -562,7 +690,7 @@ public class AstServiceTest extends TestBase {
 		void renameClass_ReplacesCast() {
 			String source = """
 					package software.coley.recaf.test.dummy;
-										
+					
 					class HelloWorld {
 						static void main(Object arg) {
 							HelloWorld casted = (HelloWorld) arg;
@@ -584,7 +712,7 @@ public class AstServiceTest extends TestBase {
 		void renameClass_ReplaceStaticCallContextInSamePackage() {
 			String source = """
 					package software.coley.recaf.test.dummy;
-										
+					
 					class HelloWorld {
 						static void main(String[] args) {
 							ClassWithExceptions.readInt(args[0]);
@@ -604,9 +732,9 @@ public class AstServiceTest extends TestBase {
 		void renameClass_ReplacePackageImport() {
 			String source = """
 					package software.coley.recaf.test.dummy;
-										
+					
 					import software.coley.recaf.util.*;
-										
+					
 					class HelloWorld {
 						static void main(String[] args) {
 							System.out.println(StringUtil.getCommonSuffix(args[0], args[1]));
@@ -631,9 +759,9 @@ public class AstServiceTest extends TestBase {
 		void renameClass_ReplaceImportOfStaticCall() {
 			String source = """
 					package software.coley.recaf.test.dummy;
-										
+					
 					import static software.coley.recaf.test.dummy.ClassWithExceptions.readInt;
-										
+					
 					class HelloWorld {
 						static void main(String[] args) {
 							readInt(args[0]);
@@ -653,7 +781,7 @@ public class AstServiceTest extends TestBase {
 		void renameClass_ArrayDecAndNew() {
 			String source = """
 					package software.coley.recaf.test.dummy;
-										
+					
 					class HelloWorld {
 						static void main(String[] args) {
 							ClassWithExceptions[] bar = new ClassWithExceptions[0];
@@ -673,7 +801,7 @@ public class AstServiceTest extends TestBase {
 		void renameClass_FieldStaticQualifier() {
 			String source = """
 					package software.coley.recaf.test.dummy;
-										
+					
 					class HelloWorld {
 						static void main(String[] args) {
 							DummyEnum one = DummyEnum.ONE;
@@ -695,11 +823,11 @@ public class AstServiceTest extends TestBase {
 		void renameClass_FieldAndVariableDeclarations() {
 			String source = """
 					package software.coley.recaf.test.dummy;
-										
+					
 					class HelloWorld {
 						ClassWithExceptions[] array;
 						ClassWithExceptions single;
-										
+					
 						static void main(String[] args) {
 							ClassWithExceptions[] local_array = null;
 							ClassWithExceptions local_single = null;
@@ -722,7 +850,7 @@ public class AstServiceTest extends TestBase {
 		void renameClass_MethodReturnAndArgs() {
 			String source = """
 					package software.coley.recaf.test.dummy;
-										
+					
 					class HelloWorld {
 						static HelloWorld get() { return null; }
 						void accept(HelloWorld arg) {}
@@ -742,7 +870,7 @@ public class AstServiceTest extends TestBase {
 		void renameClass_Constructor() {
 			String source = """
 					package software.coley.recaf.test.dummy;
-										
+					
 					class HelloWorld {
 						private HelloWorld(String s) {}
 						HelloWorld() {}
@@ -782,9 +910,9 @@ public class AstServiceTest extends TestBase {
 		void renameClass_MethodReference() {
 			String source = """
 					package software.coley.recaf.test.dummy;
-										
+					
 					import java.util.function.Supplier;
-										
+					
 					class HelloWorld {
 						static {
 							Supplier<HelloWorld> worldSupplier = HelloWorld::new;
@@ -805,7 +933,7 @@ public class AstServiceTest extends TestBase {
 		void renameClass_QualifiedNameReference() {
 			String source = """
 					package software.coley.recaf.test.dummy;
-										
+					
 					class HelloWorld {
 						static {
 							software.coley.recaf.util.Types value = new software.coley.recaf.util.Types();
@@ -826,21 +954,21 @@ public class AstServiceTest extends TestBase {
 		void renameMember_FieldName() {
 			String source = """
 					package software.coley.recaf.test.dummy;
-										
+					
 					class AccessibleFields {
 						public static int CONSTANT_FIELD;
 					 	private int privateFinalField = 8;
 					 	protected int protectedField;
 					 	public int publicField;
 					 	final int packageField;
-						
+					
 						AccessibleFields() {
 							this.packageField = 3;
 							packageField = 4;
 							protectedField = packageField;
 							publicField = CONSTANT_FIELD;
 						}
-						
+					
 						static {
 							AccessibleFields.CONSTANT_FIELD = 32;
 						}
@@ -874,15 +1002,15 @@ public class AstServiceTest extends TestBase {
 		void renameMember_MethodName() {
 			String source = """
 					package software.coley.recaf.test.dummy;
-										
+					
 					import java.util.function.Supplier;
-										
+					
 					class ClassWithMethodReference {
 						static {
 							Supplier<String> fooSupplier = ClassWithMethodReference::foo;
 							foo();
 						}
-						
+					
 						static String foo() { return "foo"; }
 					}
 					""";
@@ -901,9 +1029,9 @@ public class AstServiceTest extends TestBase {
 		void renameMember_MethodNameStaticallyImported() {
 			String source = """
 					package software.coley.recaf.test.dummy;
-										
+					
 					import static software.coley.recaf.test.dummy.ClassWithExceptions.readInt;
-										
+					
 					class HelloWorld {
 						static void main(String[] args) {
 							readInt(args[0]);
@@ -940,15 +1068,15 @@ public class AstServiceTest extends TestBase {
 			// With this assumption we scan forward until we get our next match.
 			String source = """
 					package software.coley.recaf.test.dummy;
-										
+					
 					enum DummyEnum {
 						ONE, TWO, THREE;
-						
+					
 						void foo() {}
-						
+					
 						void bar() {
 						   ** GOTO lbl-1000
-						   
+					
 						   ONE.foo();
 						}
 					}
@@ -976,7 +1104,7 @@ public class AstServiceTest extends TestBase {
 		void testResolveWithMissingEndBraces() {
 			String source = """
 					package software.coley.recaf.test.dummy;
-										
+					
 					public class ClassWithMultipleMethods {
 						public static String append(String one, String two) {
 							return one + two;
@@ -1009,7 +1137,7 @@ public class AstServiceTest extends TestBase {
 		void testResolveWithNullTerminatorParameterName() {
 			String source = """
 					package software.coley.recaf.test.dummy;
-										
+					
 					public class ClassWithMultipleMethods {
 						public static String append(String \0, String two) {
 							return "one" + two;
@@ -1042,7 +1170,7 @@ public class AstServiceTest extends TestBase {
 		void testResolveWithKeywordParameterName() {
 			String source = """
 					package software.coley.recaf.test.dummy;
-										
+					
 					public class ClassWithMultipleMethods {
 						public static String append(String static, String two) {
 							return "one" + two;

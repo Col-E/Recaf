@@ -7,6 +7,7 @@ import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import org.fxmisc.richtext.model.PlainTextChange;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 import software.coley.recaf.behavior.Closing;
 import software.coley.recaf.info.StubClassInfo;
 import software.coley.recaf.info.member.BasicFieldMember;
@@ -37,6 +38,9 @@ import software.coley.sourcesolver.resolve.entry.ClassEntry;
 import software.coley.sourcesolver.resolve.entry.EntryPool;
 import software.coley.sourcesolver.resolve.entry.FieldEntry;
 import software.coley.sourcesolver.resolve.entry.MethodEntry;
+import software.coley.sourcesolver.resolve.entry.PrimitiveEntry;
+import software.coley.sourcesolver.resolve.generic.GenericType;
+import software.coley.sourcesolver.resolve.generic.GenericTypes;
 import software.coley.sourcesolver.resolve.result.Resolution;
 import software.coley.sourcesolver.util.Range;
 
@@ -117,7 +121,7 @@ public class ScriptJavaCompletionSupport implements EditorComponent, Closing, Ja
 		ResolverAdapter localResolver = resolver;
 		if (localResolver == null)
 			return null;
-		return localResolver.resolveAt(mapCurrentPositionToAst(pos), null);
+		return localResolver.resolveAt(mapCurrentPositionToAst(pos));
 	}
 
 	@Nullable
@@ -281,10 +285,15 @@ public class ScriptJavaCompletionSupport implements EditorComponent, Closing, Ja
 
 		// Extract fields/methods.
 		List<FieldEntry> fields = declaredClassInfo == null ? List.of() : declaredClassInfo.fields().stream()
-				.map(field -> (FieldEntry) new BasicFieldEntry(field.getName(), field.getDescriptor(), field.getAccess()))
+				.map(field -> (FieldEntry) new BasicFieldEntry(field.getName(), field.getDescriptor(), field.getAccess(),
+						genericTypeFromDescriptor(field.getDescriptor(), pool)))
 				.toList();
 		List<MethodEntry> methods = declaredClassInfo == null ? List.of() : declaredClassInfo.methods().stream()
-				.map(method -> (MethodEntry) new BasicMethodEntry(method.getName(), method.getDescriptor(), method.getAccess()))
+				.map(method -> {
+					GenericMethodDescriptor descriptor = genericMethodFromDescriptor(method.getDescriptor(), pool);
+					return (MethodEntry) new BasicMethodEntry(method.getName(), method.getDescriptor(), method.getAccess(),
+							descriptor.returnType(), descriptor.parameterTypes());
+				})
 				.toList();
 
 		// Build the entry and register it in the pool, so that the resolver can find it when resolving the source.
@@ -294,6 +303,9 @@ public class ScriptJavaCompletionSupport implements EditorComponent, Closing, Ja
 				new ArrayList<>(),
 				new ArrayList<>(),
 				null,
+				List.of(),
+				objectEntry == null ? null : GenericTypes.ofClass(objectEntry),
+				List.of(),
 				fields,
 				methods);
 		pool.register(entry);
@@ -362,6 +374,46 @@ public class ScriptJavaCompletionSupport implements EditorComponent, Closing, Ja
 		return new DeclaredClassInfo(internalClassName, 0, List.copyOf(fields), List.copyOf(methods), List.of());
 	}
 
+	@Nonnull
+	private static GenericType genericTypeFromDescriptor(@Nonnull String descriptor, @Nonnull EntryPool pool) {
+		return genericTypeFromAsmType(Type.getType(descriptor), pool);
+	}
+
+	@Nonnull
+	private static GenericMethodDescriptor genericMethodFromDescriptor(@Nonnull String descriptor, @Nonnull EntryPool pool) {
+		Type methodType = Type.getMethodType(descriptor);
+		List<GenericType> parameterTypes = new ArrayList<>(methodType.getArgumentTypes().length);
+		for (Type argumentType : methodType.getArgumentTypes())
+			parameterTypes.add(genericTypeFromAsmType(argumentType, pool));
+		return new GenericMethodDescriptor(genericTypeFromAsmType(methodType.getReturnType(), pool), parameterTypes);
+	}
+
+	@Nonnull
+	private static GenericType genericTypeFromAsmType(@Nonnull Type type, @Nonnull EntryPool pool) {
+		return switch (type.getSort()) {
+			case Type.VOID, Type.BOOLEAN, Type.CHAR, Type.BYTE, Type.SHORT,
+			     Type.INT, Type.FLOAT, Type.LONG, Type.DOUBLE ->
+					GenericTypes.ofPrimitive(PrimitiveEntry.getPrimitive(type.getDescriptor()));
+			case Type.ARRAY -> {
+				Type elementType = type;
+				int dimensions = 0;
+				while (elementType.getSort() == Type.ARRAY) {
+					elementType = elementType.getElementType();
+					dimensions++;
+				}
+				yield new GenericType.ArrayType(genericTypeFromAsmType(elementType, pool), dimensions);
+			}
+			case Type.OBJECT -> {
+				ClassEntry classEntry = pool.getClass(type.getInternalName());
+				if (classEntry == null)
+					classEntry = new BasicClassEntry(type.getInternalName(), 0, null,
+							List.of(), List.of(), null, List.of(), null, List.of(), List.of(), List.of());
+				yield GenericTypes.ofClass(classEntry);
+			}
+			default -> throw new IllegalStateException("Unsupported descriptor sort: " + type.getSort());
+		};
+	}
+
 	private static int accessFromRange(@Nonnull String text, @Nonnull Range range) {
 		int begin = Math.max(0, Math.min(text.length(), range.begin()));
 		int end = Math.max(begin, Math.min(text.length(), range.end()));
@@ -391,4 +443,7 @@ public class ScriptJavaCompletionSupport implements EditorComponent, Closing, Ja
 		int index = Math.max(slash, dollar);
 		return index >= 0 ? internalClassName.substring(index + 1) : internalClassName;
 	}
+
+	private record GenericMethodDescriptor(@Nonnull GenericType returnType,
+	                                       @Nonnull List<GenericType> parameterTypes) {}
 }

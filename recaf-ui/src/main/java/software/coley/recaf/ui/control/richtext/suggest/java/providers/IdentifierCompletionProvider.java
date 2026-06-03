@@ -13,11 +13,12 @@ import software.coley.recaf.ui.control.richtext.suggest.java.JavaCompletionFacto
 import software.coley.recaf.ui.control.richtext.suggest.java.JavaCompletionSession;
 import software.coley.recaf.ui.control.richtext.suggest.java.JavaKeywordCompletionRules;
 import software.coley.recaf.ui.control.richtext.suggest.java.JavaLexicalContext;
-import software.coley.recaf.ui.control.richtext.suggest.java.ScopedVariable;
 import software.coley.recaf.ui.control.richtext.suggest.java.TypeCandidate;
-import software.coley.recaf.ui.control.richtext.suggest.java.lookups.LocalScopeLookup;
 import software.coley.recaf.ui.control.richtext.suggest.java.lookups.VisibleTypeLookup;
 import software.coley.sourcesolver.model.CompilationUnitModel;
+import software.coley.sourcesolver.model.MethodModel;
+import software.coley.sourcesolver.model.ScopeLookup;
+import software.coley.sourcesolver.model.VariableModel;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -31,7 +32,6 @@ import java.util.Objects;
  * @author Matt Coley
  */
 public final class IdentifierCompletionProvider implements JavaCompletionProvider {
-	private final LocalScopeLookup localScopeLookup = new LocalScopeLookup();
 	private final VisibleTypeLookup visibleTypeLookup = new VisibleTypeLookup();
 
 	@Nonnull
@@ -46,16 +46,18 @@ public final class IdentifierCompletionProvider implements JavaCompletionProvide
 		// Check for local variables in scope.
 		// This includes method parameters and local variables declared in the current method.
 		if (unit != null && astPos >= 0) {
-			for (ScopedVariable variable : localScopeLookup.collectVisibleVariables(unit, astPos)) {
-				if (!JavaCompletionFactory.matchesPrefix(variable.name(), partial))
+			for (VariableModel variable : ScopeLookup.collectVisibleVariables(unit, astPos)) {
+				String variableName = variable.getName();
+				boolean parameter = variable.getParent() instanceof MethodModel;
+				if (!JavaCompletionFactory.matchesPrefix(variableName, partial))
 					continue;
 				JavaCompletion.addOrReplace(completions, new JavaCompletion(
 						CompletionKind.LOCAL,
-						variable.parameter() ? variable.name() + " (param)" : variable.name(),
-						variable.name(),
-						variable.parameter() ? 0 : 1,
+						parameter ? variableName + " (param)" : variableName,
+						variableName,
+						parameter ? 0 : 1,
 						null,
-						variable.name(),
+						variableName,
 						0,
 						""
 				));

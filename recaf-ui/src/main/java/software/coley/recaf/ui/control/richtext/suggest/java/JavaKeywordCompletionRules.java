@@ -1,7 +1,6 @@
 package software.coley.recaf.ui.control.richtext.suggest.java;
 
 import jakarta.annotation.Nonnull;
-import software.coley.recaf.ui.control.richtext.suggest.java.lookups.LocalScopeLookup;
 import software.coley.recaf.util.Keywords;
 import software.coley.sourcesolver.model.AnnotationExpressionModel;
 import software.coley.sourcesolver.model.AssignmentExpressionModel;
@@ -24,7 +23,6 @@ import java.util.stream.Collectors;
  * @author Matt Coley
  */
 public final class JavaKeywordCompletionRules {
-	private static final LocalScopeLookup MODEL_LOOKUP = new LocalScopeLookup();
 	private static final Set<String> KEYWORDS_EXCLUDED_FROM_IDENTIFIER_COMPLETION = Set.of(
 			"const",
 			"goto",
@@ -214,7 +212,7 @@ public final class JavaKeywordCompletionRules {
 
 		// Check the AST to see if we can get a more specific context.
 		// This should be more accurate than the lexical context, but may not always be available.
-		Model leaf = MODEL_LOOKUP.findDeepestModelAt(unit, astPos);
+		Model leaf = unit.getDeepestNonErroneousChildAtPosition(astPos);
 		if (leaf.getParentOfType(AnnotationExpressionModel.class) != null ||
 				leaf.getParentOfType(AssignmentExpressionModel.class) != null)
 			return KeywordSite.EXPRESSION_LIKE;

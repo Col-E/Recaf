@@ -241,7 +241,9 @@ public class ResolverAdapter extends BasicResolver {
 	 */
 	@Nullable
 	public String descriptorOf(@Nonnull VariableModel variable) {
-		return descriptorOf(variable.getType().resolve(this));
+		Resolution resolution = variable.getType().getKind() == TypeModel.Kind.VAR ?
+				variable.resolve(this) : variable.getType().resolve(this);
+		return descriptorOf(resolution);
 	}
 
 	/**

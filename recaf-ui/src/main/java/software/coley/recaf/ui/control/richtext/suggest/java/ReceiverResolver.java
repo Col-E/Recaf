@@ -2,13 +2,18 @@ package software.coley.recaf.ui.control.richtext.suggest.java;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import org.slf4j.Logger;
+import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.services.source.ResolverAdapter;
-import software.coley.recaf.ui.control.richtext.suggest.java.lookups.LocalScopeLookup;
 import software.coley.recaf.ui.control.richtext.suggest.java.lookups.MemberLookup;
 import software.coley.recaf.ui.control.richtext.suggest.java.lookups.VisibleTypeLookup;
+import software.coley.sourcesolver.model.ClassModel;
 import software.coley.sourcesolver.model.CompilationUnitModel;
+import software.coley.sourcesolver.model.Model;
+import software.coley.sourcesolver.model.ScopeLookup;
 import software.coley.sourcesolver.model.VariableModel;
 import software.coley.sourcesolver.resolve.entry.ArrayEntry;
 import software.coley.sourcesolver.resolve.entry.ClassEntry;
@@ -16,18 +21,16 @@ import software.coley.sourcesolver.resolve.entry.DescribableEntry;
 import software.coley.sourcesolver.resolve.entry.EntryPool;
 import software.coley.sourcesolver.resolve.entry.FieldEntry;
 import software.coley.sourcesolver.resolve.result.ClassResolution;
-import software.coley.sourcesolver.resolve.result.DescribableResolution;
-import software.coley.sourcesolver.resolve.result.FieldResolution;
-import software.coley.sourcesolver.resolve.result.MethodResolution;
 import software.coley.sourcesolver.resolve.result.Resolution;
+import software.coley.sourcesolver.resolve.result.Resolutions;
 
 /**
  * Resolver for the receiver of a member access expression.
  *
  * @author Matt Coley
  */
-public final class ReceiverResolver {
-	private final LocalScopeLookup localScopeLookup = new LocalScopeLookup();
+public class ReceiverResolver {
+	private static final Logger logger = Logging.get(ReceiverResolver.class);
 	private final VisibleTypeLookup visibleTypeLookup = new VisibleTypeLookup();
 
 	/**
@@ -71,16 +74,10 @@ public final class ReceiverResolver {
 				return new ResolvedReceiver(classLiteralEntry, ReceiverMode.INSTANCE_ONLY);
 		}
 
-		// Check for simple identifiers that could be local variables or fields.
-		CompilationUnitModel unit = session.unit();
-		int astPos = context.receiverResolveOffset() >= 0 ? session.completionContext().mapCurrentPositionToAst(context.receiverResolveOffset()) : -1;
-		if (unit != null && astPos >= 0 && !receiverText.isEmpty()) {
-			VariableModel variable = localScopeLookup.findVisibleVariable(unit, astPos, receiverText);
-			if (variable != null) {
-				DescribableEntry variableType = resolveTypeFromResolution(pool, variable.getType().resolve(resolver));
-				if (variableType != null)
-					return new ResolvedReceiver(variableType, ReceiverMode.INSTANCE_ONLY);
-			}
+		if (isSimpleIdentifier(receiverText)) {
+			ResolvedReceiver simpleIdentifierReceiver = resolveSimpleIdentifierReceiver(session, resolver, pool, context, receiverText);
+			if (simpleIdentifierReceiver != null)
+				return simpleIdentifierReceiver;
 		}
 
 		// Check for qualified identifiers that could be chained field accesses or static type references.
@@ -88,10 +85,6 @@ public final class ReceiverResolver {
 			ResolvedReceiver chainedReceiver = resolveQualifiedIdentifierReceiver(session, resolver, pool, context, receiverText);
 			if (chainedReceiver != null)
 				return chainedReceiver;
-
-			DescribableEntry currentFieldType = resolveCurrentClassFieldType(session, pool, receiverText);
-			if (currentFieldType != null)
-				return new ResolvedReceiver(currentFieldType, ReceiverMode.INSTANCE_ONLY);
 
 			TypeCandidate visibleType = visibleTypeLookup.resolveVisibleTypeReference(session, receiverText);
 			if (visibleType != null) {
@@ -104,10 +97,10 @@ public final class ReceiverResolver {
 		// As a last resort, attempt to resolve the receiver as an arbitrary expression and use its type.
 		if (context.receiverResolveOffset() < 0)
 			return null;
-		Resolution resolution = session.completionContext().resolveRawPositionSilently(context.receiverResolveOffset());
+		Resolution resolution = resolveExpressionResolution(session, resolver, context.receiverText(), context.receiverResolveOffset());
 		if (resolution == null || resolution.isUnknown())
 			return null;
-		DescribableEntry resolvedType = resolveTypeFromResolution(pool, resolution);
+		DescribableEntry resolvedType = Resolutions.getResolvedType(resolution);
 		if (resolvedType == null)
 			return null;
 		return new ResolvedReceiver(resolvedType, ReceiverMode.INSTANCE_ONLY);
@@ -152,7 +145,7 @@ public final class ReceiverResolver {
 
 		// Resolve each subsequent segment as a member of the previous segment's type.
 		for (int i = 1; i < segments.length; i++) {
-			receiver = resolveNamedMemberReceiver(session, pool, receiver, segments[i]);
+			receiver = resolveNamedMemberReceiver(session, resolver, pool, receiver, segments[i]);
 			if (receiver == null)
 				return null;
 		}
@@ -182,22 +175,23 @@ public final class ReceiverResolver {
 	                                                         @Nonnull EntryPool pool,
 	                                                         @Nonnull JavaLexicalContext context,
 	                                                         @Nonnull String receiverText) {
-		// Check if the identifier is a visible local variable.
-		CompilationUnitModel unit = session.unit();
-		int astPos = context.receiverResolveOffset() >= 0 ? session.completionContext().mapCurrentPositionToAst(context.receiverResolveOffset()) : -1;
-		if (unit != null && astPos >= 0 && !receiverText.isEmpty()) {
-			VariableModel variable = localScopeLookup.findVisibleVariable(unit, astPos, receiverText);
-			if (variable != null) {
-				DescribableEntry variableType = resolveTypeFromResolution(pool, variable.getType().resolve(resolver));
-				if (variableType != null)
-					return new ResolvedReceiver(variableType, ReceiverMode.INSTANCE_ONLY);
-			}
+		int astResolveOffset = mapCurrentPositionToAst(session, context.receiverResolveOffset());
+		Resolution resolution = resolver.resolveReferenceAt(receiverText, astResolveOffset);
+		DescribableEntry resolvedType = Resolutions.getResolvedType(resolution);
+		if (resolvedType != null) {
+			ReceiverMode mode = isSimpleIdentifierValueReference(session, resolver, pool, context, receiverText) ?
+					ReceiverMode.INSTANCE_ONLY :
+					resolution instanceof ClassResolution ? ReceiverMode.STATIC_ONLY : ReceiverMode.INSTANCE_ONLY;
+			return new ResolvedReceiver(resolvedType, mode);
 		}
 
-		// Check if the identifier is a field of the current class.
-		DescribableEntry currentFieldType = resolveCurrentClassFieldType(session, pool, receiverText);
-		if (currentFieldType != null)
-			return new ResolvedReceiver(currentFieldType, ReceiverMode.INSTANCE_ONLY);
+		// Fallbacks for editor contexts where resolver state does not fully reflect the current class metadata.
+		resolution = resolveCurrentClassFieldResolution(session, resolver, pool, receiverText);
+		if (resolution != null) {
+			resolvedType = Resolutions.getResolvedType(resolution);
+			if (resolvedType != null)
+				return new ResolvedReceiver(resolvedType, ReceiverMode.INSTANCE_ONLY);
+		}
 
 		// Check if the identifier is a visible type reference.
 		TypeCandidate visibleType = visibleTypeLookup.resolveVisibleTypeReference(session, receiverText);
@@ -227,17 +221,18 @@ public final class ReceiverResolver {
 	 */
 	@Nullable
 	private ResolvedReceiver resolveNamedMemberReceiver(@Nonnull JavaCompletionSession session,
+	                                                    @Nonnull ResolverAdapter resolver,
 	                                                    @Nonnull EntryPool pool,
 	                                                    @Nonnull ResolvedReceiver receiver,
 	                                                    @Nonnull String memberName) {
-		// Handle array length as a special case since it's not a real member.
-		if (receiver.type() instanceof ArrayEntry) {
-			if ("length".equals(memberName) && receiver.mode() != ReceiverMode.STATIC_ONLY) {
-				DescribableEntry intEntry = pool.getDescribable("I");
-				if (intEntry != null)
-					return new ResolvedReceiver(intEntry, ReceiverMode.INSTANCE_ONLY);
-			}
+		Resolution fieldResolution = resolver.resolveFieldInContext(Resolutions.ofDescribable(receiver.type()), memberName);
+		if (fieldResolution.isUnknown())
 			return null;
+
+		// Arrays only expose synthetic "length" field access here.
+		if (receiver.type() instanceof ArrayEntry) {
+			DescribableEntry fieldType = Resolutions.getResolvedType(fieldResolution);
+			return fieldType == null ? null : new ResolvedReceiver(fieldType, ReceiverMode.INSTANCE_ONLY);
 		}
 
 		// Skip if the receiver type does not have a backing class entry, since only class types can have members.
@@ -250,68 +245,77 @@ public final class ReceiverResolver {
 		if (field == null)
 			return null;
 
-		// Resolve the field's type and return it as the new receiver.
-		DescribableEntry fieldType = pool.getDescribable(field.getDescriptor());
+		// Resolve the field's type in context so generic owner bindings are preserved.
+		DescribableEntry fieldType = Resolutions.getResolvedType(fieldResolution);
+		if (fieldType == null)
+			fieldType = pool.getDescribable(field.getDescriptor());
 		if (fieldType == null)
 			return null;
 		return new ResolvedReceiver(fieldType, ReceiverMode.INSTANCE_ONLY);
 	}
 
-	/**
-	 * Resolve the type of a resolution result, which may be a method return type, field type, class type, or describable type.
-	 *
-	 * @param pool
-	 * 		Entry pool to use for looking up entries.
-	 * @param resolution
-	 * 		Resolution result to resolve the type of.
-	 *
-	 * @return Describable entry representing the type of the resolution, or {@code null} if the type could not be resolved.
-	 */
 	@Nullable
-	private static DescribableEntry resolveTypeFromResolution(@Nonnull EntryPool pool, @Nonnull Resolution resolution) {
-		return switch (resolution) {
-			case MethodResolution methodResolution ->
-					pool.getDescribable(methodResolution.getMethodEntry().getReturnDescriptor());
-			case FieldResolution fieldResolution ->
-					pool.getDescribable(fieldResolution.getFieldEntry().getDescriptor());
-			case ClassResolution classResolution -> classResolution.getClassEntry();
-			case DescribableResolution describableResolution -> describableResolution.getDescribableEntry();
-			default -> null;
-		};
-	}
-
-	/**
-	 * Attempt to resolve a simple identifier as a field of the current class, which may be accessible via the current path or declared class info.
-	 *
-	 * @param session
-	 * 		Current completion session.
-	 * @param pool
-	 * 		Entry pool to use for looking up entries.
-	 * @param name
-	 * 		Name of the field to resolve.
-	 *
-	 * @return Describable entry representing the type of the field, or {@code null} if no such field could be found in the current class.
-	 */
-	@Nullable
-	private static DescribableEntry resolveCurrentClassFieldType(@Nonnull JavaCompletionSession session,
+	private static Resolution resolveCurrentClassFieldResolution(@Nonnull JavaCompletionSession session,
+	                                                             @Nonnull ResolverAdapter resolver,
 	                                                             @Nonnull EntryPool pool,
 	                                                             @Nonnull String name) {
+		// Get the current class's entry in the pool and check for a matching field.
+		ClassEntry currentClassEntry = session.currentClassEntry(pool);
+		if (currentClassEntry != null) {
+			Resolution resolution = resolver.resolveFieldInContext(Resolutions.ofClass(currentClassEntry), name);
+			if (!resolution.isUnknown())
+				return resolution;
+		}
+
+		// Try looking in the AST.
+		CompilationUnitModel unit = session.unit();
+		int caret = session.caretPosition();
+		if (unit != null && caret >= 0) {
+			int astPos = session.completionContext().mapCurrentPositionToAst(caret);
+			Model leaf = unit.getDeepestNonErroneousChildAtPosition(astPos);
+			ClassModel currentClass = leaf instanceof ClassModel classModel ? classModel : leaf.getParentOfType(ClassModel.class);
+			if (currentClass != null) {
+				// Check fields declared in the current class.
+				for (VariableModel field : currentClass.getFields()) {
+					if (!field.getName().equals(name))
+						continue;
+					Resolution resolution = field.getType().resolve(resolver);
+					if (!resolution.isUnknown()) {
+						logger.warn("ClassEntry structure desync: Field '{}' found in AST but not in ClassEntry of '{}'.", name, currentClass.getName());
+						return resolution;
+					}
+				}
+			}
+		}
+
 		// Look in the current class via the path for matching fields.
 		ClassPathNode currentPath = session.currentPath();
 		if (currentPath != null) {
-			FieldMember field = currentPath.getValue().getFirstDeclaredFieldByName(name);
+			ClassInfo info = currentPath.getValue();
+			FieldMember field = info.getFirstDeclaredFieldByName(name);
 			if (field == null)
 				return null;
-			return pool.getDescribable(field.getDescriptor());
+			DescribableEntry fieldType = pool.getDescribable(field.getDescriptor());
+			if (fieldType != null) {
+				logger.warn("ClassEntry structure desync: Field '{}' found in ClassInfo but not in ClassEntry of '{}'.", name, info.getName());
+				return Resolutions.ofDescribable(fieldType);
+			}
+			return null;
 		}
 
 		// Try again with the declared class info model if that is present.
 		JavaCompletionContext.DeclaredClassInfo declaredClassInfo = session.declaredClassInfo();
 		if (declaredClassInfo == null)
 			return null;
-		for (FieldMember field : declaredClassInfo.fields())
-			if (field.getName().equals(name))
-				return pool.getDescribable(field.getDescriptor());
+		for (FieldMember field : declaredClassInfo.fields()) {
+			if (!field.getName().equals(name))
+				continue;
+			DescribableEntry fieldType = pool.getDescribable(field.getDescriptor());
+			if (fieldType != null) {
+				logger.warn("ClassEntry structure desync: Field '{}' found in JCC.DeclaredClassInfo but not in ClassEntry of '{}'.", name, declaredClassInfo.internalName());
+				return Resolutions.ofDescribable(fieldType);
+			}
+		}
 		return null;
 	}
 
@@ -353,5 +357,55 @@ public final class ReceiverResolver {
 		return receiverText.length() >= 2 &&
 				receiverText.charAt(0) == '"' &&
 				receiverText.charAt(receiverText.length() - 1) == '"';
+	}
+
+	private static boolean isSimpleIdentifierValueReference(@Nonnull JavaCompletionSession session,
+	                                                        @Nonnull ResolverAdapter resolver,
+	                                                        @Nonnull EntryPool pool,
+	                                                        @Nonnull JavaLexicalContext context,
+	                                                        @Nonnull String identifier) {
+		CompilationUnitModel unit = session.unit();
+		int astPos = context.receiverResolveOffset() >= 0 ? session.completionContext().mapCurrentPositionToAst(context.receiverResolveOffset()) : -1;
+		if (unit != null && astPos >= 0 && ScopeLookup.findVisibleVariable(unit, astPos, identifier) != null)
+			return true;
+		return resolveCurrentClassFieldResolution(session, resolver, pool, identifier) != null;
+	}
+
+	@Nullable
+	private static Resolution resolveExpressionResolution(@Nonnull JavaCompletionSession session,
+	                                                      @Nonnull ResolverAdapter resolver,
+	                                                      @Nonnull String receiverText,
+	                                                      int receiverResolveOffset) {
+		int astResolveOffset = mapCurrentPositionToAst(session, receiverResolveOffset);
+		Resolution resolution = resolver.resolveFragmentAt(receiverText, astResolveOffset);
+		if (!resolution.isUnknown())
+			return resolution;
+
+		resolution = session.completionContext().resolveRawPositionSilently(receiverResolveOffset);
+		if (resolution != null && !resolution.isUnknown())
+			return resolution;
+
+		int start = Math.max(0, receiverResolveOffset - receiverText.length() + 1);
+		for (int offset = receiverResolveOffset - 1; offset >= start; offset--) {
+			resolution = session.completionContext().resolveRawPositionSilently(offset);
+			if (resolution != null && !resolution.isUnknown())
+				return resolution;
+		}
+		return null;
+	}
+
+	private static boolean isSimpleIdentifier(@Nonnull String text) {
+		if (text.isEmpty())
+			return false;
+		for (int i = 0; i < text.length(); i++) {
+			char c = text.charAt(i);
+			if (!(Character.isJavaIdentifierPart(c) || c == '$'))
+				return false;
+		}
+		return true;
+	}
+
+	private static int mapCurrentPositionToAst(@Nonnull JavaCompletionSession session, int position) {
+		return position >= 0 ? session.completionContext().mapCurrentPositionToAst(position) : position;
 	}
 }

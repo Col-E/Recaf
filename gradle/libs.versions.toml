@@ -41,7 +41,7 @@ regex = "0.1.19"
 richtextfx = "cbdcbd1440"
 treemapfx = "1.1.0"
 vineflower = "1.12.0"
-sourcesolver = "1.1.10"
+sourcesolver = "1.3.0"
 spatialcanvas = "1.0.0"
 # Plugins
 benmanes-versions = "0.52.0"

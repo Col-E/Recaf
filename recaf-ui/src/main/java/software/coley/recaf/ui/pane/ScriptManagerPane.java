@@ -186,14 +186,14 @@ public class ScriptManagerPane extends BorderPane {
 				
 				@Dependent
 				class MyScript {
-					WorkspaceManager wm;
+				    WorkspaceManager wm;
 				
-					@Inject
-					MyScript(WorkspaceManager wm) {
-						// Inject any services you need here.
-						// See: https://recaf.coley.software/dev/services/index.html
-						this.wm = wm;
-					}
+				    @Inject
+				    MyScript(WorkspaceManager wm) {
+				        // Inject any services you need here.
+				        // See: https://recaf.coley.software/dev/services/index.html
+				        this.wm = wm;
+				    }
 				
 				    void run() {
 				        if (!wm.hasCurrentWorkspace()) return;

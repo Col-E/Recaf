@@ -419,8 +419,25 @@ public class JavaLexicalContextParser {
 			return findQuotedLiteralStart(text, end, c);
 		if (Character.isJavaIdentifierPart(c) || c == '$')
 			return findQualifiedIdentifierStart(text, end);
-		if (c == ')' || c == ']')
-			return findBalancedExpressionStart(text, end);
+		if (c == ')' || c == ']') {
+			int start = findBalancedExpressionStart(text, end);
+			if (start <= 0)
+				return start;
+			int prefixEnd = start - 1;
+			while (prefixEnd >= 0 && Character.isWhitespace(text.charAt(prefixEnd)))
+				prefixEnd--;
+			if (prefixEnd >= 0) {
+				char prefixChar = text.charAt(prefixEnd);
+				if (prefixChar == '"' || prefixChar == '\'' ||
+						prefixChar == ')' || prefixChar == ']' ||
+						Character.isJavaIdentifierPart(prefixChar) || prefixChar == '$') {
+					int expandedStart = findReceiverStart(text, prefixEnd);
+					if (expandedStart >= 0)
+						return expandedStart;
+				}
+			}
+			return start;
+		}
 		return -1;
 	}
 

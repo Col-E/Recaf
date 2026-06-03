@@ -6,10 +6,16 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.signature.SignatureReader;
+import org.objectweb.asm.signature.SignatureVisitor;
+import software.coley.recaf.RecafConstants;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.InnerClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.info.member.FieldMember;
+import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.Service;
@@ -32,9 +38,14 @@ import software.coley.sourcesolver.resolve.entry.BasicClassEntry;
 import software.coley.sourcesolver.resolve.entry.BasicFieldEntry;
 import software.coley.sourcesolver.resolve.entry.BasicMethodEntry;
 import software.coley.sourcesolver.resolve.entry.ClassEntry;
+import software.coley.sourcesolver.resolve.entry.DescribableEntry;
 import software.coley.sourcesolver.resolve.entry.EntryPool;
 import software.coley.sourcesolver.resolve.entry.FieldEntry;
 import software.coley.sourcesolver.resolve.entry.MethodEntry;
+import software.coley.sourcesolver.resolve.entry.PrimitiveEntry;
+import software.coley.sourcesolver.resolve.generic.GenericType;
+import software.coley.sourcesolver.resolve.generic.GenericTypeParameter;
+import software.coley.sourcesolver.resolve.generic.GenericTypes;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -47,6 +58,7 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 /**
  * Service for tracking shared data for AST parsing.
@@ -407,17 +419,40 @@ public class AstService implements Service {
 			// Construct the class entry model.
 			//   NOTE: Parent types are fully computed regardless of TTL. The TTL reduction is used further below.
 			ClassEntry superClass = info.getSuperName() == null ? null : getClass(info.getSuperName());
-			List<FieldEntry> fields = info.getFields().stream()
-					.map(f -> (FieldEntry) new BasicFieldEntry(f.getName(), f.getDescriptor(), f.getAccess()))
-					.toList();
-			List<MethodEntry> methods = info.getMethods().stream()
-					.map(m -> (MethodEntry) new BasicMethodEntry(m.getName(), m.getDescriptor(), m.getAccess()))
-					.toList();
 			List<ClassEntry> innerClasses = new ArrayList<>();
 			List<ClassEntry> interfaces = new ArrayList<>();
 			String outerClassName = info.getOuterClassName();
 			ClassEntry outerClass = outerClassName != null && outerClassName.startsWith(className + '$') ? cache.get(outerClassName) : null;
-			entry = new BasicClassEntry(className, info.getAccess(), superClass, interfaces, innerClasses, outerClass, fields, methods);
+			List<FieldEntry> fields = new ArrayList<>();
+			List<MethodEntry> methods = new ArrayList<>();
+
+			// Register a placeholder before parsing generic signatures so self-referential
+			// bounds like Enum<E extends Enum<E>> can resolve the current class entry.
+			entry = new BasicClassEntry(className, info.getAccess(), superClass, interfaces, innerClasses, outerClass,
+					List.of(), null, List.of(), fields, methods);
+			register(entry);
+			ClassEntry objectEntry = className.equals("java/lang/Object") ? entry : lookupClassEntry("java/lang/Object");
+
+			Function<String, ClassEntry> classProvider = this::lookupClassEntry;
+			GenericSignatureBridge.ClassSignatureData classSignature = GenericSignatureBridge.parseClassSignature(
+					info, superClass, interfaces, objectEntry, classProvider);
+			GenericSignatureBridge.TypeVariableScope classScope =
+					GenericSignatureBridge.TypeVariableScope.of(className, objectEntry, null, classSignature.typeParameters());
+
+			for (FieldMember field : info.getFields()) {
+				GenericType fieldType = GenericSignatureBridge.parseFieldType(field, classScope, objectEntry, classProvider);
+				fields.add(new BasicFieldEntry(field.getName(), field.getDescriptor(), field.getAccess(), fieldType));
+			}
+			for (MethodMember method : info.getMethods()) {
+				GenericSignatureBridge.MethodSignatureData methodSignature = GenericSignatureBridge.parseMethodSignature(
+						className, method, classScope, objectEntry, classProvider);
+				methods.add(new BasicMethodEntry(method.getName(), method.getDescriptor(), method.getAccess(),
+						methodSignature.returnType(), methodSignature.parameterTypes()));
+			}
+
+			entry = new BasicClassEntry(className, info.getAccess(), superClass, interfaces, innerClasses, outerClass,
+					classSignature.typeParameters(), classSignature.genericSuperType(),
+					classSignature.genericInterfaceTypes(), fields, methods);
 			register(entry);
 
 			// Lists of other classes are populated after we put the entry in the pool to prevent entry building cycles.
@@ -447,6 +482,15 @@ public class AstService implements Service {
 					getClass(referencedClass, ttl);
 
 			return entry;
+		}
+
+		@Nonnull
+		private ClassEntry lookupClassEntry(@Nonnull String name) {
+			ClassEntry entry = getClass(name);
+			if (entry != null)
+				return entry;
+			return new BasicClassEntry(name, 0, null, List.of(), List.of(), null,
+					List.of(), null, List.of(), List.of(), List.of());
 		}
 
 		@Override
@@ -483,6 +527,530 @@ public class AstService implements Service {
 		public void onRemoveClass(@Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle,
 		                          @Nonnull JvmClassInfo cls) {
 			cache.remove(cls.getName());
+		}
+	}
+
+	/**
+	 * Translated from reflective logic in {@link GenericTypes}
+	 * but adapted to use ASM's signature parser for our binary class models.
+	 */
+	private static final class GenericSignatureBridge {
+		private GenericSignatureBridge() {}
+
+		@Nonnull
+		static ClassSignatureData parseClassSignature(@Nonnull ClassInfo info,
+		                                              @Nullable ClassEntry rawSuperType,
+		                                              @Nonnull List<ClassEntry> rawInterfaceTypes,
+		                                              @Nonnull ClassEntry objectEntry,
+		                                              @Nonnull Function<String, ClassEntry> classProvider) {
+			GenericType.ClassType fallbackSuperType = rawSuperType == null ? null : GenericTypes.ofClass(rawSuperType);
+			List<GenericType.ClassType> fallbackInterfaceTypes = rawInterfaceTypes.stream()
+					.map(GenericTypes::ofClass)
+					.toList();
+			String signature = info.getSignature();
+			if (signature == null || signature.isBlank())
+				return new ClassSignatureData(List.of(), fallbackSuperType, fallbackInterfaceTypes);
+
+			try {
+				ClassSignatureParser parser = new ClassSignatureParser(info.getName(), objectEntry, classProvider,
+						fallbackSuperType, fallbackInterfaceTypes);
+				new SignatureReader(signature).accept(parser);
+				return parser.finish();
+			} catch (Throwable ignored) {
+				return new ClassSignatureData(List.of(), fallbackSuperType, fallbackInterfaceTypes);
+			}
+		}
+
+		@Nonnull
+		static GenericType parseFieldType(@Nonnull FieldMember field,
+		                                  @Nonnull TypeVariableScope classScope,
+		                                  @Nonnull ClassEntry objectEntry,
+		                                  @Nonnull Function<String, ClassEntry> classProvider) {
+			String signature = field.getSignature();
+			if (signature != null && !signature.isBlank()) {
+				try {
+					return parseTypeSignature(signature, classScope, objectEntry, classProvider);
+				} catch (Throwable ignored) {
+					// Fall through to the erased descriptor.
+				}
+			}
+			return typeFromDescriptor(field.getDescriptor(), classProvider);
+		}
+
+		@Nonnull
+		static MethodSignatureData parseMethodSignature(@Nonnull String ownerName,
+		                                                @Nonnull MethodMember method,
+		                                                @Nonnull TypeVariableScope classScope,
+		                                                @Nonnull ClassEntry objectEntry,
+		                                                @Nonnull Function<String, ClassEntry> classProvider) {
+			String signature = method.getSignature();
+			if (signature != null && !signature.isBlank()) {
+				try {
+					MethodSignatureParser parser = new MethodSignatureParser(ownerId(ownerName, method),
+							classScope, objectEntry, classProvider);
+					new SignatureReader(signature).accept(parser);
+					return parser.finish();
+				} catch (Throwable ignored) {
+					// Fall through to the erased descriptor.
+				}
+			}
+			return methodSignatureFromDescriptor(method.getDescriptor(), classProvider);
+		}
+
+		@Nonnull
+		private static GenericType parseTypeSignature(@Nonnull String signature,
+		                                              @Nonnull TypeVariableScope scope,
+		                                              @Nonnull ClassEntry objectEntry,
+		                                              @Nonnull Function<String, ClassEntry> classProvider) {
+			TypeCapture capture = new TypeCapture();
+			new SignatureReader(signature).acceptType(new TypeSignatureParser(scope, objectEntry, classProvider, capture::setType));
+			return capture.requireType();
+		}
+
+		@Nonnull
+		private static MethodSignatureData methodSignatureFromDescriptor(@Nonnull String descriptor,
+		                                                                 @Nonnull Function<String, ClassEntry> classProvider) {
+			Type methodType = Type.getMethodType(descriptor);
+			List<GenericType> parameterTypes = new ArrayList<>(methodType.getArgumentTypes().length);
+			for (Type argumentType : methodType.getArgumentTypes())
+				parameterTypes.add(typeFromAsmType(argumentType, classProvider));
+			return new MethodSignatureData(typeFromAsmType(methodType.getReturnType(), classProvider), parameterTypes);
+		}
+
+		@Nonnull
+		private static GenericType typeFromDescriptor(@Nonnull String descriptor,
+		                                              @Nonnull Function<String, ClassEntry> classProvider) {
+			return typeFromAsmType(Type.getType(descriptor), classProvider);
+		}
+
+		@Nonnull
+		private static GenericType typeFromAsmType(@Nonnull Type type,
+		                                           @Nonnull Function<String, ClassEntry> classProvider) {
+			return switch (type.getSort()) {
+				case Type.VOID, Type.BOOLEAN, Type.CHAR, Type.BYTE, Type.SHORT,
+						Type.INT, Type.FLOAT, Type.LONG, Type.DOUBLE ->
+						GenericTypes.ofPrimitive(PrimitiveEntry.getPrimitive(type.getDescriptor()));
+				case Type.ARRAY -> {
+					Type elementType = type;
+					int dimensions = 0;
+					while (elementType.getSort() == Type.ARRAY) {
+						elementType = elementType.getElementType();
+						dimensions++;
+					}
+					yield new GenericType.ArrayType(typeFromAsmType(elementType, classProvider), dimensions);
+				}
+				case Type.OBJECT -> GenericTypes.ofClass(classProvider.apply(type.getInternalName()));
+				default -> throw new IllegalStateException("Unsupported descriptor sort: " + type.getSort());
+			};
+		}
+
+		@Nonnull
+		private static String ownerId(@Nonnull String ownerName, @Nonnull MethodMember method) {
+			return ownerName + "#" + method.getName() + method.getDescriptor();
+		}
+
+		@Nullable
+		private static GenericType.ClassType asClassType(@Nullable GenericType type) {
+			return type instanceof GenericType.ClassType classType ? classType : null;
+		}
+
+		private record ClassSignatureData(@Nonnull List<GenericTypeParameter> typeParameters,
+		                                  @Nullable GenericType.ClassType genericSuperType,
+		                                  @Nonnull List<GenericType.ClassType> genericInterfaceTypes) {}
+
+		private record MethodSignatureData(@Nonnull GenericType returnType,
+		                                   @Nonnull List<GenericType> parameterTypes) {
+			private MethodSignatureData {
+				parameterTypes = List.copyOf(parameterTypes);
+			}
+		}
+
+		private static final class TypeVariableScope {
+			private final String fallbackOwnerId;
+			private final ClassEntry objectEntry;
+			private final TypeVariableScope parent;
+			private final Map<String, GenericTypeParameter> variables = new LinkedHashMap<>();
+
+			private TypeVariableScope(@Nonnull String fallbackOwnerId,
+			                          @Nonnull ClassEntry objectEntry,
+			                          @Nullable TypeVariableScope parent) {
+				this.fallbackOwnerId = fallbackOwnerId;
+				this.objectEntry = objectEntry;
+				this.parent = parent;
+			}
+
+			@Nonnull
+			static TypeVariableScope of(@Nonnull String fallbackOwnerId,
+			                            @Nonnull ClassEntry objectEntry,
+			                            @Nullable TypeVariableScope parent,
+			                            @Nonnull List<GenericTypeParameter> variables) {
+				TypeVariableScope scope = new TypeVariableScope(fallbackOwnerId, objectEntry, parent);
+				for (GenericTypeParameter variable : variables)
+					scope.put(variable);
+				return scope;
+			}
+
+			void put(@Nonnull GenericTypeParameter parameter) {
+				variables.put(parameter.name(), parameter);
+			}
+
+			@Nonnull
+			GenericTypeParameter resolve(@Nonnull String name) {
+				GenericTypeParameter parameter = variables.get(name);
+				if (parameter != null)
+					return parameter;
+				if (parent != null)
+					return parent.resolve(name);
+				return new GenericTypeParameter(fallbackOwnerId, name, objectEntry);
+			}
+
+			@Nonnull
+			ClassEntry objectEntry() {
+				return objectEntry;
+			}
+		}
+
+		private static final class ClassSignatureParser extends SignatureVisitor {
+			private final String ownerName;
+			private final ClassEntry objectEntry;
+			private final Function<String, ClassEntry> classProvider;
+			private final List<GenericTypeParameter> typeParameters = new ArrayList<>();
+			private final Map<String, GenericTypeParameter> typeParameterMap = new LinkedHashMap<>();
+			private final GenericType.ClassType fallbackSuperType;
+			private final List<GenericType.ClassType> fallbackInterfaceTypes;
+			private final List<GenericType.ClassType> interfaceTypes = new ArrayList<>();
+			private String pendingTypeParameterName;
+			private DescribableEntry pendingTypeParameterBound;
+			private GenericType.ClassType superType;
+			private boolean parsedSuperType;
+
+			private ClassSignatureParser(@Nonnull String ownerName,
+			                             @Nonnull ClassEntry objectEntry,
+			                             @Nonnull Function<String, ClassEntry> classProvider,
+			                             @Nullable GenericType.ClassType fallbackSuperType,
+			                             @Nonnull List<GenericType.ClassType> fallbackInterfaceTypes) {
+				super(RecafConstants.getAsmVersion());
+				this.ownerName = ownerName;
+				this.objectEntry = objectEntry;
+				this.classProvider = classProvider;
+				this.fallbackSuperType = fallbackSuperType;
+				this.fallbackInterfaceTypes = fallbackInterfaceTypes;
+			}
+
+			@Override
+			public void visitFormalTypeParameter(String name) {
+				finishPendingTypeParameter();
+				pendingTypeParameterName = name;
+				pendingTypeParameterBound = objectEntry;
+			}
+
+			@Override
+			public SignatureVisitor visitClassBound() {
+				return new BoundCaptureVisitor(objectEntry, classProvider, typeParameterMap, this::acceptBound);
+			}
+
+			@Override
+			public SignatureVisitor visitInterfaceBound() {
+				return new BoundCaptureVisitor(objectEntry, classProvider, typeParameterMap, this::acceptBound);
+			}
+
+			@Override
+			public SignatureVisitor visitSuperclass() {
+				finishPendingTypeParameter();
+				return new TypeSignatureParser(scope(), objectEntry, classProvider, type -> {
+					parsedSuperType = true;
+					superType = asClassType(type);
+				});
+			}
+
+			@Override
+			public SignatureVisitor visitInterface() {
+				finishPendingTypeParameter();
+				return new TypeSignatureParser(scope(), objectEntry, classProvider, type -> {
+					GenericType.ClassType classType = asClassType(type);
+					if (classType != null)
+						interfaceTypes.add(classType);
+				});
+			}
+
+			@Nonnull
+			private ClassSignatureData finish() {
+				finishPendingTypeParameter();
+				GenericType.ClassType resolvedSuperType = parsedSuperType ? superType : fallbackSuperType;
+				List<GenericType.ClassType> resolvedInterfaceTypes =
+						interfaceTypes.isEmpty() ? fallbackInterfaceTypes : List.copyOf(interfaceTypes);
+				return new ClassSignatureData(List.copyOf(typeParameters), resolvedSuperType, resolvedInterfaceTypes);
+			}
+
+			private void acceptBound(@Nonnull DescribableEntry bound) {
+				if (pendingTypeParameterBound == objectEntry)
+					pendingTypeParameterBound = bound;
+			}
+
+			private void finishPendingTypeParameter() {
+				if (pendingTypeParameterName == null)
+					return;
+				GenericTypeParameter parameter = new GenericTypeParameter(ownerName, pendingTypeParameterName,
+						pendingTypeParameterBound == null ? objectEntry : pendingTypeParameterBound);
+				typeParameterMap.put(parameter.name(), parameter);
+				typeParameters.add(parameter);
+				pendingTypeParameterName = null;
+				pendingTypeParameterBound = null;
+			}
+
+			@Nonnull
+			private TypeVariableScope scope() {
+				return TypeVariableScope.of(ownerName, objectEntry, null, List.copyOf(typeParameterMap.values()));
+			}
+		}
+
+		private static final class MethodSignatureParser extends SignatureVisitor {
+			private final String ownerId;
+			private final TypeVariableScope classScope;
+			private final ClassEntry objectEntry;
+			private final Function<String, ClassEntry> classProvider;
+			private final List<GenericType> parameterTypes = new ArrayList<>();
+			private final Map<String, GenericTypeParameter> methodTypeParameterMap = new LinkedHashMap<>();
+			private String pendingTypeParameterName;
+			private DescribableEntry pendingTypeParameterBound;
+			private GenericType returnType;
+
+			private MethodSignatureParser(@Nonnull String ownerId,
+			                              @Nonnull TypeVariableScope classScope,
+			                              @Nonnull ClassEntry objectEntry,
+			                              @Nonnull Function<String, ClassEntry> classProvider) {
+				super(RecafConstants.getAsmVersion());
+				this.ownerId = ownerId;
+				this.classScope = classScope;
+				this.objectEntry = objectEntry;
+				this.classProvider = classProvider;
+			}
+
+			@Override
+			public void visitFormalTypeParameter(String name) {
+				finishPendingTypeParameter();
+				pendingTypeParameterName = name;
+				pendingTypeParameterBound = objectEntry;
+			}
+
+			@Override
+			public SignatureVisitor visitClassBound() {
+				return new BoundCaptureVisitor(objectEntry, classProvider, methodTypeParameterMap, this::acceptBound);
+			}
+
+			@Override
+			public SignatureVisitor visitInterfaceBound() {
+				return new BoundCaptureVisitor(objectEntry, classProvider, methodTypeParameterMap, this::acceptBound);
+			}
+
+			@Override
+			public SignatureVisitor visitParameterType() {
+				finishPendingTypeParameter();
+				return new TypeSignatureParser(scope(), objectEntry, classProvider, parameterTypes::add);
+			}
+
+			@Override
+			public SignatureVisitor visitReturnType() {
+				finishPendingTypeParameter();
+				return new TypeSignatureParser(scope(), objectEntry, classProvider, type -> returnType = type);
+			}
+
+			@Nonnull
+			private MethodSignatureData finish() {
+				finishPendingTypeParameter();
+				return new MethodSignatureData(
+						returnType == null ? GenericTypes.ofPrimitive(PrimitiveEntry.getPrimitive("V")) : returnType,
+						parameterTypes);
+			}
+
+			private void acceptBound(@Nonnull DescribableEntry bound) {
+				if (pendingTypeParameterBound == objectEntry)
+					pendingTypeParameterBound = bound;
+			}
+
+			private void finishPendingTypeParameter() {
+				if (pendingTypeParameterName == null)
+					return;
+				methodTypeParameterMap.put(pendingTypeParameterName, new GenericTypeParameter(ownerId,
+						pendingTypeParameterName, pendingTypeParameterBound == null ? objectEntry : pendingTypeParameterBound));
+				pendingTypeParameterName = null;
+				pendingTypeParameterBound = null;
+			}
+
+			@Nonnull
+			private TypeVariableScope scope() {
+				return TypeVariableScope.of(ownerId, objectEntry, classScope, List.copyOf(methodTypeParameterMap.values()));
+			}
+		}
+
+		private static final class BoundCaptureVisitor extends SignatureVisitor {
+			private final ClassEntry objectEntry;
+			private final Function<String, ClassEntry> classProvider;
+			private final Map<String, GenericTypeParameter> typeParameters;
+			private final java.util.function.Consumer<DescribableEntry> boundConsumer;
+			private DescribableEntry resolvedBound;
+
+			private BoundCaptureVisitor(@Nonnull ClassEntry objectEntry,
+			                            @Nonnull Function<String, ClassEntry> classProvider,
+			                            @Nonnull Map<String, GenericTypeParameter> typeParameters,
+			                            @Nonnull java.util.function.Consumer<DescribableEntry> boundConsumer) {
+				super(RecafConstants.getAsmVersion());
+				this.objectEntry = objectEntry;
+				this.classProvider = classProvider;
+				this.typeParameters = typeParameters;
+				this.boundConsumer = boundConsumer;
+			}
+
+			@Override
+			public void visitBaseType(char descriptor) {
+				resolvedBound = PrimitiveEntry.getPrimitive(String.valueOf(descriptor));
+			}
+
+			@Override
+			public SignatureVisitor visitArrayType() {
+				return new SignatureVisitor(api) {
+					private int dimensions = 1;
+
+					@Override
+					public void visitBaseType(char descriptor) {
+						resolvedBound = PrimitiveEntry.getPrimitive(String.valueOf(descriptor)).toArrayEntry(dimensions);
+					}
+
+					@Override
+					public SignatureVisitor visitArrayType() {
+						dimensions++;
+						return this;
+					}
+
+					@Override
+					public void visitClassType(String name) {
+						resolvedBound = classProvider.apply(name).toArrayEntry(dimensions);
+					}
+
+					@Override
+					public void visitTypeVariable(String name) {
+						GenericTypeParameter parameter = typeParameters.get(name);
+						resolvedBound = (parameter == null ? objectEntry : parameter.upperBound()).toArrayEntry(dimensions);
+					}
+				};
+			}
+
+			@Override
+			public void visitClassType(String name) {
+				resolvedBound = classProvider.apply(name);
+			}
+
+			@Override
+			public void visitInnerClassType(String name) {
+				if (resolvedBound instanceof ClassEntry classEntry)
+					resolvedBound = classProvider.apply(classEntry.getName() + '$' + name);
+			}
+
+			@Override
+			public void visitTypeVariable(String name) {
+				GenericTypeParameter parameter = typeParameters.get(name);
+				resolvedBound = parameter == null ? objectEntry : parameter.upperBound();
+			}
+
+			@Override
+			public void visitEnd() {
+				if (resolvedBound != null)
+					boundConsumer.accept(resolvedBound);
+			}
+		}
+
+		private static final class TypeSignatureParser extends SignatureVisitor {
+			private final TypeVariableScope scope;
+			private final ClassEntry objectEntry;
+			private final Function<String, ClassEntry> classProvider;
+			private final java.util.function.Consumer<GenericType> typeConsumer;
+			private String className;
+			private List<GenericType> typeArguments;
+
+			private TypeSignatureParser(@Nonnull TypeVariableScope scope,
+			                            @Nonnull ClassEntry objectEntry,
+			                            @Nonnull Function<String, ClassEntry> classProvider,
+			                            @Nonnull java.util.function.Consumer<GenericType> typeConsumer) {
+				super(RecafConstants.getAsmVersion());
+				this.scope = scope;
+				this.objectEntry = objectEntry;
+				this.classProvider = classProvider;
+				this.typeConsumer = typeConsumer;
+			}
+
+			@Override
+			public void visitBaseType(char descriptor) {
+				typeConsumer.accept(GenericTypes.ofPrimitive(PrimitiveEntry.getPrimitive(String.valueOf(descriptor))));
+			}
+
+			@Override
+			public void visitTypeVariable(String name) {
+				typeConsumer.accept(new GenericType.TypeVariableType(scope.resolve(name)));
+			}
+
+			@Override
+			public SignatureVisitor visitArrayType() {
+				return new TypeSignatureParser(scope, objectEntry, classProvider, type -> {
+					if (type instanceof GenericType.ArrayType arrayType) {
+						typeConsumer.accept(new GenericType.ArrayType(arrayType.elementType(), arrayType.dimensions() + 1));
+					} else {
+						typeConsumer.accept(new GenericType.ArrayType(type, 1));
+					}
+				});
+			}
+
+			@Override
+			public void visitClassType(String name) {
+				className = name;
+				typeArguments = new ArrayList<>();
+			}
+
+			@Override
+			public void visitInnerClassType(String name) {
+				className = className + '$' + name;
+				typeArguments = new ArrayList<>();
+			}
+
+			@Override
+			public void visitTypeArgument() {
+				typeArguments.add(new GenericType.WildcardType(null, null, objectEntry));
+			}
+
+			@Override
+			public SignatureVisitor visitTypeArgument(char wildcard) {
+				return new TypeSignatureParser(scope, objectEntry, classProvider, type -> {
+					GenericType typeArgument = switch (wildcard) {
+						case SignatureVisitor.EXTENDS ->
+								new GenericType.WildcardType(type, null, type.asDescribable());
+						case SignatureVisitor.SUPER ->
+								new GenericType.WildcardType(null, type, objectEntry);
+						default -> type;
+					};
+					typeArguments.add(typeArgument);
+				});
+			}
+
+			@Override
+			public void visitEnd() {
+				ClassEntry classEntry = classProvider.apply(className);
+				typeConsumer.accept(new GenericType.ClassType(classEntry,
+						typeArguments == null ? List.of() : List.copyOf(typeArguments)));
+			}
+		}
+
+		private static final class TypeCapture {
+			private GenericType type;
+
+			private void setType(@Nonnull GenericType type) {
+				this.type = type;
+			}
+
+			@Nonnull
+			private GenericType requireType() {
+				if (type == null)
+					throw new IllegalStateException("Missing parsed type");
+				return type;
+			}
 		}
 	}
 
