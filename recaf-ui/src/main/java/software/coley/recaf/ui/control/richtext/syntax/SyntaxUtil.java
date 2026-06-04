@@ -91,7 +91,7 @@ public class SyntaxUtil {
 		styleEnd = Math.max(styleEnd, text.indexOf('\n', styleEnd - 1));
 
 		// Allow the syntax highlighter implementation to reshape the range.
-		// Building on the example from before with multi-line comments, lets say you delete the last `/` that
+		// Building on the example from before with multi-line comments, lets say you delete the last '/' that
 		// closes a multi-line comment. The existing range up until here will cut off at the end of the prior range
 		// of the multi-line comment. But now that the comment is open, it will continue until the next '*/'.
 		//

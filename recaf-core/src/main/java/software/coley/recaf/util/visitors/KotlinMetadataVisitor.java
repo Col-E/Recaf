@@ -194,7 +194,7 @@ public class KotlinMetadataVisitor extends AnnotationVisitor {
 	 * <br>
 	 * Bits of this number represent the following flags:
 	 * <ul>
-	 * <li>0 - This is a multi-file class facade or part, compiled with `-Xmultifile-parts-inherit`.</li>
+	 * <li>0 - This is a multi-file class facade or part, compiled with {@code -Xmultifile-parts-inherit}.</li>
 	 * <li>1 - This class file is compiled by a pre-release version of Kotlin and is not visible to release versions.</li>
 	 * <li>2 - This class file is a compiled Kotlin script source file (.kts).</li>
 	 * <li>3 - "strict metadata version semantics". The metadata of this class file is not supposed to be read by the compiler, whose major.minor version is less than the major.minor version of this metadata ([metadataVersion]).</li>

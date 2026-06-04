@@ -248,7 +248,7 @@ public class BasicInfoImporter implements InfoImporter {
 		//  - utf8  - name of current class
 		//  - class - wrapper of prior
 		//  - utf8  - name of object class
-		//  - class - wrapper of prior`
+		//  - class - wrapper of prior
 		int cpSize = ((content[8] & 0xFF) << 8) + (content[9] & 0xFF);
 		return cpSize >= 4;
 	}

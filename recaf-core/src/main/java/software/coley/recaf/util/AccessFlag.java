@@ -633,7 +633,7 @@ public enum AccessFlag {
 		private final String order;
 		private final List<AccessFlag> orderList = new ArrayList<>();
 		/**
-		 * Unmodifiable view of `orderList`
+		 * Unmodifiable view of {@code orderList}.
 		 */
 		public final List<AccessFlag> recommendOrder = Collections.unmodifiableList(orderList);
 		/**
