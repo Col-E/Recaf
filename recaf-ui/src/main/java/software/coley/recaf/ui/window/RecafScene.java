@@ -2,6 +2,8 @@ package software.coley.recaf.ui.window;
 
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.input.KeyEvent;
+import software.coley.recaf.util.LayoutIndependentKeys;
 
 /**
  * Scene extension for adding additional style-sheets.
@@ -15,6 +17,7 @@ public class RecafScene extends Scene {
 	 */
 	public RecafScene(Parent root) {
 		super(root);
+		addEventFilter(KeyEvent.KEY_PRESSED, LayoutIndependentKeys::normalizeEvent);
 		addStyleSheets();
 	}
 
@@ -28,6 +31,7 @@ public class RecafScene extends Scene {
 	 */
 	public RecafScene(Parent root, double width, double height) {
 		super(root, width, height);
+		addEventFilter(KeyEvent.KEY_PRESSED, LayoutIndependentKeys::normalizeEvent);
 		addStyleSheets();
 	}
 

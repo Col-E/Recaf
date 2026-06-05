@@ -33,6 +33,7 @@ import software.coley.recaf.ui.control.BoundLabel;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.dnd.DragAndDrop;
 import software.coley.recaf.util.DirectoryChooserBuilder;
+import software.coley.recaf.util.LayoutIndependentKeys;
 import software.coley.recaf.util.ErrorDialogs;
 import software.coley.recaf.util.FileChooserBuilder;
 import software.coley.recaf.util.IOUtil;
@@ -335,7 +336,7 @@ public class WorkspaceBuilderPane extends BorderPane {
 	 * 		Key press event.
 	 */
 	private void handlePaste(KeyEvent e) {
-		if (e.isControlDown() && e.getCode() == KeyCode.V) {
+		if (LayoutIndependentKeys.isModified(e, KeyCode.V)) {
 			Clipboard clipboard = Clipboard.getSystemClipboard();
 
 			// Handle files
