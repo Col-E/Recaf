@@ -609,7 +609,7 @@ public class Actions implements Service {
 		// Not already open, gotta open a new one.
 		DockContainerLeaf container = docPanePath != null ? docPanePath.leafContainer() : dockingManager.getPrimaryDockingContainer();
 		CommentListPane content = commentListPaneProvider.get();
-		Dockable dockable = dockingManager.newTranslatableDockable("menu.analysis.list-comments", CarbonIcons.CHAT, content);
+		Dockable dockable = dockingManager.newTranslatableDockable("comments.title", CarbonIcons.CHAT, content);
 		dockable.addCloseListener((_, _) -> commentListPaneProvider.destroy(content));
 		dockable.setContextMenuFactory(d -> {
 			ContextMenu menu = new ContextMenu();

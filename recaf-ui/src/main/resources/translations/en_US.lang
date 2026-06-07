@@ -509,6 +509,9 @@ hierarchy.parents=Parents
 kotlinmetadata.title=@Metadata
 kotlinmetadata.orderwarning=Important: Items do not appear in the same order as defined in the class file
 
+## Comments
+comments.title=Comments
+
 ## Logging
 logging.title=Logging
 
