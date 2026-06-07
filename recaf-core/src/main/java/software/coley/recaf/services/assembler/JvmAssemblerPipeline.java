@@ -75,6 +75,9 @@ public class JvmAssemblerPipeline extends AbstractAssemblerPipeline<JvmClassInfo
 				}
 				return engine;
 			});
+
+		// TODO: Smart option that only emits variables if the method has a LVT, and skips variable writeback if it had no LVT.
+		options.doWriteVariables(getConfig().doEmitVariableInfo());
 		return options;
 	}
 
@@ -105,5 +108,11 @@ public class JvmAssemblerPipeline extends AbstractAssemblerPipeline<JvmClassInfo
 			logger.error("Uncaught error creating class printer for: {}", classInfo.getName(), t);
 			return Result.exception(t);
 		}
+	}
+
+	@Nonnull
+	@Override
+	public JvmAssemblerPipelineConfig getConfig() {
+		return (JvmAssemblerPipelineConfig) super.getConfig();
 	}
 }
