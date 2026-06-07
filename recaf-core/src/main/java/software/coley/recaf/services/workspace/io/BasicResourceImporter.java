@@ -31,6 +31,7 @@ import software.coley.recaf.info.properties.builtin.ZipCommentProperty;
 import software.coley.recaf.info.properties.builtin.ZipCompressionProperty;
 import software.coley.recaf.info.properties.builtin.ZipCreationTimeProperty;
 import software.coley.recaf.info.properties.builtin.ZipEntryIndexProperty;
+import software.coley.recaf.info.properties.builtin.ZipEntryAuthoritativeOffsetProperty;
 import software.coley.recaf.info.properties.builtin.ZipMarkerProperty;
 import software.coley.recaf.info.properties.builtin.ZipModificationTimeProperty;
 import software.coley.recaf.info.properties.builtin.ZipPrefixDataProperty;
@@ -222,8 +223,11 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 			List<Callable<Void>> tasks = new ArrayList<>();
 			List<LocalFileHeader> localFiles = archive.getLocalFiles();
 			for (int i = 0; i < localFiles.size(); i++) {
-				int entryIndex = i;
 				LocalFileHeader header = localFiles.get(i);
+				long entryOffset = header.getLinkedDirectoryFileHeader() == null ?
+						header.offset() : // Use authoritative CEN offset if available, otherwise fall back to local header offset.
+						header.getLinkedDirectoryFileHeader().offset();
+				int entryIndex = i;
 				tasks.add(() -> {
 					LocalFileHeaderSource headerSource = new LocalFileHeaderSource(header, isAndroid);
 					String entryName = header.getFileNameAsString();
@@ -238,7 +242,7 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 					Info info;
 					try {
 						info = infoImporter.readInfo(entryName, headerSource);
-						ZipEntryIndexProperty.set(info, entryIndex);
+
 					} catch (IOException ex) {
 						logger.error("IO error reading ZIP entry '{}' - skipping", entryName, ex);
 						return null;
@@ -246,6 +250,8 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 
 					// Record common entry attributes
 					ZipCompressionProperty.set(info, header.getCompressionMethod());
+					ZipEntryIndexProperty.set(info, entryIndex);
+					ZipEntryAuthoritativeOffsetProperty.set(info, entryOffset);
 					ExtraFieldTime.TimeWrapper extraTimes = ExtraFieldTime.read(header);
 					CentralDirectoryFileHeader centralHeader = header.getLinkedDirectoryFileHeader();
 					if (centralHeader != null) {
@@ -364,7 +370,6 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 			throw new IllegalStateException("Unknown info type: " + info);
 		}
 	}
-
 
 	private void addClassInfo(@Nonnull BasicJvmClassBundle classes,
 	                          @Nonnull BasicFileBundle files,
@@ -536,8 +541,8 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 		synchronized (files) {
 			FileInfo existingFile = files.get(pathName);
 			if (existingFile != null) {
-				int existingIndex = ZipEntryIndexProperty.getOr(existingFile, -1);
-				int newIndex = ZipEntryIndexProperty.getOr(fileInfo, -1);
+				long existingIndex = ZipEntryAuthoritativeOffsetProperty.getOr(existingFile, -1);
+				long newIndex = ZipEntryAuthoritativeOffsetProperty.getOr(fileInfo, -1);
 				if (newIndex < existingIndex)
 					return;
 				logger.warn("Multiple duplicate entries for file '{}', dropping older entry", pathName);
