@@ -1,12 +1,8 @@
 package software.coley.recaf.util;
 
 import jakarta.annotation.Nonnull;
-import javafx.event.Event;
-import javafx.scene.Node;
-import javafx.scene.control.TextInputControl;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import org.fxmisc.richtext.GenericStyledArea;
 
 public final class LayoutIndependentKeys {
 	private LayoutIndependentKeys() {
@@ -22,31 +18,6 @@ public final class LayoutIndependentKeys {
 		if (resolveKeyCode(event) != code)
 			return false;
 		return event.isControlDown() || event.isMetaDown();
-	}
-
-	public static void normalizeEvent(@Nonnull KeyEvent event) {
-		if (event.isConsumed())
-			return;
-		KeyCode resolved = resolveFromControlCharacter(event);
-		if (resolved == null || event.getCode() == resolved)
-			return;
-		if (!(event.getTarget() instanceof Node target) || !isTextInput(target))
-			return;
-		event.consume();
-		Event.fireEvent(target, new KeyEvent(
-				event.getEventType(),
-				event.getCharacter(),
-				event.getText(),
-				resolved,
-				event.isShiftDown(),
-				event.isControlDown(),
-				event.isAltDown(),
-				event.isMetaDown()
-		));
-	}
-
-	private static boolean isTextInput(@Nonnull Node target) {
-		return target instanceof TextInputControl || target instanceof GenericStyledArea;
 	}
 
 	private static KeyCode resolveFromControlCharacter(@Nonnull KeyEvent event) {
