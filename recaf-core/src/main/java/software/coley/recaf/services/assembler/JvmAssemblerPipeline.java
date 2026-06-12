@@ -76,8 +76,8 @@ public class JvmAssemblerPipeline extends AbstractAssemblerPipeline<JvmClassInfo
 				return engine;
 			});
 
-		// TODO: Smart option that only emits variables if the method has a LVT, and skips variable writeback if it had no LVT.
-		options.doWriteVariables(getConfig().doEmitVariableInfo());
+		options.variableTableMode(getConfig().getVariableTableMode());
+		options.reuseOverlayPool(getConfig().isRecycleConstPool());
 		return options;
 	}
 

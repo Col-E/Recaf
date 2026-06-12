@@ -3,7 +3,7 @@ package software.coley.recaf.services.assembler;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import me.darknet.assembler.compile.WriteLocalVariableFilter;
+import me.darknet.assembler.compile.JvmVariableMode;
 import software.coley.observables.ObservableBoolean;
 import software.coley.observables.ObservableObject;
 import software.coley.recaf.config.BasicConfigContainer;
@@ -21,7 +21,8 @@ public class JvmAssemblerPipelineConfig extends BasicConfigContainer implements 
 	private final ObservableBoolean valueAnalysis = new ObservableBoolean(true);
 	private final ObservableBoolean simulateJvmCalls = new ObservableBoolean(true);
 	private final ObservableBoolean tryRangeComments = new ObservableBoolean(true);
-	private final ObservableObject<VariableEmissionMode> variableEmissionMode = new ObservableObject<>(VariableEmissionMode.EMIT_ALWAYS);
+	private final ObservableBoolean recycleConstPool = new ObservableBoolean(false);
+	private final ObservableObject<JvmVariableMode> variableEmissionMode = new ObservableObject<>(JvmVariableMode.ALWAYS_WRITE);
 
 
 	@Inject
@@ -30,7 +31,8 @@ public class JvmAssemblerPipelineConfig extends BasicConfigContainer implements 
 		addValue(new BasicConfigValue<>("value-analysis", boolean.class, valueAnalysis));
 		addValue(new BasicConfigValue<>("simulate-jvm-calls", boolean.class, simulateJvmCalls));
 		addValue(new BasicConfigValue<>("try-range-comments", boolean.class, tryRangeComments));
-		addValue(new BasicConfigValue<>("variable-emission-mode", VariableEmissionMode.class, variableEmissionMode));
+		addValue(new BasicConfigValue<>("recycle-const-pool", boolean.class, recycleConstPool));
+		addValue(new BasicConfigValue<>("variable-emission-mode", JvmVariableMode.class, variableEmissionMode));
 	}
 
 	@Override
@@ -51,17 +53,17 @@ public class JvmAssemblerPipelineConfig extends BasicConfigContainer implements 
 	}
 
 	/**
-	 * @return {@code true} to emit variable on assembling, {@code false} to not emit any variable information.
+	 * @return {@code true} to recycle the constant pool, {@code false} to not recycle and emit a new constant pool with each class.
 	 */
-	public boolean doEmitVariableInfo() {
-		return variableEmissionMode.getValue() == VariableEmissionMode.EMIT_ALWAYS;
+	public boolean isRecycleConstPool() {
+		return recycleConstPool.getValue();
 	}
 
 	/**
-	 * Different strategies for when to emit variable information.
+	 * @return Variable table emission mode.
 	 */
-	public enum VariableEmissionMode {
-		EMIT_ALWAYS,
-		EMIT_NEVER
+	@Nonnull
+	public JvmVariableMode getVariableTableMode() {
+		return variableEmissionMode.getValue();
 	}
 }
