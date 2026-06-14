@@ -48,6 +48,11 @@ public class ExistingWordTabCompleter implements TabCompleter<String> {
 		return completionPopup.isShowing() && completeFromContext(localContext, completionPopup::doComplete);
 	}
 
+	@Override
+	public boolean isCompletionActive() {
+		return completionPopup.isShowing();
+	}
+
 	@Nonnull
 	@Override
 	public List<String> computeCurrentCompletions() {

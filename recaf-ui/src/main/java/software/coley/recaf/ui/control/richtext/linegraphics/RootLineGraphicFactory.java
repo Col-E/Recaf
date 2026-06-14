@@ -87,6 +87,14 @@ public class RootLineGraphicFactory extends AbstractLineGraphicFactory implement
 
 	@Override
 	public Node apply(int paragraph) {
+		// Skip graphics that would otherwise paint over folded lines
+		if (editor.isParagraphFolded(paragraph)) {
+			var empty = new BorderPane();
+			empty.setVisible(false);
+			empty.setManaged(false);
+			return empty;
+		}
+
 		// Add all sub-factories in sorted order.
 		LineContainer lineContainer = new LineContainer();
 		for (LineGraphicFactory factory : factories)
