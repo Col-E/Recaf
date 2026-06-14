@@ -6,6 +6,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.signature.SignatureReader;
 import org.objectweb.asm.signature.SignatureVisitor;
@@ -248,6 +249,15 @@ public class AstService implements Service {
 	}
 
 	/**
+	 * Stub class for cases where we cannot find information about a type in the workspace.
+	 */
+	private static class StubClassEntry extends BasicClassEntry {
+		public StubClassEntry(@Nonnull String className, @Nonnull ClassEntry superEntry) {
+			super(className, Opcodes.ACC_PUBLIC, superEntry, List.of(), List.of(), null, List.of(), null, List.of(), List.of(), List.of());
+		}
+	}
+
+	/**
 	 * Empty pool that yields nothing.
 	 */
 	private static class EmptyEntryPool implements EntryPool {
@@ -276,11 +286,14 @@ public class AstService implements Service {
 	 */
 	private static class WorkspaceBackedEntryPool implements EntryPool, ResourceJvmClassListener, ResourceAndroidClassListener {
 		private final Map<String, ClassEntry> cache = new ConcurrentHashMap<>();
+		private final ClassEntry OBJECT_ENTRY;
 		private final Set<String> hydratedRuntimePackages = ConcurrentHashMap.newKeySet();
 		private final Workspace workspace;
 
 		private WorkspaceBackedEntryPool(@Nonnull Workspace workspace) {
 			this.workspace = workspace;
+
+			OBJECT_ENTRY = Objects.requireNonNull(getClass("java/lang/Object"), "Failed to find java/lang/Object in the workspace, which is required for type resolution");
 
 			// TODO: When we have classes update, we will want to invalidate their child classes
 			//  in the cache as well.
@@ -388,6 +401,8 @@ public class AstService implements Service {
 			ClassEntry entry = cache.get(name);
 			if (entry != null)
 				return entry;
+			if (ttl <= 1)
+				return null;
 
 			ClassPathNode path = workspace.findClass(name);
 			if (path == null)
@@ -418,7 +433,10 @@ public class AstService implements Service {
 
 			// Construct the class entry model.
 			//   NOTE: Parent types are fully computed regardless of TTL. The TTL reduction is used further below.
-			ClassEntry superClass = info.getSuperName() == null ? null : getClass(info.getSuperName());
+			String superName = info.getSuperName();
+			ClassEntry superClass = superName == null ? null : getClass(superName);
+			if (superName != null && superClass == null)
+				superClass = new StubClassEntry(superName, OBJECT_ENTRY);
 			List<ClassEntry> innerClasses = new ArrayList<>();
 			List<ClassEntry> interfaces = new ArrayList<>();
 			String outerClassName = info.getOuterClassName();
@@ -431,9 +449,9 @@ public class AstService implements Service {
 			entry = new BasicClassEntry(className, info.getAccess(), superClass, interfaces, innerClasses, outerClass,
 					List.of(), null, List.of(), fields, methods);
 			register(entry);
-			ClassEntry objectEntry = className.equals("java/lang/Object") ? entry : lookupClassEntry("java/lang/Object");
-
-			Function<String, ClassEntry> classProvider = this::lookupClassEntry;
+			ClassEntry objectEntry = className.equals("java/lang/Object") ? entry : lookupClassEntry("java/lang/Object", 1);
+			int currentTtl = ttl;
+			Function<String, ClassEntry> classProvider = name -> lookupClassEntry(name, currentTtl);
 			GenericSignatureBridge.ClassSignatureData classSignature = GenericSignatureBridge.parseClassSignature(
 					info, superClass, interfaces, objectEntry, classProvider);
 			GenericSignatureBridge.TypeVariableScope classScope =
@@ -485,12 +503,21 @@ public class AstService implements Service {
 		}
 
 		@Nonnull
-		private ClassEntry lookupClassEntry(@Nonnull String name) {
-			ClassEntry entry = getClass(name);
+		private ClassEntry lookupClassEntry(@Nonnull String name, int ttl) {
+			ClassEntry entry = getClass(name, ttl);
 			if (entry != null)
 				return entry;
-			return new BasicClassEntry(name, 0, null, List.of(), List.of(), null,
-					List.of(), null, List.of(), List.of(), List.of());
+			return fallbackClassEntry(name);
+		}
+
+		@Nonnull
+		private ClassEntry fallbackClassEntry(@Nonnull String name) {
+			ClassEntry entry = cache.get(name);
+			if (entry != null)
+				return entry;
+			if (name.equals("java/lang/Object"))
+				return OBJECT_ENTRY;
+			return new StubClassEntry(name, OBJECT_ENTRY);
 		}
 
 		@Override
@@ -628,7 +655,7 @@ public class AstService implements Service {
 		                                           @Nonnull Function<String, ClassEntry> classProvider) {
 			return switch (type.getSort()) {
 				case Type.VOID, Type.BOOLEAN, Type.CHAR, Type.BYTE, Type.SHORT,
-						Type.INT, Type.FLOAT, Type.LONG, Type.DOUBLE ->
+				     Type.INT, Type.FLOAT, Type.LONG, Type.DOUBLE ->
 						GenericTypes.ofPrimitive(PrimitiveEntry.getPrimitive(type.getDescriptor()));
 				case Type.ARRAY -> {
 					Type elementType = type;
@@ -1020,10 +1047,8 @@ public class AstService implements Service {
 			public SignatureVisitor visitTypeArgument(char wildcard) {
 				return new TypeSignatureParser(scope, objectEntry, classProvider, type -> {
 					GenericType typeArgument = switch (wildcard) {
-						case SignatureVisitor.EXTENDS ->
-								new GenericType.WildcardType(type, null, type.asDescribable());
-						case SignatureVisitor.SUPER ->
-								new GenericType.WildcardType(null, type, objectEntry);
+						case SignatureVisitor.EXTENDS -> new GenericType.WildcardType(type, null, type.asDescribable());
+						case SignatureVisitor.SUPER -> new GenericType.WildcardType(null, type, objectEntry);
 						default -> type;
 					};
 					typeArguments.add(typeArgument);
