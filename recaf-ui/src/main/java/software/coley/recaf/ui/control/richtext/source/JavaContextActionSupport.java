@@ -430,6 +430,9 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 					astAvailabilityButton.setUnavailable();
 					inheritanceTracking.clear();
 					foldTracking.clear();
+
+					//redraw to remove any stale gutters
+					FxThreadUtil.run(() -> editor.redrawParagraphGraphics());
 				} else {
 					unit = resultingUnit;
 					resolver = astService.newJavaResolver(workspace, resultingUnit);
@@ -606,8 +609,9 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 	public void install(@Nonnull Editor editor) {
 		this.editor = editor;
 
-		// Setup inheritance tracking first. It will receive text change events before us.
+		// Setup inheritance and fold tracking first. They will receive text change events before us.
 		inheritanceTracking.install(editor);
+		foldTracking.install(editor);
 
 		// Now we register our own text change listeners.
 		editor.getTextChangeEventStream()
@@ -620,7 +624,6 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 		editor.getRootLineGraphicFactory().addLineGraphicFactory(inheritanceGutterGraphicFactory);
 
 		// Setup code folding gutter graphics/tracking.
-		foldTracking.install(editor);
 		editor.setComponent(FoldTracking.COMPONENT_KEY, foldTracking);
 		editor.getRootLineGraphicFactory().addLineGraphicFactory(foldGutterGraphicFactory);
 
