@@ -44,6 +44,7 @@ import software.coley.sourcesolver.resolve.entry.EntryPool;
 import software.coley.sourcesolver.resolve.entry.FieldEntry;
 import software.coley.sourcesolver.resolve.entry.MethodEntry;
 import software.coley.sourcesolver.resolve.entry.PrimitiveEntry;
+import software.coley.sourcesolver.resolve.entry.ReflectiveClassEntry;
 import software.coley.sourcesolver.resolve.generic.GenericType;
 import software.coley.sourcesolver.resolve.generic.GenericTypeParameter;
 import software.coley.sourcesolver.resolve.generic.GenericTypes;
@@ -293,7 +294,8 @@ public class AstService implements Service {
 		private WorkspaceBackedEntryPool(@Nonnull Workspace workspace) {
 			this.workspace = workspace;
 
-			OBJECT_ENTRY = Objects.requireNonNull(getClass("java/lang/Object"), "Failed to find java/lang/Object in the workspace, which is required for type resolution");
+			// Special case, we want to have 'Object' built using the default reflective logic.
+			OBJECT_ENTRY = ReflectiveClassEntry.build(cache, Object.class);
 
 			// TODO: When we have classes update, we will want to invalidate their child classes
 			//  in the cache as well.
