@@ -22,6 +22,27 @@ public interface NameGenerator {
 	String mapClass(@Nonnull ClassInfo info);
 
 	/**
+	 * @param info
+	 * 		Class to rename.
+	 * @param mapPackage
+	 * 		{@code true} to allow remapping the package path.
+	 *        {@code false} to keep the class in its current package.
+	 *
+	 * @return New class name.
+	 */
+	@Nonnull
+	default String mapClass(@Nonnull ClassInfo info, boolean mapPackage) {
+		String mappedName = mapClass(info);
+		if (mapPackage || info.isInDefaultPackage())
+			return mappedName;
+
+		String packageName = info.getPackageName();
+		int separatorIndex = mappedName.lastIndexOf('/');
+		String simpleName = separatorIndex >= 0 ? mappedName.substring(separatorIndex + 1) : mappedName;
+		return packageName + "/" + simpleName;
+	}
+
+	/**
 	 * @param owner
 	 * 		Class the field is defined in.
 	 * @param field
