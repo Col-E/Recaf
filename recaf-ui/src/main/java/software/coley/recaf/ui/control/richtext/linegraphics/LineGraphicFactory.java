@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 import javafx.scene.Node;
 import software.coley.recaf.ui.control.richtext.EditorComponent;
 import software.coley.recaf.ui.control.richtext.bracket.BracketMatchGraphicFactory;
+import software.coley.recaf.ui.control.richtext.folding.FoldGutterGraphicFactory;
 import software.coley.recaf.ui.control.richtext.problem.ProblemGutterGraphicFactory;
 import software.coley.recaf.ui.control.richtext.problem.ProblemSquiggleGraphicFactory;
 
@@ -38,6 +39,10 @@ public interface LineGraphicFactory extends EditorComponent, Comparable<LineGrap
 	 * Priority for {@link ProblemSquiggleGraphicFactory}.
 	 */
 	int P_LINE_INHERITANCES = 200;
+	/**
+	 * Priority for {@link FoldGutterGraphicFactory}.
+	 */
+	int P_LINE_FOLDING = 300;
 	/**
 	 * Priority for {@link BracketMatchGraphicFactory}.
 	 */

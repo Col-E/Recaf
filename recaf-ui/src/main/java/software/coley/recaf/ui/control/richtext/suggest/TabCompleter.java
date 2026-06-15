@@ -63,4 +63,11 @@ public interface TabCompleter<T> extends EditorComponent {
 	default boolean isSpecialCompletableKeyCode(@Nullable KeyCode code) {
 		return false;
 	}
+
+	/**
+	 * @return Whether completion overlay is currently visible and consuming key inputs.
+	 */
+	default boolean isCompletionActive() {
+		return false;
+	}
 }
