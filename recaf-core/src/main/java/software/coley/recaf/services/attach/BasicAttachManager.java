@@ -57,6 +57,7 @@ public class BasicAttachManager implements AttachManager {
 	private final Map<VirtualMachineDescriptor, Properties> virtualMachinePropertiesMap = new ConcurrentHashMap<>();
 	private final Map<VirtualMachineDescriptor, String> virtualMachineMainClassMap = new ConcurrentHashMap<>();
 	private final Map<VirtualMachineDescriptor, JmxBeanServerConnection> virtualMachineJmxConnMap = new ConcurrentHashMap<>();
+	private final Map<VirtualMachineDescriptor, JMXConnector> virtualMachineJmxConnectorMap = new ConcurrentHashMap<>();
 	private final ObservableList<VirtualMachineDescriptor> virtualMachineDescriptors = new ObservableList<>();
 	private final List<PostScanListener> postScanListeners = new CopyOnWriteArrayList<>();
 	private final AttachManagerConfig config;
@@ -281,6 +282,7 @@ public class BasicAttachManager implements AttachManager {
 										JMXConnector connector = JMXConnectorFactory.connect(url);
 										MBeanServerConnection connection = connector.getMBeanServerConnection();
 										virtualMachineJmxConnMap.put(descriptor, new JmxBeanServerConnection(connection));
+										virtualMachineJmxConnectorMap.put(descriptor, connector);
 									} else {
 										logger.warn("Could fetch JMX agent address, skipping connection for: {}", label);
 									}
@@ -318,9 +320,37 @@ public class BasicAttachManager implements AttachManager {
 		ThreadUtil.allOf(attachFutures.toArray(new CompletableFuture[0])).thenRun(() -> {
 			// Remove entries not visited in this pass
 			virtualMachineDescriptors.removeAll(toRemove);
+
 			for (VirtualMachineDescriptor descriptor : toRemove) {
 				String label = descriptor.id() + " - " + StringUtil.withEmptyFallback(descriptor.displayName(), "?");
 				logger.debug("Remote JVM descriptor removed: " + label);
+
+				// Evict from state caches
+				virtualMachineFailureMap.remove(descriptor);
+				virtualMachinePidMap.remove(descriptor);
+				virtualMachinePropertiesMap.remove(descriptor);
+				virtualMachineMainClassMap.remove(descriptor);
+				virtualMachineJmxConnMap.remove(descriptor);
+
+				// Safely terminate JMX network connections
+				JMXConnector connector = virtualMachineJmxConnectorMap.remove(descriptor);
+				if (connector != null) {
+					try {
+						connector.close();
+					} catch (IOException ex) {
+						logger.warn("Failed to close JMX connector for removed VM: {}", label, ex);
+					}
+				}
+
+				// Safely detach from the remote JVM native attachment
+				VirtualMachine machine = virtualMachineMap.remove(descriptor);
+				if (machine != null) {
+					try {
+						machine.detach();
+					} catch (IOException ex) {
+						logger.warn("Failed to detach from remove VM: {}", label, ex);
+					}
+				}
 			}
 
 			// Call listeners
