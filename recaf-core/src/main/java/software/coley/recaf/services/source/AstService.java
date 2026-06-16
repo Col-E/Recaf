@@ -451,7 +451,7 @@ public class AstService implements Service {
 			entry = new BasicClassEntry(className, info.getAccess(), superClass, interfaces, innerClasses, outerClass,
 					List.of(), null, List.of(), fields, methods);
 			register(entry);
-			ClassEntry objectEntry = className.equals("java/lang/Object") ? entry : lookupClassEntry("java/lang/Object", 1);
+			ClassEntry objectEntry = className.equals("java/lang/Object") ? entry : OBJECT_ENTRY;
 			int currentTtl = ttl;
 			Function<String, ClassEntry> classProvider = name -> lookupClassEntry(name, currentTtl);
 			GenericSignatureBridge.ClassSignatureData classSignature = GenericSignatureBridge.parseClassSignature(
