@@ -276,11 +276,7 @@ dialog.title.promote-resource-workspace=Сделать основным ресу
 dialog.option.create-workspace=Создать новое рабочее пространство
 dialog.option.update-workspace=Добавить в рабочее пространство
 dialog.header.promote-resource-workspace=Создать новое рабочее пространство с этим ресурсом как основным?
-dialog.content.promote-resource-workspace=Текущее рабочее пространство будет закрыто, а выбранный ресурс станет новым основным.
-
-Все открытые вкладки будут закрыты.
-
-Сохранённые изменения в рабочем пространстве останутся.
+dialog.content.promote-resource-workspace=Текущее рабочее пространство будет закрыто, а выбранный ресурс станет новым основным.\n\nВсе открытые вкладки будут закрыты.\n\nСохранённые изменения в рабочем пространстве останутся.
 
 ## Select class/file
 dialog.title.select-class=Выбрать класс
