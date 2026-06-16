@@ -45,6 +45,9 @@ import software.coley.recaf.ui.control.BoundLabel;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.EditorComponent;
+import software.coley.recaf.ui.control.richtext.folding.FoldGutterGraphicFactory;
+import software.coley.recaf.ui.control.richtext.folding.FoldRegion;
+import software.coley.recaf.ui.control.richtext.folding.FoldTracking;
 import software.coley.recaf.ui.control.richtext.inheritance.Inheritance;
 import software.coley.recaf.ui.control.richtext.inheritance.InheritanceGutterGraphicFactory;
 import software.coley.recaf.ui.control.richtext.inheritance.InheritanceTracking;
@@ -61,7 +64,10 @@ import software.coley.recaf.workspace.model.Workspace;
 import software.coley.sourcesolver.Parser;
 import software.coley.sourcesolver.model.ClassModel;
 import software.coley.sourcesolver.model.CompilationUnitModel;
+import software.coley.sourcesolver.model.ImportModel;
+import software.coley.sourcesolver.model.MethodBodyModel;
 import software.coley.sourcesolver.model.MethodModel;
+import software.coley.sourcesolver.model.NamedModel;
 import software.coley.sourcesolver.model.VariableModel;
 import software.coley.sourcesolver.resolve.result.DescribableResolution;
 import software.coley.sourcesolver.resolve.result.MethodResolution;
@@ -98,6 +104,8 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 	private final NavigableMap<Integer, Integer> offsetMap = new TreeMap<>();
 	private final AstAvailabilityButton astAvailabilityButton = new AstAvailabilityButton();
 	private final InheritanceTracking inheritanceTracking = new InheritanceTracking();
+	private final FoldTracking foldTracking = new FoldTracking();
+	private final FoldGutterGraphicFactory foldGutterGraphicFactory = new FoldGutterGraphicFactory();
 	private final InheritanceGutterGraphicFactory inheritanceGutterGraphicFactory;
 	private final CellConfigurationService cellConfigurationService;
 	private final JavaContextActionManager contextManager;
@@ -424,6 +432,10 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 					logger.warn("Could not create Java AST model from source of: {} after {}ms", classNameEsc, diffMs);
 					astAvailabilityButton.setUnavailable();
 					inheritanceTracking.clear();
+					foldTracking.clear();
+
+					//redraw to remove any stale gutters
+					FxThreadUtil.run(() -> editor.redrawParagraphGraphics());
 				} else {
 					unit = resultingUnit;
 					resolver = astService.newJavaResolver(workspace, resultingUnit);
@@ -432,6 +444,7 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 					logger.debugging(l -> l.info("AST parsed successfully, took {}ms", diffMs));
 					astAvailabilityButton.setAvailable();
 					populateInheritanceTracking();
+					populateFoldTracking();
 
 					// Run queued selection task
 					if (queuedSelectionTask != null)
@@ -522,6 +535,61 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 	}
 
 	/**
+	 * Parse the AST for foldable regions and update the {@link #foldTracking}.
+	 */
+	private void populateFoldTracking() {
+		CompilationUnitModel localUnit = unit;
+		if (localUnit == null || editor == null)
+			return;
+
+		CompletableFuture.supplyAsync(() -> {
+			List<FoldRegion> regions = new ArrayList<>();
+
+			List<ImportModel> imports = localUnit.getImports();
+			if (imports.size() > 1)
+				addFoldRegion(regions, imports.getFirst().getRange().begin(), imports.getLast().getRange().end());
+
+			for (ClassModel classModel : localUnit.getRecursiveChildrenOfType(ClassModel.class)) {
+				Range classRange = classModel.getRange();
+				NamedModel classNameModel = classModel.getNameModel();
+				int classStart = classNameModel == null ? classRange.begin() : classNameModel.getRange().begin();
+				addFoldRegion(regions, classStart, classRange.end());
+
+				for (MethodModel methodModel : classModel.getMethods()) {
+					MethodBodyModel body = methodModel.getMethodBody();
+					if (body != null)
+						addFoldRegion(regions, body.getRange().begin(), body.getRange().end());
+				}
+			}
+			return regions;
+		}, ThreadUtil.executor()).thenAcceptAsync(regions -> {
+			foldTracking.setRegions(regions);
+			editor.redrawParagraphGraphics();
+		}, FxThreadUtil.executor());
+	}
+
+	/**
+	 * Adds a fold region for the given offset range.
+	 *
+	 * @param regions
+	 * 		Collection to add to.
+	 * @param beginOffset
+	 * 		Range start offset in the text.
+	 * @param endOffset
+	 * 		Range end offset in the text.
+	 */
+	private void addFoldRegion(@Nonnull List<FoldRegion> regions, int beginOffset, int endOffset) {
+		if (beginOffset < 0 || endOffset <= beginOffset)
+			return;
+
+		CodeArea area = editor.getCodeArea();
+		int startLine = 1 + area.offsetToPosition(beginOffset, TwoDimensional.Bias.Forward).getMajor();
+		int endLine = 1 + area.offsetToPosition(endOffset, TwoDimensional.Bias.Backward).getMajor();
+		if (endLine > startLine)
+			regions.add(new FoldRegion(startLine, endLine));
+	}
+
+	/**
 	 * Offsets the given input index.
 	 *
 	 * @param index
@@ -544,8 +612,9 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 	public void install(@Nonnull Editor editor) {
 		this.editor = editor;
 
-		// Setup inheritance tracking first. It will receive text change events before us.
+		// Setup inheritance and fold tracking first. They will receive text change events before us.
 		inheritanceTracking.install(editor);
+		foldTracking.install(editor);
 
 		// Now we register our own text change listeners.
 		editor.getTextChangeEventStream()
@@ -556,6 +625,10 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 		// Setup inheritance gutter graphics/tracking.
 		editor.setComponent(InheritanceTracking.COMPONENT_KEY, inheritanceTracking);
 		editor.getRootLineGraphicFactory().addLineGraphicFactory(inheritanceGutterGraphicFactory);
+
+		// Setup code folding gutter graphics/tracking.
+		editor.setComponent(FoldTracking.COMPONENT_KEY, foldTracking);
+		editor.getRootLineGraphicFactory().addLineGraphicFactory(foldGutterGraphicFactory);
 
 		// Setup context-menu on right-click.
 		CodeArea area = editor.getCodeArea();
@@ -609,9 +682,12 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 	@Override
 	public void uninstall(@Nonnull Editor editor) {
 		inheritanceTracking.uninstall(editor);
+		foldTracking.uninstall(editor);
 		editor.getRootLineGraphicFactory().removeLineGraphicFactory(inheritanceGutterGraphicFactory);
+		editor.getRootLineGraphicFactory().removeLineGraphicFactory(foldGutterGraphicFactory);
 		editor.getCodeArea().setOnContextMenuRequested(null);
 		editor.setComponent(InheritanceTracking.COMPONENT_KEY, null);
+		editor.setComponent(FoldTracking.COMPONENT_KEY, null);
 		this.editor = null;
 	}
 
