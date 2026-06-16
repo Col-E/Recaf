@@ -233,7 +233,7 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 	 */
 	public void select(@Nonnull ClassMember member) {
 		CompilationUnitModel localUnit = unit;
- 		ResolverAdapter localResolver = resolver;
+		ResolverAdapter localResolver = resolver;
 		if (localUnit == null || localResolver == null) {
 			queuedSelectionTask = () -> select(member);
 		} else {
@@ -518,7 +518,7 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 						}
 					});
 					parents.forEach((parent, parentClassPath) -> {
-						if (parent.hasMethod(methodName, methodDesc)) {
+						if (parent.hasMethod(methodName, methodDesc) && isBlacklistedParent(parent, methodName, methodDesc)) {
 							ClassMemberPathNode parentMethodPath = parentClassPath.child(methodName, methodDesc);
 							if (parentMethodPath != null)
 								inheritances.add(new Inheritance.Parent(line, parentMethodPath));
@@ -532,6 +532,25 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 			inheritanceTracking.addItems(items);
 			editor.redrawParagraphGraphics();
 		}, FxThreadUtil.executor());
+	}
+
+	/**
+	 * Certain methods on Object are so commonly overridden that they add more noise than value to the inheritance gutter.
+	 *
+	 * @param parent
+	 * 		Parent vertex to check.
+	 * @param methodName
+	 * 		Method name to check.
+	 * @param methodDesc
+	 * 		Method descriptor to check.
+	 *
+	 * @return {@code true} if the parent method is blacklisted, {@code false} otherwise.
+	 */
+	private boolean isBlacklistedParent(@Nonnull InheritanceVertex parent, @Nonnull String methodName, @Nonnull String methodDesc) {
+		return "java/lang/Object".equals(parent.getName())
+				&& ("toString".equals(methodName)
+				|| "hashCode".equals(methodName)
+				|| "equals".equals(methodName));
 	}
 
 	/**

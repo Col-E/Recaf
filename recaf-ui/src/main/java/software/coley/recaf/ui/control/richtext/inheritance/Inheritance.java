@@ -19,6 +19,7 @@ public sealed interface Inheritance extends Comparable<Inheritance> {
 	/**
 	 * @return Path to the class member the inheritance applies to.
 	 */
+	@Nonnull
 	ClassMemberPathNode path();
 
 	/**
@@ -27,6 +28,7 @@ public sealed interface Inheritance extends Comparable<Inheritance> {
 	 *
 	 * @return Copy of the current inheritance, but with the line number modified.
 	 */
+	@Nonnull
 	Inheritance withLine(int newLine);
 
 	@Override
@@ -45,6 +47,7 @@ public sealed interface Inheritance extends Comparable<Inheritance> {
 	 * Inheritance item representing a child override method.
 	 */
 	record Child(int line, @Nonnull ClassMemberPathNode path) implements Inheritance {
+		@Nonnull
 		@Override
 		public Inheritance withLine(int newLine) {
 			return new Child(newLine, path);
@@ -63,6 +66,7 @@ public sealed interface Inheritance extends Comparable<Inheritance> {
 	 * Inheritance item representing an overridden parent method.
 	 */
 	record Parent(int line, @Nonnull ClassMemberPathNode path) implements Inheritance {
+		@Nonnull
 		@Override
 		public Inheritance withLine(int newLine) {
 			return new Parent(newLine, path);
