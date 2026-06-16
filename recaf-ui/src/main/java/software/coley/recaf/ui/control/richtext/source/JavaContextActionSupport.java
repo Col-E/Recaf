@@ -64,7 +64,10 @@ import software.coley.recaf.workspace.model.Workspace;
 import software.coley.sourcesolver.Parser;
 import software.coley.sourcesolver.model.ClassModel;
 import software.coley.sourcesolver.model.CompilationUnitModel;
+import software.coley.sourcesolver.model.ImportModel;
+import software.coley.sourcesolver.model.MethodBodyModel;
 import software.coley.sourcesolver.model.MethodModel;
+import software.coley.sourcesolver.model.NamedModel;
 import software.coley.sourcesolver.model.VariableModel;
 import software.coley.sourcesolver.resolve.result.DescribableResolution;
 import software.coley.sourcesolver.resolve.result.MethodResolution;
@@ -535,25 +538,25 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 	 * Parse the AST for foldable regions and update the {@link #foldTracking}.
 	 */
 	private void populateFoldTracking() {
-		var localUnit = unit;
+		CompilationUnitModel localUnit = unit;
 		if (localUnit == null || editor == null)
 			return;
 
 		CompletableFuture.supplyAsync(() -> {
-			var regions = new ArrayList<FoldRegion>();
+			List<FoldRegion> regions = new ArrayList<>();
 
-			var imports = localUnit.getImports();
+			List<ImportModel> imports = localUnit.getImports();
 			if (imports.size() > 1)
 				addFoldRegion(regions, imports.getFirst().getRange().begin(), imports.getLast().getRange().end());
 
-			for (var classModel : localUnit.getRecursiveChildrenOfType(ClassModel.class)) {
-				var classRange = classModel.getRange();
-				var classNameModel = classModel.getNameModel();
-				var classStart = classNameModel == null ? classRange.begin() : classNameModel.getRange().begin();
+			for (ClassModel classModel : localUnit.getRecursiveChildrenOfType(ClassModel.class)) {
+				Range classRange = classModel.getRange();
+				NamedModel classNameModel = classModel.getNameModel();
+				int classStart = classNameModel == null ? classRange.begin() : classNameModel.getRange().begin();
 				addFoldRegion(regions, classStart, classRange.end());
 
-				for (var methodModel : classModel.getMethods()) {
-					var body = methodModel.getMethodBody();
+				for (MethodModel methodModel : classModel.getMethods()) {
+					MethodBodyModel body = methodModel.getMethodBody();
 					if (body != null)
 						addFoldRegion(regions, body.getRange().begin(), body.getRange().end());
 				}
@@ -579,9 +582,9 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 		if (beginOffset < 0 || endOffset <= beginOffset)
 			return;
 
-		var area = editor.getCodeArea();
-		var startLine = 1 + area.offsetToPosition(beginOffset, TwoDimensional.Bias.Forward).getMajor();
-		var endLine = 1 + area.offsetToPosition(endOffset, TwoDimensional.Bias.Backward).getMajor();
+		CodeArea area = editor.getCodeArea();
+		int startLine = 1 + area.offsetToPosition(beginOffset, TwoDimensional.Bias.Forward).getMajor();
+		int endLine = 1 + area.offsetToPosition(endOffset, TwoDimensional.Bias.Backward).getMajor();
 		if (endLine > startLine)
 			regions.add(new FoldRegion(startLine, endLine));
 	}

@@ -34,10 +34,10 @@ public class SafeCodeArea extends CodeArea {
 		if (isFolded(startParagraph + 1))
 			return;
 
-		var caret = getCaretPosition();
-		var anchor = getAnchor();
-		var hiddenStart = getAbsolutePosition(startParagraph + 1, 0);
-		var hiddenEnd = getAbsolutePosition(endParagraph, getParagraphLength(endParagraph));
+		int caret = getCaretPosition();
+		int anchor = getAnchor();
+		int hiddenStart = getAbsolutePosition(startParagraph + 1, 0);
+		int hiddenEnd = getAbsolutePosition(endParagraph, getParagraphLength(endParagraph));
 
 		foldOperationInProgress = true;
 		try {
@@ -63,10 +63,10 @@ public class SafeCodeArea extends CodeArea {
 		if (!isFolded(startParagraph + 1))
 			return;
 
-		var caret = getCaretPosition();
-		var anchor = getAnchor();
+		int caret = getCaretPosition();
+		int anchor = getAnchor();
 
-		var wasInProgress = foldOperationInProgress;
+		boolean wasInProgress = foldOperationInProgress;
 		foldOperationInProgress = true;
 		try {
 			undoAvailability.suspendWhile(() -> unfoldParagraphs(startParagraph));
@@ -79,7 +79,7 @@ public class SafeCodeArea extends CodeArea {
 
 	@Override
 	public void foldParagraphs(int startPar, int endPar) {
-		var wasInProgress = foldOperationInProgress;
+		boolean wasInProgress = foldOperationInProgress;
 		foldOperationInProgress = true;
 		try {
 			super.foldParagraphs(startPar, endPar);
@@ -90,7 +90,7 @@ public class SafeCodeArea extends CodeArea {
 
 	@Override
 	public void unfoldParagraphs(int startingFromPar) {
-		var wasInProgress = foldOperationInProgress;
+		boolean wasInProgress = foldOperationInProgress;
 		foldOperationInProgress = true;
 		try {
 			super.unfoldParagraphs(startingFromPar);
@@ -109,9 +109,9 @@ public class SafeCodeArea extends CodeArea {
 		if (paragraph <= 0 || paragraph >= getParagraphs().size())
 			return;
 
-		var sanity = 128;
+		int sanity = 128;
 		while (isFolded(paragraph) && sanity-- > 0) {
-			var start = paragraph;
+			int start = paragraph;
 			while (start > 0 && isFolded(start))
 				start--;
 			unfoldParagraphsSafely(start);

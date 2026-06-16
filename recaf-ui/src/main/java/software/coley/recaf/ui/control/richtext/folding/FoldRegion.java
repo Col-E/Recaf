@@ -13,6 +13,8 @@ import software.coley.recaf.ui.control.richtext.Editor;
  * 		Header line of the region, 1-indexed.
  * @param endLine
  * 		Last line of the region, 1-indexed, inclusive.
+ *
+ * @author SooStrator
  */
 public record FoldRegion(int startLine, int endLine) implements Comparable<FoldRegion> {
 	/**

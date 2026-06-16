@@ -15,10 +15,11 @@ import software.coley.recaf.ui.control.richtext.linegraphics.LineContainer;
 import software.coley.recaf.ui.control.richtext.linegraphics.LineGraphicFactory;
 
 /**
- * Graphic factory that adds collapse/expand arrows to lines that begin a {@link FoldRegion}
+ * Graphic factory that adds collapse/expand arrows to lines that begin a {@link FoldRegion}.
+ *
+ * @author SooStrator
  */
 public class FoldGutterGraphicFactory extends AbstractLineGraphicFactory {
-
 	private static final double DEFAULT_FONT_SIZE = 12;
 	private static final double ICON_SCALE = 16.0 / DEFAULT_FONT_SIZE;
 	private static final double GUTTER_SCALE = 14.0 / 16.0;
@@ -45,27 +46,27 @@ public class FoldGutterGraphicFactory extends AbstractLineGraphicFactory {
 
 	@Override
 	public void apply(@Nonnull LineContainer container, int paragraph) {
-		var foldTracking = (FoldTracking) editor.getComponent(FoldTracking.COMPONENT_KEY);
+		FoldTracking foldTracking = (FoldTracking) editor.getComponent(FoldTracking.COMPONENT_KEY);
 		if (foldTracking == null)
 			return;
 
-		var collapsedHeader = editor.isParagraphFolded(paragraph + 1) && !editor.isParagraphFolded(paragraph);
+		boolean collapsedHeader = editor.isParagraphFolded(paragraph + 1) && !editor.isParagraphFolded(paragraph);
 		if (foldTracking.isEmpty() && !collapsedHeader)
 			return;
 
-		var region = foldTracking.getRegionStartingAt(paragraph + 1);
+		FoldRegion region = foldTracking.getRegionStartingAt(paragraph + 1);
 
 		// Scale the arrow and gutter with the editor font size.
-		var iconSize = resolveIconSize();
-		var gutterWidth = resolveGutterWidth(iconSize);
+		int iconSize = resolveIconSize();
+		double gutterWidth = resolveGutterWidth(iconSize);
 
-		var box = new HBox();
+		HBox box = new HBox();
 		box.setAlignment(Pos.CENTER_LEFT);
 		box.setMinWidth(gutterWidth);
 		box.setMaxWidth(gutterWidth);
 		box.setPickOnBounds(true);
 		if (collapsedHeader) {
-			var icon = new FontIconView(CarbonIcons.CHEVRON_DOWN, iconSize);
+			FontIconView icon = new FontIconView(CarbonIcons.CHEVRON_DOWN, iconSize);
 			icon.setRotate(-90);
 			icon.setOpacity(0.75);
 			box.getChildren().add(icon);
@@ -79,8 +80,8 @@ public class FoldGutterGraphicFactory extends AbstractLineGraphicFactory {
 				editor.redrawParagraphGraphics();
 			});
 		} else if (region != null) {
-			var icon = new FontIconView(CarbonIcons.CHEVRON_DOWN, iconSize);
-			icon.setOpacity(0.5);
+			FontIconView icon = new FontIconView(CarbonIcons.CHEVRON_DOWN, iconSize);
+			icon.setOpacity(0.3);
 			box.getChildren().add(icon);
 			box.setCursor(Cursor.HAND);
 			box.setOnMousePressed(e -> {
@@ -108,7 +109,7 @@ public class FoldGutterGraphicFactory extends AbstractLineGraphicFactory {
 			return cachedFontSize;
 
 		if (editor != null) {
-			for (var node : editor.getCodeArea().lookupAll(".text")) {
+			for (Node node : editor.getCodeArea().lookupAll(".text")) {
 				if (node instanceof Text text) {
 					var size = text.getFont().getSize();
 					if (size > 0) {
@@ -121,5 +122,4 @@ public class FoldGutterGraphicFactory extends AbstractLineGraphicFactory {
 
 		return DEFAULT_FONT_SIZE;
 	}
-
 }

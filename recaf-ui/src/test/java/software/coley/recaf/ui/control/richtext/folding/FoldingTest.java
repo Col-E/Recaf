@@ -31,7 +31,7 @@ class FoldingTest extends BaseFxTest {
 	@BeforeAll
 	static void startFx() {
 		try {
-			var started = new CountDownLatch(1);
+			CountDownLatch started = new CountDownLatch(1);
 			Platform.startup(started::countDown);
 			fxAvailable = started.await(10, TimeUnit.SECONDS);
 		} catch (IllegalStateException e) {
@@ -62,7 +62,7 @@ class FoldingTest extends BaseFxTest {
 			assertTrue(editor.isParagraphFolded(2));
 
 			editor.unfoldParagraphs(1);
-			for (var i = 0; i <= 5; i++)
+			for (int i = 0; i <= 5; i++)
 				assertFalse(editor.isParagraphFolded(i));
 		});
 	}
@@ -95,7 +95,7 @@ class FoldingTest extends BaseFxTest {
 			editor.foldParagraphs(1, 4);
 			assertTrue(editor.isParagraphFolded(2));
 
-			var idx = TEXT.indexOf("line3"); //line3 is folded away
+			int idx = TEXT.indexOf("line3"); // line3 is folded away
 			editor.getCodeArea().selectRange(idx, idx + 5);
 
 			assertFalse(editor.isParagraphFolded(2), "Selecting hidden text should expand the fold");
@@ -138,12 +138,12 @@ class FoldingTest extends BaseFxTest {
 	void testArrowNavigationOverFoldKeepsTargetColumn() {
 		// Down over a fold onto a shorter line lands at its end; continuing onto a longer line snaps back
 		// to the remembered x-offset, just like regular vertical navigation.
-		var text = "line1\nlong line number 2\nline3\nline4\nline5\nx\nline7 is much longer still\nline8";
+		String text = "line1\nlong line number 2\nline3\nline4\nline5\nx\nline7 is much longer still\nline8";
 		onEditor(text, editor -> {
 			editor.foldParagraphs(1, 4);
 
 			// Caret at the end of the long fold header.
-			var headerLength = "long line number 2".length();
+			int headerLength = "long line number 2".length();
 			editor.getCodeArea().moveTo(1, headerLength);
 			fireKey(editor, KeyCode.DOWN, false);
 			assertEquals(5, editor.getCodeArea().getCurrentParagraph());
@@ -167,12 +167,12 @@ class FoldingTest extends BaseFxTest {
 	private void onEditor(String text, Consumer<Editor> action) {
 		assumeTrue(fxAvailable, "FX platform unavailable");
 
-		var error = new AtomicReference<Throwable>();
-		var done = new CountDownLatch(1);
+		AtomicReference<Throwable> error = new AtomicReference<>();
+		CountDownLatch done = new CountDownLatch(1);
 		Platform.runLater(() -> {
 			var stage = new Stage();
 			try {
-				var editor = new Editor();
+				Editor editor = new Editor();
 				stage.setScene(new Scene(editor, 400, 300));
 				stage.show();
 				editor.setText(text);

@@ -3,6 +3,7 @@ package software.coley.recaf.ui.control.richtext.folding;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import org.fxmisc.richtext.model.PlainTextChange;
+import org.fxmisc.richtext.model.ReadOnlyStyledDocument;
 import org.fxmisc.richtext.model.TwoDimensional;
 import software.coley.recaf.analytics.logging.DebuggingLogger;
 import software.coley.recaf.analytics.logging.Logging;
@@ -10,6 +11,7 @@ import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.EditorComponent;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
 import java.util.function.Consumer;
@@ -17,6 +19,8 @@ import java.util.function.UnaryOperator;
 
 /**
  * Tracking for foldable line regions to display in an {@link Editor}.
+ *
+ * @author SooStrator
  */
 public class FoldTracking implements EditorComponent, Consumer<PlainTextChange> {
 	public static final String COMPONENT_KEY = "fold-tracking";
@@ -76,18 +80,18 @@ public class FoldTracking implements EditorComponent, Consumer<PlainTextChange> 
 			return;
 
 		try {
-			var lineInserted = change.getInserted().contains("\n");
-			var lineRemoved = change.getRemoved().contains("\n");
+			boolean lineInserted = change.getInserted().contains("\n");
+			boolean lineRemoved = change.getRemoved().contains("\n");
 
 			if (lineRemoved) {
-				var lastDocumentSnapshot = editor.getLastDocumentSnapshot();
-				var start = lastDocumentSnapshot.offsetToPosition(change.getPosition(), TwoDimensional.Bias.Backward).getMajor() + 1;
-				var end = lastDocumentSnapshot.offsetToPosition(change.getRemovalEnd(), TwoDimensional.Bias.Backward).getMajor() + 1;
+				ReadOnlyStyledDocument<Collection<String>, String, Collection<String>> lastDocumentSnapshot = editor.getLastDocumentSnapshot();
+				int start = lastDocumentSnapshot.offsetToPosition(change.getPosition(), TwoDimensional.Bias.Backward).getMajor() + 1;
+				int end = lastDocumentSnapshot.offsetToPosition(change.getRemovalEnd(), TwoDimensional.Bias.Backward).getMajor() + 1;
 				onLinesRemoved(start, end);
 			}
 			if (lineInserted) {
-				var start = editor.getCodeArea().offsetToPosition(change.getPosition(), TwoDimensional.Bias.Backward).getMajor() + 1;
-				var end = editor.getCodeArea().offsetToPosition(change.getInsertionEnd(), TwoDimensional.Bias.Backward).getMajor();
+				int start = editor.getCodeArea().offsetToPosition(change.getPosition(), TwoDimensional.Bias.Backward).getMajor() + 1;
+				int end = editor.getCodeArea().offsetToPosition(change.getInsertionEnd(), TwoDimensional.Bias.Backward).getMajor();
 				onLinesInserted(start, end);
 			}
 		} catch (Throwable t) {
@@ -104,7 +108,7 @@ public class FoldTracking implements EditorComponent, Consumer<PlainTextChange> 
 	 * 		Ending range of lines inserted, inclusive.
 	 */
 	private void onLinesInserted(int startLine, int endLine) {
-		var shift = 1 + endLine - startLine;
+		int shift = 1 + endLine - startLine;
 		remapRegions(region -> {
 			if (region.endLine() < startLine)
 				return region;
@@ -125,7 +129,7 @@ public class FoldTracking implements EditorComponent, Consumer<PlainTextChange> 
 	 * 		Ending range of lines removed, exclusive.
 	 */
 	private void onLinesRemoved(int startLine, int endLine) {
-		var shift = endLine - startLine;
+		int shift = endLine - startLine;
 		remapRegions(region -> {
 			if (region.endLine() < startLine)
 				return region;
@@ -134,7 +138,7 @@ public class FoldTracking implements EditorComponent, Consumer<PlainTextChange> 
 
 			// Removal within the body -> shrink
 			if (region.startLine() < startLine && region.endLine() >= endLine) {
-				var shrunk = region.extended(-shift);
+				FoldRegion shrunk = region.extended(-shift);
 				return shrunk.endLine() > shrunk.startLine() ? shrunk : null;
 			}
 
@@ -149,9 +153,9 @@ public class FoldTracking implements EditorComponent, Consumer<PlainTextChange> 
 	 */
 	private void remapRegions(@Nonnull UnaryOperator<FoldRegion> mapper) {
 		synchronized (regions) {
-			var updated = new TreeMap<Integer, FoldRegion>();
-			for (var region : regions.values()) {
-				var mapped = mapper.apply(region);
+			Map<Integer, FoldRegion> updated = new TreeMap<>();
+			for (FoldRegion region : regions.values()) {
+				FoldRegion mapped = mapper.apply(region);
 				if (mapped != null && mapped.endLine() > mapped.startLine())
 					updated.merge(mapped.startLine(), mapped, (a, b) -> a.endLine() >= b.endLine() ? a : b);
 			}

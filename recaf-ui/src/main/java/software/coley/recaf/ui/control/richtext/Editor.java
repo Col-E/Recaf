@@ -937,15 +937,15 @@ public class Editor extends BorderPane implements Closing {
 		if (tabCompleter != null && tabCompleter.isCompletionActive())
 			return;
 
-		var direction = event.getCode() == KeyCode.UP ? -1 : 1;
-		var paragraphCount = codeArea.getParagraphs().size();
-		var paragraph = codeArea.getCurrentParagraph();
+		int direction = event.getCode() == KeyCode.UP ? -1 : 1;
+		int paragraphCount = codeArea.getParagraphs().size();
+		int paragraph = codeArea.getCurrentParagraph();
 
-		var target = paragraph + direction;
+		int target = paragraph + direction;
 		if (target < 0 || target >= paragraphCount || !isParagraphFolded(target))
 			return;
 
-		var skippedLines = 0;
+		int skippedLines = 0;
 		while (target >= 0 && target < paragraphCount && isParagraphFolded(target)) {
 			skippedLines += codeArea.getParagraphLinesCount(target);
 			target += direction;
@@ -955,28 +955,32 @@ public class Editor extends BorderPane implements Closing {
 
 		event.consume();
 
-		moveCaretByVisualLines(direction * (1 + skippedLines), event.isShiftDown() ? NavigationActions.SelectionPolicy.ADJUST : NavigationActions.SelectionPolicy.CLEAR);
+		moveCaretByVisualLines(direction * (1 + skippedLines), event.isShiftDown() ?
+				NavigationActions.SelectionPolicy.ADJUST :
+				NavigationActions.SelectionPolicy.CLEAR);
 	}
 
 	/**
 	 * Mirroring the default caret navigation handling in {@code GenericStyledAreaBehavior#downLines}, while handling
 	 * x-offsets normally, even with folded paragraphs.
+	 *
 	 * @param lineDelta
 	 * 		Number of visual lines to move by.
 	 * @param policy
-	 * 		{@link NavigationActions.SelectionPolicy#CLEAR} for simple navigation,
-	 * 		{@link NavigationActions.SelectionPolicy#ADJUST} for selection.
+	 *        {@link NavigationActions.SelectionPolicy#CLEAR} for simple navigation,
+	 *        {@link NavigationActions.SelectionPolicy#ADJUST} for selection.
 	 */
 	private void moveCaretByVisualLines(int lineDelta, @Nonnull NavigationActions.SelectionPolicy policy) {
 		try {
 			TwoDimensional.Position currentLine = Unchecked.cast(resolveAreaMethod("currentLine").invoke(codeArea));
 			if (currentLine == null)
 				return;
-			var targetLine = currentLine.offsetBy(lineDelta, TwoDimensional.Bias.Forward).clamp();
+
+			TwoDimensional.Position targetLine = currentLine.offsetBy(lineDelta, TwoDimensional.Bias.Forward).clamp();
 			if (currentLine.sameAs(targetLine))
 				return;
 
-			var targetOffset = resolveAreaMethod("getTargetCaretOffset").invoke(codeArea);
+			Object targetOffset = resolveAreaMethod("getTargetCaretOffset").invoke(codeArea);
 			if (targetOffset == null)
 				return;
 

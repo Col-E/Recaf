@@ -89,7 +89,7 @@ public class RootLineGraphicFactory extends AbstractLineGraphicFactory implement
 	public Node apply(int paragraph) {
 		// Skip graphics that would otherwise paint over folded lines
 		if (editor.isParagraphFolded(paragraph)) {
-			var empty = new BorderPane();
+			Node empty = new BorderPane();
 			empty.setVisible(false);
 			empty.setManaged(false);
 			return empty;
