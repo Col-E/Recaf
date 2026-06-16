@@ -1110,29 +1110,29 @@ service.ui.language-config=Язык
 service.ui.language-config.current=Текущий язык
 
 ### Matcher translations
-number.match.equal=значение == n
-number.match.not=значение != n
-number.match.gt=значение > n
-number.match.gte=значение >= n
-number.match.lt=значение < n
-number.match.lte=значение <= n
-number.match.gt-lt=мин < значение < макс
-number.match.gte-lt=мин <= значение < макс
-number.match.gt-lte=мин < значение <= макс
-number.match.gte-lte=мин <= значение <= макс
-number.match.any-of=числа.contains(значение)
+number.match.equal=value == n
+number.match.not=value != n
+number.match.gt=value > n
+number.match.gte=value >= n
+number.match.lt=value < n
+number.match.lte=value <= n
+number.match.gt-lt=min < value < max
+number.match.gte-lt=min <= value < max
+number.match.gt-lte=min < value <= max
+number.match.gte-lte=min <= value <= max
+number.match.any-of=numbers.contains(value)
 string.match.anything=Всё
 string.match.zilch=Ничего
-string.match.contains=строка.contains(значение)
-string.match.contains-ic=строка.containsIgnoreCase(значение)
-string.match.ends=строка.endsWith(значение)
-string.match.ends-ic=строка.endsWithIgnoreCase(значение)
-string.match.equal=строка.equals(значение)
-string.match.equal-ic=строка.equalsIgnoreCase(значение)
-string.match.regex-full=строка.matches(значение)
-string.match.regex-partial=строка.matchesPartially(значение)
-string.match.starts=строка.startsWith(значение)
-string.match.starts-ic=строка.startsWithIgnoreCase(значение)
+string.match.contains=str.contains(value)
+string.match.contains-ic=str.containsIgnoreCase(value)
+string.match.ends=str.endsWith(value)
+string.match.ends-ic=str.endsWithIgnoreCase(value)
+string.match.equal=str.equals(value)
+string.match.equal-ic=str.equalsIgnoreCase(value)
+string.match.regex-full=str.matches(value)
+string.match.regex-partial=str.matchesPartially(value)
+string.match.starts=str.startsWith(value)
+string.match.starts-ic=str.startsWithIgnoreCase(value)
 
 ### Misc stuff
 misc.acknowledge=Принять
