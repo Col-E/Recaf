@@ -89,8 +89,8 @@ public class CallResultInliningTransformer implements JvmClassTransformer {
 					for (int j = 0; j < methodType.getArgumentCount(); j++)
 						arguments.addFirst(frame.getStack(frame.getStackSize() - 1 - j));
 
-					// All arguments must have known values.
-					if (arguments.stream().anyMatch(v -> !v.hasKnownValue()))
+					// Either we need zero arguments, or all arguments that have known values.
+					if (!arguments.isEmpty() && arguments.stream().anyMatch(v -> !v.hasKnownValue()))
 						continue;
 
 					// Target method must be able to be evaluated.
