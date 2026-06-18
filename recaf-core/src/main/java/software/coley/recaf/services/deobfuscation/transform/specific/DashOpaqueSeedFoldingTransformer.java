@@ -10,6 +10,7 @@ import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.member.MethodMember;
+import software.coley.recaf.services.transform.CollectionTransformer;
 import software.coley.recaf.services.transform.JvmClassTransformer;
 import software.coley.recaf.services.transform.JvmTransformerContext;
 import software.coley.recaf.services.transform.TransformationException;
@@ -28,7 +29,7 @@ import static org.objectweb.asm.Opcodes.IRETURN;
  * @author Matt Coley
  */
 @Dependent
-public class DashOpaqueSeedFoldingTransformer implements JvmClassTransformer {
+public class DashOpaqueSeedFoldingTransformer implements JvmClassTransformer, CollectionTransformer {
 	@Override
 	public void transform(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace,
 	                      @Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle,

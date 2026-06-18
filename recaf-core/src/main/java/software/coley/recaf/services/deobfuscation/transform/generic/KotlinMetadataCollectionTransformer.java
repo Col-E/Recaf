@@ -14,6 +14,7 @@ import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.services.mapping.aggregate.AggregatedMappings;
+import software.coley.recaf.services.transform.CollectionTransformer;
 import software.coley.recaf.services.transform.JvmClassTransformer;
 import software.coley.recaf.services.transform.JvmTransformerContext;
 import software.coley.recaf.services.transform.TransformationException;
@@ -52,7 +53,7 @@ import java.util.function.Function;
  * @author Matt Coley
  */
 @Dependent
-public class KotlinMetadataCollectionTransformer implements JvmClassTransformer {
+public class KotlinMetadataCollectionTransformer implements JvmClassTransformer, CollectionTransformer {
 	private final Map<String, KtClass> kotlinClassModels = new HashMap<>();
 	private AggregatedMappings kotlinClassMappings;
 

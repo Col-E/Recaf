@@ -76,6 +76,7 @@ import software.coley.recaf.services.deobfuscation.transform.specific.DashOpaque
 import software.coley.recaf.services.info.association.FileTypeSyntaxAssociationService;
 import software.coley.recaf.services.navigation.Actions;
 import software.coley.recaf.services.transform.ClassTransformer;
+import software.coley.recaf.services.transform.CollectionTransformer;
 import software.coley.recaf.services.transform.JvmClassTransformer;
 import software.coley.recaf.services.transform.JvmTransformResult;
 import software.coley.recaf.services.transform.TransformationApplier;
@@ -729,7 +730,7 @@ public class DeobfuscationWindow extends RecafStage {
 		@Override
 		public void onTransformFailure(@Nonnull Workspace workspace, @Nonnull WorkspaceResource resource,
 		                               @Nonnull ClassBundle<?> bundle, @Nonnull ClassInfo classInfo,
-		                               @Nonnull ClassTransformer transformer,int pass,
+		                               @Nonnull ClassTransformer transformer, int pass,
 		                               @Nullable Throwable error) {
 			// TODO: In the UI we should show errors affecting classes grouped by transformer as they occur.
 			//  - Mainly so that users can report bugs on specific transformers when they run into issues.
@@ -739,7 +740,7 @@ public class DeobfuscationWindow extends RecafStage {
 		@Override
 		public void onTransformedWithoutWork(@Nonnull Workspace workspace, @Nonnull WorkspaceResource resource,
 		                                     @Nonnull ClassBundle<?> bundle, @Nonnull ClassInfo classInfo,
-		                                     @Nonnull ClassTransformer transformer,int pass) {
+		                                     @Nonnull ClassTransformer transformer, int pass) {
 			onTransformed(workspace, resource, bundle, classInfo, transformer, pass);
 		}
 
@@ -784,8 +785,11 @@ public class DeobfuscationWindow extends RecafStage {
 
 		@Override
 		public boolean shouldTransform(@Nonnull Workspace workspace, @Nonnull WorkspaceResource resource,
-		                               @Nonnull ClassBundle<?> bundle, @Nonnull ClassInfo classInfo,  @Nonnull ClassTransformer transformer,int pass) {
-			return classInfo.getName().equals(targetClass.getName()) || classInfo.isInnerClassOf(targetClass.getName());
+		                               @Nonnull ClassBundle<?> bundle, @Nonnull ClassInfo classInfo,
+		                               @Nonnull ClassTransformer transformer, int pass) {
+			return classInfo.getName().equals(targetClass.getName())
+					|| classInfo.isInnerClassOf(targetClass.getName())
+					|| transformer instanceof CollectionTransformer;
 		}
 	}
 

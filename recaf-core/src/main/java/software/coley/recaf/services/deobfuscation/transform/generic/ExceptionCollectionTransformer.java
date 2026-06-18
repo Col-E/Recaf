@@ -12,6 +12,7 @@ import software.coley.recaf.info.properties.builtin.ThrowableProperty;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.inheritance.InheritanceGraphService;
+import software.coley.recaf.services.transform.CollectionTransformer;
 import software.coley.recaf.services.transform.JvmClassTransformer;
 import software.coley.recaf.services.transform.JvmTransformerContext;
 import software.coley.recaf.services.transform.TransformationException;
@@ -30,7 +31,7 @@ import java.util.Set;
  * @author Matt Coley
  */
 @Dependent
-public class ExceptionCollectionTransformer implements JvmClassTransformer, Opcodes {
+public class ExceptionCollectionTransformer implements JvmClassTransformer, CollectionTransformer, Opcodes {
 	private final Set<String> thrownExceptions = new HashSet<>();
 	private final InheritanceGraphService graphService;
 	private InheritanceGraph inheritanceGraph;

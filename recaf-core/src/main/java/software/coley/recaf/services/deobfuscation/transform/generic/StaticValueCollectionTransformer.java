@@ -16,6 +16,7 @@ import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.inheritance.InheritanceGraphService;
+import software.coley.recaf.services.transform.CollectionTransformer;
 import software.coley.recaf.services.transform.JvmClassTransformer;
 import software.coley.recaf.services.transform.JvmTransformerContext;
 import software.coley.recaf.services.transform.TransformationException;
@@ -46,7 +47,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Matt Coley
  */
 @Dependent
-public class StaticValueCollectionTransformer implements JvmClassTransformer, GetStaticLookup {
+public class StaticValueCollectionTransformer implements JvmClassTransformer, CollectionTransformer, GetStaticLookup {
 	private final Map<String, StaticValues> classValues = new ConcurrentHashMap<>();
 	private final Map<String, EffectivelyFinalFields> classFinals = new ConcurrentHashMap<>();
 	private final InheritanceGraphService graphService;
