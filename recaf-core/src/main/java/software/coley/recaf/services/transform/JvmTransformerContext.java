@@ -5,6 +5,7 @@ import jakarta.annotation.Nullable;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.analysis.Frame;
 import org.slf4j.Logger;
@@ -17,6 +18,7 @@ import software.coley.recaf.services.deobfuscation.transform.generic.DeadCodeRem
 import software.coley.recaf.services.deobfuscation.transform.generic.FrameRemovingTransformer;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.mapping.aggregate.AggregatedMappings;
+import software.coley.recaf.util.ClassMethodPair;
 import software.coley.recaf.util.analysis.ReAnalyzer;
 import software.coley.recaf.util.analysis.ReInterpreter;
 import software.coley.recaf.util.analysis.lookup.BasicGetStaticLookup;
@@ -321,6 +323,60 @@ public class JvmTransformerContext extends AbstractTransformerContext<JvmClassTr
 	public void setBytecode(@Nonnull JvmClassBundle bundle, @Nonnull JvmClassInfo info, @Nonnull byte[] bytecode) {
 		recordDidWork();
 		getJvmClassData(bundle, info).setBytecode(bytecode);
+	}
+
+	/**
+	 * Resolves a method instruction to the class and method it is calling.
+	 *
+	 * @param min
+	 * 		Method instruction to resolve.
+	 *
+	 * @return The class and method being called, or {@code null} if the method cannot be resolved.
+	 */
+	@Nullable
+	public ClassMethodPair resolveMethod(@Nonnull MethodInsnNode min) {
+		String owner = min.owner;
+		String methodName = min.name;
+		String methodDesc = min.desc;
+
+		return resolveMethod(owner, methodName, methodDesc);
+	}
+
+	/**
+	 * Resolves a method call to the class and method it is calling.
+	 *
+	 * @param owner
+	 * 		Class name declaring the method.
+	 * @param methodName
+	 * 		Name of the method being called.
+	 * @param methodDesc
+	 * 		Descriptor of the method being called.
+	 *
+	 * @return The class and method being called, or {@code null} if the method cannot be resolved.
+	 */
+	@Nullable
+	public ClassMethodPair resolveMethod(@Nonnull String owner,
+	                                     @Nonnull String methodName,
+	                                     @Nonnull String methodDesc) {
+		// Look up class in the workspace.
+		ClassPathNode classPath = workspace.findJvmClass(owner);
+		if (classPath == null)
+			return null;
+
+		// Look up the bundle for the class.
+		JvmClassBundle bundle = classPath.getValueOfType(JvmClassBundle.class);
+		if (bundle == null)
+			return null;
+
+		// We really only looked up the class to get the containing bundle.
+		// Now that we have the bundle, we can look up the class node in its current form in this context
+		// and up-to-date method contents in that class.
+		JvmClassInfo classInfo = classPath.getValue().asJvmClass();
+		ClassNode classNode = getNode(bundle, classInfo);
+		for (MethodNode method : classNode.methods)
+			if (methodName.equals(method.name) && methodDesc.equals(method.desc))
+				return new ClassMethodPair(classNode, method);
+		return null;
 	}
 
 	/**

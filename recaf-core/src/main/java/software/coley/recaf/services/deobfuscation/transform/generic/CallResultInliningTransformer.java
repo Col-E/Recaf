@@ -19,10 +19,11 @@ import software.coley.recaf.services.transform.ClassTransformer;
 import software.coley.recaf.services.transform.JvmClassTransformer;
 import software.coley.recaf.services.transform.JvmTransformerContext;
 import software.coley.recaf.services.transform.TransformationException;
+import software.coley.recaf.util.ClassMethodPair;
 import software.coley.recaf.util.analysis.eval.EvaluationResult;
 import software.coley.recaf.util.analysis.eval.EvaluationYieldResult;
-import software.coley.recaf.util.analysis.eval.FieldCacheManager;
 import software.coley.recaf.util.analysis.eval.Evaluator;
+import software.coley.recaf.util.analysis.eval.FieldCacheManager;
 import software.coley.recaf.util.analysis.value.DoubleValue;
 import software.coley.recaf.util.analysis.value.LongValue;
 import software.coley.recaf.util.analysis.value.ReValue;
@@ -59,7 +60,7 @@ public class CallResultInliningTransformer implements JvmClassTransformer {
 	@Override
 	public void setup(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace) {
 		inheritanceGraph = graphService.getOrCreateInheritanceGraph(workspace);
-		evaluator = new Evaluator(workspace, context.newInterpreter(inheritanceGraph), new FieldCacheManager(), MAX_STEPS, false);
+		evaluator = new Evaluator(workspace, context.newInterpreter(inheritanceGraph), fieldCacheManager, MAX_STEPS, false);
 	}
 
 	@Override
@@ -94,14 +95,17 @@ public class CallResultInliningTransformer implements JvmClassTransformer {
 						continue;
 
 					// Target method must be able to be evaluated.
-					if (!canEvaluate(min))
+					ClassMethodPair target = context.resolveMethod(min);
+					if (target == null)
+						continue;
+					if (!evaluator.canEvaluate(target.methodNode()))
 						continue;
 
 					// Reset instance support before each evaluation to prevent state pollution.
 					fieldCacheManager.reset();
 
 					// Attempt evaluation. If it yields a value, replace the call with the result.
-					EvaluationResult result = evaluator.evaluate(min.owner, min.name, min.desc, null, arguments);
+					EvaluationResult result = evaluator.evaluate(target.classNode(), target.methodNode(), null, arguments);
 					if (result instanceof EvaluationYieldResult(ReValue retVal)) {
 						AbstractInsnNode replacement = OpaqueConstantFoldingTransformer.toInsn(retVal);
 						if (replacement != null) {
@@ -137,10 +141,4 @@ public class CallResultInliningTransformer implements JvmClassTransformer {
 		return "Call result inlining";
 	}
 
-	private boolean canEvaluate(@Nonnull MethodInsnNode min) {
-		String key = min.owner + "." + min.name + min.desc;
-		synchronized (canBeEvaluatedMap) {
-			return canBeEvaluatedMap.computeIfAbsent(key, k -> evaluator.canEvaluate(min.owner, min.name, min.desc) ? 1 : 0) != 0;
-		}
-	}
 }
