@@ -298,6 +298,8 @@ public class Evaluator {
 		ExecutingFrame frame = new ExecutingFrame(originFrame.getLocals(), originFrame.getMaxStackSize(), methodAccess);
 		for (int i = 0; i < originFrame.getLocals(); i++)
 			frame.setLocal(i, originFrame.getLocal(i));
+		for (int i = 0; i < originFrame.getStackSize(); i++)
+			frame.push(originFrame.getStack(i));
 
 		// Handle execution
 		AbstractInsnNode pc = instructionBlock.getFirst();
