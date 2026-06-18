@@ -50,7 +50,7 @@ public class EmbeddedResourceContainerPathNode extends AbstractPathNode<Workspac
 	@Nonnull
 	@Override
 	public Set<String> directParentTypeIds() {
-		return Set.of(EmbeddedResourceContainerPathNode.TYPE_ID);
+		return Set.of(ResourcePathNode.TYPE_ID);
 	}
 
 	@Override

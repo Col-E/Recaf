@@ -117,7 +117,7 @@ public class ResourcePathNode extends AbstractPathNode<Workspace, WorkspaceResou
 	@Nonnull
 	@Override
 	public Set<String> directParentTypeIds() {
-		return Set.of(WorkspacePathNode.TYPE_ID);
+		return Set.of(WorkspacePathNode.TYPE_ID, EmbeddedResourceContainerPathNode.TYPE_ID);
 	}
 
 	@Override
@@ -132,9 +132,9 @@ public class ResourcePathNode extends AbstractPathNode<Workspace, WorkspaceResou
 
 			if (parent instanceof EmbeddedResourceContainerPathNode) {
 				PathNode<WorkspaceResource> parentOfParent = Unchecked.cast(parent.getParent());
-				Map<String, WorkspaceFileResource> embeddedResources = parentOfParent.getValue().getEmbeddedResources();
-				String ourKey = Objects.requireNonNullElse(Maps.identityKeyOf(embeddedResources, resource), "?");
-				String otherKey = Objects.requireNonNullElse(Maps.identityKeyOf(embeddedResources, otherResource), "?");
+				WorkspaceResource containingResource = parentOfParent.getValue();
+				String ourKey = embeddedResourceKey(containingResource, resource);
+				String otherKey = embeddedResourceKey(containingResource, otherResource);
 				return Named.STRING_PATH_COMPARATOR.compare(ourKey, otherKey);
 			} else {
 				if (workspace != null) {
@@ -161,6 +161,25 @@ public class ResourcePathNode extends AbstractPathNode<Workspace, WorkspaceResou
 			}
 		}
 		return 0;
+	}
+
+	@Nonnull
+	private static String embeddedResourceKey(@Nonnull WorkspaceResource containingResource,
+	                                          @Nonnull WorkspaceResource targetResource) {
+		// Get key of the target resource in the map of embedded resources.
+		Map<String, WorkspaceFileResource> embeddedResources = containingResource.getEmbeddedResources();
+		String directKey = Maps.identityKeyOf(embeddedResources, targetResource);
+		if (directKey != null)
+			return directKey;
+
+		// If it is not directly embedded, check if it's nested in any of the embedded resources.
+		for (Map.Entry<String, WorkspaceFileResource> entry : embeddedResources.entrySet()) {
+			String nestedKey = embeddedResourceKey(entry.getValue(), targetResource);
+			if (!"?".equals(nestedKey))
+				return entry.getKey() + "/" + nestedKey;
+		}
+
+		return "?";
 	}
 
 	@Override

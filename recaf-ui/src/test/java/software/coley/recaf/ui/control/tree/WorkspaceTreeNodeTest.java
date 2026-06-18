@@ -238,6 +238,49 @@ class WorkspaceTreeNodeTest {
 	}
 
 	@Test
+	void nestedEmbeddedResourcesAreFlattenedIntoSingleContainerInBulkBuild() {
+		// Build a workspace with the following structure:
+		//  host/
+		//   deep.jar/
+		//    internal.txt
+		//	  super-deep.jar/
+		//	    deep.txt
+		WorkspaceFileResource deepResource = embeddedResource("jars/super-deep.jar", "deep.txt");
+		BasicFileBundle internalFiles = new BasicFileBundle();
+		internalFiles.put(new StubFileInfo("internal.txt"));
+		WorkspaceFileResource internalResource = new WorkspaceFileResourceBuilder(new BasicJvmClassBundle(), internalFiles)
+				.withFileInfo(new StubFileInfo("jars/deep.jar"))
+				.withEmbeddedResources(Map.of("jars/super-deep.jar", embeddedResource("jars/super-deep.jar", "deep.txt")))
+				.build();
+		WorkspaceResource hostResource = new WorkspaceResourceBuilder()
+				.withEmbeddedResources(Map.of("jars/deep.jar", internalResource))
+				.build();
+		Workspace workspace = new BasicWorkspace(hostResource);
+		WorkspacePathNode rootPath = PathNodes.workspacePath(workspace);
+		ResourcePathNode hostPath = rootPath.child(hostResource);
+
+		// Build the tree model.
+		WorkspaceRootTreeNode root = new WorkspaceRootTreeNode(new WorkspaceExplorerConfig(), rootPath);
+		root.build();
+
+		// We should be able to find the embedded resource container.
+		WorkspaceTreeNode containerNode = root.getNodeByPath(hostPath.embeddedChildContainer());
+		assertNotNull(containerNode, "Could not find embedded resource container");
+
+		// The embedded container should have both (because we flatten embeddings):
+		// - The direct embedded resource
+		// - The nested embedded resource
+		List<TreeItem<PathNode<?>>> children = containerNode.getSourceChildren();
+		assertEquals(2, children.size(), "Expected direct and nested embedded resource nodes");
+		List<?> childValues = children.stream()
+				.map(TreeItem::getValue)
+				.map(PathNode::getValue)
+				.toList();
+		assertTrue(childValues.contains(internalResource), "Direct embedded resource missing");
+		assertTrue(childValues.contains(deepResource), "Nested embedded resource missing");
+	}
+
+	@Test
 	void embeddedResourceCompareDoesNotUseResourceEquality() {
 		WorkspaceFileResource aResource = equalityBombEmbeddedResource("a.jar", "a.txt");
 		WorkspaceFileResource bResource = equalityBombEmbeddedResource("b.jar", "b.txt");
@@ -254,6 +297,28 @@ class WorkspaceTreeNodeTest {
 
 		// Local compare should bypass the equals()/hashCode() methods of the resources.
 		// We don't want to check contents for sorting, just the path name.
+		assertTrue(embeddedContainer.child(aResource).localCompare(embeddedContainer.child(bResource)) < 0);
+		assertTrue(embeddedContainer.child(bResource).localCompare(embeddedContainer.child(aResource)) > 0);
+	}
+
+	@Test
+	void nestedEmbeddedResourceCompareUsesRecursivePathLookup() {
+		WorkspaceFileResource aResource = embeddedResource("2.jar", "a.txt");
+		WorkspaceFileResource bResource = embeddedResource("3.jar", "b.txt");
+		WorkspaceFileResource containerResource = new WorkspaceFileResourceBuilder(new BasicJvmClassBundle(), new BasicFileBundle())
+				.withFileInfo(new StubFileInfo("1.jar"))
+				.withEmbeddedResources(Map.of("2.jar", aResource, "3.jar", bResource))
+				.build();
+		WorkspaceResource hostResource = new WorkspaceResourceBuilder()
+				.withEmbeddedResources(Map.of("1.jar", containerResource))
+				.build();
+		Workspace workspace = new BasicWorkspace(hostResource);
+		EmbeddedResourceContainerPathNode embeddedContainer = PathNodes.workspacePath(workspace)
+				.child(hostResource)
+				.embeddedChildContainer();
+
+		// Local compare should compare the path names of the resources, even if the resource objects themselves are not equal.
+		// The idea is that the path name is what determines sorting, not the resource contents or identity.
 		assertTrue(embeddedContainer.child(aResource).localCompare(embeddedContainer.child(bResource)) < 0);
 		assertTrue(embeddedContainer.child(bResource).localCompare(embeddedContainer.child(aResource)) > 0);
 	}
