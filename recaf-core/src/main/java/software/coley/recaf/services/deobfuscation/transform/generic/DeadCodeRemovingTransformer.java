@@ -86,7 +86,11 @@ public class DeadCodeRemovingTransformer implements JvmClassTransformer {
 			// Prune any instructions not visited.
 			int end = instructions.size() - 1;
 			for (int i = end; i >= 0; i--) {
+				if (i >= instructions.size())
+					continue;
 				AbstractInsnNode insn = instructions.get(i);
+				if (insn == null)
+					continue;
 				if (!visited.contains(insn) || insn.getOpcode() == NOP) {
 					// Don't prune the tail label even if it is "dead" because the last method instruction
 					// is terminal like 'return' or 'athrow'. The label will just get added back automatically
