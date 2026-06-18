@@ -50,8 +50,12 @@ public class FabricModEntryPointDiscovery implements EntryPointDiscovery {
 				if (!methodName.equals("onInitialize") && !methodName.equals("onInitializeClient"))
 					continue;
 
-				// Check if this class is a mod-initializer subtype.
-				if (isModInitializer == null && (isModInitializer = isInitializer(graph, className)))
+				// Lazily check if this class is a mod-initializer subtype.
+				if (isModInitializer == null)
+					isModInitializer = isInitializer(graph, className);
+
+				// Skip methods if the class is not a valid mod initializer.
+				if (!isModInitializer)
 					continue;
 
 				// Add the entry point.
@@ -65,7 +69,7 @@ public class FabricModEntryPointDiscovery implements EntryPointDiscovery {
 
 	private static boolean isInitializer(@Nonnull InheritanceGraph graph, @Nonnull String className) {
 		// Fabric and Quilt (lol) both use the same interface names
-		return !graph.isAssignableFrom("net/fabricmc/api/ClientModInitializer", className)
-				&& !graph.isAssignableFrom("net/fabricmc/api/ModInitializer", className);
+		return graph.isAssignableFrom("net/fabricmc/api/ClientModInitializer", className)
+				|| graph.isAssignableFrom("net/fabricmc/api/ModInitializer", className);
 	}
 }
