@@ -16,5 +16,7 @@ public record EntryPointKind(@Nonnull String id, @Nonnull String displayName) {
 	public static final EntryPointKind JVM_MAIN_METHOD = new EntryPointKind("jvm-main-method", "Java main(String[])");
 	public static final EntryPointKind ANDROID_ACTIVITY = new EntryPointKind("android-activity", "Android activity");
 	public static final EntryPointKind MC_FABRIC_MOD_INIT = new EntryPointKind("mc.fabric", "Fabric mod initializer");
-	public static final EntryPointKind MC_FORGE_MOD_INIT = new EntryPointKind("mc.forge", "Fabric mod initializer");
+	public static final EntryPointKind MC_FORGE_MOD_INIT = new EntryPointKind("mc.forge", "Forge mod initializer");
+	public static final EntryPointKind MC_BUKKIT_PLUGIN_INIT = new EntryPointKind("mc.bukkit", "Bukkit plugin initializer");
+	public static final EntryPointKind MC_VELOCITY_PLUGIN_INIT = new EntryPointKind("mc.velocity", "Velocity plugin initializer");
 }
