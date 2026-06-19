@@ -57,7 +57,8 @@ public class ForgeModEntryPointDiscovery implements EntryPointDiscovery {
 			);
 			for (String annotation : annotations) {
 				if ("Lnet/minecraftforge/fml/common/Mod;".equals(annotation)
-						|| "Lnet/neoforged/fml/common/Mod;".equals(annotation)) {
+						|| "Lnet/neoforged/fml/common/Mod;".equals(annotation)
+						|| "Lcpw/mods/fml/common/Mod;".equals(annotation)) {
 					classPath = PathNodes.classPath(workspace, resource, bundle, cls);
 					classEntry = new EntryPoint(kind(), classPath, null);
 					break;
@@ -74,6 +75,14 @@ public class ForgeModEntryPointDiscovery implements EntryPointDiscovery {
 						|| "(Lnet/neoforged/fml/event/lifecycle/FMLClientSetupEvent;)V".equals(desc)
 						|| "(Lnet/neoforged/fml/event/lifecycle/FMLCommonSetupEvent;)V".equals(desc)
 						|| "(Lnet/neoforged/fml/event/lifecycle/FMLDedicatedServerSetupEvent;)V".equals(desc)
+						// Legacy Forge 1.8 - 1.12.2 lifecycle events
+						|| "(Lnet/minecraftforge/fml/common/event/FMLPreInitializationEvent;)V".equals(desc)
+						|| "(Lnet/minecraftforge/fml/common/event/FMLInitializationEvent;)V".equals(desc)
+						|| "(Lnet/minecraftforge/fml/common/event/FMLPostInitializationEvent;)V".equals(desc)
+						// Legacy Forge 1.6.4 - 1.7.10 lifecycle events
+						|| "(Lcpw/mods/fml/common/event/FMLPreInitializationEvent;)V".equals(desc)
+						|| "(Lcpw/mods/fml/common/event/FMLInitializationEvent;)V".equals(desc)
+						|| "(Lcpw/mods/fml/common/event/FMLPostInitializationEvent;)V".equals(desc)
 						// Not sure if we should consider events like this as entry points...
 						// || "(Lnet/minecraftforge/event/server/ServerAboutToStartEvent;)V".equals(desc)
 						// || "(Lnet/minecraftforge/event/server/ServerStartingEvent;)V".equals(desc)
