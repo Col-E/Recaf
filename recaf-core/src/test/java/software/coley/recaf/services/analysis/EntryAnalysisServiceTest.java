@@ -94,6 +94,84 @@ class EntryAnalysisServiceTest extends TestBase {
 	}
 
 	@Test
+	void findsFabricModEntryPoint() {
+		JvmClassInfo fabricClass = createClass("test/TestFabricMod", node -> {
+			node.interfaces.add("net/fabricmc/api/ModInitializer");
+
+			MethodNode initMethod = new MethodNode(Opcodes.ACC_PUBLIC, "onInitialize", "()V", null, null);
+			initMethod.visitCode();
+			initMethod.visitInsn(Opcodes.RETURN);
+			initMethod.visitEnd();
+			node.methods.add(initMethod);
+		});
+
+		Workspace workspace = fromBundle(fromClasses(fabricClass));
+		List<EntryPoint> results = service.findEntryPoints(workspace, workspace.getPrimaryResource());
+
+		assertEquals(1, results.size(), "Should find exactly one entry point");
+		assertEquals(EntryPointKind.MC_FABRIC_MOD_INIT, results.getFirst().kind(), "Should be Fabric entry point");
+	}
+
+	@Test
+	void findsForgeModEntryPoint() {
+		JvmClassInfo forgeModClass = createClass("test/TestForgeMod", node -> {
+			node.visitAnnotation("Lnet/minecraftforge/fml/common/Mod;", true).visitEnd();
+
+			MethodNode setupMethod = new MethodNode(Opcodes.ACC_PUBLIC, "setup",
+					"(Lnet/minecraftforge/fml/event/lifecycle/FMLCommonSetupEvent;)V", null, null);
+			setupMethod.visitCode();
+			setupMethod.visitInsn(Opcodes.RETURN);
+			setupMethod.visitEnd();
+			node.methods.add(setupMethod);
+		});
+
+		Workspace workspace = fromBundle(fromClasses(forgeModClass));
+		List<EntryPoint> results = service.findEntryPoints(workspace, workspace.getPrimaryResource());
+
+		assertEquals(1, results.size(), "Should find exactly one entry point");
+		assertEquals(EntryPointKind.MC_FORGE_MOD_INIT, results.getFirst().kind(), "Should be Forge entry point");
+	}
+
+	@Test
+	void findsBukkitPluginEntryPoint() {
+		JvmClassInfo bukkitPluginClass = createClass("test/TestBukkitPlugin", node -> {
+			node.superName = "org/bukkit/plugin/java/JavaPlugin";
+
+			MethodNode onEnableMethod = new MethodNode(Opcodes.ACC_PUBLIC, "onEnable", "()V", null, null);
+			onEnableMethod.visitCode();
+			onEnableMethod.visitInsn(Opcodes.RETURN);
+			onEnableMethod.visitEnd();
+			node.methods.add(onEnableMethod);
+		});
+
+		Workspace workspace = fromBundle(fromClasses(bukkitPluginClass));
+		List<EntryPoint> results = service.findEntryPoints(workspace, workspace.getPrimaryResource());
+
+		assertEquals(1, results.size(), "Should find exactly one entry point");
+		assertEquals(EntryPointKind.MC_BUKKIT_PLUGIN_INIT, results.getFirst().kind(), "Should be Bukkit entry point");
+	}
+
+	@Test
+	void findsVelocityPluginEntryPoint() {
+		JvmClassInfo velocityPluginClass = createClass("test/TestVelocityPlugin", node -> {
+			node.visitAnnotation("Lcom/velocitypowered/api/plugin/Plugin;", true).visitEnd();
+
+			MethodNode initMethod = new MethodNode(Opcodes.ACC_PUBLIC, "onInit",
+					"(Lcom/velocitypowered/api/event/proxy/ProxyInitializeEvent;)V", null, null);
+			initMethod.visitCode();
+			initMethod.visitInsn(Opcodes.RETURN);
+			initMethod.visitEnd();
+			node.methods.add(initMethod);
+		});
+
+		Workspace workspace = fromBundle(fromClasses(velocityPluginClass));
+		List<EntryPoint> results = service.findEntryPoints(workspace, workspace.getPrimaryResource());
+
+		assertEquals(1, results.size(), "Should find exactly one entry point");
+		assertEquals(EntryPointKind.MC_VELOCITY_PLUGIN_INIT, results.getFirst().kind(), "Should be Velocity entry point");
+	}
+
+	@Test
 	void supportsRuntimeDiscoveryRegistration() throws IOException {
 		Workspace workspace = fromBundle(fromClasses(HelloWorld.class));
 		WorkspaceResource primary = workspace.getPrimaryResource();
