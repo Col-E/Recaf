@@ -1,6 +1,10 @@
 package software.coley.recaf.services.attach;
 
-import com.sun.tools.attach.*;
+import com.sun.tools.attach.AgentInitializationException;
+import com.sun.tools.attach.AgentLoadException;
+import com.sun.tools.attach.AttachNotSupportedException;
+import com.sun.tools.attach.VirtualMachine;
+import com.sun.tools.attach.VirtualMachineDescriptor;
 import com.sun.tools.attach.spi.AttachProvider;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
@@ -34,8 +38,18 @@ import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.jar.JarFile;
 
 /**
@@ -373,7 +387,7 @@ public class BasicAttachManager implements AttachManager {
 				try {
 					port = SocketAvailability.findAvailable();
 					String agentAbsolutePath = StringUtil.pathToAbsoluteString(getAgentJarPath());
-					String agentArgs = "port=" + port+",notrampolines";
+					String agentArgs = "port=" + port + ",notrampolines";
 					if (DevDetection.isDevEnv())
 						agentArgs += ",debug";
 					else

@@ -447,6 +447,7 @@ attach.no-vms.detail=There are currently no Java virtual machines that are avail
 attach.problem.disable-attach=If you are attempting to connect to a Java process that uses -XX:+DisableAttachMechanism please see:
 attach.problem.java-21=If you are attempting to connect to a Java 21+ process please see:
 attach.connect=Connect
+attach.connecting=Connecting...
 attach.tab.properties=Properties
 attach.tab.classloading=Classes
 attach.tab.compilation=Compilation
