@@ -518,7 +518,7 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 						}
 					});
 					parents.forEach((parent, parentClassPath) -> {
-						if (parent.hasMethod(methodName, methodDesc) && isBlacklistedParent(parent, methodName, methodDesc)) {
+						if (parent.hasMethod(methodName, methodDesc) && !isBlacklistedParent(parent, methodName, methodDesc)) {
 							ClassMemberPathNode parentMethodPath = parentClassPath.child(methodName, methodDesc);
 							if (parentMethodPath != null)
 								inheritances.add(new Inheritance.Parent(line, parentMethodPath));
