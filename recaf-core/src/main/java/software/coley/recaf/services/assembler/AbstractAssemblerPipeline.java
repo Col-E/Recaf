@@ -8,6 +8,7 @@ import me.darknet.assembler.compiler.ClassResult;
 import me.darknet.assembler.compiler.Compiler;
 import me.darknet.assembler.compiler.CompilerOptions;
 import me.darknet.assembler.compiler.InheritanceChecker;
+import me.darknet.assembler.compiler.TypeAwareness;
 import me.darknet.assembler.error.Error;
 import me.darknet.assembler.error.Result;
 import me.darknet.assembler.printer.AnnotationHolder;
@@ -81,6 +82,26 @@ public abstract class AbstractAssemblerPipeline<C extends ClassInfo, R extends C
 	protected abstract Compiler getCompiler();
 
 	@Nonnull
+	protected TypeAwareness getTypeAwareness() {
+		return new TypeAwareness() {
+			@Override
+			public boolean isAwareOf(String type) {
+				return inheritanceGraph.getVertex(type) != null;
+			}
+
+			@Override
+			public String notifyUnknownType(String type) {
+				// TODO: We should have 'assembler.missingtypewarning' in the lang files, but we're not in the UI module
+				//   so we can't reference it here...
+				return "Type '" + type + "' is not present in the workspace. StackMapTable references to it will degrade to 'java/lang/Object'\n" +
+						"Consider either:\n" +
+						"- Adding a dependency containing the class to the workspace.\n" +
+						"- Enabling workspace phantom generation under 'All Services > Analysis > Phantom generator'.";
+			}
+		};
+	}
+
+	@Nonnull
 	protected InheritanceChecker getInheritanceChecker() {
 		return new InheritanceChecker() {
 			@Override
@@ -145,6 +166,7 @@ public abstract class AbstractAssemblerPipeline<C extends ClassInfo, R extends C
 
 		CompilerOptions<? extends CompilerOptions<?>> options = getCompilerOptions();
 		options.version(getClassVersion(info))
+				.awareness(getTypeAwareness())
 				.inheritanceChecker(getInheritanceChecker());
 
 		if (element.type() != ElementType.CLASS) {
