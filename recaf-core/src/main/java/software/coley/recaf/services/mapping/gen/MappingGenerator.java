@@ -260,7 +260,7 @@ public class MappingGenerator implements Service {
 
 			// Add mapping.
 			String name = vertex.getName();
-			String mapped = generator.mapClass(classInfo);
+			String mapped = generator.mapClass(classInfo, filter.shouldMapPackage(classInfo));
 			mappings.addClass(name, mapped);
 		});
 	}

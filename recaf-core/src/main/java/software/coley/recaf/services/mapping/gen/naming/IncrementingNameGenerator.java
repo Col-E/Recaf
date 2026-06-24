@@ -22,8 +22,11 @@ public class IncrementingNameGenerator implements DeconflictingNameGenerator {
 	private long varIndex = 1;
 
 	@Nonnull
-	private String nextClassName() {
-		return "mapped/Class" + classIndex++;
+	private String nextClassName(@Nullable String packageName) {
+		String simpleName = "Class" + classIndex++;
+		if (packageName == null || packageName.isEmpty())
+			return simpleName;
+		return packageName + "/" + simpleName;
 	}
 
 	@Nonnull
@@ -49,10 +52,17 @@ public class IncrementingNameGenerator implements DeconflictingNameGenerator {
 	@Nonnull
 	@Override
 	public String mapClass(@Nonnull ClassInfo info) {
-		String name = nextClassName();
+		return mapClass(info, true);
+	}
+
+	@Nonnull
+	@Override
+	public String mapClass(@Nonnull ClassInfo info, boolean mapPackage) {
+		String packageName = mapPackage ? "mapped" : info.getPackageName();
+		String name = nextClassName(packageName);
 		if (workspace != null) {
 			while (workspace.findClass(name) != null)
-				name = nextClassName();
+				name = nextClassName(packageName);
 		}
 		return name;
 	}

@@ -35,6 +35,11 @@ public class IncludeClassesFilter extends NameGeneratorFilter {
 	}
 
 	@Override
+	public boolean shouldMapPackage(@Nonnull ClassInfo info) {
+		return shouldMapClass(info);
+	}
+
+	@Override
 	public boolean shouldMapField(@Nonnull ClassInfo owner, @Nonnull FieldMember field) {
 		// Consider owner type, we do not want to map fields if they are outside the inclusion filter
 		return shouldMapClass(owner) && super.shouldMapField(owner, field);
