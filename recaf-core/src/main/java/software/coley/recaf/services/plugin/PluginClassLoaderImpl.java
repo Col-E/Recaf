@@ -18,6 +18,10 @@ final class PluginClassLoaderImpl extends ClassLoader implements PluginClassLoad
 	private final PluginSource source;
 	private final String id;
 
+	static {
+		registerAsParallelCapable();
+	}
+
 	PluginClassLoaderImpl(@Nonnull ClassLoader classLoader, @Nonnull PluginGraph graph, @Nonnull PluginSource source, @Nonnull String id) {
 		super(classLoader);
 		this.graph = graph;
@@ -32,7 +36,7 @@ final class PluginClassLoaderImpl extends ClassLoader implements PluginClassLoad
 			return null;
 		}
 		try {
-			URI uri = new URI("recaf", "/", name);
+			URI uri = new URI("recaf", null, "/" + name, null);
 			return URL.of(uri, new URLStreamHandler() {
 				@Override
 				protected URLConnection openConnection(URL u) {
@@ -84,8 +88,12 @@ final class PluginClassLoaderImpl extends ClassLoader implements PluginClassLoad
 			return cls;
 		var dependencyLoaders = graph.getDependencyClassloaders(id);
 		while (dependencyLoaders.hasNext()) {
-			if ((cls = dependencyLoaders.next().findClass(name)) != null)
-				return cls;
+			try {
+				if ((cls = dependencyLoaders.next().findClass(name)) != null)
+					return cls;
+			} catch (ClassNotFoundException ignored) {
+				// This dependency does not have the required class.
+			}
 		}
 		throw new ClassNotFoundException(name);
 	}

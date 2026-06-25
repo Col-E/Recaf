@@ -194,16 +194,40 @@ final class PluginGraph {
 	 * 		Plugin to collect dependants of.
 	 * @param dependants
 	 * 		Map to store results in.
+	 *
+	 * @throws IllegalStateException
+	 * 		If a circular dependency is detected.
 	 */
 	private void collectDependants(@Nonnull LoadedPlugin plugin, @Nonnull Map<LoadedPlugin, Set<LoadedPlugin>> dependants) {
+		collectDependants(plugin, dependants, HashSet.newHashSet(4));
+	}
+
+	/**
+	 * Recursively collects dependants while protecting against circular dependencies.
+	 *
+	 * @param plugin
+	 * 		Plugin to collect dependants of in the current step of recursion.
+	 * @param dependants
+	 * 		Map to store results in.
+	 * @param visited
+	 * 		Set of plugins visited in the current traversal path to detect circular dependencies.
+	 *
+	 * @throws IllegalStateException
+	 * 		If a circular dependency is detected during traversal.
+	 */
+	private void collectDependants(@Nonnull LoadedPlugin plugin, @Nonnull Map<LoadedPlugin, Set<LoadedPlugin>> dependants, @Nonnull Set<LoadedPlugin> visited) {
+		if (!visited.add(plugin)) {
+			throw new IllegalStateException("Circular dependency detected at plugin: %s".formatted(plugin.getContainer().info().id()));
+		}
 		Set<LoadedPlugin> dependantsSet = dependants.computeIfAbsent(plugin, _ -> HashSet.newHashSet(4));
 		for (LoadedPlugin pl : plugins.values()) {
 			if (plugin == pl) continue;
 			if (pl.getDependencies().contains(plugin)) {
 				dependantsSet.add(pl);
-				collectDependants(pl, dependants);
+				collectDependants(pl, dependants, visited);
 			}
 		}
+		visited.remove(plugin);
 	}
 
 	/**
@@ -252,16 +276,37 @@ final class PluginGraph {
 	 * @throws PluginException
 	 * 		If the plugin could not be initialized or enabled.
 	 */
-	@SuppressWarnings({"rawtypes", "unchecked"})
 	private void enable(@Nonnull LoadedPlugin loadedPlugin) throws PluginException {
-		// Enable dependent plugins
-		for (LoadedPlugin dependency : loadedPlugin.getDependencies())
-			enable(dependency);
+		enable(loadedPlugin, HashSet.newHashSet(4));
+	}
 
+	/**
+	 * Recursively enables the given plugin and its dependencies while protecting
+	 * against circular dependencies.
+	 *
+	 * @param loadedPlugin
+	 * 		Plugin to enable.
+	 * @param visiting
+	 * 		Set of plugins currently being initialized in the current dependency chain
+	 * 		to detect circular dependencies.
+	 *
+	 * @throws PluginException
+	 * 		If a circular dependency is detected, or if the plugin could not be
+	 * 		initialized or enabled.
+	 */
+	@SuppressWarnings({"rawtypes", "unchecked"})
+	private void enable(@Nonnull LoadedPlugin loadedPlugin, @Nonnull Set<LoadedPlugin> visiting) throws PluginException {
 		// Check if the plugin is already initialized.
 		PluginContainerImpl container = loadedPlugin.getContainer();
 		Plugin plugin = container.plugin;
 		if (plugin != null) return; // Already initialized, skip.
+
+		if (!visiting.add(loadedPlugin)) {
+			throw new PluginException("Circular dependency detected during enablement at: %s".formatted(container.info().id()));
+		}
+		// Enable dependent plugins
+		for (LoadedPlugin dependency : loadedPlugin.getDependencies())
+			enable(dependency, visiting);
 
 		// Initialize and enable the plugin.
 		try {
@@ -271,6 +316,8 @@ final class PluginGraph {
 			container.plugin = plugin;
 		} catch (Throwable t) {
 			throw new PluginException(t);
+		} finally {
+			visiting.remove(loadedPlugin);
 		}
 	}
 }
