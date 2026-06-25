@@ -58,6 +58,15 @@ final class PluginClassLoaderImpl extends ClassLoader implements PluginClassLoad
 		}
 	}
 
+	@Override
+	protected Enumeration<URL> findResources(String name) {
+		URL resource = findResource(name);
+		if (resource == null) {
+			return Collections.emptyEnumeration();
+		}
+		return Collections.enumeration(List.of(resource));
+	}
+
 	@Nullable
 	@Override
 	public ByteSource lookupResource(@Nonnull String name) {

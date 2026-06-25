@@ -26,10 +26,7 @@ import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.objectweb.asm.Opcodes.*;
@@ -48,6 +45,32 @@ public class PluginManagerTest extends TestBase {
 	@AfterEach
 	void verifyCleanSlate() {
 		assertEquals(0, pluginManager.getPlugins().size(), "Plugins still loaded after test case");
+	}
+
+	@Test
+	void testPluginResourcesAreVisibleThroughGetResources() throws IOException {
+		String id = "resource-enumeration-plugin";
+		String pluginClass = "test/ResourceEnumerationPlugin";
+		String resourceName = "META-INF/services/example.Service";
+		String resourceContent = "example.Implementation";
+
+		byte[] zip = createPluginZip(pluginClass, createPluginClassCallingEnumeratedResourceAssertion(
+				pluginClass,
+				id,
+				resourceName,
+				resourceContent
+		), Map.of(
+				resourceName, resourceContent.getBytes(StandardCharsets.UTF_8)
+		));
+
+		PluginDiscoverer discoverer = () -> List.of(() -> ByteSources.wrap(zip));
+
+		try {
+			pluginManager.loadPlugins(discoverer);
+			pluginManager.unloaderFor(id).commit();
+		} catch (PluginException ex) {
+			fail("Failed to enumerate plugin resources", ex);
+		}
 	}
 
 	@Test
@@ -73,6 +96,19 @@ public class PluginManagerTest extends TestBase {
 			pluginManager.unloaderFor(id).commit();
 		} catch (PluginException ex) {
 			fail("Failed to validate fresh plugin resource streams", ex);
+		}
+	}
+
+	public static void assertEnumeratedResource(ClassLoader classLoader, String name, String expectedContent) throws IOException {
+		Enumeration<URL> resources = classLoader.getResources(name);
+
+		assertTrue(resources.hasMoreElements(), "Expected resource to be visible through ClassLoader#getResources: " + name);
+
+		URL resource = resources.nextElement();
+		assertNotNull(resource, "Enumerated resource URL must not be null");
+
+		try (InputStream inputStream = resource.openStream()) {
+			assertEquals(expectedContent, new String(inputStream.readAllBytes(), StandardCharsets.UTF_8));
 		}
 	}
 
@@ -103,6 +139,36 @@ public class PluginManagerTest extends TestBase {
 		entries.put(ZipPluginLoader.SERVICE_PATH, pluginInternalName.replace('/', '.').getBytes(StandardCharsets.UTF_8));
 		entries.putAll(additionalEntries);
 		return ZipCreationUtils.createZip(entries);
+	}
+
+	private static byte[] createPluginClassCallingEnumeratedResourceAssertion(
+			String internalName,
+			String id,
+			String resourceName,
+			String expectedContent
+	) {
+		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
+		cw.visit(V22, ACC_PUBLIC | ACC_SUPER, internalName, null, "java/lang/Object", new String[]{"software/coley/recaf/plugin/Plugin"});
+		visitPluginInformation(cw, id, new String[0]);
+		writeDefaultConstructor(cw);
+
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "onEnable", "()V", null, null);
+		mv.visitCode();
+		writeCurrentClassLoader(mv);
+		mv.visitLdcInsn(resourceName);
+		mv.visitLdcInsn(expectedContent);
+		mv.visitMethodInsn(INVOKESTATIC,
+				"software/coley/recaf/services/plugin/PluginManagerTest",
+				"assertEnumeratedResource",
+				"(Ljava/lang/ClassLoader;Ljava/lang/String;Ljava/lang/String;)V",
+				false);
+		mv.visitInsn(RETURN);
+		mv.visitMaxs(0, 0);
+		mv.visitEnd();
+
+		writeEmptyMethod(cw, "onDisable");
+		cw.visitEnd();
+		return cw.toByteArray();
 	}
 
 	private static byte[] createPluginClassCallingFreshResourceStreamAssertion(
