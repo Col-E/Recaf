@@ -20,10 +20,14 @@ import software.coley.recaf.util.io.ByteSource;
 import software.coley.recaf.util.io.ByteSources;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Modifier;
+import java.net.URL;
+import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -44,6 +48,131 @@ public class PluginManagerTest extends TestBase {
 	@AfterEach
 	void verifyCleanSlate() {
 		assertEquals(0, pluginManager.getPlugins().size(), "Plugins still loaded after test case");
+	}
+
+	@Test
+	void testPluginResourceUrlReturnsFreshStreams() throws IOException {
+		String id = "fresh-stream-plugin";
+		String pluginClass = "test/FreshStreamPlugin";
+		String resourceName = "fresh-resource.txt";
+		String resourceContent = "fresh-content";
+
+		byte[] zip = createPluginZip(pluginClass, createPluginClassCallingFreshResourceStreamAssertion(
+				pluginClass,
+				id,
+				resourceName,
+				resourceContent
+		), Map.of(
+				resourceName, resourceContent.getBytes(StandardCharsets.UTF_8)
+		));
+
+		PluginDiscoverer discoverer = () -> List.of(() -> ByteSources.wrap(zip));
+
+		try {
+			pluginManager.loadPlugins(discoverer);
+			pluginManager.unloaderFor(id).commit();
+		} catch (PluginException ex) {
+			fail("Failed to validate fresh plugin resource streams", ex);
+		}
+	}
+
+	public static void assertFreshResourceStreams(ClassLoader classLoader, String name, String expectedContent) throws IOException {
+		URL resource = classLoader.getResource(name);
+
+		assertNotNull(resource, "Expected resource URL: " + name);
+
+		URLConnection connection = resource.openConnection();
+
+		String firstRead;
+		try (InputStream inputStream = connection.getInputStream()) {
+			firstRead = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+		}
+
+		String secondRead;
+		try (InputStream inputStream = connection.getInputStream()) {
+			secondRead = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+		}
+
+		assertEquals(expectedContent, firstRead);
+		assertEquals(expectedContent, secondRead);
+	}
+
+	private static byte[] createPluginZip(String pluginInternalName, byte[] pluginClassBytes, Map<String, byte[]> additionalEntries) throws IOException {
+		Map<String, byte[]> entries = new LinkedHashMap<>();
+		entries.put(pluginInternalName + ".class", pluginClassBytes);
+		entries.put(ZipPluginLoader.SERVICE_PATH, pluginInternalName.replace('/', '.').getBytes(StandardCharsets.UTF_8));
+		entries.putAll(additionalEntries);
+		return ZipCreationUtils.createZip(entries);
+	}
+
+	private static byte[] createPluginClassCallingFreshResourceStreamAssertion(
+			String internalName,
+			String id,
+			String resourceName,
+			String expectedContent
+	) {
+		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
+		cw.visit(V22, ACC_PUBLIC | ACC_SUPER, internalName, null, "java/lang/Object", new String[]{"software/coley/recaf/plugin/Plugin"});
+		visitPluginInformation(cw, id, new String[0]);
+		writeDefaultConstructor(cw);
+
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "onEnable", "()V", null, null);
+		mv.visitCode();
+		writeCurrentClassLoader(mv);
+		mv.visitLdcInsn(resourceName);
+		mv.visitLdcInsn(expectedContent);
+		mv.visitMethodInsn(INVOKESTATIC,
+				"software/coley/recaf/services/plugin/PluginManagerTest",
+				"assertFreshResourceStreams",
+				"(Ljava/lang/ClassLoader;Ljava/lang/String;Ljava/lang/String;)V",
+				false);
+		mv.visitInsn(RETURN);
+		mv.visitMaxs(0, 0);
+		mv.visitEnd();
+
+		writeEmptyMethod(cw, "onDisable");
+		cw.visitEnd();
+		return cw.toByteArray();
+	}
+
+	private static void visitPluginInformation(ClassWriter cw, String id, String[] dependencies) {
+		AnnotationVisitor av = cw.visitAnnotation("Lsoftware/coley/recaf/plugin/PluginInformation;", true);
+		av.visit("id", id);
+		av.visit("name", id);
+		av.visit("version", "1.0");
+
+		if (dependencies.length > 0) {
+			AnnotationVisitor dependenciesVisitor = av.visitArray("dependencies");
+			for (String dependency : dependencies)
+				dependenciesVisitor.visit(null, dependency);
+			dependenciesVisitor.visitEnd();
+		}
+
+		av.visitEnd();
+	}
+
+	private static void writeDefaultConstructor(ClassWriter cw) {
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
+		mv.visitCode();
+		mv.visitVarInsn(ALOAD, 0);
+		mv.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
+		mv.visitInsn(RETURN);
+		mv.visitMaxs(0, 0);
+		mv.visitEnd();
+	}
+
+	private static void writeEmptyMethod(ClassWriter cw, String name) {
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, name, "()V", null, null);
+		mv.visitCode();
+		mv.visitInsn(RETURN);
+		mv.visitMaxs(0, 0);
+		mv.visitEnd();
+	}
+
+	private static void writeCurrentClassLoader(MethodVisitor mv) {
+		mv.visitVarInsn(ALOAD, 0);
+		mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Object", "getClass", "()Ljava/lang/Class;", false);
+		mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Class", "getClassLoader", "()Ljava/lang/ClassLoader;", false);
 	}
 
 	@Test

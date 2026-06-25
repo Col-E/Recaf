@@ -7,6 +7,9 @@ import software.coley.recaf.util.io.ByteSource;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.*;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.List;
 
 /**
  * Classloader for plugin content.
@@ -37,7 +40,6 @@ final class PluginClassLoaderImpl extends ClassLoader implements PluginClassLoad
 				@Override
 				protected URLConnection openConnection(URL u) {
 					return new URLConnection(u) {
-						InputStream in;
 
 						@Override
 						public void connect() {
@@ -46,18 +48,13 @@ final class PluginClassLoaderImpl extends ClassLoader implements PluginClassLoad
 
 						@Override
 						public InputStream getInputStream() throws IOException {
-							InputStream in = this.in;
-							if (in == null) {
-								in = source.openStream();
-								this.in = in;
-							}
-							return in;
+							return source.openStream();
 						}
 					};
 				}
 			});
 		} catch (MalformedURLException | URISyntaxException ex) {
-			throw new IllegalStateException(ex);
+			throw new IllegalStateException("Failed to create plugin resource URL for: " + name, ex);
 		}
 	}
 
