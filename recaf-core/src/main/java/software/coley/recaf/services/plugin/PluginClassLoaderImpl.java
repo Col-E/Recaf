@@ -35,7 +35,8 @@ final class PluginClassLoaderImpl extends ClassLoader implements PluginClassLoad
 			return null;
 		}
 		try {
-			URI uri = new URI("recaf", "/", name);
+			String resourcePath = name.startsWith("/") ? name.substring(1) : name;
+			URI uri = new URI("recaf", id, "/" + resourcePath, null);
 			return URL.of(uri, new URLStreamHandler() {
 				@Override
 				protected URLConnection openConnection(URL u) {

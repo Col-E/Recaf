@@ -74,6 +74,31 @@ public class PluginManagerTest extends TestBase {
 	}
 
 	@Test
+	void testPluginResourceUrlsIncludePluginId() throws IOException {
+		String id = "scoped-resource-plugin";
+		String pluginClass = "test/ScopedResourcePlugin";
+		String resourceName = "plugin-resource.txt";
+
+		byte[] zip = createPluginZip(pluginClass, createPluginClassCallingResourceUrlScopeAssertion(
+				pluginClass,
+				id,
+				resourceName,
+				id
+		), Map.of(
+				resourceName, "scoped".getBytes(StandardCharsets.UTF_8)
+		));
+
+		PluginDiscoverer discoverer = () -> List.of(() -> ByteSources.wrap(zip));
+
+		try {
+			pluginManager.loadPlugins(discoverer);
+			pluginManager.unloaderFor(id).commit();
+		} catch (PluginException ex) {
+			fail("Failed to validate plugin resource URL scope", ex);
+		}
+	}
+
+	@Test
 	void testPluginResourceUrlReturnsFreshStreams() throws IOException {
 		String id = "fresh-stream-plugin";
 		String pluginClass = "test/FreshStreamPlugin";
@@ -110,6 +135,14 @@ public class PluginManagerTest extends TestBase {
 		try (InputStream inputStream = resource.openStream()) {
 			assertEquals(expectedContent, new String(inputStream.readAllBytes(), StandardCharsets.UTF_8));
 		}
+	}
+
+	public static void assertResourceUrlContains(ClassLoader classLoader, String name, String expectedUrlPart) {
+		URL resource = classLoader.getResource(name);
+
+		assertNotNull(resource, "Expected resource URL: " + name);
+		assertTrue(resource.toExternalForm().contains(expectedUrlPart),
+				"Expected resource URL to contain '%s', got: %s".formatted(expectedUrlPart, resource));
 	}
 
 	public static void assertFreshResourceStreams(ClassLoader classLoader, String name, String expectedContent) throws IOException {
@@ -160,6 +193,36 @@ public class PluginManagerTest extends TestBase {
 		mv.visitMethodInsn(INVOKESTATIC,
 				"software/coley/recaf/services/plugin/PluginManagerTest",
 				"assertEnumeratedResource",
+				"(Ljava/lang/ClassLoader;Ljava/lang/String;Ljava/lang/String;)V",
+				false);
+		mv.visitInsn(RETURN);
+		mv.visitMaxs(0, 0);
+		mv.visitEnd();
+
+		writeEmptyMethod(cw, "onDisable");
+		cw.visitEnd();
+		return cw.toByteArray();
+	}
+
+	private static byte[] createPluginClassCallingResourceUrlScopeAssertion(
+			String internalName,
+			String id,
+			String resourceName,
+			String expectedUrlPart
+	) {
+		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
+		cw.visit(V22, ACC_PUBLIC | ACC_SUPER, internalName, null, "java/lang/Object", new String[]{"software/coley/recaf/plugin/Plugin"});
+		visitPluginInformation(cw, id, new String[0]);
+		writeDefaultConstructor(cw);
+
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "onEnable", "()V", null, null);
+		mv.visitCode();
+		writeCurrentClassLoader(mv);
+		mv.visitLdcInsn(resourceName);
+		mv.visitLdcInsn(expectedUrlPart);
+		mv.visitMethodInsn(INVOKESTATIC,
+				"software/coley/recaf/services/plugin/PluginManagerTest",
+				"assertResourceUrlContains",
 				"(Ljava/lang/ClassLoader;Ljava/lang/String;Ljava/lang/String;)V",
 				false);
 		mv.visitInsn(RETURN);
