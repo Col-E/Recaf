@@ -194,16 +194,40 @@ final class PluginGraph {
 	 * 		Plugin to collect dependants of.
 	 * @param dependants
 	 * 		Map to store results in.
+	 *
+	 * @throws IllegalStateException
+	 * 		If a circular dependency is detected.
 	 */
 	private void collectDependants(@Nonnull LoadedPlugin plugin, @Nonnull Map<LoadedPlugin, Set<LoadedPlugin>> dependants) {
+		collectDependants(plugin, dependants, HashSet.newHashSet(4));
+	}
+
+	/**
+	 * Recursively collects dependants while protecting against circular dependencies.
+	 *
+	 * @param plugin
+	 * 		Plugin to collect dependants of in the current step of recursion.
+	 * @param dependants
+	 * 		Map to store results in.
+	 * @param visited
+	 * 		Set of plugins visited in the current traversal path to detect circular dependencies.
+	 *
+	 * @throws IllegalStateException
+	 * 		If a circular dependency is detected during traversal.
+	 */
+	private void collectDependants(@Nonnull LoadedPlugin plugin, @Nonnull Map<LoadedPlugin, Set<LoadedPlugin>> dependants, @Nonnull Set<LoadedPlugin> visited) {
+		if (!visited.add(plugin)) {
+			throw new IllegalStateException("Circular dependency detected at plugin: %s".formatted(plugin.getContainer().info().id()));
+		}
 		Set<LoadedPlugin> dependantsSet = dependants.computeIfAbsent(plugin, _ -> HashSet.newHashSet(4));
 		for (LoadedPlugin pl : plugins.values()) {
 			if (plugin == pl) continue;
 			if (pl.getDependencies().contains(plugin)) {
 				dependantsSet.add(pl);
-				collectDependants(pl, dependants);
+				collectDependants(pl, dependants, visited);
 			}
 		}
+		visited.remove(plugin);
 	}
 
 	/**
