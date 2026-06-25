@@ -88,8 +88,12 @@ final class PluginClassLoaderImpl extends ClassLoader implements PluginClassLoad
 			return cls;
 		var dependencyLoaders = graph.getDependencyClassloaders(id);
 		while (dependencyLoaders.hasNext()) {
-			if ((cls = dependencyLoaders.next().findClass(name)) != null)
-				return cls;
+			try {
+				if ((cls = dependencyLoaders.next().findClass(name)) != null)
+					return cls;
+			} catch (ClassNotFoundException ignored) {
+				// This dependency does not have the required class.
+			}
 		}
 		throw new ClassNotFoundException(name);
 	}
