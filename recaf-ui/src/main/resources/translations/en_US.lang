@@ -39,6 +39,7 @@ menu.goto.method=Go to method
 menu.goto.instruction=Go to instruction
 menu.goto.file=Go to file
 menu.goto.label=Go to label
+menu.goto.switch.title=Switch targets
 menu.edit=Edit
 menu.edit.add.field=Add field
 menu.edit.add.method=Add method
