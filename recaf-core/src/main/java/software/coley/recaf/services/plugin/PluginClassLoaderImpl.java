@@ -18,6 +18,10 @@ final class PluginClassLoaderImpl extends ClassLoader implements PluginClassLoad
 	private final PluginSource source;
 	private final String id;
 
+	static {
+		registerAsParallelCapable();
+	}
+
 	PluginClassLoaderImpl(@Nonnull ClassLoader classLoader, @Nonnull PluginGraph graph, @Nonnull PluginSource source, @Nonnull String id) {
 		super(classLoader);
 		this.graph = graph;
