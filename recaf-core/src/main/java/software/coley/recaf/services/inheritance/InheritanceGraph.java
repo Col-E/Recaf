@@ -484,7 +484,7 @@ public class InheritanceGraph {
 	 */
 	@Nonnull
 	private String getCommon(@Nonnull InheritanceVertex firstVertex, @Nonnull String first, @Nonnull String second) {
-		// Full upwards hierarchy for the first
+		// Full upwards hierarchy for the first type, including the type itself.
 		SequencedSet<String> firstParents = firstVertex.allParents()
 				.map(InheritanceVertex::getParentAndCurrentNames)
 				.flatMap(Collection::stream)
@@ -495,15 +495,15 @@ public class InheritanceGraph {
 		firstParents.remove(OBJECT);
 		firstParents.add(OBJECT);
 
-		// Base case
+		// Base case, if the second type is a direct parent of the first type, return it.
 		if (firstParents.contains(second))
 			return second;
 
-		// Iterate over second's parents via breadth-first-search
+		// Iterate over second's parents via breadth-first-search.
 		Queue<String> queue = new LinkedList<>();
 		queue.add(second);
 		do {
-			// Item to fetch parents of
+			// Item to fetch parents of.
 			String next = queue.poll();
 			if (next == null || next.equals(OBJECT))
 				continue;
@@ -512,21 +512,21 @@ public class InheritanceGraph {
 			if (nextVertex == null)
 				continue;
 
-			for (String parent : nextVertex.getParents().stream()
-					.map(InheritanceVertex::getParentAndCurrentNames)
-					.flatMap(Collection::stream)
-					.toList()) {
-				if (!parent.equals(OBJECT)) {
-					// Parent in the set of visited classes? Then its valid.
-					if (firstParents.contains(parent))
-						return parent;
-					// Queue up the parent
-					queue.add(parent);
-				}
+			// Check if any of the parents are in the first type's hierarchy. If so, return it.
+			for (InheritanceVertex parentVertex : nextVertex.getParents()) {
+				String parent = parentVertex.getName();
+				if (parent.equals(OBJECT))
+					continue;
+
+				// Check direct parents before traversing upwards so the closest shared type wins.
+				if (firstParents.contains(parent))
+					return parent;
+
+				queue.add(parent);
 			}
 		} while (!queue.isEmpty());
 
-		// Fallback option
+		// Fallback option, if no common parent was found, return Object.
 		return OBJECT;
 	}
 

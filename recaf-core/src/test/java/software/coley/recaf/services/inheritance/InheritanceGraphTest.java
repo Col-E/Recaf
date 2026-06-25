@@ -139,6 +139,21 @@ class InheritanceGraphTest extends TestBase {
 	}
 
 	@Test
+	void getCommonPrefersClosestSharedExceptionParent() {
+		// Make two exception types, and assert that the common type is the closest shared parent, not just Throwable.
+		String fooExceptionName = "foo/FooException";
+		String barExceptionName = "foo/BarException";
+		BasicJvmClassBundle bundle = new BasicJvmClassBundle();
+		bundle.initialPut(createChildClass(fooExceptionName, "java/lang/Exception"));
+		bundle.initialPut(createChildClass(barExceptionName, "java/lang/Exception"));
+		Workspace localWorkspace = TestClassUtils.fromBundle(bundle);
+		InheritanceGraph localGraph = new InheritanceGraph(localWorkspace);
+
+		assertEquals("java/lang/Exception", localGraph.getCommon(fooExceptionName, barExceptionName),
+				"Common type should prefer the closest shared exception parent");
+	}
+
+	@Test
 	void isAssignableFrom() {
 		String edibleName = Inheritance.Edible.class.getName().replace('.', '/');
 		String appleName = Inheritance.Apple.class.getName().replace('.', '/');
