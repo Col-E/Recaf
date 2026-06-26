@@ -22,6 +22,10 @@ final class PluginClassLoaderImpl extends ClassLoader implements PluginClassLoad
 	private final String id;
 	private volatile List<PluginClassLoaderImpl> dependencyLoaders = List.of();
 
+	static {
+		registerAsParallelCapable();
+	}
+
 	PluginClassLoaderImpl(@Nonnull ClassLoader classLoader, @Nonnull PluginSource source, @Nonnull String id) {
 		super(classLoader);
 		this.source = source;
@@ -81,18 +85,24 @@ final class PluginClassLoaderImpl extends ClassLoader implements PluginClassLoad
 	@Nonnull
 	@Override
 	public Class<?> lookupClass(@Nonnull String name) throws ClassNotFoundException {
-		Class<?> cls = lookupClassImpl(name);
-		if (cls == null) {
-			throw new ClassNotFoundException(name);
+		synchronized (getClassLoadingLock(name)) {
+			Class<?> cls = lookupClassImpl(name);
+			if (cls == null) {
+				throw new ClassNotFoundException(name);
+			}
+			return cls;
 		}
-		return cls;
 	}
 
 	@Override
 	protected Class<?> findClass(String name) throws ClassNotFoundException {
-		Class<?> cls = lookupClassImpl(name);
-		if (cls != null)
-			return cls;
+		Class<?> cls;
+		synchronized (getClassLoadingLock(name)) {
+			cls = lookupClassImpl(name);
+			if (cls != null) {
+				return cls;
+			}
+		}
 		for (PluginClassLoaderImpl dependencyLoader : dependencyLoaders) {
 			if ((cls = dependencyLoader.findClass(name)) != null) {
 				return cls;
