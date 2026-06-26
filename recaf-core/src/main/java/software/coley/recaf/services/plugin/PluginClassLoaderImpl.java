@@ -7,6 +7,7 @@ import software.coley.recaf.util.io.ByteSource;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.*;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
@@ -17,15 +18,18 @@ import java.util.List;
  * @author xDark
  */
 final class PluginClassLoaderImpl extends ClassLoader implements PluginClassLoader {
-	private final PluginGraph graph;
 	private final PluginSource source;
 	private final String id;
+	private volatile List<PluginClassLoaderImpl> dependencyLoaders = List.of();
 
-	PluginClassLoaderImpl(@Nonnull ClassLoader classLoader, @Nonnull PluginGraph graph, @Nonnull PluginSource source, @Nonnull String id) {
+	PluginClassLoaderImpl(@Nonnull ClassLoader classLoader, @Nonnull PluginSource source, @Nonnull String id) {
 		super(classLoader);
-		this.graph = graph;
 		this.source = source;
 		this.id = id;
+	}
+
+	void setDependencyClassLoaders(@Nonnull Collection<PluginClassLoaderImpl> dependencyLoaders) {
+		this.dependencyLoaders = List.copyOf(dependencyLoaders);
 	}
 
 	@Override
@@ -89,10 +93,10 @@ final class PluginClassLoaderImpl extends ClassLoader implements PluginClassLoad
 		Class<?> cls = lookupClassImpl(name);
 		if (cls != null)
 			return cls;
-		var dependencyLoaders = graph.getDependencyClassloaders(id);
-		while (dependencyLoaders.hasNext()) {
-			if ((cls = dependencyLoaders.next().findClass(name)) != null)
+		for (PluginClassLoaderImpl dependencyLoader : dependencyLoaders) {
+			if ((cls = dependencyLoader.findClass(name)) != null) {
 				return cls;
+			}
 		}
 		throw new ClassNotFoundException(name);
 	}

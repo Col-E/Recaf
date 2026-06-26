@@ -48,6 +48,49 @@ public class PluginManagerTest extends TestBase {
 	}
 
 	@Test
+	void testBatchLoadedPluginCanReferenceDependencyClasses() throws IOException {
+		String apiId = "api-plugin";
+		String implId = "impl-plugin";
+
+		String apiPluginClass = "test/ApiPlugin";
+		String apiTypeClass = "test/ApiType";
+		String implPluginClass = "test/ImplPlugin";
+
+		byte[] apiZip = createPluginZip(apiPluginClass, createPluginClass(apiPluginClass, apiId, new String[0]), Map.of(
+				apiTypeClass + ".class", createStaticStringProviderClass(apiTypeClass, "message", "dependency-ok")
+		));
+
+		byte[] implZip = createPluginZip(implPluginClass, createPluginClassCallingDependencyStringProvider(
+				implPluginClass,
+				implId,
+				new String[]{apiId},
+				apiTypeClass,
+				"message",
+				"dependency-ok"
+		), Map.of());
+
+		PluginDiscoverer discoverer = () -> List.of(
+				() -> ByteSources.wrap(apiZip),
+				() -> ByteSources.wrap(implZip)
+		);
+
+		try {
+			Collection<PluginContainer<?>> containers = pluginManager.loadPlugins(discoverer);
+
+			assertEquals(2, containers.size());
+			assertNotNull(pluginManager.getPlugin(apiId));
+			assertNotNull(pluginManager.getPlugin(implId));
+
+			pluginManager.unloaderFor(apiId).commit();
+
+			assertNull(pluginManager.getPlugin(apiId));
+			assertNull(pluginManager.getPlugin(implId));
+		} catch (PluginException ex) {
+			fail("Failed to load plugins with same-batch dependency class visibility", ex);
+		}
+	}
+
+	@Test
 	void testPluginResourcesAreVisibleThroughGetResources() throws IOException {
 		String id = "resource-enumeration-plugin";
 		String pluginClass = "test/ResourceEnumerationPlugin";
@@ -124,6 +167,10 @@ public class PluginManagerTest extends TestBase {
 		}
 	}
 
+	public static void assertSameText(String expected, String actual) {
+		assertEquals(expected, actual);
+	}
+
 	public static void assertEnumeratedResource(ClassLoader classLoader, String name, String expectedContent) throws IOException {
 		Enumeration<URL> resources = classLoader.getResources(name);
 
@@ -172,6 +219,48 @@ public class PluginManagerTest extends TestBase {
 		entries.put(ZipPluginLoader.SERVICE_PATH, pluginInternalName.replace('/', '.').getBytes(StandardCharsets.UTF_8));
 		entries.putAll(additionalEntries);
 		return ZipCreationUtils.createZip(entries);
+	}
+
+	private static byte[] createPluginClass(String internalName, String id, String[] dependencies) {
+		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
+		cw.visit(V22, ACC_PUBLIC | ACC_SUPER, internalName, null, "java/lang/Object", new String[]{"software/coley/recaf/plugin/Plugin"});
+		visitPluginInformation(cw, id, dependencies);
+		writeDefaultConstructor(cw);
+		writeEmptyMethod(cw, "onEnable");
+		writeEmptyMethod(cw, "onDisable");
+		cw.visitEnd();
+		return cw.toByteArray();
+	}
+
+	private static byte[] createPluginClassCallingDependencyStringProvider(
+			String internalName,
+			String id,
+			String[] dependencies,
+			String providerInternalName,
+			String providerMethodName,
+			String expectedValue
+	) {
+		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
+		cw.visit(V22, ACC_PUBLIC | ACC_SUPER, internalName, null, "java/lang/Object", new String[]{"software/coley/recaf/plugin/Plugin"});
+		visitPluginInformation(cw, id, dependencies);
+		writeDefaultConstructor(cw);
+
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "onEnable", "()V", null, null);
+		mv.visitCode();
+		mv.visitLdcInsn(expectedValue);
+		mv.visitMethodInsn(INVOKESTATIC, providerInternalName, providerMethodName, "()Ljava/lang/String;", false);
+		mv.visitMethodInsn(INVOKESTATIC,
+				"software/coley/recaf/services/plugin/PluginManagerTest",
+				"assertSameText",
+				"(Ljava/lang/String;Ljava/lang/String;)V",
+				false);
+		mv.visitInsn(RETURN);
+		mv.visitMaxs(0, 0);
+		mv.visitEnd();
+
+		writeEmptyMethod(cw, "onDisable");
+		cw.visitEnd();
+		return cw.toByteArray();
 	}
 
 	private static byte[] createPluginClassCallingEnumeratedResourceAssertion(
@@ -260,6 +349,22 @@ public class PluginManagerTest extends TestBase {
 		mv.visitEnd();
 
 		writeEmptyMethod(cw, "onDisable");
+		cw.visitEnd();
+		return cw.toByteArray();
+	}
+
+	private static byte[] createStaticStringProviderClass(String internalName, String methodName, String value) {
+		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
+		cw.visit(V22, ACC_PUBLIC | ACC_SUPER, internalName, null, "java/lang/Object", null);
+		writeDefaultConstructor(cw);
+
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC | ACC_STATIC, methodName, "()Ljava/lang/String;", null, null);
+		mv.visitCode();
+		mv.visitLdcInsn(value);
+		mv.visitInsn(ARETURN);
+		mv.visitMaxs(0, 0);
+		mv.visitEnd();
+
 		cw.visitEnd();
 		return cw.toByteArray();
 	}

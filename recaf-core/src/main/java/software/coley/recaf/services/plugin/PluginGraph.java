@@ -1,10 +1,9 @@
 package software.coley.recaf.services.plugin;
 
 import com.google.common.collect.Collections2;
-import com.google.common.collect.Iterators;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
-import software.coley.recaf.plugin.*;
+import software.coley.recaf.plugin.Plugin;
 
 import java.util.*;
 import java.util.stream.Stream;
@@ -48,33 +47,15 @@ final class PluginGraph {
 			}
 			var threadContextClassLoader = Thread.currentThread().getContextClassLoader();
 			var parentLoader = threadContextClassLoader != null ? threadContextClassLoader : ClassLoader.getSystemClassLoader();
-			var classLoader = new PluginClassLoaderImpl(parentLoader, this, preparedPlugin.pluginSource(), id);
+			var classLoader = new PluginClassLoaderImpl(parentLoader, preparedPlugin.pluginSource(), id);
 			LoadedPlugin loadedPlugin = new LoadedPlugin(new PluginContainerImpl<>(preparedPlugin, classLoader));
 
 			if (temp.putIfAbsent(id, loadedPlugin) != null) {
 				throw new PluginException("Duplicate plugin %s".formatted(id));
 			}
 		}
-		for (LoadedPlugin plugin : temp.values()) {
-			PluginInfo info = plugin.getContainer().info();
-			for (String dependencyId : info.dependencies()) {
-				LoadedPlugin dep = temp.get(dependencyId);
-				if (dep == null) {
-					dep = plugins.get(dependencyId);
-				}
-				if (dep == null) {
-					throw new PluginException("Plugin %s is missing dependency %s".formatted(info.id(), dependencyId));
-				}
-				plugin.getDependencies().add(dep);
-			}
-			for (String dependencyId : info.softDependencies()) {
-				LoadedPlugin dep = temp.get(dependencyId);
-				if (dep == null && (dep = plugins.get(dependencyId)) == null) {
-					continue;
-				}
-				plugin.getDependencies().add(dep);
-			}
-		}
+		resolveDependencies(temp);
+		wireDependencyClassLoaders(temp.values());
 		for (LoadedPlugin loadedPlugin : temp.values()) {
 			try {
 				enable(loadedPlugin);
@@ -138,6 +119,89 @@ final class PluginGraph {
 						.map(plugin -> plugin.getContainer().info());
 			}
 		};
+	}
+
+	/**
+	 * Resolves hard and soft dependencies for all staged plugins.
+	 *
+	 * @param temp
+	 * 		Staged plugins.
+	 *
+	 * @throws PluginException
+	 * 		When a hard dependency is missing.
+	 */
+	private void resolveDependencies(@Nonnull Map<String, LoadedPlugin> temp) throws PluginException {
+		for (LoadedPlugin plugin : temp.values()) {
+			PluginInfo info = plugin.getContainer().info();
+
+			for (String dependencyId : info.dependencies()) {
+				if (info.id().equals(dependencyId)) {
+					throw new PluginException("Plugin %s cannot depend of itself".formatted(info.id()));
+				}
+				LoadedPlugin dependency = resolveDependency(dependencyId, temp);
+				if (dependency == null) {
+					throw new PluginException("Plugin %s is missing dependency %s".formatted(info.id(), dependencyId));
+				}
+				addDependency(plugin, dependency);
+			}
+
+			for (String dependencyId : info.softDependencies()) {
+				if (info.id().equals(dependencyId)) {
+					continue;
+				}
+				LoadedPlugin dependency = resolveDependency(dependencyId, temp);
+				if (dependency != null) {
+					addDependency(plugin, dependency);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Wires already resolved dependencies into plugin classloaders.
+	 *
+	 * @param loadedPlugins
+	 * 		Plugins to wire.
+	 */
+	private static void wireDependencyClassLoaders(@Nonnull Collection<LoadedPlugin> loadedPlugins) {
+		for (LoadedPlugin loadedPlugin : loadedPlugins) {
+			PluginClassLoaderImpl classLoader = classLoaderOf(loadedPlugin);
+			List<PluginClassLoaderImpl> dependencyLoaders = loadedPlugin.getDependencies()
+					.stream()
+					.map(PluginGraph::classLoaderOf)
+					.toList();
+
+			classLoader.setDependencyClassLoaders(dependencyLoaders);
+		}
+	}
+
+	/**
+	 * @param id
+	 * 		Dependency plugin identifier.
+	 * @param temp
+	 * 		Staged plugins.
+	 *
+	 * @return Resolved dependency from staged or already loaded plugins.
+	 */
+	@Nullable
+	private LoadedPlugin resolveDependency(@Nonnull String id, @Nonnull Map<String, LoadedPlugin> temp) {
+		LoadedPlugin dependency = temp.get(id);
+		if (dependency != null) {
+			return dependency;
+		}
+		return plugins.get(id);
+	}
+
+	/**
+	 * Adds dependency once.
+	 *
+	 * @param plugin
+	 * 		Plugin that owns the dependency.
+	 * @param dependency
+	 * 		Dependency to add.
+	 */
+	private static void addDependency(@Nonnull LoadedPlugin plugin, @Nonnull LoadedPlugin dependency) {
+		plugin.getDependencies().add(dependency);
 	}
 
 	/**
@@ -229,21 +293,6 @@ final class PluginGraph {
 	}
 
 	/**
-	 * @param id
-	 * 		Plugin identifier.
-	 *
-	 * @return Iterator of dependency classloaders.
-	 */
-	@Nonnull
-	Iterator<PluginClassLoaderImpl> getDependencyClassloaders(@Nonnull String id) {
-		var loaded = plugins.get(id);
-		if (loaded == null) {
-			return Collections.emptyIterator();
-		}
-		return Iterators.transform(loaded.getDependencies().iterator(), input -> ((PluginClassLoaderImpl) input.getContainer().plugin().getClass().getClassLoader()));
-	}
-
-	/**
 	 * Enables the given plugin, initializing if necessary.
 	 *
 	 * @param loadedPlugin
@@ -272,5 +321,16 @@ final class PluginGraph {
 		} catch (Throwable t) {
 			throw new PluginException(t);
 		}
+	}
+
+	/**
+	 * @param plugin
+	 * 		Plugin to get classloader from.
+	 *
+	 * @return Plugin classloader.
+	 */
+	@Nonnull
+	private static PluginClassLoaderImpl classLoaderOf(@Nonnull LoadedPlugin plugin) {
+		return (PluginClassLoaderImpl) plugin.getContainer().classLoader;
 	}
 }
