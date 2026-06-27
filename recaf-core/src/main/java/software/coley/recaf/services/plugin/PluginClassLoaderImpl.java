@@ -104,7 +104,7 @@ final class PluginClassLoaderImpl extends ClassLoader implements PluginClassLoad
 			}
 		}
 		for (PluginClassLoaderImpl dependencyLoader : dependencyLoaders) {
-			if ((cls = dependencyLoader.findClass(name)) != null) {
+			if ((cls = dependencyLoader.loadClass(name)) != null) {
 				return cls;
 			}
 		}
