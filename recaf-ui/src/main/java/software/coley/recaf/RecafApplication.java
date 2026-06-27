@@ -11,7 +11,6 @@ import software.coley.recaf.services.window.WindowManager;
 import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.ui.RecafTheme;
 import software.coley.recaf.ui.config.KeybindingConfig;
-import software.coley.recaf.ui.config.WindowScaleConfig;
 import software.coley.recaf.ui.menubar.MainMenu;
 import software.coley.recaf.ui.pane.LoggingPane;
 import software.coley.recaf.ui.docking.DockingManager;
@@ -57,7 +56,6 @@ public class RecafApplication extends Application {
 		wrapper.getStyleClass().addAll("padded", "bg-inset");
 
 		// Display
-		WindowScaleConfig scaleConfig = recaf.get(WindowScaleConfig.class);
 		Scene scene = new RecafScene(wrapper);
 		scene.addEventFilter(KeyEvent.KEY_PRESSED, (KeyEvent event) -> {
 			// Global keybind handling
@@ -69,18 +67,18 @@ public class RecafApplication extends Application {
 				recaf.get(PathExportingManager.class).export(workspaceManager.getCurrent());
 			}
 		});
-		stage.setMinWidth(450 / scaleConfig.getScale());
-		stage.setMinHeight(200 / scaleConfig.getScale());
-		stage.setWidth(900 / scaleConfig.getScale());
-		stage.setHeight(620 / scaleConfig.getScale());
+		stage.setMinWidth(450);
+		stage.setMinHeight(200);
+		stage.setWidth(900);
+		stage.setHeight(620);
 		stage.setScene(scene);
 		stage.getIcons().add(Icons.getImage(Icons.LOGO));
 		stage.setTitle("Recaf");
 		stage.setOnCloseRequest(e -> ExitDebugLoggingHook.exit(0));
-		stage.show();
 
 		// Register main window
 		windowManager.register(WindowManager.WIN_MAIN, stage);
+		stage.show();
 
 		// Publish UI init event
 		recaf.getContainer().getBeanContainer().getEvent().fire(new UiInitializationEvent());
