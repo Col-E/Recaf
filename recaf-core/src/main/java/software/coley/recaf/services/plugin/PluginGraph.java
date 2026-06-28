@@ -86,7 +86,7 @@ final class PluginGraph {
 		return new PluginUnloader() {
 			@Override
 			public void commit() throws PluginException {
-				PluginException ex = unload(plugin, dependants);
+				PluginException ex = unload(plugin, dependants, new HashSet<>());
 				if (ex != null)
 					throw ex;
 			}
@@ -198,18 +198,23 @@ final class PluginGraph {
 	 * 		Plugin to unload.
 	 * @param dependants
 	 * 		Map of plugin dependents.
+	 * @param unloaded
+	 * 		Plugins already unloaded in this operation.
 	 *
 	 * @return Exception to be thrown if the plugin could not be unloaded.
 	 */
 	@Nullable
-	private PluginException unload(@Nonnull LoadedPlugin plugin, @Nonnull Map<LoadedPlugin, Set<LoadedPlugin>> dependants) {
+	private PluginException unload(@Nonnull LoadedPlugin plugin, @Nonnull Map<LoadedPlugin, Set<LoadedPlugin>> dependants, @Nonnull Set<LoadedPlugin> unloaded) {
+		if (!unloaded.add(plugin)) {
+			return null;
+		}
 		String id = plugin.getContainer().info().id();
 		if (!plugins.remove(id, plugin)) {
 			throw new IllegalStateException("Plugin %s was already removed, recursion?".formatted(id));
 		}
 		PluginException exception = null;
-		for (LoadedPlugin dependant : dependants.get(plugin)) {
-			PluginException inner = unload(dependant, dependants);
+		for (LoadedPlugin dependant : dependants.getOrDefault(plugin, Collections.emptySet())) {
+			PluginException inner = unload(dependant, dependants, unloaded);
 			if (inner != null) {
 				if (exception == null) {
 					exception = inner;

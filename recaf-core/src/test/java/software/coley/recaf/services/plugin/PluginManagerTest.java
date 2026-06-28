@@ -191,6 +191,51 @@ public class PluginManagerTest extends TestBase {
 		assertEquals(0, pluginManager.getPlugins().size(), "Failed plugin should not remain loaded");
 	}
 
+	@Test
+	void testDiamondDependencyUnloadDoesNotUnloadSamePluginTwice() throws IOException {
+		String pluginA = "diamond-a";
+		String pluginB = "diamond-b";
+		String pluginC = "diamond-c";
+		String pluginD = "diamond-d";
+
+		String classA = "test/DiamondA";
+		String classB = "test/DiamondB";
+		String classC = "test/DiamondC";
+		String classD = "test/DiamondD";
+
+		ENABLE_COUNTS.clear();
+		DISABLE_COUNTS.clear();
+
+		byte[] zipA = createPluginZip(classA, createLifecycleCountingPluginClass(classA, pluginA, new String[0]), Map.of());
+		byte[] zipB = createPluginZip(classB, createLifecycleCountingPluginClass(classB, pluginB, new String[]{pluginA}), Map.of());
+		byte[] zipC = createPluginZip(classC, createLifecycleCountingPluginClass(classC, pluginC, new String[]{pluginA}), Map.of());
+		byte[] zipD = createPluginZip(classD, createLifecycleCountingPluginClass(classD, pluginD, new String[]{pluginB, pluginC}), Map.of());
+
+		PluginDiscoverer discoverer = () -> List.of(
+				() -> ByteSources.wrap(zipA),
+				() -> ByteSources.wrap(zipB),
+				() -> ByteSources.wrap(zipC),
+				() -> ByteSources.wrap(zipD)
+		);
+
+		try {
+			pluginManager.loadPlugins(discoverer);
+
+			assertEquals(4, pluginManager.getPlugins().size());
+
+			pluginManager.unloaderFor(pluginA).commit();
+
+			assertEquals(0, pluginManager.getPlugins().size());
+
+			assertEquals(1, countOf(DISABLE_COUNTS, pluginA));
+			assertEquals(1, countOf(DISABLE_COUNTS, pluginB));
+			assertEquals(1, countOf(DISABLE_COUNTS, pluginC));
+			assertEquals(1, countOf(DISABLE_COUNTS, pluginD));
+		} catch (PluginException ex) {
+			fail("Failed to unload diamond dependency graph", ex);
+		}
+	}
+
 	public static void assertSameText(String expected, String actual) {
 		assertEquals(expected, actual);
 	}
@@ -273,6 +318,18 @@ public class PluginManagerTest extends TestBase {
 		cw.visitEnd();
 		return cw.toByteArray();
 	}
+
+	private static byte[] createLifecycleCountingPluginClass(String internalName, String id, String[] dependencies) {
+		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
+		cw.visit(V22, ACC_PUBLIC | ACC_SUPER, internalName, null, "java/lang/Object", new String[]{"software/coley/recaf/plugin/Plugin"});
+		visitPluginInformation(cw, id, dependencies);
+		writeDefaultConstructor(cw);
+		writeLifecycleCounterMethod(cw, "onEnable", "recordEnable", id);
+		writeLifecycleCounterMethod(cw, "onDisable", "recordDisable", id);
+		cw.visitEnd();
+		return cw.toByteArray();
+	}
+
 
 	private static byte[] createPluginClassFailingOnEnable(String internalName, String id) {
 		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
