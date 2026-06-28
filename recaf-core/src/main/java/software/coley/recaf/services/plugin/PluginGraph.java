@@ -39,6 +39,7 @@ final class PluginGraph {
 	@Nonnull
 	Collection<PluginContainer<?>> apply(@Nonnull List<PreparedPlugin> preparedPlugins) throws PluginException {
 		Map<String, LoadedPlugin> temp = LinkedHashMap.newLinkedHashMap(preparedPlugins.size());
+		List<LoadedPlugin> initializedPlugins = new ArrayList<>(preparedPlugins.size());
 		var plugins = this.plugins;
 		for (var preparedPlugin : preparedPlugins) {
 			String id = preparedPlugin.info().id();
@@ -58,23 +59,9 @@ final class PluginGraph {
 		wireDependencyClassLoaders(temp.values());
 		for (LoadedPlugin loadedPlugin : temp.values()) {
 			try {
-				enable(loadedPlugin);
+				enable(loadedPlugin, initializedPlugins);
 			} catch (PluginException ex) {
-				for (LoadedPlugin pl : temp.values()) {
-					PluginContainerImpl<?> container = pl.getContainer();
-					try {
-						try {
-							Plugin maybeEnabled = container.plugin;
-							if (maybeEnabled != null) {
-								maybeEnabled.onDisable();
-							}
-						} finally {
-							container.preparedPlugin.reject();
-						}
-					} catch (Exception ex1) {
-						ex.addSuppressed(ex1);
-					}
-				}
+				rollbackFailedApply(temp, initializedPlugins, ex);
 				throw ex;
 			}
 		}
@@ -297,15 +284,17 @@ final class PluginGraph {
 	 *
 	 * @param loadedPlugin
 	 * 		Plugin to enable.
+	 * @param initializedPlugins
+	 * 		Plugins initialized during the current apply operation.
 	 *
 	 * @throws PluginException
 	 * 		If the plugin could not be initialized or enabled.
 	 */
 	@SuppressWarnings({"rawtypes", "unchecked"})
-	private void enable(@Nonnull LoadedPlugin loadedPlugin) throws PluginException {
+	private void enable(@Nonnull LoadedPlugin loadedPlugin, @Nonnull List<LoadedPlugin> initializedPlugins) throws PluginException {
 		// Enable dependent plugins
 		for (LoadedPlugin dependency : loadedPlugin.getDependencies())
-			enable(dependency);
+			enable(dependency, initializedPlugins);
 
 		// Check if the plugin is already initialized.
 		PluginContainerImpl container = loadedPlugin.getContainer();
@@ -316,10 +305,55 @@ final class PluginGraph {
 		try {
 			Class<? extends Plugin> pluginClass = (Class<? extends Plugin>) container.classLoader.lookupClass(container.preparedPlugin.pluginClassName());
 			plugin = classAllocator.instance(pluginClass);
-			plugin.onEnable();
 			container.plugin = plugin;
+			initializedPlugins.add(loadedPlugin);
+			plugin.onEnable();
 		} catch (Throwable t) {
 			throw new PluginException(t);
+		}
+	}
+
+	/**
+	 * Rolls back plugins initialized during a failed apply operation.
+	 *
+	 * @param temp
+	 * 		Staged plugins.
+	 * @param initializedPlugins
+	 * 		Plugins initialized before the failure.
+	 * @param failure
+	 * 		Failure to attach rollback errors to.
+	 */
+	private static void rollbackFailedApply(@Nonnull Map<String, LoadedPlugin> temp, @Nonnull List<LoadedPlugin> initializedPlugins, @Nonnull PluginException failure) {
+		for (int i = initializedPlugins.size() - 1; i >= 0; i--) {
+			LoadedPlugin loadedPlugin = initializedPlugins.get(i);
+			PluginContainerImpl<?> container = loadedPlugin.getContainer();
+
+			try {
+				Plugin plugin = container.plugin;
+				if (plugin != null) {
+					plugin.onDisable();
+				}
+			} catch (Exception ex) {
+				failure.addSuppressed(ex);
+			} finally {
+				container.plugin = null;
+
+				if (container.classLoader instanceof AutoCloseable closeable) {
+					try {
+						closeable.close();
+					} catch (Exception ex) {
+						failure.addSuppressed(ex);
+					}
+				}
+			}
+		}
+
+		for (LoadedPlugin loadedPlugin : temp.values()) {
+			try {
+				loadedPlugin.getContainer().preparedPlugin.reject();
+			} catch (Exception ex) {
+				failure.addSuppressed(ex);
+			}
 		}
 	}
 

@@ -27,6 +27,8 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.objectweb.asm.Opcodes.*;
@@ -36,6 +38,8 @@ import static org.objectweb.asm.Opcodes.*;
  */
 public class PluginManagerTest extends TestBase {
 	static PluginManager pluginManager;
+	private static final Map<String, AtomicInteger> ENABLE_COUNTS = new ConcurrentHashMap<>();
+	private static final Map<String, AtomicInteger> DISABLE_COUNTS = new ConcurrentHashMap<>();
 
 	@BeforeAll
 	static void setup() {
@@ -167,6 +171,26 @@ public class PluginManagerTest extends TestBase {
 		}
 	}
 
+	@Test
+	void testFailedEnableCallsDisableDuringRollback() throws IOException {
+		String id = "failing-enable-plugin";
+		String pluginClass = "test/FailingEnablePlugin";
+
+		ENABLE_COUNTS.clear();
+		DISABLE_COUNTS.clear();
+
+		byte[] zip = createPluginZip(pluginClass, createPluginClassFailingOnEnable(pluginClass, id), Map.of());
+
+		PluginDiscoverer discoverer = () -> List.of(() -> ByteSources.wrap(zip));
+
+		assertThrows(PluginException.class, () -> pluginManager.loadPlugins(discoverer),
+				"Plugin loading should fail when onEnable throws");
+
+		assertEquals(1, countOf(ENABLE_COUNTS, id), "onEnable should have been called once");
+		assertEquals(1, countOf(DISABLE_COUNTS, id), "onDisable should have been called during rollback");
+		assertEquals(0, pluginManager.getPlugins().size(), "Failed plugin should not remain loaded");
+	}
+
 	public static void assertSameText(String expected, String actual) {
 		assertEquals(expected, actual);
 	}
@@ -213,6 +237,24 @@ public class PluginManagerTest extends TestBase {
 		assertEquals(expectedContent, secondRead);
 	}
 
+	public static void recordEnable(String id) {
+		ENABLE_COUNTS.computeIfAbsent(id, ignored -> new AtomicInteger()).incrementAndGet();
+	}
+
+	public static void recordDisable(String id) {
+		DISABLE_COUNTS.computeIfAbsent(id, ignored -> new AtomicInteger()).incrementAndGet();
+	}
+
+	public static void recordEnableThenFail(String id) {
+		recordEnable(id);
+		throw new IllegalStateException("Intentional enable failure for test plugin: " + id);
+	}
+
+	private static int countOf(Map<String, AtomicInteger> counts, String id) {
+		AtomicInteger count = counts.get(id);
+		return count == null ? 0 : count.get();
+	}
+
 	private static byte[] createPluginZip(String pluginInternalName, byte[] pluginClassBytes, Map<String, byte[]> additionalEntries) throws IOException {
 		Map<String, byte[]> entries = new LinkedHashMap<>();
 		entries.put(pluginInternalName + ".class", pluginClassBytes);
@@ -228,6 +270,17 @@ public class PluginManagerTest extends TestBase {
 		writeDefaultConstructor(cw);
 		writeEmptyMethod(cw, "onEnable");
 		writeEmptyMethod(cw, "onDisable");
+		cw.visitEnd();
+		return cw.toByteArray();
+	}
+
+	private static byte[] createPluginClassFailingOnEnable(String internalName, String id) {
+		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
+		cw.visit(V22, ACC_PUBLIC | ACC_SUPER, internalName, null, "java/lang/Object", new String[]{"software/coley/recaf/plugin/Plugin"});
+		visitPluginInformation(cw, id, new String[0]);
+		writeDefaultConstructor(cw);
+		writeLifecycleCounterMethod(cw, "onEnable", "recordEnableThenFail", id);
+		writeLifecycleCounterMethod(cw, "onDisable", "recordDisable", id);
 		cw.visitEnd();
 		return cw.toByteArray();
 	}
@@ -398,6 +451,20 @@ public class PluginManagerTest extends TestBase {
 	private static void writeEmptyMethod(ClassWriter cw, String name) {
 		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, name, "()V", null, null);
 		mv.visitCode();
+		mv.visitInsn(RETURN);
+		mv.visitMaxs(0, 0);
+		mv.visitEnd();
+	}
+
+	private static void writeLifecycleCounterMethod(ClassWriter cw, String methodName, String counterMethodName, String id) {
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, methodName, "()V", null, null);
+		mv.visitCode();
+		mv.visitLdcInsn(id);
+		mv.visitMethodInsn(INVOKESTATIC,
+				"software/coley/recaf/services/plugin/PluginManagerTest",
+				counterMethodName,
+				"(Ljava/lang/String;)V",
+				false);
 		mv.visitInsn(RETURN);
 		mv.visitMaxs(0, 0);
 		mv.visitEnd();
