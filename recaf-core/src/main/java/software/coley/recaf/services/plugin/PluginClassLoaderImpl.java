@@ -7,6 +7,10 @@ import software.coley.recaf.util.io.ByteSource;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.List;
 
 /**
  * Classloader for plugin content.
@@ -14,15 +18,22 @@ import java.net.*;
  * @author xDark
  */
 final class PluginClassLoaderImpl extends ClassLoader implements PluginClassLoader {
-	private final PluginGraph graph;
 	private final PluginSource source;
 	private final String id;
+	private volatile List<PluginClassLoaderImpl> dependencyLoaders = List.of();
 
-	PluginClassLoaderImpl(@Nonnull ClassLoader classLoader, @Nonnull PluginGraph graph, @Nonnull PluginSource source, @Nonnull String id) {
+	static {
+		registerAsParallelCapable();
+	}
+
+	PluginClassLoaderImpl(@Nonnull ClassLoader classLoader, @Nonnull PluginSource source, @Nonnull String id) {
 		super(classLoader);
-		this.graph = graph;
 		this.source = source;
 		this.id = id;
+	}
+
+	void setDependencyClassLoaders(@Nonnull Collection<PluginClassLoaderImpl> dependencyLoaders) {
+		this.dependencyLoaders = List.copyOf(dependencyLoaders);
 	}
 
 	@Override
@@ -32,12 +43,12 @@ final class PluginClassLoaderImpl extends ClassLoader implements PluginClassLoad
 			return null;
 		}
 		try {
-			URI uri = new URI("recaf", "/", name);
+			String resourcePath = name.startsWith("/") ? name.substring(1) : name;
+			URI uri = new URI("recaf", id, "/" + resourcePath, null);
 			return URL.of(uri, new URLStreamHandler() {
 				@Override
 				protected URLConnection openConnection(URL u) {
 					return new URLConnection(u) {
-						InputStream in;
 
 						@Override
 						public void connect() {
@@ -46,19 +57,23 @@ final class PluginClassLoaderImpl extends ClassLoader implements PluginClassLoad
 
 						@Override
 						public InputStream getInputStream() throws IOException {
-							InputStream in = this.in;
-							if (in == null) {
-								in = source.openStream();
-								this.in = in;
-							}
-							return in;
+							return source.openStream();
 						}
 					};
 				}
 			});
 		} catch (MalformedURLException | URISyntaxException ex) {
-			throw new IllegalStateException(ex);
+			throw new IllegalStateException("Failed to create plugin resource URL for: " + name, ex);
 		}
+	}
+
+	@Override
+	protected Enumeration<URL> findResources(String name) {
+		URL resource = findResource(name);
+		if (resource == null) {
+			return Collections.emptyEnumeration();
+		}
+		return Collections.enumeration(List.of(resource));
 	}
 
 	@Nullable
@@ -70,22 +85,28 @@ final class PluginClassLoaderImpl extends ClassLoader implements PluginClassLoad
 	@Nonnull
 	@Override
 	public Class<?> lookupClass(@Nonnull String name) throws ClassNotFoundException {
-		Class<?> cls = lookupClassImpl(name);
-		if (cls == null) {
-			throw new ClassNotFoundException(name);
+		synchronized (getClassLoadingLock(name)) {
+			Class<?> cls = lookupClassImpl(name);
+			if (cls == null) {
+				throw new ClassNotFoundException(name);
+			}
+			return cls;
 		}
-		return cls;
 	}
 
 	@Override
 	protected Class<?> findClass(String name) throws ClassNotFoundException {
-		Class<?> cls = lookupClassImpl(name);
-		if (cls != null)
-			return cls;
-		var dependencyLoaders = graph.getDependencyClassloaders(id);
-		while (dependencyLoaders.hasNext()) {
-			if ((cls = dependencyLoaders.next().findClass(name)) != null)
+		Class<?> cls;
+		synchronized (getClassLoadingLock(name)) {
+			cls = lookupClassImpl(name);
+			if (cls != null) {
 				return cls;
+			}
+		}
+		for (PluginClassLoaderImpl dependencyLoader : dependencyLoaders) {
+			if ((cls = dependencyLoader.loadClass(name)) != null) {
+				return cls;
+			}
 		}
 		throw new ClassNotFoundException(name);
 	}
