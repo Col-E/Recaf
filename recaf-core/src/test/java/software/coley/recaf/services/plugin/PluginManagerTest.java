@@ -236,6 +236,28 @@ public class PluginManagerTest extends TestBase {
 		}
 	}
 
+	@Test
+	void testCircularDependencyFailsDuringEnable() throws IOException {
+		String pluginA = "circular-a";
+		String pluginB = "circular-b";
+
+		String classA = "test/CircularA";
+		String classB = "test/CircularB";
+
+		byte[] zipA = createPluginZip(classA, createPluginClass(classA, pluginA, new String[]{pluginB}), Map.of());
+		byte[] zipB = createPluginZip(classB, createPluginClass(classB, pluginB, new String[]{pluginA}), Map.of());
+
+		PluginDiscoverer discoverer = () -> List.of(
+				() -> ByteSources.wrap(zipA),
+				() -> ByteSources.wrap(zipB)
+		);
+
+		assertThrows(PluginException.class, () -> pluginManager.loadPlugins(discoverer),
+				"Circular plugin dependencies should fail during enablement");
+
+		assertEquals(0, pluginManager.getPlugins().size(), "Circular dependency failure should not leave plugins loaded");
+	}
+
 	public static void assertSameText(String expected, String actual) {
 		assertEquals(expected, actual);
 	}
