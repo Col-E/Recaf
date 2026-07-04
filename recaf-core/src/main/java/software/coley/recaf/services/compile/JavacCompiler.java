@@ -28,6 +28,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -96,11 +98,14 @@ public class JavacCompiler implements Service {
 		if (compiler == null)
 			return new CompilerResult(new IllegalStateException("Cannot load 'javac' compiler."));
 
-		String className = arguments.getClassName();
+		// Primary class to compile, plus any additional classes that are being compiled alongside it.
+		String className = arguments.getClassName(); // This is primarily used for logging, there's no other special treatment.
+		Map<String, String> classSources = arguments.getClassSources();
+		Set<String> sourceClassNames = classSources.keySet();
 
 		// Class input map
 		VirtualUnitMap unitMap = new VirtualUnitMap();
-		unitMap.addSource(className, arguments.getClassSource());
+		classSources.forEach(unitMap::addSource);
 
 		// Create a file manager to track files in-memory rather than on-disk
 		List<WorkspaceResource> virtualClassPath = workspace == null ?
@@ -111,8 +116,10 @@ public class JavacCompiler implements Service {
 		// Generate phantom classes if the workspace does not already have phantoms in it.
 		if (workspace != null && config.getGeneratePhantoms().getValue()
 				&& workspace.getSupportingResources().stream().noneMatch(resource -> resource instanceof GeneratedPhantomWorkspaceResource)) {
-			// Only scan the target class and any of its inner classes for content to fill in.
-			List<JvmClassInfo> classesToScan = workspace.findJvmClasses(c -> c.getName().equals(className) || c.isInnerClassOf(className)).stream()
+			// Only scan the target classes and any of their inner classes for content to fill in.
+			List<JvmClassInfo> classesToScan = workspace.findJvmClasses(c ->
+							sourceClassNames.contains(c.getName()) ||
+									sourceClassNames.stream().anyMatch(c::isInnerClassOf)).stream()
 					.map(p -> p.getValue().asJvmClass())
 					.collect(Collectors.toList());
 			if (!classesToScan.isEmpty()) {

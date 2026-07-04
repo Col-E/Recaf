@@ -184,4 +184,34 @@ public class JavacCompilerTest extends TestBase {
 		assertEquals(0, result.getDiagnostics().size(), "There were unexpected diagnostic messages");
 		assertTrue(result.getCompilations().containsKey("HelloWorld"), "Class missing from compile map output");
 	}
+
+	@Test
+	void testJavacWithMultipleSources() {
+		// Specify multiple sources with a minimal dependency between them.
+		JavacArguments arguments = new JavacArgumentsBuilder()
+				.withClassSources(Map.of(
+						"HelloWorld",
+								"""
+								public class HelloWorld {
+									public static void main(String[] args) {
+										System.out.println(Helper.message());
+									}
+								}""",
+						// Supporting class
+						"Helper", """
+								public class Helper {
+									public static String message() {
+										return "Hello world";
+									}
+								}"""
+				))
+				.build();
+
+		// We should be able to compile both classes at once.
+		CompilerResult result = javac.compile(arguments, null, null);
+		assertTrue(result.wasSuccess(), "Result does not indicate success");
+		assertEquals(0, result.getDiagnostics().size(), "There were unexpected diagnostic messages");
+		assertTrue(result.getCompilations().containsKey("HelloWorld"), "Primary class missing from compile map output");
+		assertTrue(result.getCompilations().containsKey("Helper"), "Dependent class missing from compile map output");
+	}
 }

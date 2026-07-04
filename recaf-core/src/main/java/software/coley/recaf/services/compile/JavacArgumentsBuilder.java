@@ -4,14 +4,22 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import software.coley.recaf.util.JavaVersion;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Builder for {@link JavacArguments}.
  *
  * @author Matt Coley
  */
 public final class JavacArgumentsBuilder {
+	// Primary class to compile.
 	private String className;
 	private String classSource;
+	// All classes to compile, keyed by internal name.
+	// Does not need to contain the primary class, that will be added automatically if provided.
+	private Map<String, String> classSources;
+	// Additional compiler arguments.
 	private String classPath = System.getProperty("java.class.path");
 	private int versionTarget = JavaVersion.get();
 	private int downsampleTarget = -1;
@@ -21,7 +29,7 @@ public final class JavacArgumentsBuilder {
 
 	/**
 	 * @param className
-	 * 		Internal name of the class being compiled.
+	 * 		Internal name of the primary class being compiled.
 	 *
 	 * @return Builder.
 	 */
@@ -33,13 +41,40 @@ public final class JavacArgumentsBuilder {
 
 	/**
 	 * @param classSource
-	 * 		Source of the class.
+	 * 		Source of the primary class to compile.
 	 *
 	 * @return Builder.
 	 */
 	@Nonnull
 	public JavacArgumentsBuilder withClassSource(@Nonnull String classSource) {
 		this.classSource = classSource;
+		return this;
+	}
+
+	/**
+	 * @param classSources
+	 * 		Sources of additional classes to compile, keyed by internal name.
+	 *
+	 * @return Builder.
+	 */
+	@Nonnull
+	public JavacArgumentsBuilder withClassSources(@Nonnull Map<String, String> classSources) {
+		// Skip if no additional sources are provided.
+		if (classSources.isEmpty())
+			return this;
+
+		// Add additional sources to the builder.
+		if (this.classSources == null)
+			this.classSources = new HashMap<>();
+		this.classSources.putAll(classSources);
+
+		// If the primary class is not set pick the first entry in the map as the primary class.
+		if (className == null) {
+			Map.Entry<String, String> entry = classSources.entrySet().iterator().next();
+			return withClassName(entry.getKey())
+					.withClassSource(entry.getValue());
+		}
+
 		return this;
 	}
 
@@ -122,11 +157,20 @@ public final class JavacArgumentsBuilder {
 	@Nonnull
 	public JavacArguments build() {
 		if (className == null)
-			throw new IllegalArgumentException("Class name must not be null");
-		if (classSource == null)
-			throw new IllegalArgumentException("Class source must not be null");
+			throw new IllegalArgumentException("Primary class name must not be null");
 
-		return new JavacArguments(className, classSource,
+		// Combine primary input with any additional sources.
+		Map<String, String> allClassSources = classSources == null ? new HashMap<>() : new HashMap<>(classSources);
+		if (classSource != null)
+			allClassSources.put(className, classSource);
+
+		// Validate that the primary class is present in the sources.
+		if (allClassSources.isEmpty())
+			throw new IllegalArgumentException("Class sources must not be empty");
+		if (!allClassSources.containsKey(className))
+			throw new IllegalArgumentException("Class sources must contain the primary class");
+
+		return new JavacArguments(className, allClassSources,
 				classPath, versionTarget, downsampleTarget,
 				debugVariables, debugLineNumbers, debugSourceName);
 	}
