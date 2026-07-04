@@ -1,49 +1,52 @@
 package software.coley.recaf.services.plugin;
 
-import net.bytebuddy.ByteBuddy;
-import net.bytebuddy.dynamic.DynamicType;
-import net.bytebuddy.implementation.FixedValue;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.objectweb.asm.AnnotationVisitor;
-import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.Label;
-import org.objectweb.asm.MethodVisitor;
-import software.coley.recaf.plugin.*;
+import software.coley.recaf.info.builder.JvmClassInfoBuilder;
+import software.coley.recaf.services.compile.CompileMap;
+import software.coley.recaf.services.compile.CompilerDiagnostic;
+import software.coley.recaf.services.compile.CompilerResult;
+import software.coley.recaf.services.compile.JavacArguments;
+import software.coley.recaf.services.compile.JavacArgumentsBuilder;
+import software.coley.recaf.services.compile.JavacCompiler;
 import software.coley.recaf.services.plugin.discovery.DiscoveredPluginSource;
 import software.coley.recaf.services.plugin.discovery.PluginDiscoverer;
 import software.coley.recaf.services.plugin.zip.ZipPluginLoader;
 import software.coley.recaf.test.TestBase;
+import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.util.ZipCreationUtils;
 import software.coley.recaf.util.io.ByteSource;
 import software.coley.recaf.util.io.ByteSources;
+import software.coley.recaf.workspace.model.Workspace;
+import software.coley.recaf.workspace.model.bundle.BasicJvmClassBundle;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Modifier;
-import java.net.URL;
-import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.StringJoiner;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.objectweb.asm.Opcodes.*;
 
 /**
  * Tests for {@link PluginManager}
  */
 public class PluginManagerTest extends TestBase {
-	static PluginManager pluginManager;
-	private static final Map<String, AtomicInteger> ENABLE_COUNTS = new ConcurrentHashMap<>();
-	private static final Map<String, AtomicInteger> DISABLE_COUNTS = new ConcurrentHashMap<>();
+	private static final String ENABLE_COUNT_PREFIX = "recaf.test.plugin.enable.";
+	private static final String DISABLE_COUNT_PREFIX = "recaf.test.plugin.disable.";
+
+	private static PluginManager pluginManager;
+	private static JavacCompiler javac;
 
 	@BeforeAll
 	static void setup() {
 		pluginManager = recaf.get(PluginManager.class);
+		javac = recaf.get(JavacCompiler.class);
 	}
 
 	@AfterEach
@@ -53,40 +56,58 @@ public class PluginManagerTest extends TestBase {
 
 	@Test
 	void testBatchLoadedPluginCanReferenceDependencyClasses() throws IOException {
+		// Setup two plugins, one of which depends on the other.
+		// The dependent plugin will call a static method on a class in the dependency plugin.
 		String apiId = "api-plugin";
 		String implId = "impl-plugin";
-
 		String apiPluginClass = "test/ApiPlugin";
 		String apiTypeClass = "test/ApiType";
 		String implPluginClass = "test/ImplPlugin";
+		Map<String, String> apiSources = new HashMap<>();
+		apiSources.put(apiPluginClass, pluginSource(apiPluginClass, apiId, new String[0], "", ""));
+		apiSources.put(apiTypeClass, javaSource(apiTypeClass, """
+				public class ApiType {
+					public static String message() {
+						return "dependency-ok";
+					}
+				}
+				"""));
 
-		byte[] apiZip = createPluginZip(apiPluginClass, createPluginClass(apiPluginClass, apiId, new String[0]), Map.of(
-				apiTypeClass + ".class", createStaticStringProviderClass(apiTypeClass, "message", "dependency-ok")
-		));
-
-		byte[] implZip = createPluginZip(implPluginClass, createPluginClassCallingDependencyStringProvider(
+		CompilerResult apiCompilation = compilePluginSources(apiPluginClass, apiSources, Map.of());
+		byte[] apiZip = createPluginZip(apiPluginClass, apiCompilation.getCompilations(), Map.of());
+		byte[] implZip = createPluginZip(
 				implPluginClass,
-				implId,
-				new String[]{apiId},
-				apiTypeClass,
-				"message",
-				"dependency-ok"
-		), Map.of());
-
-		PluginDiscoverer discoverer = () -> List.of(
-				() -> ByteSources.wrap(apiZip),
-				() -> ByteSources.wrap(implZip)
+				Map.of(implPluginClass, pluginSource(
+						implPluginClass,
+						implId,
+						new String[]{apiId},
+						"""
+								if (!java.util.Objects.equals("dependency-ok", ApiType.message())) {
+									throw new IllegalStateException("Expected dependency-ok from ApiType.message()");
+								}
+								""",
+						""
+				)),
+				apiCompilation.getCompilations(),
+				Map.of()
 		);
 
 		try {
+			// We should be able to load both plugins in the same batch.
+			PluginDiscoverer discoverer = () -> List.of(
+					() -> ByteSources.wrap(apiZip),
+					() -> ByteSources.wrap(implZip)
+			);
 			Collection<PluginContainer<?>> containers = pluginManager.loadPlugins(discoverer);
 
+			// Validate both are loaded and accessible.
+			// That implies that the dependent plugin was able to see the API plugin's classes during its onEnable().
 			assertEquals(2, containers.size());
 			assertNotNull(pluginManager.getPlugin(apiId));
 			assertNotNull(pluginManager.getPlugin(implId));
 
+			// Unload the API plugin, which should also unload the dependent plugin.
 			pluginManager.unloaderFor(apiId).commit();
-
 			assertNull(pluginManager.getPlugin(apiId));
 			assertNull(pluginManager.getPlugin(implId));
 		} catch (PluginException ex) {
@@ -101,18 +122,37 @@ public class PluginManagerTest extends TestBase {
 		String resourceName = "META-INF/services/example.Service";
 		String resourceContent = "example.Implementation";
 
-		byte[] zip = createPluginZip(pluginClass, createPluginClassCallingEnumeratedResourceAssertion(
+		// The plugin will attempt to enumerate the resource through ClassLoader#getResources,
+		// and validate that it can see the resource and that the content is as expected.
+		byte[] zip = createPluginZip(pluginClass, pluginSource(
 				pluginClass,
 				id,
-				resourceName,
-				resourceContent
+				new String[0],
+				"""
+						try {
+							var resources = getClass().getClassLoader().getResources("META-INF/services/example.Service");
+							if (!resources.hasMoreElements()) {
+								throw new IllegalStateException("Expected resource to be visible through ClassLoader#getResources");
+							}
+							var resource = resources.nextElement();
+							try (var inputStream = resource.openStream()) {
+								String content = new String(inputStream.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+								if (!java.util.Objects.equals("example.Implementation", content)) {
+									throw new IllegalStateException("Unexpected resource content: " + content);
+								}
+							}
+						} catch (java.io.IOException ex) {
+							throw new java.io.UncheckedIOException(ex);
+						}
+						""",
+				""
 		), Map.of(
 				resourceName, resourceContent.getBytes(StandardCharsets.UTF_8)
 		));
 
-		PluginDiscoverer discoverer = () -> List.of(() -> ByteSources.wrap(zip));
-
+		// It should load/run without issue.
 		try {
+			PluginDiscoverer discoverer = () -> List.of(() -> ByteSources.wrap(zip));
 			pluginManager.loadPlugins(discoverer);
 			pluginManager.unloaderFor(id).commit();
 		} catch (PluginException ex) {
@@ -126,18 +166,29 @@ public class PluginManagerTest extends TestBase {
 		String pluginClass = "test/ScopedResourcePlugin";
 		String resourceName = "plugin-resource.txt";
 
-		byte[] zip = createPluginZip(pluginClass, createPluginClassCallingResourceUrlScopeAssertion(
+		// The plugin will attempt to get the resource through ClassLoader#getResource,
+		// and validate that the URL contains the plugin ID, which indicates that the resource is scoped to the plugin's classloader.
+		byte[] zip = createPluginZip(pluginClass, pluginSource(
 				pluginClass,
 				id,
-				resourceName,
-				id
+				new String[0],
+				"""
+						var resource = getClass().getClassLoader().getResource("plugin-resource.txt");
+						if (resource == null) {
+							throw new IllegalStateException("Expected resource URL: plugin-resource.txt");
+						}
+						if (!resource.toExternalForm().contains("scoped-resource-plugin")) {
+							throw new IllegalStateException("Expected resource URL to contain scoped-resource-plugin, got: " + resource);
+						}
+						""",
+				""
 		), Map.of(
 				resourceName, "scoped".getBytes(StandardCharsets.UTF_8)
 		));
 
-		PluginDiscoverer discoverer = () -> List.of(() -> ByteSources.wrap(zip));
-
+		// It should load/run without issue.
 		try {
+			PluginDiscoverer discoverer = () -> List.of(() -> ByteSources.wrap(zip));
 			pluginManager.loadPlugins(discoverer);
 			pluginManager.unloaderFor(id).commit();
 		} catch (PluginException ex) {
@@ -146,48 +197,42 @@ public class PluginManagerTest extends TestBase {
 	}
 
 	@Test
-	void testPluginResourceUrlReturnsFreshStreams() throws IOException {
-		String id = "fresh-stream-plugin";
-		String pluginClass = "test/FreshStreamPlugin";
-		String resourceName = "fresh-resource.txt";
-		String resourceContent = "fresh-content";
-
-		byte[] zip = createPluginZip(pluginClass, createPluginClassCallingFreshResourceStreamAssertion(
-				pluginClass,
-				id,
-				resourceName,
-				resourceContent
-		), Map.of(
-				resourceName, resourceContent.getBytes(StandardCharsets.UTF_8)
-		));
-
-		PluginDiscoverer discoverer = () -> List.of(() -> ByteSources.wrap(zip));
-
-		try {
-			pluginManager.loadPlugins(discoverer);
-			pluginManager.unloaderFor(id).commit();
-		} catch (PluginException ex) {
-			fail("Failed to validate fresh plugin resource streams", ex);
-		}
-	}
-
-	@Test
 	void testFailedEnableCallsDisableDuringRollback() throws IOException {
 		String id = "failing-enable-plugin";
 		String pluginClass = "test/FailingEnablePlugin";
 
-		ENABLE_COUNTS.clear();
-		DISABLE_COUNTS.clear();
+		clearCount(ENABLE_COUNT_PREFIX, id);
+		clearCount(DISABLE_COUNT_PREFIX, id);
 
-		byte[] zip = createPluginZip(pluginClass, createPluginClassFailingOnEnable(pluginClass, id), Map.of());
+		// The plugin will throw an exception during onEnable, which should trigger a rollback that calls onDisable.
+		byte[] zip = createPluginZip(pluginClass, pluginSource(
+				pluginClass,
+				id,
+				new String[0],
+				// onEnable will throw an exception, which should trigger a rollback that calls onDisable.
+				"""
+						String key = "recaf.test.plugin.enable.failing-enable-plugin";
+						int count = Integer.parseInt(System.getProperty(key, "0"));
+						System.setProperty(key, Integer.toString(count + 1));
+						throw new IllegalStateException("Intentional enable failure for test plugin: failing-enable-plugin");
+						""",
+				// onDisable will increment a counter to verify that it was called during rollback.
+				"""
+						String key = "recaf.test.plugin.disable.failing-enable-plugin";
+						int count = Integer.parseInt(System.getProperty(key, "0"));
+						System.setProperty(key, Integer.toString(count + 1));
+						"""
+		), Map.of());
 
+		// Loading the plugin should fail.
+		// We should see that onEnable was called once, and onDisable was called once during rollback.
 		PluginDiscoverer discoverer = () -> List.of(() -> ByteSources.wrap(zip));
-
 		assertThrows(PluginException.class, () -> pluginManager.loadPlugins(discoverer),
 				"Plugin loading should fail when onEnable throws");
 
-		assertEquals(1, countOf(ENABLE_COUNTS, id), "onEnable should have been called once");
-		assertEquals(1, countOf(DISABLE_COUNTS, id), "onDisable should have been called during rollback");
+		// Verify that onEnable was called once, and onDisable was called once during rollback.
+		assertEquals(1, countOf(ENABLE_COUNT_PREFIX, id), "onEnable should have been called once");
+		assertEquals(1, countOf(DISABLE_COUNT_PREFIX, id), "onDisable should have been called during rollback");
 		assertEquals(0, pluginManager.getPlugins().size(), "Failed plugin should not remain loaded");
 	}
 
@@ -203,34 +248,92 @@ public class PluginManagerTest extends TestBase {
 		String classC = "test/DiamondC";
 		String classD = "test/DiamondD";
 
-		ENABLE_COUNTS.clear();
-		DISABLE_COUNTS.clear();
+		clearCount(ENABLE_COUNT_PREFIX, pluginA);
+		clearCount(ENABLE_COUNT_PREFIX, pluginB);
+		clearCount(ENABLE_COUNT_PREFIX, pluginC);
+		clearCount(ENABLE_COUNT_PREFIX, pluginD);
+		clearCount(DISABLE_COUNT_PREFIX, pluginA);
+		clearCount(DISABLE_COUNT_PREFIX, pluginB);
+		clearCount(DISABLE_COUNT_PREFIX, pluginC);
+		clearCount(DISABLE_COUNT_PREFIX, pluginD);
 
-		byte[] zipA = createPluginZip(classA, createLifecycleCountingPluginClass(classA, pluginA, new String[0]), Map.of());
-		byte[] zipB = createPluginZip(classB, createLifecycleCountingPluginClass(classB, pluginB, new String[]{pluginA}), Map.of());
-		byte[] zipC = createPluginZip(classC, createLifecycleCountingPluginClass(classC, pluginC, new String[]{pluginA}), Map.of());
-		byte[] zipD = createPluginZip(classD, createLifecycleCountingPluginClass(classD, pluginD, new String[]{pluginB, pluginC}), Map.of());
-
-		PluginDiscoverer discoverer = () -> List.of(
-				() -> ByteSources.wrap(zipA),
-				() -> ByteSources.wrap(zipB),
-				() -> ByteSources.wrap(zipC),
-				() -> ByteSources.wrap(zipD)
-		);
+		byte[] zipA = createPluginZip(classA, pluginSource(
+				classA, pluginA, new String[0],
+				"""
+						String key = "recaf.test.plugin.enable.diamond-a";
+						int count = Integer.parseInt(System.getProperty(key, "0"));
+						System.setProperty(key, Integer.toString(count + 1));
+						""",
+				"""
+						String key = "recaf.test.plugin.disable.diamond-a";
+						int count = Integer.parseInt(System.getProperty(key, "0"));
+						System.setProperty(key, Integer.toString(count + 1));
+						"""
+		), Map.of());
+		byte[] zipB = createPluginZip(classB, pluginSource(
+				classB, pluginB, new String[]{pluginA},
+				"""
+						String key = "recaf.test.plugin.enable.diamond-b";
+						int count = Integer.parseInt(System.getProperty(key, "0"));
+						System.setProperty(key, Integer.toString(count + 1));
+						""",
+				"""
+						String key = "recaf.test.plugin.disable.diamond-b";
+						int count = Integer.parseInt(System.getProperty(key, "0"));
+						System.setProperty(key, Integer.toString(count + 1));
+						"""
+		), Map.of());
+		byte[] zipC = createPluginZip(classC, pluginSource(
+				classC, pluginC, new String[]{pluginA},
+				"""
+						String key = "recaf.test.plugin.enable.diamond-c";
+						int count = Integer.parseInt(System.getProperty(key, "0"));
+						System.setProperty(key, Integer.toString(count + 1));
+						""",
+				"""
+						String key = "recaf.test.plugin.disable.diamond-c";
+						int count = Integer.parseInt(System.getProperty(key, "0"));
+						System.setProperty(key, Integer.toString(count + 1));
+						"""
+		), Map.of());
+		byte[] zipD = createPluginZip(classD, pluginSource(
+				classD, pluginD, new String[]{pluginB, pluginC},
+				"""
+						String key = "recaf.test.plugin.enable.diamond-d";
+						int count = Integer.parseInt(System.getProperty(key, "0"));
+						System.setProperty(key, Integer.toString(count + 1));
+						""",
+				"""
+						String key = "recaf.test.plugin.disable.diamond-d";
+						int count = Integer.parseInt(System.getProperty(key, "0"));
+						System.setProperty(key, Integer.toString(count + 1));
+						"""
+		), Map.of());
 
 		try {
+			// Load all plugins in a single batch, which should succeed.
+			PluginDiscoverer discoverer = () -> List.of(
+					() -> ByteSources.wrap(zipA),
+					() -> ByteSources.wrap(zipB),
+					() -> ByteSources.wrap(zipC),
+					() -> ByteSources.wrap(zipD)
+			);
 			pluginManager.loadPlugins(discoverer);
-
 			assertEquals(4, pluginManager.getPlugins().size());
 
+			// Unload the root of the diamond dependency graph, which should unload all plugins.
 			pluginManager.unloaderFor(pluginA).commit();
-
 			assertEquals(0, pluginManager.getPlugins().size());
 
-			assertEquals(1, countOf(DISABLE_COUNTS, pluginA));
-			assertEquals(1, countOf(DISABLE_COUNTS, pluginB));
-			assertEquals(1, countOf(DISABLE_COUNTS, pluginC));
-			assertEquals(1, countOf(DISABLE_COUNTS, pluginD));
+			// Verify that each plugin's onEnable and onDisable were called exactly once.
+			assertEquals(1, countOf(ENABLE_COUNT_PREFIX, pluginA));
+			assertEquals(1, countOf(ENABLE_COUNT_PREFIX, pluginB));
+			assertEquals(1, countOf(ENABLE_COUNT_PREFIX, pluginC));
+			assertEquals(1, countOf(ENABLE_COUNT_PREFIX, pluginD));
+			assertEquals(1, countOf(DISABLE_COUNT_PREFIX, pluginA));
+			assertEquals(1, countOf(DISABLE_COUNT_PREFIX, pluginB));
+			assertEquals(1, countOf(DISABLE_COUNT_PREFIX, pluginC));
+			assertEquals(1, countOf(DISABLE_COUNT_PREFIX, pluginD));
 		} catch (PluginException ex) {
 			fail("Failed to unload diamond dependency graph", ex);
 		}
@@ -240,349 +343,39 @@ public class PluginManagerTest extends TestBase {
 	void testCircularDependencyFailsDuringEnable() throws IOException {
 		String pluginA = "circular-a";
 		String pluginB = "circular-b";
-
 		String classA = "test/CircularA";
 		String classB = "test/CircularB";
+		byte[] zipA = createPluginZip(classA, pluginSource(classA, pluginA, new String[]{pluginB}, "", ""), Map.of());
+		byte[] zipB = createPluginZip(classB, pluginSource(classB, pluginB, new String[]{pluginA}, "", ""), Map.of());
 
-		byte[] zipA = createPluginZip(classA, createPluginClass(classA, pluginA, new String[]{pluginB}), Map.of());
-		byte[] zipB = createPluginZip(classB, createPluginClass(classB, pluginB, new String[]{pluginA}), Map.of());
-
+		// If we have a circular dependency, the plugin manager should fail to load the plugins during enablement.
 		PluginDiscoverer discoverer = () -> List.of(
 				() -> ByteSources.wrap(zipA),
 				() -> ByteSources.wrap(zipB)
 		);
-
 		assertThrows(PluginException.class, () -> pluginManager.loadPlugins(discoverer),
 				"Circular plugin dependencies should fail during enablement");
-
 		assertEquals(0, pluginManager.getPlugins().size(), "Circular dependency failure should not leave plugins loaded");
-	}
-
-	public static void assertSameText(String expected, String actual) {
-		assertEquals(expected, actual);
-	}
-
-	public static void assertEnumeratedResource(ClassLoader classLoader, String name, String expectedContent) throws IOException {
-		Enumeration<URL> resources = classLoader.getResources(name);
-
-		assertTrue(resources.hasMoreElements(), "Expected resource to be visible through ClassLoader#getResources: " + name);
-
-		URL resource = resources.nextElement();
-		assertNotNull(resource, "Enumerated resource URL must not be null");
-
-		try (InputStream inputStream = resource.openStream()) {
-			assertEquals(expectedContent, new String(inputStream.readAllBytes(), StandardCharsets.UTF_8));
-		}
-	}
-
-	public static void assertResourceUrlContains(ClassLoader classLoader, String name, String expectedUrlPart) {
-		URL resource = classLoader.getResource(name);
-
-		assertNotNull(resource, "Expected resource URL: " + name);
-		assertTrue(resource.toExternalForm().contains(expectedUrlPart),
-				"Expected resource URL to contain '%s', got: %s".formatted(expectedUrlPart, resource));
-	}
-
-	public static void assertFreshResourceStreams(ClassLoader classLoader, String name, String expectedContent) throws IOException {
-		URL resource = classLoader.getResource(name);
-
-		assertNotNull(resource, "Expected resource URL: " + name);
-
-		URLConnection connection = resource.openConnection();
-
-		String firstRead;
-		try (InputStream inputStream = connection.getInputStream()) {
-			firstRead = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
-		}
-
-		String secondRead;
-		try (InputStream inputStream = connection.getInputStream()) {
-			secondRead = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
-		}
-
-		assertEquals(expectedContent, firstRead);
-		assertEquals(expectedContent, secondRead);
-	}
-
-	public static void recordEnable(String id) {
-		ENABLE_COUNTS.computeIfAbsent(id, ignored -> new AtomicInteger()).incrementAndGet();
-	}
-
-	public static void recordDisable(String id) {
-		DISABLE_COUNTS.computeIfAbsent(id, ignored -> new AtomicInteger()).incrementAndGet();
-	}
-
-	public static void recordEnableThenFail(String id) {
-		recordEnable(id);
-		throw new IllegalStateException("Intentional enable failure for test plugin: " + id);
-	}
-
-	private static int countOf(Map<String, AtomicInteger> counts, String id) {
-		AtomicInteger count = counts.get(id);
-		return count == null ? 0 : count.get();
-	}
-
-	private static byte[] createPluginZip(String pluginInternalName, byte[] pluginClassBytes, Map<String, byte[]> additionalEntries) throws IOException {
-		Map<String, byte[]> entries = new LinkedHashMap<>();
-		entries.put(pluginInternalName + ".class", pluginClassBytes);
-		entries.put(ZipPluginLoader.SERVICE_PATH, pluginInternalName.replace('/', '.').getBytes(StandardCharsets.UTF_8));
-		entries.putAll(additionalEntries);
-		return ZipCreationUtils.createZip(entries);
-	}
-
-	private static byte[] createPluginClass(String internalName, String id, String[] dependencies) {
-		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
-		cw.visit(V22, ACC_PUBLIC | ACC_SUPER, internalName, null, "java/lang/Object", new String[]{"software/coley/recaf/plugin/Plugin"});
-		visitPluginInformation(cw, id, dependencies);
-		writeDefaultConstructor(cw);
-		writeEmptyMethod(cw, "onEnable");
-		writeEmptyMethod(cw, "onDisable");
-		cw.visitEnd();
-		return cw.toByteArray();
-	}
-
-	private static byte[] createLifecycleCountingPluginClass(String internalName, String id, String[] dependencies) {
-		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
-		cw.visit(V22, ACC_PUBLIC | ACC_SUPER, internalName, null, "java/lang/Object", new String[]{"software/coley/recaf/plugin/Plugin"});
-		visitPluginInformation(cw, id, dependencies);
-		writeDefaultConstructor(cw);
-		writeLifecycleCounterMethod(cw, "onEnable", "recordEnable", id);
-		writeLifecycleCounterMethod(cw, "onDisable", "recordDisable", id);
-		cw.visitEnd();
-		return cw.toByteArray();
-	}
-
-
-	private static byte[] createPluginClassFailingOnEnable(String internalName, String id) {
-		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
-		cw.visit(V22, ACC_PUBLIC | ACC_SUPER, internalName, null, "java/lang/Object", new String[]{"software/coley/recaf/plugin/Plugin"});
-		visitPluginInformation(cw, id, new String[0]);
-		writeDefaultConstructor(cw);
-		writeLifecycleCounterMethod(cw, "onEnable", "recordEnableThenFail", id);
-		writeLifecycleCounterMethod(cw, "onDisable", "recordDisable", id);
-		cw.visitEnd();
-		return cw.toByteArray();
-	}
-
-	private static byte[] createPluginClassCallingDependencyStringProvider(
-			String internalName,
-			String id,
-			String[] dependencies,
-			String providerInternalName,
-			String providerMethodName,
-			String expectedValue
-	) {
-		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
-		cw.visit(V22, ACC_PUBLIC | ACC_SUPER, internalName, null, "java/lang/Object", new String[]{"software/coley/recaf/plugin/Plugin"});
-		visitPluginInformation(cw, id, dependencies);
-		writeDefaultConstructor(cw);
-
-		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "onEnable", "()V", null, null);
-		mv.visitCode();
-		mv.visitLdcInsn(expectedValue);
-		mv.visitMethodInsn(INVOKESTATIC, providerInternalName, providerMethodName, "()Ljava/lang/String;", false);
-		mv.visitMethodInsn(INVOKESTATIC,
-				"software/coley/recaf/services/plugin/PluginManagerTest",
-				"assertSameText",
-				"(Ljava/lang/String;Ljava/lang/String;)V",
-				false);
-		mv.visitInsn(RETURN);
-		mv.visitMaxs(0, 0);
-		mv.visitEnd();
-
-		writeEmptyMethod(cw, "onDisable");
-		cw.visitEnd();
-		return cw.toByteArray();
-	}
-
-	private static byte[] createPluginClassCallingEnumeratedResourceAssertion(
-			String internalName,
-			String id,
-			String resourceName,
-			String expectedContent
-	) {
-		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
-		cw.visit(V22, ACC_PUBLIC | ACC_SUPER, internalName, null, "java/lang/Object", new String[]{"software/coley/recaf/plugin/Plugin"});
-		visitPluginInformation(cw, id, new String[0]);
-		writeDefaultConstructor(cw);
-
-		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "onEnable", "()V", null, null);
-		mv.visitCode();
-		writeCurrentClassLoader(mv);
-		mv.visitLdcInsn(resourceName);
-		mv.visitLdcInsn(expectedContent);
-		mv.visitMethodInsn(INVOKESTATIC,
-				"software/coley/recaf/services/plugin/PluginManagerTest",
-				"assertEnumeratedResource",
-				"(Ljava/lang/ClassLoader;Ljava/lang/String;Ljava/lang/String;)V",
-				false);
-		mv.visitInsn(RETURN);
-		mv.visitMaxs(0, 0);
-		mv.visitEnd();
-
-		writeEmptyMethod(cw, "onDisable");
-		cw.visitEnd();
-		return cw.toByteArray();
-	}
-
-	private static byte[] createPluginClassCallingResourceUrlScopeAssertion(
-			String internalName,
-			String id,
-			String resourceName,
-			String expectedUrlPart
-	) {
-		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
-		cw.visit(V22, ACC_PUBLIC | ACC_SUPER, internalName, null, "java/lang/Object", new String[]{"software/coley/recaf/plugin/Plugin"});
-		visitPluginInformation(cw, id, new String[0]);
-		writeDefaultConstructor(cw);
-
-		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "onEnable", "()V", null, null);
-		mv.visitCode();
-		writeCurrentClassLoader(mv);
-		mv.visitLdcInsn(resourceName);
-		mv.visitLdcInsn(expectedUrlPart);
-		mv.visitMethodInsn(INVOKESTATIC,
-				"software/coley/recaf/services/plugin/PluginManagerTest",
-				"assertResourceUrlContains",
-				"(Ljava/lang/ClassLoader;Ljava/lang/String;Ljava/lang/String;)V",
-				false);
-		mv.visitInsn(RETURN);
-		mv.visitMaxs(0, 0);
-		mv.visitEnd();
-
-		writeEmptyMethod(cw, "onDisable");
-		cw.visitEnd();
-		return cw.toByteArray();
-	}
-
-	private static byte[] createPluginClassCallingFreshResourceStreamAssertion(
-			String internalName,
-			String id,
-			String resourceName,
-			String expectedContent
-	) {
-		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
-		cw.visit(V22, ACC_PUBLIC | ACC_SUPER, internalName, null, "java/lang/Object", new String[]{"software/coley/recaf/plugin/Plugin"});
-		visitPluginInformation(cw, id, new String[0]);
-		writeDefaultConstructor(cw);
-
-		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "onEnable", "()V", null, null);
-		mv.visitCode();
-		writeCurrentClassLoader(mv);
-		mv.visitLdcInsn(resourceName);
-		mv.visitLdcInsn(expectedContent);
-		mv.visitMethodInsn(INVOKESTATIC,
-				"software/coley/recaf/services/plugin/PluginManagerTest",
-				"assertFreshResourceStreams",
-				"(Ljava/lang/ClassLoader;Ljava/lang/String;Ljava/lang/String;)V",
-				false);
-		mv.visitInsn(RETURN);
-		mv.visitMaxs(0, 0);
-		mv.visitEnd();
-
-		writeEmptyMethod(cw, "onDisable");
-		cw.visitEnd();
-		return cw.toByteArray();
-	}
-
-	private static byte[] createStaticStringProviderClass(String internalName, String methodName, String value) {
-		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
-		cw.visit(V22, ACC_PUBLIC | ACC_SUPER, internalName, null, "java/lang/Object", null);
-		writeDefaultConstructor(cw);
-
-		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC | ACC_STATIC, methodName, "()Ljava/lang/String;", null, null);
-		mv.visitCode();
-		mv.visitLdcInsn(value);
-		mv.visitInsn(ARETURN);
-		mv.visitMaxs(0, 0);
-		mv.visitEnd();
-
-		cw.visitEnd();
-		return cw.toByteArray();
-	}
-
-	private static void visitPluginInformation(ClassWriter cw, String id, String[] dependencies) {
-		AnnotationVisitor av = cw.visitAnnotation("Lsoftware/coley/recaf/plugin/PluginInformation;", true);
-		av.visit("id", id);
-		av.visit("name", id);
-		av.visit("version", "1.0");
-
-		if (dependencies.length > 0) {
-			AnnotationVisitor dependenciesVisitor = av.visitArray("dependencies");
-			for (String dependency : dependencies)
-				dependenciesVisitor.visit(null, dependency);
-			dependenciesVisitor.visitEnd();
-		}
-
-		av.visitEnd();
-	}
-
-	private static void writeDefaultConstructor(ClassWriter cw) {
-		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
-		mv.visitCode();
-		mv.visitVarInsn(ALOAD, 0);
-		mv.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
-		mv.visitInsn(RETURN);
-		mv.visitMaxs(0, 0);
-		mv.visitEnd();
-	}
-
-	private static void writeEmptyMethod(ClassWriter cw, String name) {
-		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, name, "()V", null, null);
-		mv.visitCode();
-		mv.visitInsn(RETURN);
-		mv.visitMaxs(0, 0);
-		mv.visitEnd();
-	}
-
-	private static void writeLifecycleCounterMethod(ClassWriter cw, String methodName, String counterMethodName, String id) {
-		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, methodName, "()V", null, null);
-		mv.visitCode();
-		mv.visitLdcInsn(id);
-		mv.visitMethodInsn(INVOKESTATIC,
-				"software/coley/recaf/services/plugin/PluginManagerTest",
-				counterMethodName,
-				"(Ljava/lang/String;)V",
-				false);
-		mv.visitInsn(RETURN);
-		mv.visitMaxs(0, 0);
-		mv.visitEnd();
-	}
-
-	private static void writeCurrentClassLoader(MethodVisitor mv) {
-		mv.visitVarInsn(ALOAD, 0);
-		mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Object", "getClass", "()Ljava/lang/Class;", false);
-		mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Class", "getClassLoader", "()Ljava/lang/ClassLoader;", false);
 	}
 
 	@Test
 	void testSingleLoadAndUnload() throws IOException {
 		String id = "test-plugin";
-		String name = id;
+		String name = "test plugin";
 		String version = "test-version";
 		String author = "test-author";
 		String description = "test-description";
-		String className = "test.PluginTest";
-		DynamicType.Unloaded<Plugin> unloaded = new ByteBuddy()
-				.subclass(Plugin.class)
-				.name(className)
-				.defineMethod("onEnable", void.class, Modifier.PUBLIC)
-				.intercept(FixedValue.originType())
-				.defineMethod("onDisable", void.class, Modifier.PUBLIC)
-				.intercept(FixedValue.originType())
-				.annotateType(new PluginInformationRecord(id, name, version, author, new String[0], description)).make();
-		byte[] zip = ZipCreationUtils.createZip(Map.of(
-				"test/PluginTest.class", unloaded.getBytes(),
-				ZipPluginLoader.SERVICE_PATH, className.getBytes(StandardCharsets.UTF_8)
-		));
+		String className = "test/PluginTest";
+		byte[] zip = createPluginZip(className, pluginSource(
+				className, id, name, version, author, description, new String[0], "", ""
+		), Map.of());
 
 		try {
-			// Load the plugin
 			ByteSource pluginSource = ByteSources.wrap(zip);
 			PluginDiscoverer discoverer = () -> List.of(() -> pluginSource);
 			PluginContainer<?> container = pluginManager.loadPlugins(discoverer).iterator().next();
 
-			// Assert the information stuck
+			// Validate info matches expected values.
 			PluginInfo information = container.info();
 			assertEquals(id, information.id());
 			assertEquals(name, information.name());
@@ -590,21 +383,17 @@ public class PluginManagerTest extends TestBase {
 			assertEquals(author, information.author());
 			assertEquals(description, information.description());
 
-			// Assert the plugin is active
+			// Validate that the plugin is loaded and accessible.
 			assertEquals(1, pluginManager.getPlugins().size());
 			assertSame(container, pluginManager.getPlugin(id));
 
-			// Assert that loading the same plugin twice throws an exception, and does
-			// not actually register a 2nd instance of the plugin.
-			assertThrows(PluginException.class, () -> pluginManager.loadPlugins(discoverer),
-					"Duplicate plugin loading should fail");
+			// Validate that attempting to load the same plugin again fails.
+			assertThrows(PluginException.class, () -> pluginManager.loadPlugins(discoverer), "Duplicate plugin loading should fail");
 			assertEquals(1, pluginManager.getPlugins().size());
 			assertSame(container, pluginManager.getPlugin(id));
 
-			// Now unload it
+			// Unload the plugin and validate that it is no longer accessible.
 			pluginManager.unloaderFor(id).commit();
-
-			// Assert the plugin is no longer active
 			assertEquals(0, pluginManager.getPlugins().size());
 			assertNull(pluginManager.getPlugin(id));
 		} catch (PluginException ex) {
@@ -614,43 +403,30 @@ public class PluginManagerTest extends TestBase {
 
 	@Test
 	void testDependentChain() throws IOException {
+		// 1 <-- 2 <-- 3
 		List<DiscoveredPluginSource> sources = new ArrayList<>(3);
 		for (int i = 0; i < 3; i++) {
 			String id = "test-plugin-" + i;
-			String name = id;
+			String name = "test " + i;
 			String version = "test-version";
 			String author = "test-author";
 			String description = "test-description";
-			String className = "test.PluginTest" + i;
+			String className = "test/PluginTest" + i;
 			String[] dependencies = i > 0 ? new String[]{"test-plugin-" + (i - 1)} : new String[0];
-			DynamicType.Unloaded<Plugin> unloaded = new ByteBuddy()
-					.subclass(Plugin.class)
-					.name(className)
-					.defineMethod("onEnable", void.class, Modifier.PUBLIC)
-					.intercept(FixedValue.originType())
-					.defineMethod("onDisable", void.class, Modifier.PUBLIC)
-					.intercept(FixedValue.originType())
-					.annotateType(new PluginInformationRecord(id, name, version, author, dependencies, description)).make();
-			byte[] zip = ZipCreationUtils.createZip(Map.of(
-					"test/PluginTest" + i + ".class", unloaded.getBytes(),
-					ZipPluginLoader.SERVICE_PATH, className.getBytes(StandardCharsets.UTF_8)
-			));
+			byte[] zip = createPluginZip(className, pluginSource(
+					className, id, name, version, author, description, dependencies, "", ""
+			), Map.of());
 			sources.add(() -> ByteSources.wrap(zip));
 		}
 
-
 		try {
-			// Load the plugin
+			// Load all plugins in a single batch, which should succeed.
 			PluginDiscoverer discoverer = () -> sources;
 			pluginManager.loadPlugins(discoverer);
-
-			// Assert the plugins are active
 			assertEquals(3, pluginManager.getPlugins().size());
 
-			// Now unload them
+			// Unload the root of the dependency chain, which should unload all plugins.
 			pluginManager.unloaderFor("test-plugin-0").commit();
-
-			// Assert the plugins are no longer active
 			assertEquals(0, pluginManager.getPlugins().size());
 			for (int i = 0; i < 3; i++) {
 				String id = "test-plugin-" + i;
@@ -661,171 +437,158 @@ public class PluginManagerTest extends TestBase {
 		}
 	}
 
-	@Test
-	void testPluginWithResourceLoading() throws IOException {
-		String className = "DummyPluginBody";
-		byte[] classBytes;
-		{
-			/*
-			@PluginInformation(id = "dummy", name = "dummy", version = "1.0")
-			public class DummyPluginBody implements Plugin {
-				@Override
-				public void onEnable() {
-					try (var s = getClass().getResourceAsStream("file.txt")) {
-						System.out.println(new String(s.readAllBytes()));
-					} catch (Exception e) {
-						throw new RuntimeException(e);
-					}
-				}
-				@Override
-				public void onDisable() {}
-			}
-			 */
-
-			ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-			cw.visit(V22, ACC_PUBLIC | ACC_SUPER, className, null, "java/lang/Object", new String[]{"software/coley/recaf/plugin/Plugin"});
-			AnnotationVisitor av = cw.visitAnnotation("Lsoftware/coley/recaf/plugin/PluginInformation;", true);
-			av.visit("id", "dummy");
-			av.visit("name", "dummy");
-			av.visit("version", "1.0");
-			av.visitEnd();
-			MethodVisitor mv;
-			{
-				mv = cw.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
-				mv.visitCode();
-				mv.visitLabel(new Label());
-				mv.visitVarInsn(ALOAD, 0);
-				mv.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
-				mv.visitInsn(RETURN);
-				mv.visitLabel(new Label());
-				mv.visitMaxs(1, 1);
-				mv.visitEnd();
-			}
-			{
-				mv = cw.visitMethod(ACC_PUBLIC, "onEnable", "()V", null, null);
-				mv.visitCode();
-				Label label0 = new Label();
-				Label label1 = new Label();
-				Label label2 = new Label();
-				mv.visitTryCatchBlock(label0, label1, label2, "java/lang/Throwable");
-				Label label3 = new Label();
-				Label label4 = new Label();
-				Label label5 = new Label();
-				mv.visitTryCatchBlock(label3, label4, label5, "java/lang/Throwable");
-				Label label6 = new Label();
-				Label label7 = new Label();
-				Label label8 = new Label();
-				mv.visitTryCatchBlock(label6, label7, label8, "java/lang/Exception");
-				mv.visitLabel(label6);
-				mv.visitLineNumber(10, label6);
-				mv.visitVarInsn(ALOAD, 0);
-				mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Object", "getClass", "()Ljava/lang/Class;", false);
-				mv.visitLdcInsn("file.txt");
-				mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Class", "getResourceAsStream", "(Ljava/lang/String;)Ljava/io/InputStream;", false);
-				mv.visitVarInsn(ASTORE, 1);
-				mv.visitLabel(label0);
-				mv.visitLineNumber(11, label0);
-				mv.visitFieldInsn(GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
-				mv.visitTypeInsn(NEW, "java/lang/String");
-				mv.visitInsn(DUP);
-				mv.visitVarInsn(ALOAD, 1);
-				mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/InputStream", "readAllBytes", "()[B", false);
-				mv.visitMethodInsn(INVOKESPECIAL, "java/lang/String", "<init>", "([B)V", false);
-				mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println", "(Ljava/lang/String;)V", false);
-				mv.visitLabel(label1);
-				mv.visitLineNumber(12, label1);
-				mv.visitVarInsn(ALOAD, 1);
-				mv.visitJumpInsn(IFNULL, label7);
-				mv.visitVarInsn(ALOAD, 1);
-				mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/InputStream", "close", "()V", false);
-				mv.visitJumpInsn(GOTO, label7);
-				mv.visitLabel(label2);
-				mv.visitLineNumber(10, label2);
-				mv.visitVarInsn(ASTORE, 2);
-				mv.visitVarInsn(ALOAD, 1);
-				Label label9 = new Label();
-				mv.visitJumpInsn(IFNULL, label9);
-				mv.visitLabel(label3);
-				mv.visitVarInsn(ALOAD, 1);
-				mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/InputStream", "close", "()V", false);
-				mv.visitLabel(label4);
-				mv.visitJumpInsn(GOTO, label9);
-				mv.visitLabel(label5);
-				mv.visitVarInsn(ASTORE, 3);
-				mv.visitVarInsn(ALOAD, 2);
-				mv.visitVarInsn(ALOAD, 3);
-				mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Throwable", "addSuppressed", "(Ljava/lang/Throwable;)V", false);
-				mv.visitLabel(label9);
-				mv.visitVarInsn(ALOAD, 2);
-				mv.visitInsn(ATHROW);
-				mv.visitLabel(label7);
-				mv.visitLineNumber(14, label7);
-				Label label10 = new Label();
-				mv.visitJumpInsn(GOTO, label10);
-				mv.visitLabel(label8);
-				mv.visitLineNumber(12, label8);
-				mv.visitVarInsn(ASTORE, 1);
-				Label label11 = new Label();
-				mv.visitLabel(label11);
-				mv.visitLineNumber(13, label11);
-				mv.visitTypeInsn(NEW, "java/lang/RuntimeException");
-				mv.visitInsn(DUP);
-				mv.visitVarInsn(ALOAD, 1);
-				mv.visitMethodInsn(INVOKESPECIAL, "java/lang/RuntimeException", "<init>", "(Ljava/lang/Throwable;)V", false);
-				mv.visitInsn(ATHROW);
-				mv.visitLabel(label10);
-				mv.visitLineNumber(15, label10);
-				mv.visitInsn(RETURN);
-				Label label12 = new Label();
-				mv.visitLabel(label12);
-				mv.visitLocalVariable("s", "Ljava/io/InputStream;", null, label0, label7, 1);
-				mv.visitLocalVariable("e", "Ljava/lang/Exception;", null, label11, label10, 1);
-				mv.visitLocalVariable("this", "Lsoftware/coley/recaf/services/plugin/DummyPluginBody;", null, label6, label12, 0);
-				mv.visitMaxs(4, 4);
-				mv.visitEnd();
-			}
-			{
-				mv = cw.visitMethod(ACC_PUBLIC, "onDisable", "()V", null, null);
-				mv.visitCode();
-				mv.visitLabel(new Label());
-				mv.visitInsn(RETURN);
-				mv.visitLabel(new Label());
-				mv.visitMaxs(0, 1);
-				mv.visitEnd();
-			}
-			cw.visitEnd();
-			classBytes = cw.toByteArray();
-		}
-		byte[] zip = ZipCreationUtils.createZip(Map.of(
-				className + ".class", classBytes,
-				ZipPluginLoader.SERVICE_PATH, className.getBytes(StandardCharsets.UTF_8),
-				"file.txt", "Dummy plugin says 'hello world'!".getBytes(StandardCharsets.UTF_8)
-		));
-
-		try {
-			// Load the plugin
-			ByteSource pluginSource = ByteSources.wrap(zip);
-			PluginDiscoverer discoverer = () -> List.of(() -> pluginSource);
-			PluginContainer<?> container = pluginManager.loadPlugins(discoverer).iterator().next();
-
-			// Now unload it
-			pluginManager.unloaderFor("dummy").commit();
-		} catch (PluginException ex) {
-			fail("Failed to load plugin", ex);
-		}
+	private static void clearCount(String prefix, String id) {
+		System.clearProperty(prefix + id);
 	}
 
-	@SuppressWarnings("all")
-	private record PluginInformationRecord(String id, String name, String version, String author, String[] dependencies,
-	                                       String description) implements PluginInformation {
-		@Override
-		public Class<? extends Annotation> annotationType() {
-			return PluginInformation.class;
-		}
+	private static int countOf(String prefix, String id) {
+		return Integer.parseInt(System.getProperty(prefix + id, "0"));
+	}
 
-		@Override
-		public String[] softDependencies() {
-			return new String[0];
+	private static byte[] createPluginZip(String pluginInternalName, String pluginSource, Map<String, byte[]> additionalEntries) throws IOException {
+		return createPluginZip(pluginInternalName, Map.of(pluginInternalName, pluginSource), Map.of(), additionalEntries);
+	}
+
+	private static byte[] createPluginZip(String pluginInternalName, Map<String, String> classSources, Map<String, byte[]> additionalEntries) throws IOException {
+		return createPluginZip(pluginInternalName, classSources, Map.of(), additionalEntries);
+	}
+
+	private static byte[] createPluginZip(String pluginInternalName, Map<String, String> classSources,
+	                                      Map<String, byte[]> compileClasspathClasses, Map<String, byte[]> additionalEntries) throws IOException {
+		return createPluginZip(pluginInternalName, compilePluginSources(pluginInternalName, classSources, compileClasspathClasses).getCompilations(), additionalEntries);
+	}
+
+	private static byte[] createPluginZip(String pluginInternalName, CompileMap compilations, Map<String, byte[]> additionalEntries) throws IOException {
+		Map<String, byte[]> entries = new HashMap<>();
+		compilations.forEach((name, bytes) -> entries.put(name + ".class", bytes));
+		entries.put(ZipPluginLoader.SERVICE_PATH, pluginInternalName.replace('/', '.').getBytes(StandardCharsets.UTF_8));
+		entries.putAll(additionalEntries);
+		return ZipCreationUtils.createZip(entries);
+	}
+
+	private static CompilerResult compilePluginSources(String pluginInternalName, Map<String, String> classSources,
+	                                                   Map<String, byte[]> compileClasspathClasses) {
+		Workspace workspace = compileClasspathClasses.isEmpty() ? null : workspaceFromCompilations(compileClasspathClasses);
+		JavacArguments arguments = new JavacArgumentsBuilder()
+				.withClassName(pluginInternalName)
+				.withClassSources(classSources)
+				.build();
+		CompilerResult result = javac.compile(arguments, workspace, null);
+		if (!result.wasSuccess())
+			throw new AssertionError("Failed to compile plugin sources for '" + pluginInternalName + "':\n" + formatCompilationFailure(result));
+		return result;
+	}
+
+	private static Workspace workspaceFromCompilations(Map<String, byte[]> compileClasspathClasses) {
+		BasicJvmClassBundle bundle = new BasicJvmClassBundle();
+		compileClasspathClasses.values().forEach(bytes -> bundle.initialPut(new JvmClassInfoBuilder(bytes).build()));
+		return TestClassUtils.fromBundle(bundle);
+	}
+
+	private static String formatCompilationFailure(CompilerResult result) {
+		StringBuilder sb = new StringBuilder();
+		if (result.getException() != null)
+			sb.append(result.getException()).append('\n');
+		if (!result.getDiagnostics().isEmpty()) {
+			String diagnostics = result.getDiagnostics().stream()
+					.map(CompilerDiagnostic::toString)
+					.collect(Collectors.joining("\n"));
+			sb.append(diagnostics).append('\n');
 		}
+		if (sb.isEmpty())
+			sb.append("Unknown compilation failure");
+		return sb.toString().stripTrailing();
+	}
+
+	private static String pluginSource(String internalName, String id, String[] dependencies, String onEnableBody, String onDisableBody) {
+		return pluginSource(internalName, id, id, "1.0", "", "", dependencies, onEnableBody, onDisableBody);
+	}
+
+	private static String pluginSource(String internalName, String id, String name, String version, String author,
+	                                   String description, String[] dependencies, String onEnableBody, String onDisableBody) {
+		String simpleName = simpleName(internalName);
+		String annotation = pluginInformationAnnotation(id, name, version, author, description, dependencies);
+		String enableBody = methodBody(onEnableBody);
+		String disableBody = methodBody(onDisableBody);
+		return javaSource(internalName, """
+				import software.coley.recaf.plugin.Plugin;
+				import software.coley.recaf.plugin.PluginInformation;
+				
+				%s
+				public class %s implements Plugin {
+					@Override
+					public void onEnable() {
+				%s
+					}
+				
+					@Override
+					public void onDisable() {
+				%s
+					}
+				}
+				""".formatted(annotation, simpleName, enableBody, disableBody));
+	}
+
+	private static String javaSource(String internalName, String body) {
+		String packageDeclaration = packageDeclaration(internalName);
+		String sourceBody = body.stripIndent().strip();
+		if (packageDeclaration.isEmpty())
+			return sourceBody + '\n';
+		return packageDeclaration + "\n" + sourceBody + '\n';
+	}
+
+	private static String packageDeclaration(String internalName) {
+		int separatorIndex = internalName.lastIndexOf('/');
+		if (separatorIndex < 0)
+			return "";
+		return "package " + internalName.substring(0, separatorIndex).replace('/', '.') + ";";
+	}
+
+	private static String simpleName(String internalName) {
+		int separatorIndex = internalName.lastIndexOf('/');
+		return separatorIndex < 0 ? internalName : internalName.substring(separatorIndex + 1);
+	}
+
+	private static String methodBody(String body) {
+		String stripped = body.stripIndent().strip();
+		if (stripped.isEmpty())
+			return "";
+		return indent(stripped, 8);
+	}
+
+	private static String indent(String text, int spaces) {
+		String padding = " ".repeat(spaces);
+		return text.lines()
+				.map(line -> padding + line)
+				.collect(Collectors.joining("\n"));
+	}
+
+	private static String pluginInformationAnnotation(String id, String name, String version, String author,
+	                                                  String description, String[] dependencies) {
+		StringJoiner joiner = new StringJoiner(", ", "@PluginInformation(", ")");
+		joiner.add("id = " + stringLiteral(id));
+		joiner.add("name = " + stringLiteral(name));
+		joiner.add("version = " + stringLiteral(version));
+		if (!author.isEmpty())
+			joiner.add("author = " + stringLiteral(author));
+		if (!description.isEmpty())
+			joiner.add("description = " + stringLiteral(description));
+		if (dependencies.length > 0)
+			joiner.add("dependencies = " + stringArrayLiteral(dependencies));
+		return joiner.toString();
+	}
+
+	private static String stringArrayLiteral(String[] values) {
+		return values.length == 0 ? "{}" : "{ " + List.of(values).stream()
+				.map(PluginManagerTest::stringLiteral)
+				.collect(Collectors.joining(", ")) + " }";
+	}
+
+	private static String stringLiteral(String value) {
+		return "\"" + value
+				.replace("\\", "\\\\")
+				.replace("\"", "\\\"")
+				.replace("\r", "\\r")
+				.replace("\n", "\\n") + "\"";
 	}
 }
