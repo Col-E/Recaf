@@ -438,8 +438,7 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 					FxThreadUtil.run(() -> editor.redrawParagraphGraphics());
 				} else {
 					unit = resultingUnit;
-					resolver = astService.newJavaResolver(workspace, resultingUnit);
-					resolver.setClassContext(getPath().getValue());
+					resolver = astService.newJavaResolver(workspace, getPath(), resultingUnit);
 
 					logger.debugging(l -> l.info("AST parsed successfully, took {}ms", diffMs));
 					astAvailabilityButton.setAvailable();

@@ -3,10 +3,14 @@ package software.coley.recaf.services.source;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import software.coley.recaf.info.ClassInfo;
+import software.coley.recaf.path.BundlePathNode;
 import software.coley.recaf.path.ClassMemberPathNode;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.DirectoryPathNode;
+import software.coley.recaf.path.PathNodes;
 import software.coley.recaf.workspace.model.Workspace;
+import software.coley.recaf.workspace.model.bundle.ClassBundle;
+import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 import software.coley.sourcesolver.model.AnnotationExpressionModel;
 import software.coley.sourcesolver.model.AssignmentExpressionModel;
 import software.coley.sourcesolver.model.ClassModel;
@@ -44,6 +48,7 @@ import java.util.List;
  */
 public class ResolverAdapter extends BasicResolver {
 	private final Workspace workspace;
+	private ClassPathNode classContextPath;
 
 	/**
 	 * @param workspace
@@ -77,6 +82,17 @@ public class ResolverAdapter extends BasicResolver {
 		ClassEntry entry = getPool().getClass(cls.getName());
 		if (model != null && entry != null)
 			setDeclaredClass(model, entry);
+	}
+
+	/**
+	 * Marks the declared class in the compilation unit as being resolved to the given class path.
+	 *
+	 * @param path
+	 * 		Path to the class that represents the code outlined by the compilation unit.
+	 */
+	public void setClassContext(@Nonnull ClassPathNode path) {
+		classContextPath = path;
+		setClassContext(path.getValue());
 	}
 
 	/**
@@ -121,7 +137,7 @@ public class ResolverAdapter extends BasicResolver {
 			return null;
 		else if (resolution instanceof ClassResolution classResolution) {
 			String name = classResolution.getClassEntry().getName();
-			ClassPathNode path = workspace.findClass(name);
+			ClassPathNode path = findClass(name);
 			if (path == null)
 				return null;
 
@@ -150,7 +166,7 @@ public class ResolverAdapter extends BasicResolver {
 			return AstResolveResult.reference(path);
 		} else if (resolution instanceof FieldResolution fieldResolution) {
 			String ownerName = fieldResolution.getOwnerEntry().getName();
-			ClassPathNode ownerPath = workspace.findClass(ownerName);
+			ClassPathNode ownerPath = findClass(ownerName);
 			if (ownerPath == null)
 				return null;
 			FieldEntry fieldEntry = fieldResolution.getFieldEntry();
@@ -168,7 +184,7 @@ public class ResolverAdapter extends BasicResolver {
 			return AstResolveResult.reference(fieldPath);
 		} else if (resolution instanceof MethodResolution methodResolution) {
 			String ownerName = methodResolution.getOwnerEntry().getName();
-			ClassPathNode ownerPath = workspace.findClass(ownerName);
+			ClassPathNode ownerPath = findClass(ownerName);
 			if (ownerPath == null)
 				return null;
 			MethodEntry methodEntry = methodResolution.getMethodEntry();
@@ -203,7 +219,7 @@ public class ResolverAdapter extends BasicResolver {
 				return adapt(Resolutions.ofMember(firstMember), target);
 			} else if (memberEntries.size() > 1) {
 				// Multiple members
-				ClassPathNode path = workspace.findClass(firstClassName);
+				ClassPathNode path = findClass(firstClassName);
 				if (path != null)
 					return AstResolveResult.reference(path);
 			}
@@ -270,6 +286,52 @@ public class ResolverAdapter extends BasicResolver {
 		if (returnType == null)
 			return null;
 		return descriptor.append(')').append(returnType.getDescriptor()).toString();
+	}
+
+	/**
+	 * @param name Name of the class to find.
+	 * @return Path to the class, or {@code null} if it cannot be found in the workspace.
+	 */
+	@Nullable
+	private ClassPathNode findClass(@Nonnull String name) {
+		// Try to find the class in the context of the current compilation unit first, then fall back to searching the workspace.
+		ClassPathNode contextualPath = findContextualClass(name);
+		if (contextualPath != null)
+			return contextualPath;
+		return workspace.findClass(name);
+	}
+
+	/**
+	 * @param name Name of the class to find.
+	 * @return Path to the class, or {@code null} if it cannot be found in the context of the current compilation unit.
+	 */
+	@Nullable
+	private ClassPathNode findContextualClass(@Nonnull String name) {
+		if (classContextPath == null)
+			return null;
+
+		// First check if the class context is the class we're looking for.
+		if (classContextPath.getValue().getName().equals(name))
+			return classContextPath;
+
+		// Next check the same bundle as the context.
+		BundlePathNode bundlePath = classContextPath.getParent().getParent();
+		ClassInfo classInfo = (ClassInfo) bundlePath.getValue().get(name);
+		if (classInfo != null)
+			return bundlePath.child(classInfo);
+
+		// Then check the same resource as the context, across its other class bundles.
+		WorkspaceResource resource = classContextPath.getValueOfType(WorkspaceResource.class);
+		if (resource != null) {
+			for (ClassBundle<? extends ClassInfo> bundle : resource.classBundleStream().toList()) {
+				if (bundle == bundlePath.getValue()) // We already checked this bundle, so skip it.
+					continue;
+				classInfo = bundle.get(name);
+				if (classInfo != null)
+					return PathNodes.classPath(workspace, resource, bundle, classInfo);
+			}
+		}
+		return null;
 	}
 
 	@Nullable

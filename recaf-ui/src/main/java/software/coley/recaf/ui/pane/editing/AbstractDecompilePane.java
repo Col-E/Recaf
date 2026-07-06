@@ -240,8 +240,7 @@ public class AbstractDecompilePane extends BorderPane implements ClassNavigable,
 				CompilationUnitModel unit = contextActionSupport.getUnit();
 				Workspace workspace = path.getValueOfType(Workspace.class);
 				if (unit != null && workspace != null) {
-					ResolverAdapter resolver = astService.newJavaResolver(workspace, unit);
-					resolver.setClassContext(getPath().getValue());
+					ResolverAdapter resolver = astService.newJavaResolver(workspace, getPath(), unit);
 					String modifiedSource = astService.applyMappings(unit, resolver, mappings);
 
 					// If there were no changes made then the AST service failed to make dynamic changes.

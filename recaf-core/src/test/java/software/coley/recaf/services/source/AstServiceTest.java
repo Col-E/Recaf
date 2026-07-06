@@ -6,13 +6,17 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
+import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.MethodNode;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.path.ClassMemberPathNode;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.DirectoryPathNode;
+import software.coley.recaf.path.PathNodes;
 import software.coley.recaf.services.mapping.IntermediateMappings;
 import software.coley.recaf.services.mapping.Mappings;
 import software.coley.recaf.test.TestBase;
@@ -34,8 +38,11 @@ import software.coley.recaf.test.dummy.StringListUser;
 import software.coley.recaf.test.dummy.StringSupplier;
 import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.util.Types;
+import software.coley.recaf.workspace.model.BasicWorkspace;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.BasicJvmClassBundle;
+import software.coley.recaf.workspace.model.resource.WorkspaceResource;
+import software.coley.recaf.workspace.model.resource.WorkspaceResourceBuilder;
 import software.coley.sourcesolver.Parser;
 import software.coley.sourcesolver.model.CompilationUnitModel;
 import software.coley.sourcesolver.model.VariableModel;
@@ -44,6 +51,7 @@ import software.coley.sourcesolver.resolve.result.MethodResolution;
 import software.coley.sourcesolver.resolve.result.Resolution;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.function.Consumer;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -643,6 +651,79 @@ public class AstServiceTest extends TestBase {
 				FieldResolution fieldResolution = assertInstanceOf(FieldResolution.class, resolution);
 				assertEquals("I", fieldResolution.getResolvedFieldType().getDescriptor());
 			});
+		}
+
+		@Test
+		void testClassContextPathDifferentiatesDuplicateResources() {
+			// Create a workspace with two resources that have the same classes and method signatures.
+			// When resolving a method reference, the path should point to the resource in the resolver context.
+			JvmClassInfo primaryFoo = TestClassUtils.createClass("dup/Foo",
+					node -> node.methods.add(noopMethod("same")));
+			JvmClassInfo supportingFoo = TestClassUtils.createClass("dup/Foo",
+					node -> node.methods.add(noopMethod("same")));
+			JvmClassInfo primaryHelper = TestClassUtils.createClass("dup/Helper",
+					node -> node.methods.add(noopStaticMethod("sameStatic")));
+			JvmClassInfo supportingHelper = TestClassUtils.createClass("dup/Helper",
+					node -> node.methods.add(noopStaticMethod("sameStatic")));
+
+			// Create a workspace with two resources, one primary and one supporting.
+			//  - Primary:    dup/Foo -> same(), dup/Helper -> sameStatic()
+			//  - Supporting: dup/Foo -> same(), dup/Helper -> sameStatic()
+			BasicJvmClassBundle primaryBundle = TestClassUtils.fromClasses(primaryFoo, primaryHelper);
+			BasicJvmClassBundle supportingBundle = TestClassUtils.fromClasses(supportingFoo, supportingHelper);
+			WorkspaceResource primaryResource = new WorkspaceResourceBuilder()
+					.withJvmClassBundle(primaryBundle)
+					.build();
+			WorkspaceResource supportingResource = new WorkspaceResourceBuilder()
+					.withJvmClassBundle(supportingBundle)
+					.build();
+			Workspace workspace = new BasicWorkspace(primaryResource, List.of(supportingResource));
+			ClassPathNode supportingPath = PathNodes.classPath(workspace, supportingResource, supportingBundle, supportingFoo);
+
+			// Validate that the primary resource is found when doing the regular workspace class lookup.
+			ClassPathNode firstFoo = workspace.findClass("dup/Foo");
+			assertNotNull(firstFoo);
+			assertSame(primaryResource, firstFoo.getValueOfType(WorkspaceResource.class));
+
+			// Validate that the supporting resource is found when doing a lookup with the supporting path.
+			String source = """
+					package dup;
+					public class Foo {
+						public void same() {}
+						public void use() {
+							Helper.sameStatic();
+						}
+					}
+					""";
+			CompilationUnitModel unit = parser.parse(source);
+
+			// When we resolve the same() declaration it should point to the supporting resource.
+			// This is because we're passing the supporting resource path to the resolver,
+			// which should take precedence over the primary resource.
+			ResolverAdapter resolver = service.newJavaResolver(workspace, supportingPath, unit);
+			int position = source.indexOf("same()") + 1;
+			AstResolveResult result = resolver.resolveThenAdapt(position);
+			assertNotNull(result);
+			assertTrue(result.isDeclaration());
+
+			// The path should point to the supporting resource, not the primary resource.
+			ClassMemberPathNode memberPath = assertInstanceOf(ClassMemberPathNode.class, result.path());
+			assertSame(supportingResource, memberPath.getValueOfType(WorkspaceResource.class));
+			assertEquals("same", memberPath.getValue().getName());
+			assertEquals("()V", memberPath.getValue().getDescriptor());
+
+			// Now resolve the sameStatic() call, which is in a different class, but still in the supporting resource.
+			position = source.indexOf("sameStatic()") + 1;
+			result = resolver.resolveThenAdapt(position);
+			assertNotNull(result);
+			assertFalse(result.isDeclaration());
+
+			// The path should point to the supporting resource, not the primary resource.
+			memberPath = assertInstanceOf(ClassMemberPathNode.class, result.path());
+			assertSame(supportingResource, memberPath.getValueOfType(WorkspaceResource.class));
+			assertEquals("dup/Helper", memberPath.getValueOfType(ClassInfo.class).getName());
+			assertEquals("sameStatic", memberPath.getValue().getName());
+			assertEquals("()V", memberPath.getValue().getDescriptor());
 		}
 	}
 
@@ -1252,6 +1333,21 @@ public class AstServiceTest extends TestBase {
 	private static void handleUnit(@Nonnull String source, @Nullable Consumer<CompilationUnitModel> consumer) {
 		if (consumer != null)
 			consumer.accept(parser.parse(source));
+	}
+
+	@Nonnull
+	private static MethodNode noopMethod(@Nonnull String name) {
+		MethodNode method = new MethodNode(Opcodes.ACC_PUBLIC, name, "()V", null, null);
+		method.instructions.add(new InsnNode(Opcodes.RETURN));
+		method.maxLocals = 1;
+		return method;
+	}
+
+	@Nonnull
+	private static MethodNode noopStaticMethod(@Nonnull String name) {
+		MethodNode method = new MethodNode(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, name, "()V", null, null);
+		method.instructions.add(new InsnNode(Opcodes.RETURN));
+		return method;
 	}
 
 	private enum IsDeclarationTarget {
