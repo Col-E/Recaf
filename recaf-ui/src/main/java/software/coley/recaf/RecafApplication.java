@@ -6,6 +6,7 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 import software.coley.recaf.cdi.UiInitializationEvent;
+import software.coley.recaf.services.navigation.NavigationHistoryService;
 import software.coley.recaf.services.navigation.NavigationManager;
 import software.coley.recaf.services.window.WindowManager;
 import software.coley.recaf.services.workspace.WorkspaceManager;
@@ -43,6 +44,7 @@ public class RecafApplication extends Application {
 		// Get services
 		DockingManager dockingManager = recaf.get(DockingManager.class);
 		KeybindingConfig keybindingConfig = recaf.get(KeybindingConfig.class);
+		NavigationHistoryService navigationHistoryService = recaf.get(NavigationHistoryService.class);
 		WindowManager windowManager = recaf.get(WindowManager.class);
 		WorkspaceManager workspaceManager = recaf.get(WorkspaceManager.class);
 
@@ -61,7 +63,11 @@ public class RecafApplication extends Application {
 		Scene scene = new RecafScene(wrapper);
 		scene.addEventFilter(KeyEvent.KEY_PRESSED, (KeyEvent event) -> {
 			// Global keybind handling
-			if (keybindingConfig.getQuickNav().match(event)) {
+			if (keybindingConfig.getNavigateBack().match(event) && navigationHistoryService.back()) {
+				event.consume();
+			} else if (keybindingConfig.getNavigateForward().match(event) && navigationHistoryService.forward()) {
+				event.consume();
+			} else if (keybindingConfig.getQuickNav().match(event)) {
 				Stage quickNav = windowManager.getQuickNav();
 				quickNav.show();
 				quickNav.requestFocus();

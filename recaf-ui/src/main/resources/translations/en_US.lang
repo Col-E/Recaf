@@ -211,6 +211,8 @@ bind.editor.replace=Replace
 bind.editor.save=Save
 bind.editor.undo=Undo
 bind.editor.closetab=Close current tab
+bind.navigate.back=Navigate back
+bind.navigate.forward=Navigate forward
 bind.quicknav=Quick nav
 bind.workspace.export=Export workspace
 
@@ -1108,6 +1110,8 @@ service.ui.text-format-config.max-length=Maximum text display length
 service.ui.text-format-config.shorten=Enable text shortening
 service.ui.file-type-syntax-association-config=File type associations
 service.ui.file-type-syntax-association-config.extensions-to-langs=Extension to language map
+service.ui.navigation-history-config=Navigation history
+service.ui.navigation-history-config.max-entries=Max entries
 service.ui.snippets-config=Snippets
 service.ui.window-manager-config=Window manager
 service.ui.window-scale-config=Window scaling

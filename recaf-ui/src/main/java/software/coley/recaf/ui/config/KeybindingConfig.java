@@ -62,6 +62,8 @@ public class KeybindingConfig extends BasicConfigContainer {
 	private static final String ID_CLOSE_TAB = "editor.closetab";
 	private static final String ID_RENAME = "editor.rename";
 	private static final String ID_GOTO = "editor.goto";
+	private static final String ID_NAVIGATE_BACK = "navigate.back";
+	private static final String ID_NAVIGATE_FORWARD = "navigate.forward";
 	private static final String ID_EXPORT = "workspace.export";
 
 	private final BindingBundle bundle;
@@ -80,6 +82,8 @@ public class KeybindingConfig extends BasicConfigContainer {
 				createBindForPlatform(ID_CLOSE_TAB, CONTROL, W),
 				createBindForPlatform(ID_RENAME, ALT, R),
 				createBindForPlatform(ID_GOTO, F3),
+				createBindForPlatform(ID_NAVIGATE_BACK, ALT, LEFT),
+				createBindForPlatform(ID_NAVIGATE_FORWARD, ALT, RIGHT),
 				createBindForPlatform(ID_EXPORT, CONTROL, E)
 		));
 		addValue(new BasicMapConfigValue<>("bundle", BindingBundle.class, String.class, Binding.class, bundle));
@@ -194,6 +198,22 @@ public class KeybindingConfig extends BasicConfigContainer {
 	@Nonnull
 	public Binding getGoto() {
 		return Objects.requireNonNull(bundle.get(ID_GOTO));
+	}
+
+	/**
+	 * @return Keybinding for navigating to the prior interacted declaration.
+	 */
+	@Nonnull
+	public Binding getNavigateBack() {
+		return Objects.requireNonNull(bundle.get(ID_NAVIGATE_BACK));
+	}
+
+	/**
+	 * @return Keybinding for navigating to the next interacted declaration.
+	 */
+	@Nonnull
+	public Binding getNavigateForward() {
+		return Objects.requireNonNull(bundle.get(ID_NAVIGATE_FORWARD));
 	}
 
 	/**

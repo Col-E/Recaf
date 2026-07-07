@@ -33,6 +33,7 @@ import software.coley.recaf.services.mapping.MappingResults;
 import software.coley.recaf.services.mapping.Mappings;
 import software.coley.recaf.services.navigation.ClassNavigable;
 import software.coley.recaf.services.navigation.Navigable;
+import software.coley.recaf.services.navigation.NavigationHistoryService;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
 import software.coley.recaf.services.source.AstMapper;
 import software.coley.recaf.services.source.AstService;
@@ -94,6 +95,7 @@ public class AbstractDecompilePane extends BorderPane implements ClassNavigable,
 	                                @Nonnull SearchBar searchBar,
 	                                @Nonnull AstService astService,
 	                                @Nonnull JavaContextActionSupport contextActionSupport,
+	                                @Nonnull NavigationHistoryService navigationHistoryService,
 	                                @Nonnull CellConfigurationService cellConfigurationService,
 	                                @Nonnull FileTypeSyntaxAssociationService languageAssociation,
 	                                @Nonnull DecompilerManager decompilerManager,
@@ -115,6 +117,11 @@ public class AbstractDecompilePane extends BorderPane implements ClassNavigable,
 		editor.setProblemTracking(problemTracking);
 		editor.getRootLineGraphicFactory().addDefaultCodeGraphicFactories();
 		contextActionSupport.install(editor);
+		editor.getCaretPosEventStream().addObserver(change -> {
+			PathNode<?> enclosingPath = contextActionSupport.getEnclosingDeclarationPath(change.getNewValue());
+			if (enclosingPath != null)
+				navigationHistoryService.record(enclosingPath);
+		});
 		if (tabCompletionConfig.isEnabledInJavaSource())
 			editor.setTabCompleter(new JavaTabCompleter(contextActionSupport, cellConfigurationService, javaTypeIndexService, tabCompletionConfig));
 		searchBar.install(editor);
