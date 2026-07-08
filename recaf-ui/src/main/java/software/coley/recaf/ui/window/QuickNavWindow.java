@@ -97,6 +97,14 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 			return workspaceManager.getCurrent().classesStream(false);
 		};
 		Function<ClassPathNode, String> classTextMapper = classPath -> classPath.getValue().getSimpleName();
+		ContainmentMatcher<ClassPathNode> classTextMatcher = (classPath, search, caseSensitive) -> {
+			String text = search.indexOf('/') >= 0 ?
+					classPath.getValue().getName() :
+					classPath.getValue().getSimpleName();
+			if (!caseSensitive)
+				text = text.toLowerCase();
+			return text.contains(search);
+		};
 		BiConsumer<ListCell<?>, ClassPathNode> renderClass = (cell, classPath) -> {
 			DirectoryPathNode packagePath = Objects.requireNonNull(classPath.getParent());
 			String packageName = packagePath.getValue();
@@ -124,7 +132,7 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 		};
 		Consumer<ListCell<ClassPathNode>> classRenderer = cell -> renderClass.accept(cell, cell.getItem());
 		OneToOneContentPane<ClassPathNode> classContent = new OneToOneContentPane<>(actions, this,
-				classProvider, classTextMapper, classRenderer);
+				classProvider, classTextMapper, classTextMatcher, classRenderer);
 
 		Supplier<Stream<ClassMemberPathNode>> memberProvider = () -> {
 			if (!workspaceManager.hasCurrentWorkspace())
@@ -316,6 +324,14 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 				case TEXT -> renderLine.accept(cell, (LineNumberPathNode) result.path());
 				case COMMENT -> renderComment.accept(cell, result.path());
 			}
+		}, (result, search, caseSensitive) -> {
+			if (result.type() == QuickNavResultType.CLASS)
+				return classTextMatcher.matches((ClassPathNode) result.path(), search, caseSensitive);
+
+			String text = result.text();
+			if (!caseSensitive && text != null)
+				text = text.toLowerCase();
+			return contains(text, search);
 		});
 		List<ContentPaneBase> contentPanes = List.of(allContent, classContent, memberContent, fileContent, textContent, commentContent);
 		contentPanes.forEach(workspaceManager::addWorkspaceCloseListener);
@@ -350,6 +366,10 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 		setMinWidth(300);
 		setMinHeight(300);
 		setScene(new RecafScene(tabs, 750, 550));
+	}
+
+	private static boolean contains(@Nullable String text, @Nonnull String search) {
+		return text != null && text.contains(search);
 	}
 
 	/**
@@ -425,15 +445,27 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 	}
 
 	/**
+	 * Item matcher for plain-text containment searches.
+	 *
+	 * @param <T>
+	 * 		Item type.
+	 */
+	@FunctionalInterface
+	private interface ContainmentMatcher<T> {
+		boolean matches(@Nonnull T item, @Nonnull String search, boolean caseSensitive);
+	}
+
+	/**
 	 * Pane for displaying all supported quick-nav results.
 	 */
 	private static class AllContentPane extends ContentPaneBase {
 		private AllContentPane(@Nonnull Actions actions,
 		                       @Nonnull Stage stage,
 		                       @Nonnull Supplier<Stream<QuickNavResult>> valueProvider,
-		                       @Nonnull Consumer<ListCell<QuickNavResult>> renderCell) {
+		                       @Nonnull Consumer<ListCell<QuickNavResult>> renderCell,
+		                       @Nonnull ContainmentMatcher<QuickNavResult> containmentMatcher) {
 			super(new PathResultsPane<>(actions, stage, QuickNavResult::path, renderCell));
-			setSearchBar(new OneToOneNavSearchBar<>(Unchecked.cast(results), valueProvider, QuickNavResult::text));
+			setSearchBar(new OneToOneNavSearchBar<>(Unchecked.cast(results), valueProvider, QuickNavResult::text, containmentMatcher));
 			setCenter(results);
 		}
 	}
@@ -450,8 +482,17 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 		                            @Nonnull Supplier<Stream<T>> valueProvider,
 		                            @Nonnull Function<T, String> valueTextMapper,
 		                            @Nonnull Consumer<ListCell<T>> renderCell) {
+			this(actions, stage, valueProvider, valueTextMapper, null, renderCell);
+		}
+
+		private OneToOneContentPane(@Nonnull Actions actions,
+		                            @Nonnull Stage stage,
+		                            @Nonnull Supplier<Stream<T>> valueProvider,
+		                            @Nonnull Function<T, String> valueTextMapper,
+		                            @Nullable ContainmentMatcher<T> containmentMatcher,
+		                            @Nonnull Consumer<ListCell<T>> renderCell) {
 			super(new PathResultsPane<>(actions, stage, item -> item, renderCell));
-			setSearchBar(new OneToOneNavSearchBar<>(Unchecked.cast(results), valueProvider, valueTextMapper));
+			setSearchBar(new OneToOneNavSearchBar<>(Unchecked.cast(results), valueProvider, valueTextMapper, containmentMatcher));
 			setCenter(results);
 		}
 	}
@@ -727,12 +768,26 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 	 */
 	private static class OneToOneNavSearchBar<T extends Comparable<? super T>> extends NavSearchBarBase<T, T> {
 		private final Function<T, String> valueTextMapper;
+		private final ContainmentMatcher<T> containmentMatcher;
 
 		private OneToOneNavSearchBar(@Nonnull PathResultsPane<T> results,
 		                             @Nonnull Supplier<Stream<T>> valueProvider,
 		                             @Nonnull Function<T, String> valueTextMapper) {
+			this(results, valueProvider, valueTextMapper, null);
+		}
+
+		private OneToOneNavSearchBar(@Nonnull PathResultsPane<T> results,
+		                             @Nonnull Supplier<Stream<T>> valueProvider,
+		                             @Nonnull Function<T, String> valueTextMapper,
+		                             @Nullable ContainmentMatcher<T> containmentMatcher) {
 			super(results, valueProvider);
 			this.valueTextMapper = valueTextMapper;
+			this.containmentMatcher = containmentMatcher == null ? (item, search, caseSensitive) -> {
+				String text = valueTextMapper.apply(item);
+				if (!caseSensitive && text != null)
+					text = text.toLowerCase();
+				return QuickNavWindow.contains(text, search);
+			} : containmentMatcher;
 		}
 
 		@Override
@@ -750,20 +805,13 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 		@Override
 		protected void containmentSearch(@Nonnull String search, @Nonnull List<T> results) {
 			// Modify the text/search for case-insensitive searches.
-			Function<T, String> localValueTextMapper;
-			if (!caseSensitivity.get()) {
+			if (!caseSensitivity.get())
 				search = search.toLowerCase();
-				localValueTextMapper = valueTextMapper.andThen(String::toLowerCase);
-			} else {
-				localValueTextMapper = valueTextMapper;
-			}
 
 			String finalSearch = search;
+			boolean caseSensitive = caseSensitivity.get();
 			valueProvider.get().forEach(item -> {
-				String text = localValueTextMapper.apply(item);
-				if (text == null)
-					return;
-				if (text.contains(finalSearch))
+				if (containmentMatcher.matches(item, finalSearch, caseSensitive))
 					results.add(item);
 			});
 		}
@@ -806,17 +854,15 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 
 		@Override
 		protected void containmentSearch(@Nonnull String search, @Nonnull List<R> results) {
+			if (!caseSensitivity.get())
+				search = search.toLowerCase();
+			String finalSearch = search;
 			valueProvider.get().forEach(item -> {
 				valueUnroller.apply(item).forEach(mappedItem -> {
 					String text = valueTextMapper.apply(mappedItem);
-					if (text == null)
-						return;
-					String localSearch = search;
-					if (!caseSensitivity.get()) {
+					if (!caseSensitivity.get() && text != null)
 						text = text.toLowerCase();
-						localSearch = localSearch.toLowerCase();
-					}
-					if (text.contains(localSearch))
+					if (QuickNavWindow.contains(text, finalSearch))
 						results.add(mappedItem);
 				});
 			});
