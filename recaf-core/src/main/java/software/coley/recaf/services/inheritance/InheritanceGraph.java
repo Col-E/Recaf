@@ -28,7 +28,6 @@ import java.util.Deque;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashSet;
-import java.util.LinkedList;
 import java.util.Map;
 import java.util.Queue;
 import java.util.SequencedSet;
@@ -77,7 +76,7 @@ public class InheritanceGraph {
 		workspace.addWorkspaceModificationListener(listener);
 
 		// Populate downwards (parent --> child) lookup
-		refreshChildLookup();
+		rebuildParentChildIndex();
 	}
 
 	/**
@@ -108,13 +107,13 @@ public class InheritanceGraph {
 	}
 
 	/**
-	 * Refresh parent-to-child lookup.
+	 * Rebuild parent-to-child lookup.
 	 */
-	private void refreshChildLookup() {
+	private void rebuildParentChildIndex() {
 		parentToChild.clear();
 		ClassPathNodeProvider.Cached cachedProvider = ClassPathNodeProvider.cache(workspace);
 		Set<String> visited = new HashSet<>(cachedProvider.size() + 1024 /* leeway */);
-		workspace.forEachClass(false, cls -> populateParentToChildLookupForRefreshIterative(cls, visited, cachedProvider));
+		workspace.forEachClass(false, cls -> indexClassParentsDuringRebuild(cls, visited, cachedProvider));
 		clearCachedVertices();
 	}
 
@@ -135,10 +134,12 @@ public class InheritanceGraph {
 	 * 		Class names already visited in this refresh.
 	 * @param provider
 	 * 		Node provider for resolving parent classes.
+	 *
+	 * @see #rebuildParentChildIndex
 	 */
-	private void populateParentToChildLookupForRefreshIterative(@Nonnull ClassInfo info,
-	                                                            @Nonnull Set<String> visited,
-	                                                            @Nonnull ClassPathNodeProvider provider) {
+	private void indexClassParentsDuringRebuild(@Nonnull ClassInfo info,
+	                                            @Nonnull Set<String> visited,
+	                                            @Nonnull ClassPathNodeProvider provider) {
 		Deque<ClassInfo> pending = new ArrayDeque<>();
 		pending.add(info);
 		while (!pending.isEmpty()) {
@@ -159,7 +160,7 @@ public class InheritanceGraph {
 			// Add direct parent.
 			String superName = current.getSuperName();
 			if (superName != null) {
-				populateParentToChildLookupFast(name, superName);
+				addParentChildEdge(name, superName);
 
 				// Visit parent.
 				ClassInfo superInfo = resolveClass(superName, provider);
@@ -169,7 +170,7 @@ public class InheritanceGraph {
 
 			// Add direct interfaces.
 			for (String itf : current.getInterfaces()) {
-				populateParentToChildLookupFast(name, itf);
+				addParentChildEdge(name, itf);
 
 				// Visit interface.
 				ClassInfo interfaceInfo = resolveClass(itf, provider);
@@ -187,7 +188,7 @@ public class InheritanceGraph {
 	 * @param parentName
 	 * 		Parent class name.
 	 */
-	private void populateParentToChildLookupFast(@Nonnull String name, @Nonnull String parentName) {
+	private void addParentChildEdge(@Nonnull String name, @Nonnull String parentName) {
 		parentToChild.computeIfAbsent(parentName, k -> ConcurrentHashMap.newKeySet()).add(name);
 	}
 
@@ -201,8 +202,8 @@ public class InheritanceGraph {
 	 * @param provider
 	 * 		Node provider.
 	 */
-	private void populateParentToChildLookup(@Nonnull String name, @Nonnull String parentName, @Nonnull ClassPathNodeProvider provider) {
-		populateParentToChildLookupFast(name, parentName);
+	private void addParentChildEdgeAndInvalidate(@Nonnull String name, @Nonnull String parentName, @Nonnull ClassPathNodeProvider provider) {
+		addParentChildEdge(name, parentName);
 
 		// Clear any cached relationships in the vertex and the parent vertex.
 		InheritanceVertex parentVertex = getVertex(parentName, provider);
@@ -219,8 +220,8 @@ public class InheritanceGraph {
 	 * @param parentName
 	 * 		Parent class name.
 	 */
-	private void populateParentToChildLookup(@Nonnull String name, @Nonnull String parentName) {
-		populateParentToChildLookup(name, parentName, workspaceNodeProvider);
+	private void addParentChildEdgeAndInvalidate(@Nonnull String name, @Nonnull String parentName) {
+		addParentChildEdgeAndInvalidate(name, parentName, workspaceNodeProvider);
 	}
 
 	/**
@@ -229,8 +230,8 @@ public class InheritanceGraph {
 	 * @param info
 	 * 		Child class.
 	 */
-	private void populateParentToChildLookup(@Nonnull ClassInfo info) {
-		populateParentToChildLookup(info, Collections.newSetFromMap(new IdentityHashMap<>()), workspaceNodeProvider);
+	private void indexClassParents(@Nonnull ClassInfo info) {
+		indexClassParents(info, Collections.newSetFromMap(new IdentityHashMap<>()), workspaceNodeProvider);
 	}
 
 	/**
@@ -243,42 +244,50 @@ public class InheritanceGraph {
 	 * @param provider
 	 * 		Node provider.
 	 */
-	private void populateParentToChildLookup(@Nonnull ClassInfo info, @Nonnull Set<ClassInfo> visited, @Nonnull ClassPathNodeProvider provider) {
-		// Since we have observed this class to exist, we will remove the "stub" placeholder for this name.
-		stubs.remove(info.getName());
+	private void indexClassParents(@Nonnull ClassInfo info, @Nonnull Set<ClassInfo> visited,
+	                               @Nonnull ClassPathNodeProvider provider) {
+		Deque<ClassInfo> pending = new ArrayDeque<>();
+		pending.add(info);
+		while (!pending.isEmpty()) {
+			ClassInfo current = pending.remove();
 
-		// Skip if already visited
-		if (!visited.add(info))
-			return;
+			// Since we have observed this class to exist, we will remove the "stub" placeholder for this name.
+			stubs.remove(current.getName());
 
-		// Skip module classes
-		if (info.hasModuleModifier())
-			return;
+			// Skip if already visited.
+			if (!visited.add(current))
+				continue;
 
-		// Add direct parent
-		String name = info.getName();
-		InheritanceVertex vertex = getVertex(name, provider);
-		if (vertex != null)
-			vertex.clearCachedVertices();
+			// Skip module classes.
+			if (current.hasModuleModifier())
+				continue;
 
-		String superName = info.getSuperName();
-		if (superName != null) {
-			populateParentToChildLookup(name, superName, provider);
+			// Add direct parent.
+			String name = current.getName();
+			InheritanceVertex vertex = getVertex(name, provider);
+			if (vertex != null)
+				vertex.clearCachedVertices();
 
-			// Visit parent
-			InheritanceVertex superVertex = getVertex(superName, provider);
-			if (superVertex != null && !superVertex.isJavaLangObject() && !superVertex.isLoop())
-				populateParentToChildLookup(superVertex.getValue(), visited, provider);
-		}
+			// Add direct parent.
+			String superName = current.getSuperName();
+			if (superName != null) {
+				addParentChildEdgeAndInvalidate(name, superName, provider);
 
-		// Add direct interfaces
-		for (String itf : info.getInterfaces()) {
-			populateParentToChildLookup(name, itf, provider);
+				// Visit parent.
+				InheritanceVertex superVertex = getVertex(superName, provider);
+				if (superVertex != null && !superVertex.isJavaLangObject() && !superVertex.isLoop())
+					pending.add(superVertex.getValue());
+			}
 
-			// Visit interfaces
-			InheritanceVertex interfaceVertex = getVertex(itf, provider);
-			if (interfaceVertex != null)
-				populateParentToChildLookup(interfaceVertex.getValue(), visited, provider);
+			// Add direct interfaces.
+			for (String itf : current.getInterfaces()) {
+				addParentChildEdgeAndInvalidate(name, itf, provider);
+
+				// Visit interfaces.
+				InheritanceVertex interfaceVertex = getVertex(itf, provider);
+				if (interfaceVertex != null)
+					pending.add(interfaceVertex.getValue());
+			}
 		}
 	}
 
@@ -290,8 +299,8 @@ public class InheritanceGraph {
 	 * @param visited
 	 * 		Classes already visited in population.
 	 */
-	private void populateParentToChildLookup(@Nonnull ClassInfo info, @Nonnull Set<ClassInfo> visited) {
-		populateParentToChildLookup(info, visited, workspaceNodeProvider);
+	private void indexClassParents(@Nonnull ClassInfo info, @Nonnull Set<ClassInfo> visited) {
+		indexClassParents(info, visited, workspaceNodeProvider);
 	}
 
 	/**
@@ -300,12 +309,12 @@ public class InheritanceGraph {
 	 * @param info
 	 * 		Child class.
 	 */
-	private void removeParentToChildLookup(@Nonnull ClassInfo info) {
+	private void removeClassParentEdges(@Nonnull ClassInfo info) {
 		String superName = info.getSuperName();
 		if (superName != null)
-			removeParentToChildLookup(info.getName(), superName);
+			removeParentChildEdgeAndInvalidate(info.getName(), superName);
 		for (String itf : info.getInterfaces())
-			removeParentToChildLookup(info.getName(), itf);
+			removeParentChildEdgeAndInvalidate(info.getName(), itf);
 	}
 
 	/**
@@ -316,7 +325,7 @@ public class InheritanceGraph {
 	 * @param parentName
 	 * 		Parent class name.
 	 */
-	private void removeParentToChildLookup(@Nonnull String name, @Nonnull String parentName) {
+	private void removeParentChildEdgeAndInvalidate(@Nonnull String name, @Nonnull String parentName) {
 		Set<String> children = parentToChild.get(parentName);
 		if (children != null)
 			children.remove(name);
@@ -335,7 +344,7 @@ public class InheritanceGraph {
 	 * 		Class that was removed.
 	 */
 	private void removeClass(@Nonnull ClassInfo cls) {
-		removeParentToChildLookup(cls);
+		removeClassParentEdges(cls);
 
 		String name = cls.getName();
 		vertices.remove(name);
@@ -500,7 +509,7 @@ public class InheritanceGraph {
 			return second;
 
 		// Iterate over second's parents via breadth-first-search.
-		Queue<String> queue = new LinkedList<>();
+		Queue<String> queue = new ArrayDeque<>();
 		queue.add(second);
 		do {
 			// Item to fetch parents of.
@@ -612,8 +621,8 @@ public class InheritanceGraph {
 		// Update hierarchy now that super-name changed
 		if (oldValue.getSuperName() != null && newValue.getSuperName() != null) {
 			if (!oldValue.getSuperName().equals(newValue.getSuperName())) {
-				removeParentToChildLookup(name, oldValue.getSuperName());
-				populateParentToChildLookup(name, newValue.getSuperName());
+				removeParentChildEdgeAndInvalidate(name, oldValue.getSuperName());
+				addParentChildEdgeAndInvalidate(name, newValue.getSuperName());
 			}
 		}
 
@@ -624,9 +633,9 @@ public class InheritanceGraph {
 			boolean oldHas = oldValue.getInterfaces().contains(itf);
 			boolean newHas = newValue.getInterfaces().contains(itf);
 			if (oldHas && !newHas) {
-				removeParentToChildLookup(name, itf);
+				removeParentChildEdgeAndInvalidate(name, itf);
 			} else if (!oldHas && newHas) {
-				populateParentToChildLookup(name, itf);
+				addParentChildEdgeAndInvalidate(name, itf);
 			}
 		}
 
@@ -641,12 +650,12 @@ public class InheritanceGraph {
 
 		@Override
 		public void onNewClass(@Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle, @Nonnull JvmClassInfo cls) {
-			populateParentToChildLookup(cls);
+			indexClassParents(cls);
 		}
 
 		@Override
 		public void onNewClass(@Nonnull WorkspaceResource resource, @Nonnull AndroidClassBundle bundle, @Nonnull AndroidClassInfo cls) {
-			populateParentToChildLookup(cls);
+			indexClassParents(cls);
 		}
 
 		@Override
@@ -671,7 +680,7 @@ public class InheritanceGraph {
 
 		@Override
 		public void onAddLibrary(@Nonnull Workspace workspace, @Nonnull WorkspaceResource library) {
-			refreshChildLookup();
+			rebuildParentChildIndex();
 		}
 
 		@Override
@@ -682,7 +691,7 @@ public class InheritanceGraph {
 			library.androidClassBundleStreamRecursive()
 					.flatMap(Bundle::stream)
 					.forEach(InheritanceGraph.this::removeClass);
-			refreshChildLookup();
+			rebuildParentChildIndex();
 		}
 
 		@Override
@@ -724,7 +733,7 @@ public class InheritanceGraph {
 				// Refresh the parent-->children mapping.
 				parentToChild.remove(name);
 				ClassInfo postClass = path.getValue();
-				populateParentToChildLookup(postClass, visited);
+				indexClassParents(postClass, visited);
 			});
 		}
 	}

@@ -6,20 +6,26 @@ import software.coley.collections.Sets;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
-import software.coley.recaf.util.collect.Streams;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
+import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Queue;
 import java.util.Set;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /**
  * Graph element for a class inheritance hierarchy.
@@ -81,8 +87,7 @@ public class InheritanceVertex {
 		if (hasField(name, desc))
 			return true;
 		return allParents()
-				.filter(v -> v != this)
-				.anyMatch(parent -> parent.hasFieldInSelfOrParents(name, desc));
+				.anyMatch(parent -> parent.hasField(name, desc));
 	}
 
 	/**
@@ -97,8 +102,7 @@ public class InheritanceVertex {
 		if (hasField(name, desc))
 			return true;
 		return allChildren()
-				.filter(v -> v != this)
-				.anyMatch(parent -> parent.hasFieldInSelfOrChildren(name, desc));
+				.anyMatch(child -> child.hasField(name, desc));
 	}
 
 	/**
@@ -128,8 +132,7 @@ public class InheritanceVertex {
 		if (hasMethod(name, desc))
 			return true;
 		return allParents()
-				.filter(v -> v != this)
-				.anyMatch(parent -> parent.hasMethodInSelfOrParents(name, desc));
+				.anyMatch(parent -> parent.hasMethod(name, desc));
 	}
 
 	/**
@@ -144,8 +147,7 @@ public class InheritanceVertex {
 		if (hasMethod(name, desc))
 			return true;
 		return allChildren()
-				.filter(v -> v != this)
-				.anyMatch(parent -> parent.hasMethodInSelfOrChildren(name, desc));
+				.anyMatch(child -> child.hasMethod(name, desc));
 	}
 
 	/**
@@ -200,14 +202,8 @@ public class InheritanceVertex {
 		if (!isPrimary && hasMethod(name, desc))
 			return true;
 
-		// Check parents.
-		// If we extend a class with a library definition then it should be considered a library method.
-		for (InheritanceVertex parent : getParents())
-			if (parent.isLibraryMethod(name, desc))
-				return true;
-
-		// No library definition found, so its safe to rename.
-		return false;
+		// Check parents. If we extend a class with a library definition then it should be considered a library method.
+		return allParents().anyMatch(parent -> !parent.isPrimary && parent.hasMethod(name, desc));
 	}
 
 	/**
@@ -305,18 +301,20 @@ public class InheritanceVertex {
 	@Nonnull
 	public Set<InheritanceVertex> getFamily(boolean includeObject) {
 		Set<InheritanceVertex> vertices = new LinkedHashSet<>();
-		visitFamily(vertices);
+		if (!isModule()) {
+			Queue<InheritanceVertex> pending = new ArrayDeque<>();
+			pending.add(this);
+			while (!pending.isEmpty()) {
+				InheritanceVertex vertex = pending.remove();
+				if (vertex.isModule())
+					continue;
+				if (vertices.add(vertex) && !vertex.isJavaLangObject())
+					pending.addAll(vertex.getAllDirectVertices());
+			}
+		}
 		if (!includeObject)
 			vertices.removeIf(InheritanceVertex::isJavaLangObject);
 		return vertices;
-	}
-
-	private void visitFamily(@Nonnull Set<InheritanceVertex> vertices) {
-		if (isModule())
-			return;
-		if (vertices.add(this) && !isJavaLangObject())
-			for (InheritanceVertex vertex : getAllDirectVertices())
-				vertex.visitFamily(vertices);
 	}
 
 	/**
@@ -332,9 +330,7 @@ public class InheritanceVertex {
 	 */
 	@Nonnull
 	public Stream<InheritanceVertex> allParents() {
-		// Skip 1 to skip ourselves (which we use as the seed vertex)
-		return Streams.recurseIdentityWithoutCycles(this, InheritanceVertex::getParents)
-				.skip(1);
+		return walk(InheritanceVertex::getParents);
 	}
 
 	/**
@@ -385,9 +381,37 @@ public class InheritanceVertex {
 	 */
 	@Nonnull
 	public Stream<InheritanceVertex> allChildren() {
-		// Skip 1 to skip ourselves (which we use as the seed vertex)
-		return Streams.recurseIdentityWithoutCycles(this, InheritanceVertex::getChildren)
-				.skip(1);
+		return walk(InheritanceVertex::getChildren);
+	}
+
+	/**
+	 * @param vertexLookup
+	 * 		Lookup for directly connected vertices to continue walking into.
+	 *
+	 * @return Stream of vertices reached from the current vertex, excluding the current vertex.
+	 */
+	@Nonnull
+	private Stream<InheritanceVertex> walk(@Nonnull Function<InheritanceVertex, Set<InheritanceVertex>> vertexLookup) {
+		Set<InheritanceVertex> visited = Collections.newSetFromMap(new IdentityHashMap<>());
+		Queue<InheritanceVertex> pending = new ArrayDeque<>();
+		pending.add(this);
+		return StreamSupport.stream(new Spliterators.AbstractSpliterator<>(Long.MAX_VALUE, Spliterator.IMMUTABLE | Spliterator.NONNULL) {
+			@Override
+			public boolean tryAdvance(Consumer<? super InheritanceVertex> action) {
+				while (!pending.isEmpty()) {
+					InheritanceVertex vertex = pending.remove();
+					if (!visited.add(vertex))
+						continue;
+
+					pending.addAll(vertexLookup.apply(vertex));
+					if (vertex != InheritanceVertex.this) {
+						action.accept(vertex);
+						return true;
+					}
+				}
+				return false;
+			}
+		}, false);
 	}
 
 	/**
