@@ -38,7 +38,6 @@ public class JvmAssemblerPipeline extends AbstractAssemblerPipeline<JvmClassInfo
 	public static final String SERVICE_ID = "jvm-assembler";
 	private static final Logger logger = Logging.get(JvmAssemblerPipeline.class);
 	private final ASTProcessor processor = new ASTProcessor(BytecodeFormat.JVM);
-	private final InheritanceGraph inheritanceGraph;
 	private final Workspace workspace;
 
 	public JvmAssemblerPipeline(@Nonnull Workspace workspace,
@@ -47,7 +46,6 @@ public class JvmAssemblerPipeline extends AbstractAssemblerPipeline<JvmClassInfo
 	                            @Nonnull JvmAssemblerPipelineConfig jvmConfig) {
 		super(generalConfig, jvmConfig, inheritanceGraph);
 		this.workspace = workspace;
-		this.inheritanceGraph = inheritanceGraph;
 	}
 
 	@Nonnull

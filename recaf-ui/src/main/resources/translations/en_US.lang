@@ -386,6 +386,7 @@ dialog.conv.title.expression=Number expression
 
 ## Quick nav
 dialog.quicknav=Quick navigation
+dialog.quicknav.tab.all=All
 dialog.quicknav.tab.classes=Classes
 dialog.quicknav.tab.members=Members
 dialog.quicknav.tab.files=Files

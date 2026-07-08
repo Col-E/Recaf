@@ -6,8 +6,6 @@ import software.coley.recaf.info.annotation.Annotated;
 import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
-import software.coley.recaf.util.Types;
-import software.coley.recaf.util.visitors.IllegalSignatureRemovingVisitor;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -23,6 +21,26 @@ import java.util.stream.Stream;
  * @see AndroidClassInfo For Android classes.
  */
 public interface ClassInfo extends Info, Annotated, Accessed {
+	/**
+	 * @return Simple name of the class, without package or outer class portions of the internal name.
+	 */
+	@Nonnull
+	default String getSimpleName() {
+		String name = getName();
+
+		// Cut of leading package name.
+		int lastSlash = name.lastIndexOf('/');
+		if (lastSlash >= 0)
+			name = name.substring(lastSlash + 1);
+
+		// Cut off leading outer class name.
+		int lastDollar = name.lastIndexOf('$');
+		if (lastDollar >= 0)
+			name = name.substring(lastDollar + 1);
+
+		return name;
+	}
+
 	/**
 	 * @return Name of the source file the class was compiled from.
 	 * May be {@code null} when there is no debug data attached to the class.

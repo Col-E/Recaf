@@ -286,6 +286,7 @@ dialog.conv.title.expression=数値の式
 
 ## Quick nav
 dialog.quicknav=クイック・ナビゲーション
+dialog.quicknav.tab.all=すべて
 dialog.quicknav.tab.classes=クラス
 dialog.quicknav.tab.members=メンバ
 dialog.quicknav.tab.files=ファイル

@@ -259,6 +259,7 @@ dialog.conv.title.expression=Wyrażenie liczbowe
 
 ## Szybka nawigacja
 dialog.quicknav=Szybka nawigacja
+dialog.quicknav.tab.all=Wszystko
 dialog.quicknav.tab.classes=Klasy
 dialog.quicknav.tab.members=Elementy
 dialog.quicknav.tab.files=Pliki
