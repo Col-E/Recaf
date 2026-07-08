@@ -174,7 +174,6 @@ class FoldingTest extends BaseFxTest {
 			try {
 				Editor editor = new Editor();
 				stage.setScene(new Scene(editor, 400, 300));
-				stage.show();
 				editor.setText(text);
 				action.accept(editor);
 			} catch (Throwable t) {
