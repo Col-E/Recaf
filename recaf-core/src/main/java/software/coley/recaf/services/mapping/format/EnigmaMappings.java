@@ -574,7 +574,7 @@ public class EnigmaMappings extends AbstractMappingFileFormat {
 		for (VariableMapping variable : variables) {
 			// First add args for method parameter locals.
 			// These are the only locals that enigma officially supports.
-			if (variable.getIndex() < maxParam) {
+			if (variable.getIndex() >= 0 && variable.getIndex() < maxParam) {
 				sb.append("\t\tARG ")
 						.append(variable.getIndex()).append(' ')
 						.append(variable.getNewName()).append("\n");

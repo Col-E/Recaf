@@ -274,7 +274,7 @@ public class MappingsAdapter implements Mappings {
 				intermediate.addField(oldOwner, oldDesc, oldName, newName);
 			} else if (key instanceof VariableMappingKey vk) {
 				intermediate.addVariable(vk.getOwner(), vk.getMethodName(), vk.getMethodDesc(),
-						vk.getVariableDesc(), vk.getVariableName(), -1, newName);
+						vk.getVariableDesc(), vk.getVariableName(), vk.getVariableIndex(), newName);
 			}
 		}
 		return intermediate;
@@ -650,7 +650,7 @@ public class MappingsAdapter implements Mappings {
 	@Nonnull
 	protected MappingKey getVariableKey(@Nonnull String className, @Nonnull String methodName, @Nonnull String methodDesc,
 	                                    @Nullable String name, @Nullable String desc, int index) {
-		return new VariableMappingKey(className, methodName, methodDesc, name, desc);
+		return new VariableMappingKey(className, methodName, methodDesc, name, desc, index);
 	}
 
 	/**
