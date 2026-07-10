@@ -37,6 +37,7 @@ import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.behavior.Closing;
 import software.coley.recaf.ui.control.VirtualizedScrollPaneWrapper;
 import software.coley.recaf.ui.control.richtext.bracket.SelectedBracketTracking;
+import software.coley.recaf.ui.control.richtext.highlight.SelectedWordHighlighting;
 import software.coley.recaf.ui.control.richtext.linegraphics.RootLineGraphicFactory;
 import software.coley.recaf.ui.control.richtext.problem.ProblemTracking;
 import software.coley.recaf.ui.control.richtext.suggest.TabCompleter;
@@ -95,6 +96,7 @@ public class Editor extends BorderPane implements Closing {
 	private ReadOnlyStyledDocument<Collection<String>, String, Collection<String>> lastDocumentSnapshot;
 	private ScrollReset lastScrollReset = null;
 	private CaretReset lastCaretReset = null;
+	private SelectedWordHighlighting selectedWordHighlighting;
 	private TabCompleter<?> tabCompleter;
 	private SyntaxHighlighter syntaxHighlighter;
 	private SelectedBracketTracking selectedBracketTracking;
@@ -175,7 +177,7 @@ public class Editor extends BorderPane implements Closing {
 				.reduceSuccessions(Collections::singletonList, Lists::add, Duration.ofMillis(SHORT_DELAY_MS))
 				.addObserver(changes -> {
 					try {
-						// Pass to highlighter.
+						// Pass to syntax highlighter.
 						if (syntaxHighlighter != null) {
 							for (PlainTextChange change : changes) {
 								schedule(syntaxPool, FALLBACK_STYLE_RESULT, () -> {
@@ -208,6 +210,8 @@ public class Editor extends BorderPane implements Closing {
 
 	@Override
 	public void close() {
+		if (selectedWordHighlighting != null)
+			selectedWordHighlighting.uninstall(this);
 		if (selectedBracketTracking != null)
 			selectedBracketTracking.close();
 		if (!syntaxPool.isShutdown())
@@ -263,6 +267,16 @@ public class Editor extends BorderPane implements Closing {
 	}
 
 	/**
+	 * Force a full restyle of the entire document.
+	 */
+	public void restyleAll() {
+		String text = getText();
+		if (text.isBlank() || syntaxHighlighter == null)
+			return;
+		setStyleSpans(0, syntaxHighlighter.createStyleSpans(text, 0, getTextLength()));
+	}
+
+	/**
 	 * Delegates to {@link StyleActions#setStyleSpans(int, StyleSpans)} but with some scroll-position preservation logic.
 	 *
 	 * @param from
@@ -270,18 +284,25 @@ public class Editor extends BorderPane implements Closing {
 	 * @param spans
 	 * 		Style spans to apply.
 	 */
-	private void setStyleSpans(int from, @Nonnull StyleSpans<Collection<String>> spans) {
+	public void setStyleSpans(int from, @Nonnull StyleSpans<Collection<String>> spans) {
 		// Updating the styles can cause the 'Navigator' to set its target position back to zero for... some reason.
 		// See Navigator:
 		//  - setTargetPosition
 		//  - scrollCurrentPositionBy
-		// To prevent jank, we record the first visible index before the update, and restore it after.
-		//
-		// We use the CodeArea's "showParagraphAtTop" instead of our direct one on the VirtualFlow, because the CodeArea's
-		// suspension handling is necessary to keep event ordering correct (where the restoration happens after the janky reset).
-		int virtualFlowFirst = virtualFlow.getFirstVisibleIndex();
+		// To prevent jank, record the precise scroll-pixel estimate before the update, and restore it after.
+		// Using the first visible paragraph snaps mouse-wheel scroll positions to the top of that paragraph.
+		double scrollY = virtualFlow.getEstimatedScrollY();
+		int firstVisibleIndex = virtualFlow.getFirstVisibleIndex();
+		if (selectedWordHighlighting != null) // Inject selected-word highlighting into the style spans.
+			spans = selectedWordHighlighting.apply(from, spans);
 		codeArea.setStyleSpans(from, spans);
-		codeArea.showParagraphAtTop(virtualFlowFirst);
+
+		// We want to use the CodeArea variants of scrolling rather than the virtual-flow for event order reasons.
+		// Without the suspension handling of these variants some of the restores may not take effect.
+		if (Double.isFinite(scrollY))
+			codeArea.scrollYToPixel(scrollY);
+		else
+			codeArea.showParagraphAtTop(firstVisibleIndex);
 	}
 
 	/**
@@ -467,11 +488,19 @@ public class Editor extends BorderPane implements Closing {
 	}
 
 	/**
-	 * @return Current highlighter.
+	 * @return Current syntax highlighter.
 	 */
 	@Nullable
 	public SyntaxHighlighter getSyntaxHighlighter() {
 		return syntaxHighlighter;
+	}
+
+	/**
+	 * @return Current selected-word highlighter.
+	 */
+	@Nullable
+	public SelectedWordHighlighting getSelectedWordHighlighting() {
+		return selectedWordHighlighting;
 	}
 
 	/**
@@ -486,12 +515,30 @@ public class Editor extends BorderPane implements Closing {
 
 		// Set and install new instance.
 		this.syntaxHighlighter = syntaxHighlighter;
-		if (syntaxHighlighter != null) {
+		if (syntaxHighlighter != null)
 			syntaxHighlighter.install(this);
-			String text = getText();
-			if (!text.isBlank())
-				setStyleSpans(0, syntaxHighlighter.createStyleSpans(text, 0, getTextLength()));
-		}
+		restyleAll();
+	}
+
+	/**
+	 * @param selectedWordHighlighting
+	 * 		Highlighting implementation for selected-word occurrences.
+	 */
+	public void setSelectedWordHighlighting(@Nullable SelectedWordHighlighting selectedWordHighlighting) {
+		// Skip if it is already set to the same instance.
+		if (this.selectedWordHighlighting == selectedWordHighlighting)
+			return;
+
+		// Uninstall prior instance.
+		SelectedWordHighlighting previousSelectedWordHighlighting = this.selectedWordHighlighting;
+		if (previousSelectedWordHighlighting != null)
+			previousSelectedWordHighlighting.uninstall(this);
+
+		// Set and install new instance.
+		this.selectedWordHighlighting = selectedWordHighlighting;
+		if (selectedWordHighlighting != null)
+			selectedWordHighlighting.install(this);
+		restyleAll();
 	}
 
 	/**

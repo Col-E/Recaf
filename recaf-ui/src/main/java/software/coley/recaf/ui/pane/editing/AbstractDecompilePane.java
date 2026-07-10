@@ -43,6 +43,7 @@ import software.coley.recaf.ui.control.BoundLabel;
 import software.coley.recaf.ui.control.animation.LabelByteAnimationTransition;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.bracket.SelectedBracketTracking;
+import software.coley.recaf.ui.control.richtext.highlight.SelectedWordHighlighting;
 import software.coley.recaf.ui.control.richtext.problem.ProblemTracking;
 import software.coley.recaf.ui.control.richtext.search.SearchBar;
 import software.coley.recaf.ui.control.richtext.suggest.java.JavaTabCompleter;
@@ -113,6 +114,7 @@ public class AbstractDecompilePane extends BorderPane implements ClassNavigable,
 		// Configure the editor
 		editor = new Editor();
 		languageAssociation.configureEditorSyntax("java", editor);
+		editor.setSelectedWordHighlighting(new SelectedWordHighlighting());
 		editor.setSelectedBracketTracking(new SelectedBracketTracking());
 		editor.setProblemTracking(problemTracking);
 		editor.getRootLineGraphicFactory().addDefaultCodeGraphicFactories();

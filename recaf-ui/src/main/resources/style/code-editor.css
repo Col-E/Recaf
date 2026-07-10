@@ -40,6 +40,9 @@ Style for handling selection color.
 .code-area .main-selection {
     -fx-fill: -color-accent-6;
 }
+.code-area .selected-word-match {
+    -rtfx-background-color: rgb(45, 85, 65);
+}
 
 /*
 ==================================== Line numbers ====================================

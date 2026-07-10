@@ -38,6 +38,7 @@ import software.coley.recaf.ui.LanguageStylesheets;
 import software.coley.recaf.ui.config.KeybindingConfig;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.bracket.SelectedBracketTracking;
+import software.coley.recaf.ui.control.richtext.highlight.SelectedWordHighlighting;
 import software.coley.recaf.ui.control.richtext.problem.Problem;
 import software.coley.recaf.ui.control.richtext.problem.ProblemLevel;
 import software.coley.recaf.ui.control.richtext.problem.ProblemPhase;
@@ -115,6 +116,7 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 			editor.setTabCompleter(tabCompleter);
 		}
 		editor.getCodeArea().getStylesheets().add(LanguageStylesheets.getJasmStylesheet());
+		editor.setSelectedWordHighlighting(new SelectedWordHighlighting());
 		editor.setSelectedBracketTracking(new SelectedBracketTracking());
 		editor.setSyntaxHighlighter(new RegexSyntaxHighlighter(RegexLanguages.getJasmLanguage()));
 		editor.setProblemTracking(problemTracking);
