@@ -27,6 +27,7 @@ import software.coley.sourcesolver.resolve.result.MultiClassResolution;
 import software.coley.sourcesolver.resolve.result.MultiMemberResolution;
 import software.coley.sourcesolver.resolve.result.PrimitiveResolution;
 import software.coley.sourcesolver.resolve.result.Resolution;
+import software.coley.sourcesolver.resolve.result.VariableResolution;
 import software.coley.sourcesolver.util.Range;
 
 import java.util.ArrayList;
@@ -95,6 +96,8 @@ public class AstMapper {
 				} else {
 					source = replacePatternIn(named, source, methodResolution.getMethodEntry().getName(), getSimpleName(getMappedMethod(methodResolution)));
 				}
+			} else if (resolution instanceof VariableResolution variableResolution) {
+				source = replacePatternIn(named, source, variableResolution.getName(), getMappedVariable(variableResolution, named));
 			}
 		}
 
@@ -308,6 +311,21 @@ public class AstMapper {
 		String name = methodEntry.getName();
 		String desc = methodEntry.getDescriptor();
 		return mappings.getMappedMethodName(owner, name, desc);
+	}
+
+	@Nullable
+	private String getMappedVariable(@Nonnull VariableResolution resolution, @Nonnull NamedModel named) {
+		if (!(named instanceof Model model))
+			return null;
+
+		MethodModel method = model instanceof MethodModel methodModel ? methodModel : model.getParentOfType(MethodModel.class);
+		if (method == null || !(method.resolve(resolver) instanceof MethodResolution methodResolution))
+			return null;
+
+		ClassEntry owner = methodResolution.getOwnerEntry();
+		MethodEntry methodEntry = methodResolution.getMethodEntry();
+		return mappings.getMappedVariableName(owner.getName(), methodEntry.getName(), methodEntry.getDescriptor(),
+				resolution.getName(), resolution.getResolvedType().getDescriptor(), -1);
 	}
 
 	@Nonnull

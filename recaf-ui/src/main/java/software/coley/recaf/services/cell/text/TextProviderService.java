@@ -305,7 +305,12 @@ public class TextProviderService implements Service {
 			if (Types.isPrimitive(type)) {
 				text = type.getClassName() + " " + name;
 			} else {
-				text = formatConfig.filterShorten(type.getClassName()) + " " + name;
+				if (type.getSort() == Type.ARRAY) {
+					String elementName = type.getElementType().getInternalName();
+					text = formatConfig.filter(elementName) + "[]".repeat(type.getDimensions()) + " " + name;
+				} else {
+					text = formatConfig.filter(type.getInternalName()) + " " + name;
+				}
 			}
 			return formatConfig.filterMaxLength(text);
 		};

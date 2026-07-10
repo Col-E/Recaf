@@ -10,6 +10,7 @@ import software.coley.recaf.services.mapping.data.FieldMapping;
 import software.coley.recaf.services.mapping.data.MemberMapping;
 import software.coley.recaf.services.mapping.data.MethodMapping;
 import software.coley.recaf.services.mapping.data.VariableMapping;
+import software.coley.recaf.util.NameTypePair;
 import software.coley.recaf.workspace.model.Workspace;
 
 import java.util.Collection;
@@ -260,9 +261,9 @@ public class AggregatedMappings extends IntermediateMappings {
 		boolean bridged;
 		IntermediateMappings intermediate = newMappings.exportIntermediate();
 		bridged = updateClasses(intermediate.getClasses());
+		bridged |= updateVariables(intermediate.getVariables().values());
 		bridged |= updateMembers(intermediate.getFields().values());
 		bridged |= updateMembers(intermediate.getMethods().values());
-		bridged |= updateVariables(intermediate.getVariables().values());
 		return bridged;
 	}
 
@@ -332,16 +333,60 @@ public class AggregatedMappings extends IntermediateMappings {
 		// a.foo() var x --> var z
 		boolean bridged = false;
 
-		/*
-		TODO: Aggregate variable mappings
 		for (List<VariableMapping> variableMappings : newMappings) {
 			for (VariableMapping newVariableMapping : variableMappings) {
 				String bOwner = newVariableMapping.getOwnerName();
 				String bMethodName = newVariableMapping.getMethodName();
 				String bMethodDesc = newVariableMapping.getMethodDesc();
+				String oldVariableName = newVariableMapping.getOldName();
+				String newVariableName = newVariableMapping.getNewName();
+				String variableDesc = newVariableMapping.getDesc();
+				int variableIndex = newVariableMapping.getIndex();
+
+				// Check if the class declaring the method with the variable has been renamed,
+				// if so we need to find the original class name.
+				String owner = bOwner;
+				String aOwner = reverseOrderClassMapping.get(bOwner);
+				if (aOwner != null) {
+					bridged = true;
+					owner = aOwner;
+				}
+
+				// Descriptor must always be checked for updates,
+				// since the method may have been renamed and thus the descriptor may have changed.
+				String methodDesc = applyReverseMappings(bMethodDesc);
+				if (methodDesc == null)
+					continue;
+
+				// Check if the method declaring the variable has been renamed, if so we need to find the original method name.
+				NameTypePair methodContext = null;
+				for (MethodMapping oldMethodMapping : getClassMethodMappings(owner)) {
+					if (oldMethodMapping.getNewName().equals(bMethodName) && oldMethodMapping.getDesc().equals(methodDesc)) {
+						methodContext = new NameTypePair(oldMethodMapping.getOldName(), oldMethodMapping.getDesc());
+						break;
+					}
+				}
+				if (methodContext != null) {
+					// We map the variable to the original method name, since the method has been renamed.
+					bridged = true;
+					bMethodName = methodContext.name();
+					methodDesc = methodContext.type();
+				}
+
+				// Check if the variable has been renamed, if so we need to find the original variable name.
+				variableDesc = applyReverseMappings(variableDesc);
+				VariableMapping priorVariableMapping = findPriorVariableMapping(owner, bMethodName, methodDesc, newVariableMapping, variableDesc);
+				if (priorVariableMapping != null) {
+					bridged = true;
+					oldVariableName = priorVariableMapping.getOldName();
+					variableDesc = priorVariableMapping.getDesc();
+					if (variableIndex < 0)
+						variableIndex = priorVariableMapping.getIndex();
+				}
+
+				addVariable(owner, bMethodName, methodDesc, variableDesc, oldVariableName, variableIndex, newVariableName);
 			}
 		}
-		 */
 		return bridged;
 	}
 
@@ -373,5 +418,47 @@ public class AggregatedMappings extends IntermediateMappings {
 		// Remove old mapping entry
 		members.remove(target);
 		return target.getOldName();
+	}
+
+	@Nullable
+	private VariableMapping findPriorVariableMapping(@Nonnull String ownerName, @Nonnull String methodName, @Nonnull String methodDesc,
+	                                                 @Nonnull VariableMapping newVariableMapping, @Nullable String variableDesc) {
+		// Get prior variable mapping list for the method, if any.
+		List<VariableMapping> methodVariables = variables.get(varKey(ownerName, methodName, methodDesc));
+		if (methodVariables == null || methodVariables.isEmpty())
+			return null;
+
+		// Find a prior variable mapping that matches the new variable mapping's old name, descriptor, and index.
+		String oldVariableName = newVariableMapping.getOldName();
+		int variableIndex = newVariableMapping.getIndex();
+		for (int i = 0; i < methodVariables.size(); i++) {
+			VariableMapping oldVariableMapping = methodVariables.get(i);
+			if (variableNameMatches(oldVariableMapping, oldVariableName, variableIndex) &&
+					variableDescMatches(oldVariableMapping.getDesc(), variableDesc) &&
+					variableIndexMatches(oldVariableMapping.getIndex(), variableIndex)) {
+				methodVariables.remove(i);
+				return oldVariableMapping;
+			}
+		}
+		return null;
+	}
+
+	private static boolean variableDescMatches(@Nullable String a, @Nullable String b) {
+		// Some mapping formats do not include descriptors for variables, so we have null leniency here.
+		return a == null || b == null || a.equals(b);
+	}
+
+	private static boolean variableNameMatches(@Nonnull VariableMapping oldVariableMapping, @Nullable String newOldName, int newIndex) {
+		// Check if the old mapping has the same destination name for the variable as our new mapping.
+		if (newOldName != null)
+			return oldVariableMapping.getNewName().equals(newOldName);
+
+		// If the new mapping does not have an old name, then we can only check if the variable index matches.
+		return newIndex >= 0 && oldVariableMapping.getIndex() == newIndex;
+	}
+
+	private static boolean variableIndexMatches(int a, int b) {
+		// Some mapping formats do not include variable indexes, so we have -1 leniency here.
+		return a < 0 || b < 0 || a == b;
 	}
 }

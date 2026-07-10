@@ -1,21 +1,34 @@
 package software.coley.recaf.services.mapping.format;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.Dependent;
+import jakarta.inject.Inject;
+import org.objectweb.asm.Type;
 import org.slf4j.Logger;
 import software.coley.collections.tuple.Pair;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.path.ClassMemberPathNode;
+import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.services.mapping.IntermediateMappings;
 import software.coley.recaf.services.mapping.Mappings;
 import software.coley.recaf.services.mapping.data.ClassMapping;
 import software.coley.recaf.services.mapping.data.FieldMapping;
 import software.coley.recaf.services.mapping.data.MethodMapping;
+import software.coley.recaf.services.mapping.data.VariableMapping;
+import software.coley.recaf.services.workspace.WorkspaceManager;
+import software.coley.recaf.util.Types;
+import software.coley.recaf.workspace.model.Workspace;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -46,6 +59,19 @@ public class EnigmaMappings extends AbstractMappingFileFormat {
 	 */
 	public EnigmaMappings() {
 		super(NAME, true, true);
+	}
+
+	/**
+	 * New enigma instance with workspace context.
+	 *
+	 * @param workspaceManager
+	 * 		Workspace manager to pull the current workspace from.
+	 */
+	@Inject
+	public EnigmaMappings(@Nonnull WorkspaceManager workspaceManager) {
+		this();
+		if (workspaceManager.hasCurrentWorkspace())
+			setWorkspace(workspaceManager.getCurrent());
 	}
 
 	/**
@@ -110,11 +136,12 @@ public class EnigmaMappings extends AbstractMappingFileFormat {
 		// CLASS BaseClass TargetClass
 		//     FIELD baseField targetField baseDesc
 		//     METHOD baseMethod targetMethod baseMethodDesc
-		//         ARG baseArg targetArg #ignored
+		//         ARG index targetArg
+		//         VAR desc baseVar targetVar
 		//     CLASS 1 InnerClass
 		//         FIELD innerField targetField innerDesc
 		IntermediateMappings mappings = new IntermediateMappings();
-		Deque<Pair<String, String>> currentClass = new ArrayDeque<>();
+		ParseContext context = new ParseContext();
 
 		int line = 1;
 		for (int i = 0, len = mappingsText.length(); i < len; ) { // i incremented inside the loop
@@ -130,7 +157,7 @@ public class EnigmaMappings extends AbstractMappingFileFormat {
 			}
 
 			// parse line
-			i = handleLine(line, indent, i, mappingsText, currentClass, mappings);
+			i = handleLine(line, indent, i, mappingsText, context, mappings);
 
 			// go to next line
 			if (i < len) {
@@ -158,8 +185,8 @@ public class EnigmaMappings extends AbstractMappingFileFormat {
 	 * 		Current offset into the mappings file.
 	 * @param mappingsText
 	 * 		Mappings file contents.
-	 * @param currentClass
-	 * 		Deque of the current 'context' <i>(what class are we building mappings for)</i>.
+	 * @param context
+	 * 		Current class and method parser context.
 	 * @param mappings
 	 * 		Output mappings.
 	 *
@@ -168,12 +195,16 @@ public class EnigmaMappings extends AbstractMappingFileFormat {
 	 * @throws InvalidMappingException
 	 * 		When reading the mappings encounters any failure.
 	 */
-	private static int handleLine(int line, int indent, int i, @Nonnull String mappingsText, @Nonnull Deque<Pair<String, String>> currentClass,
+	private static int handleLine(int line, int indent, int i, @Nonnull String mappingsText, @Nonnull ParseContext context,
 	                              @Nonnull IntermediateMappings mappings) throws InvalidMappingException {
 		// read next token
 		String lineType = mappingsText.substring(i = skipSpace(i, mappingsText), i = readToken(i, mappingsText));
+		MethodContext currentMethod = context.currentMethod;
+		if (currentMethod != null && indent <= currentMethod.indent)
+			context.currentMethod = null;
 		switch (lineType) {
 			case "CLASS" -> {
+				Deque<Pair<String, String>> currentClass = context.currentClass;
 				updateIndent(currentClass, indent, () -> ("Invalid Enigma mappings, CLASS indent level " + indent + " too deep (expected max. "
 						+ currentClass.size() + ", " + currentClass + ") @line " + line + " @char "), i);
 
@@ -192,10 +223,18 @@ public class EnigmaMappings extends AbstractMappingFileFormat {
 				}
 				currentClass.push(new Pair<>(classNameA, classNameB));
 			}
-			case "FIELD" ->
-					i = handleClassMemberMapping(line, indent, i, mappingsText, currentClass, "FIELD", mappings::addField);
-			case "METHOD" ->
-					i = handleClassMemberMapping(line, indent, i, mappingsText, currentClass, "METHOD", mappings::addMethod);
+			case "FIELD" -> {
+				MemberMappingInfo info = handleClassMemberMapping(line, indent, i, mappingsText, context.currentClass, "FIELD", mappings::addField);
+				i = info.offset;
+			}
+			case "METHOD" -> {
+				MemberMappingInfo info = handleClassMemberMapping(line, indent, i, mappingsText, context.currentClass, "METHOD", mappings::addMethod);
+				i = info.offset;
+				if (info.isValid())
+					context.currentMethod = new MethodContext(indent, info.ownerName, info.oldName, info.desc);
+			}
+			case "ARG" -> i = handleArgumentMapping(i, mappingsText, context.currentMethod, mappings);
+			case "VAR" -> i = handleVariableMapping(i, mappingsText, context.currentMethod, mappings);
 		}
 		i = skipLineRest(i, mappingsText);
 		return i;
@@ -217,13 +256,14 @@ public class EnigmaMappings extends AbstractMappingFileFormat {
 	 * @param consumer
 	 * 		Consumer to record parsed mappings into.
 	 *
-	 * @return Updated offset into the mappings file.
+	 * @return Member mapping line information.
 	 *
 	 * @throws InvalidMappingException
 	 * 		When reading the mappings encounters any failure.
 	 */
-	private static int handleClassMemberMapping(int line, int indent, int i, @Nonnull String mappingsText, @Nonnull Deque<Pair<String, String>> currentClass,
-	                                            @Nonnull String type, @Nonnull MemberMappingsConsumer consumer) throws InvalidMappingException {
+	@Nonnull
+	private static MemberMappingInfo handleClassMemberMapping(int line, int indent, int i, @Nonnull String mappingsText, @Nonnull Deque<Pair<String, String>> currentClass,
+	                                                          @Nonnull String type, @Nonnull MemberMappingsConsumer consumer) throws InvalidMappingException {
 		// <name-a> <name-b> <formatted-access-modifier> <desc> <eol>
 		// <name-b> = '' | '-' | <space> <name>
 		updateIndent(currentClass, indent, () -> FAIL + type + " indent level " + indent + " too deep (expected max. "
@@ -233,20 +273,90 @@ public class EnigmaMappings extends AbstractMappingFileFormat {
 		}
 
 		String nameA = mappingsText.substring(i = skipSpace(i, mappingsText), i = readToken(i, mappingsText));
-		String nameB = mappingsText.substring(i = skipSpace(i, mappingsText), i = readToken(i, mappingsText));
+		String next = mappingsText.substring(i = skipSpace(i, mappingsText), i = readToken(i, mappingsText));
+		if (nameA.isEmpty() || next.isEmpty())
+			return new MemberMappingInfo(i);
 
-		// If can have mapping
-		if (!nameB.isEmpty() && !"-".equals(nameB) && !nameB.startsWith("ACC:")) {
-			String desc = mappingsText.substring(i = skipSpace(i, mappingsText), i = readToken(i, mappingsText));
-			if (desc.startsWith("ACC:")) { // skip optional access modifier
-				desc = mappingsText.substring(i = skipSpace(i, mappingsText), i = readToken(i, mappingsText));
+		// Handle the case where the next token is a descriptor, which means the nameB is omitted.
+		// - Also skip any access modifiers, as they are not relevant to the mapping.
+		String nameB = null;
+		String desc;
+		if ("-".equals(next)) {
+			desc = mappingsText.substring(i = skipSpace(i, mappingsText), i = readToken(i, mappingsText));
+		} else if (next.startsWith("ACC:")) {
+			desc = next;
+		} else if (Types.isValidDesc(next)) {
+			desc = next;
+		} else {
+			nameB = next;
+			desc = mappingsText.substring(i = skipSpace(i, mappingsText), i = readToken(i, mappingsText));
+		}
+		while (desc.startsWith("ACC:"))
+			desc = mappingsText.substring(i = skipSpace(i, mappingsText), i = readToken(i, mappingsText));
+		if (desc.isEmpty())
+			return new MemberMappingInfo(i);
+
+		// Record the mapping if we have a valid nameB.
+		String ownerName = currentClass.peek().getLeft();
+		if (nameB != null)
+			consumer.accept(ownerName, desc, nameA, nameB);
+		return new MemberMappingInfo(i, ownerName, nameA, desc);
+	}
+
+	/**
+	 * @param i
+	 * 		Current offset into the mappings file.
+	 * @param mappingsText
+	 * 		Mappings file contents.
+	 * @param currentMethod
+	 * 		Current method context to attach the argument mapping to.
+	 * @param mappings
+	 * 		Output mappings.
+	 *
+	 * @return Updated offset into the mappings file.
+	 *
+	 * @throws InvalidMappingException
+	 * 		When reading the mappings encounters any failure.
+	 */
+	private static int handleArgumentMapping(int i, @Nonnull String mappingsText, @Nullable MethodContext currentMethod,
+	                                         @Nonnull IntermediateMappings mappings) throws InvalidMappingException {
+		String indexText = mappingsText.substring(i = skipSpace(i, mappingsText), i = readToken(i, mappingsText));
+		String newName = mappingsText.substring(i = skipSpace(i, mappingsText), i = readToken(i, mappingsText));
+		if (currentMethod != null && !indexText.isEmpty() && !newName.isEmpty()) {
+			try {
+				int index = Integer.parseInt(indexText);
+				mappings.addVariable(currentMethod.ownerName, currentMethod.methodName, currentMethod.methodDesc,
+						null, null, index, newName);
+			} catch (NumberFormatException ignored) {
+				// Skip invalid index, as it is not a valid mapping.
 			}
-			if (desc.isEmpty()) {
-				// no desc found = line contained only one name and optional access modifier = no mapping
-				return i;
-			}
-			assert currentClass.peek() != null; // checked above
-			consumer.accept(currentClass.peek().getLeft(), desc, nameA, nameB);
+		}
+		return i;
+	}
+
+	/**
+	 * @param i
+	 * 		Current offset into the mappings file.
+	 * @param mappingsText
+	 * 		Mappings file contents.
+	 * @param currentMethod
+	 * 		Current method context to attach the variable mapping to.
+	 * @param mappings
+	 * 		Output mappings.
+	 *
+	 * @return Updated offset into the mappings file.
+	 *
+	 * @throws InvalidMappingException
+	 * 		When reading the mappings encounters any failure.
+	 */
+	private static int handleVariableMapping(int i, @Nonnull String mappingsText, @Nullable MethodContext currentMethod,
+	                                         @Nonnull IntermediateMappings mappings) throws InvalidMappingException {
+		String desc = mappingsText.substring(i = skipSpace(i, mappingsText), i = readToken(i, mappingsText));
+		String oldName = mappingsText.substring(i = skipSpace(i, mappingsText), i = readToken(i, mappingsText));
+		String newName = mappingsText.substring(i = skipSpace(i, mappingsText), i = readToken(i, mappingsText));
+		if (currentMethod != null && !desc.isEmpty() && !oldName.isEmpty() && !newName.isEmpty()) {
+			mappings.addVariable(currentMethod.ownerName, currentMethod.methodName, currentMethod.methodDesc,
+					desc, oldName, -1, newName);
 		}
 		return i;
 	}
@@ -381,10 +491,11 @@ public class EnigmaMappings extends AbstractMappingFileFormat {
 		//TODO: Fix inner class handling
 		// - Currently we export inner classes as top-level classes
 		// - We should match the spec and have inner-classes indented beneath their outer classes
-
+		Workspace workspace = getWorkspace();
 		StringBuilder sb = new StringBuilder();
 		IntermediateMappings intermediate = mappings.exportIntermediate();
 		for (String oldClassName : intermediate.getClassesWithMappings()) {
+			ClassPathNode classPath = workspace == null ? null : workspace.findClass(oldClassName);
 			ClassMapping classMapping = intermediate.getClassMapping(oldClassName);
 			if (classMapping != null) {
 				String newClassName = classMapping.getNewName();
@@ -407,6 +518,7 @@ public class EnigmaMappings extends AbstractMappingFileFormat {
 						.append(newFieldName).append(' ')
 						.append(fieldDesc).append("\n");
 			}
+			Map<String, List<VariableMapping>> variablesByMethod = getClassVariablesByMethod(intermediate, oldClassName);
 			for (MethodMapping methodMapping : intermediate.getClassMethodMappings(oldClassName)) {
 				String oldMethodName = methodMapping.getOldName();
 				String newMethodName = methodMapping.getNewName();
@@ -416,17 +528,137 @@ public class EnigmaMappings extends AbstractMappingFileFormat {
 						.append(oldMethodName).append(' ')
 						.append(newMethodName).append(' ')
 						.append(methodDesc).append("\n");
+
+				// When we emit these variables also remove them from the map.
+				// Any remaining items will be from methods that were not mapped, but we still want to emit their variables.
+				appendVariables(sb, classPath, oldMethodName, methodDesc, variablesByMethod.remove(methodKey(oldMethodName, methodDesc)));
+			}
+			for (List<VariableMapping> variables : variablesByMethod.values()) {
+				if (variables.isEmpty())
+					continue;
+				VariableMapping firstVariable = variables.getFirst();
+				String oldMethodName = firstVariable.getMethodName();
+				String methodDesc = firstVariable.getMethodDesc();
+				// METHOD baseMethod baseMethodDesc
+				sb.append("\tMETHOD ")
+						.append(oldMethodName).append(' ')
+						.append(methodDesc).append("\n");
+				appendVariables(sb, classPath, oldMethodName, methodDesc, variables);
 			}
 		}
 		return sb.toString();
 	}
 
+	private static void appendVariables(@Nonnull StringBuilder sb, @Nullable ClassPathNode classPath,
+	                                    @Nonnull String oldMethodName, @Nonnull String methodDesc,
+	                                    @Nullable List<VariableMapping> variables) {
+		if (variables == null || variables.isEmpty())
+			return;
+
+		// Enigma only officially supports parameters.
+		// - ARG index newName
+		// We can add our own special prefix (that gets ignored by the mainstream enigma tool) that allows us to export more detailed variable mappings.
+		//  - VAR desc oldName newName
+		Type methodType = Type.getMethodType(methodDesc);
+		Type[] argumentTypes = methodType.getArgumentTypes();
+		int maxParam = Integer.MAX_VALUE;
+		if (classPath != null) {
+			ClassMemberPathNode memberPath = classPath.child(oldMethodName, methodDesc);
+			if (memberPath != null) {
+				maxParam = memberPath.getValueAsMethod().hasStaticModifier() ? 0 : 1;
+				for (Type argumentType : argumentTypes) {
+					maxParam += argumentType.getSize();
+				}
+			}
+		}
+		for (VariableMapping variable : variables) {
+			// First add args for method parameter locals.
+			// These are the only locals that enigma officially supports.
+			if (variable.getIndex() < maxParam) {
+				sb.append("\t\tARG ")
+						.append(variable.getIndex()).append(' ')
+						.append(variable.getNewName()).append("\n");
+			}
+
+			// Then add all locals for method body variables.
+			// These are not officially supported by enigma,
+			// but we can add our own special prefix that gets ignored by the mainstream enigma tool.
+			sb.append("\t\tVAR ")
+					.append(variable.getDesc()).append(' ')
+					.append(variable.getOldName()).append(' ')
+					.append(variable.getNewName()).append("\n");
+		}
+	}
+
+	@Nonnull
+	private static Map<String, List<VariableMapping>> getClassVariablesByMethod(@Nonnull IntermediateMappings intermediate,
+	                                                                            @Nonnull String oldClassName) {
+		Map<String, List<VariableMapping>> variablesByMethod = new TreeMap<>();
+		for (List<VariableMapping> variables : intermediate.getVariables().values()) {
+			for (VariableMapping variable : variables) {
+				if (oldClassName.equals(variable.getOwnerName())) {
+					variablesByMethod.computeIfAbsent(methodKey(variable.getMethodName(), variable.getMethodDesc()), key -> new ArrayList<>())
+							.add(variable);
+				}
+			}
+		}
+		return variablesByMethod;
+	}
+
+	@Nonnull
+	private static String methodKey(@Nonnull String methodName, @Nonnull String methodDesc) {
+		// Arbitrary key for variable mapping grouping.
+		return methodName + '.' + methodDesc;
+	}
+
 	@Nonnull
 	private static String removeNonePackage(@Nonnull String text) {
+		// None prefix is what Enigma uses to indicate that a class is in the default package.
 		return text.replaceAll("(?:^|(?<=L))none/", "");
 	}
 
 	private interface MemberMappingsConsumer {
 		void accept(String oldClassName, String desc, String oldName, String newName);
+	}
+
+	private static class ParseContext {
+		private final Deque<Pair<String, String>> currentClass = new ArrayDeque<>();
+		private MethodContext currentMethod;
+	}
+
+	private static class MethodContext {
+		private final int indent;
+		private final String ownerName;
+		private final String methodName;
+		private final String methodDesc;
+
+		private MethodContext(int indent, @Nonnull String ownerName, @Nonnull String methodName, @Nonnull String methodDesc) {
+			this.indent = indent;
+			this.ownerName = ownerName;
+			this.methodName = methodName;
+			this.methodDesc = methodDesc;
+		}
+	}
+
+	private static class MemberMappingInfo {
+		private final int offset;
+		private final String ownerName;
+		private final String oldName;
+		private final String desc;
+
+		private MemberMappingInfo(int offset) {
+			this(offset, null, null, null);
+		}
+
+		private MemberMappingInfo(int offset, @Nonnull String ownerName, @Nonnull String oldName, @Nonnull String desc) {
+			this.offset = offset;
+			this.ownerName = ownerName;
+			this.oldName = oldName;
+			this.desc = desc;
+		}
+
+		private boolean isValid() {
+			return ownerName != null;
+		}
 	}
 }

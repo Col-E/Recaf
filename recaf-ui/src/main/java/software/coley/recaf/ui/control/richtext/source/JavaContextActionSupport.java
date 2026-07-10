@@ -332,7 +332,7 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 			Range candidateRange = candidate.getRange();
 			if (!candidateRange.isWithin(astPos))
 				continue;
-			if ((classModel == null || rangeLength(candidateRange) < rangeLength(classModel.getRange())))
+			if ((classModel == null || candidateRange.length() < classModel.getRange().length()))
 				classModel = candidate;
 		}
 
@@ -856,11 +856,6 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 		if (result == null)
 			return null;
 		return result.path();
-	}
-
-	private static int rangeLength(@Nonnull Range range) {
-		// TODO: range.length() when updating to next SourceSolver version.
-		return range.end() - range.begin();
 	}
 
 	/**

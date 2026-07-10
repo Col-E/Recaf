@@ -66,6 +66,18 @@ public class Types {
 	);
 
 	/**
+	 * @param desc
+	 * 		Some internal type descriptor.
+	 *
+	 * @return {@code true} if it matches an array type.
+	 */
+	public static boolean isArray(@Nullable String desc) {
+		if (desc == null || desc.isEmpty())
+			return false;
+		return desc.charAt(0) == '[';
+	}
+
+	/**
 	 * @param type
 	 * 		Some type to check.
 	 *

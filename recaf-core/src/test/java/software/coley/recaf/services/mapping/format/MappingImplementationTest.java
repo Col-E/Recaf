@@ -3,6 +3,9 @@ package software.coley.recaf.services.mapping.format;
 import org.junit.jupiter.api.Test;
 import software.coley.recaf.services.mapping.IntermediateMappings;
 import software.coley.recaf.services.mapping.Mappings;
+import software.coley.recaf.services.mapping.data.VariableMapping;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -61,6 +64,21 @@ public class MappingImplementationTest {
 		MappingFileFormat format = new SimpleMappings();
 		IntermediateMappings mappings = assertDoesNotThrow(() -> format.parse(mappingsText));
 		assertInheritMap(mappings);
+	}
+
+	@Test
+	void testSimpleVariables() {
+		String mappingsText = """
+				test/Greetings.say(Ljava/lang/String;)V Ljava/lang/String; input renamedInput
+				test/Greetings.unmapped(I)V I number renamedNumber""";
+		MappingFileFormat format = new SimpleMappings();
+		IntermediateMappings mappings = assertDoesNotThrow(() -> format.parse(mappingsText));
+
+		assertEquals("renamedInput", mappings.getMappedVariableName("test/Greetings", "say",
+				"(Ljava/lang/String;)V", "input", "Ljava/lang/String;", -1));
+		assertEquals("renamedNumber", mappings.getMappedVariableName("test/Greetings", "unmapped",
+				"(I)V", "number", "I", -1));
+		assertEquals(mappingsText, assertDoesNotThrow(() -> format.exportText(mappings)));
 	}
 
 	@Test
@@ -166,6 +184,55 @@ public class MappingImplementationTest {
 				\t\tARG noArgsHere""";
 		mappings = assertDoesNotThrow(() -> format.parse(sampleWithCommentsAndNewlines));
 		assertInheritMap(mappings);
+	}
+
+	@Test
+	void testEnigmaVariables() {
+		String mappingsText = """
+				CLASS test/Greetings rename/Hello
+				\tMETHOD say speak (Ljava/lang/String;)V
+				\t\tARG 1 renamedInput
+				\t\tVAR Ljava/lang/String; input renamedInput
+				\tMETHOD unmapped (I)V
+				\t\tARG 0 renamedNumber
+				\t\tVAR I number renamedNumber""";
+		MappingFileFormat format = new EnigmaMappings();
+		IntermediateMappings mappings = assertDoesNotThrow(() -> format.parse(mappingsText));
+
+		assertEquals("renamedInput", mappings.getMappedVariableName("test/Greetings", "say",
+				"(Ljava/lang/String;)V", "input", "Ljava/lang/String;", 1));
+		assertEquals("renamedNumber", mappings.getMappedVariableName("test/Greetings", "unmapped",
+				"(I)V", "number", "I", 0));
+
+		List<VariableMapping> variables = mappings.getMethodVariableMappings("test/Greetings", "say", "(Ljava/lang/String;)V");
+		assertEquals(2, variables.size());
+		assertTrue(variables.stream().anyMatch(variable -> variable.getIndex() == 1
+				&& variable.getOldName() == null
+				&& variable.getDesc() == null
+				&& variable.getNewName().equals("renamedInput")));
+		assertTrue(variables.stream().anyMatch(variable -> variable.getIndex() == -1
+				&& variable.getOldName().equals("input")
+				&& variable.getDesc().equals("Ljava/lang/String;")
+				&& variable.getNewName().equals("renamedInput")));
+	}
+
+	@Test
+	void testEnigmaVariableOnlyExport() {
+		IntermediateMappings mappings = new IntermediateMappings();
+		mappings.addVariable("test/Greetings", "unmapped", "(I)V", "I", "number", 1, "renamedNumber");
+
+		MappingFileFormat format = new EnigmaMappings();
+		String mappingsText = assertDoesNotThrow(() -> format.exportText(mappings));
+		assertEquals("""
+				CLASS test/Greetings
+				\tMETHOD unmapped (I)V
+				\t\tARG 1 renamedNumber
+				\t\tVAR I number renamedNumber
+				""", mappingsText);
+
+		IntermediateMappings parsedMappings = assertDoesNotThrow(() -> format.parse(mappingsText));
+		assertEquals("renamedNumber", parsedMappings.getMappedVariableName("test/Greetings", "unmapped",
+				"(I)V", "number", "I", 1));
 	}
 
 	@Test

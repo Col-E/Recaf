@@ -2,12 +2,18 @@ package software.coley.recaf.services.source;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import org.objectweb.asm.Type;
 import software.coley.recaf.info.ClassInfo;
+import software.coley.recaf.info.member.BasicLocalVariable;
+import software.coley.recaf.info.member.LocalVariable;
+import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.path.BundlePathNode;
 import software.coley.recaf.path.ClassMemberPathNode;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.DirectoryPathNode;
+import software.coley.recaf.path.LocalVariablePathNode;
 import software.coley.recaf.path.PathNodes;
+import software.coley.recaf.util.Types;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.ClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -38,6 +44,7 @@ import software.coley.sourcesolver.resolve.result.MultiMemberResolution;
 import software.coley.sourcesolver.resolve.result.PackageResolution;
 import software.coley.sourcesolver.resolve.result.Resolution;
 import software.coley.sourcesolver.resolve.result.Resolutions;
+import software.coley.sourcesolver.resolve.result.VariableResolution;
 
 import java.util.List;
 
@@ -164,6 +171,20 @@ public class ResolverAdapter extends BasicResolver {
 			if (parentClassDeclaration != null && parentClassDeclaration.resolve(this).matches(resolution))
 				return AstResolveResult.declared(path);
 			return AstResolveResult.reference(path);
+		} else if (resolution instanceof VariableResolution variableResolution) {
+			LocalVariablePathNode path = findVariable(variableResolution, target);
+			if (path == null)
+				return null;
+
+			// Determine if it's a declaration or reference.
+			//  - The target model must be the variable declaration model.
+			//  - Its name/type must match the resolved variable.
+			if (target instanceof VariableModel variable
+					&& variable.getName().equals(variableResolution.getName())
+					&& variableResolution.getResolvedType().getDescriptor().equals(descriptorOf(variable)))
+				return AstResolveResult.declared(path);
+
+			return AstResolveResult.reference(path);
 		} else if (resolution instanceof FieldResolution fieldResolution) {
 			String ownerName = fieldResolution.getOwnerEntry().getName();
 			ClassPathNode ownerPath = findClass(ownerName);
@@ -247,6 +268,77 @@ public class ResolverAdapter extends BasicResolver {
 		//  in the UI for variables which would be nice.
 
 		return null;
+	}
+
+	/**
+	 * @param resolution
+	 * 		Variable resolution to adapt.
+	 * @param target
+	 * 		Target model that was the item being resolved.
+	 *
+	 * @return Path to the variable, or {@code null} when the enclosing method cannot be adapted.
+	 */
+	@Nullable
+	private LocalVariablePathNode findVariable(@Nonnull VariableResolution resolution, @Nonnull Model target) {
+		// Must be in a method.
+		MethodModel method = target instanceof MethodModel targetMethod ? targetMethod : target.getParentOfType(MethodModel.class);
+		if (method == null)
+			return null;
+
+		// The method must be resolvable so we can know its owner/descriptor.
+		Resolution methodResolution = method.resolve(this);
+		if (!(methodResolution instanceof MethodResolution resolvedMethod))
+			return null;
+
+		// Find owner class in the workspace.
+		String ownerName = resolvedMethod.getOwnerEntry().getName();
+		ClassPathNode ownerPath = findClass(ownerName);
+		if (ownerPath == null)
+			return null;
+
+		// Build path down to the method.
+		MethodEntry methodEntry = resolvedMethod.getMethodEntry();
+		ClassMemberPathNode methodPath = ownerPath.child(methodEntry.getName(), methodEntry.getDescriptor());
+		if (methodPath == null)
+			return null;
+		if (!(methodPath.getValue() instanceof MethodMember methodMember))
+			return null;
+
+		// Find the variable in the method's local variables.
+		String name = resolution.getName();
+		String descriptor = resolution.getResolvedType().getDescriptor();
+		LocalVariable matchedVariable = null;
+		for (LocalVariable localVariable : methodMember.getLocalVariables()) {
+			if (localVariable.getName().equals(name)) {
+				// The name matches, so now lets check the descriptor.
+				// This ideally would just be a single 'equals' check, but some decompilers don't emit the same type
+				// as what is in the table. For instance consider: List<String> foo = new ArrayList<>()
+				//  - CFR emits: ArrayList<String> foo = new ArrayList<>()
+				//  - Procyon/Fernflower emit: List<String> foo = new ArrayList<>() as expected
+				if (!localVariable.getDescriptor().equals(descriptor)
+						&& !Types.isPrimitive(descriptor)
+						&& !Types.isArray(descriptor)) {
+					// Check if the type is a child of the expected type.
+					String mappingType = Type.getType(descriptor).getInternalName();
+					String varType = Type.getType(localVariable.getDescriptor()).getInternalName();
+					ClassEntry mappingEntry = getPool().getClass(mappingType);
+					ClassEntry varEntry = getPool().getClass(varType);
+					if (mappingEntry != null && varEntry != null && varEntry.isAssignableFrom(mappingEntry)) {
+						matchedVariable = localVariable;
+						break;
+					}
+					continue;
+				}
+
+				matchedVariable = localVariable;
+				break;
+			}
+		}
+
+		// Synthetic paths are still useful for type-aware context actions. Rename stays disabled for index < 0.
+		if (matchedVariable == null)
+			matchedVariable = new BasicLocalVariable(-1, name, descriptor, null);
+		return methodPath.childVariable(matchedVariable);
 	}
 
 	/**
@@ -338,6 +430,8 @@ public class ResolverAdapter extends BasicResolver {
 	private static String descriptorOf(@Nonnull Resolution resolution) {
 		if (resolution instanceof DescribableResolution describableResolution)
 			return describableResolution.getDescribableEntry().getDescriptor();
+		if (resolution instanceof VariableResolution variableResolution)
+			return variableResolution.getResolvedType().getDescriptor();
 		return null;
 	}
 }

@@ -7,9 +7,14 @@ import software.coley.recaf.services.mapping.Mappings;
 import software.coley.recaf.services.mapping.data.ClassMapping;
 import software.coley.recaf.services.mapping.data.FieldMapping;
 import software.coley.recaf.services.mapping.data.MethodMapping;
+import software.coley.recaf.services.mapping.data.VariableMapping;
 import software.coley.recaf.util.StringUtil;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import static software.coley.recaf.util.EscapeUtil.escapeStandardAndUnicodeWhitespace;
 import static software.coley.recaf.util.EscapeUtil.unescapeStandardAndUnicodeWhitespace;
@@ -24,6 +29,7 @@ import static software.coley.recaf.util.EscapeUtil.unescapeStandardAndUnicodeWhi
  *     <li>Support for {@code #comment} lines</li>
  *     <li>Support for unicode escape sequences ({@code \\uXXXX})</li>
  *     <li>Support for fields specified by their name <i>and descriptor</i></li>
+ *     <li>Support for local variables specified by their owner signature + name/type</li>
  * </ul>
  *
  * @author Matt Coley
@@ -50,40 +56,46 @@ public class SimpleMappings extends AbstractMappingFileFormat {
 		// BaseClass.baseField targetField
 		// BaseClass.baseField baseDesc targetField
 		// BaseClass.baseMethod(BaseMethodDesc) targetMethod
+		// BaseClass.baseMethod(BaseMethodDesc) oldVarDesc oldVarName newVarName
 		for (String line : lines) {
 			// Skip comments and empty lines
 			if (line.trim().startsWith("#") || line.trim().isEmpty())
 				continue;
-			String[] args = line.split(" ");
+			String[] args = line.trim().split(" +");
+			if (args.length < 2)
+				continue;
 			String oldBaseName = unescapeStandardAndUnicodeWhitespace(args[0]);
-			if (args.length >= 3) {
-				// Descriptor qualified field format
-				String desc = unescapeStandardAndUnicodeWhitespace(args[1]);
-				String targetName = unescapeStandardAndUnicodeWhitespace(args[2]);
-				int dot = oldBaseName.lastIndexOf('.');
+			String newName = unescapeStandardAndUnicodeWhitespace(args[args.length - 1]);
+			int dot = oldBaseName.lastIndexOf('.');
+			if (dot > 0) {
+				// Indicates a member
 				String oldClassName = oldBaseName.substring(0, dot);
-				String oldFieldName = oldBaseName.substring(dot + 1);
-				mappings.addField(oldClassName, desc, oldFieldName, targetName);
-			} else {
-				String newName = unescapeStandardAndUnicodeWhitespace(args[1]);
-				int dot = oldBaseName.lastIndexOf('.');
-				if (dot > 0) {
-					// Indicates a member
-					String oldClassName = oldBaseName.substring(0, dot);
-					String oldIdentifier = oldBaseName.substring(dot + 1);
-					int methodDescStart = oldIdentifier.lastIndexOf("(");
-					if (methodDescStart > 0) {
-						// Method descriptor part of ID, split it up
-						String methodName = oldIdentifier.substring(0, methodDescStart);
-						String methodDesc = oldIdentifier.substring(methodDescStart);
+				String oldIdentifier = oldBaseName.substring(dot + 1);
+				int methodDescStart = oldIdentifier.lastIndexOf("(");
+				if (methodDescStart > 0) {
+					// Method descriptor part of ID, split it up.
+					String methodName = oldIdentifier.substring(0, methodDescStart);
+					String methodDesc = oldIdentifier.substring(methodDescStart);
+					if (args.length >= 4) {
+						// Indicates a variable mapping
+						String variableDesc = unescapeStandardAndUnicodeWhitespace(args[1]);
+						String variableName = unescapeStandardAndUnicodeWhitespace(args[2]);
+						mappings.addVariable(oldClassName, methodName, methodDesc, variableDesc, variableName, -1, newName);
+					} else if (args.length == 2) {
 						mappings.addMethod(oldClassName, methodDesc, methodName, newName);
+					}
+				} else {
+					if (args.length >= 3) {
+						// Descriptor qualified field format
+						String desc = unescapeStandardAndUnicodeWhitespace(args[1]);
+						mappings.addField(oldClassName, desc, oldIdentifier, newName);
 					} else {
 						// Likely a field without linked descriptor
 						mappings.addField(oldClassName, null, oldIdentifier, newName);
 					}
-				} else {
-					mappings.addClass(oldBaseName, newName);
 				}
+			} else {
+				mappings.addClass(oldBaseName, newName);
 			}
 		}
 		return mappings;
@@ -125,7 +137,43 @@ public class SimpleMappings extends AbstractMappingFileFormat {
 						.append(methodDesc)
 						.append(' ').append(newMethodName).append("\n");
 			}
+			for (VariableMapping variableMapping : getClassVariableMappings(intermediate, oldClassName)) {
+				String oldVariableName = variableMapping.getOldName();
+				String variableDesc = variableMapping.getDesc();
+				if (oldVariableName == null || variableDesc == null)
+					continue;
+
+				String oldMethodName = escapeStandardAndUnicodeWhitespace(variableMapping.getMethodName());
+				String methodDesc = escapeStandardAndUnicodeWhitespace(variableMapping.getMethodDesc());
+				String escapedVariableDesc = escapeStandardAndUnicodeWhitespace(variableDesc);
+				String escapedOldVariableName = escapeStandardAndUnicodeWhitespace(oldVariableName);
+				String newVariableName = escapeStandardAndUnicodeWhitespace(variableMapping.getNewName());
+				// BaseClass.baseMethod(BaseMethodDesc) oldVarDesc oldVarName newVarName
+				sb.append(escapedOldClassName).append('.').append(oldMethodName)
+						.append(methodDesc)
+						.append(' ').append(escapedVariableDesc)
+						.append(' ').append(escapedOldVariableName)
+						.append(' ').append(newVariableName).append("\n");
+			}
 		}
-		return sb.toString();
+		return sb.toString().trim();
+	}
+
+	@Nonnull
+	private static List<VariableMapping> getClassVariableMappings(@Nonnull IntermediateMappings intermediate,
+	                                                              @Nonnull String oldClassName) {
+		List<VariableMapping> classVariables = new ArrayList<>();
+		for (List<VariableMapping> methodVariables : intermediate.getVariables().values()) {
+			for (VariableMapping variableMapping : methodVariables) {
+				if (oldClassName.equals(variableMapping.getOwnerName()))
+					classVariables.add(variableMapping);
+			}
+		}
+		classVariables.sort(Comparator.comparing(VariableMapping::getMethodName)
+				.thenComparing(VariableMapping::getMethodDesc)
+				.thenComparing(variable -> Objects.toString(variable.getDesc(), ""))
+				.thenComparing(variable -> Objects.toString(variable.getOldName(), ""))
+				.thenComparing(VariableMapping::getNewName));
+		return classVariables;
 	}
 }

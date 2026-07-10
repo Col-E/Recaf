@@ -41,6 +41,7 @@ import software.coley.recaf.info.annotation.AnnotationInfo;
 import software.coley.recaf.info.builder.JvmClassInfoBuilder;
 import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.info.member.FieldMember;
+import software.coley.recaf.info.member.LocalVariable;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.path.ClassMemberPathNode;
 import software.coley.recaf.path.ClassPathNode;
@@ -48,6 +49,7 @@ import software.coley.recaf.path.DirectoryPathNode;
 import software.coley.recaf.path.FilePathNode;
 import software.coley.recaf.path.IncompletePathException;
 import software.coley.recaf.path.LineNumberPathNode;
+import software.coley.recaf.path.LocalVariablePathNode;
 import software.coley.recaf.path.PathNode;
 import software.coley.recaf.path.PathNodes;
 import software.coley.recaf.services.Service;
@@ -271,6 +273,16 @@ public class Actions implements Service {
 				throw new IncompletePathException(ClassInfo.class);
 			ClassNavigable navigable = gotoDeclaration(parent);
 			navigable.requestFocus(classMemberPath.getValue());
+			return navigable;
+		} else if (path instanceof LocalVariablePathNode variablePath) {
+			ClassMemberPathNode parent = variablePath.getParent();
+			if (parent == null)
+				throw new IncompletePathException(ClassMember.class);
+			ClassPathNode classPath = parent.getParent();
+			if (classPath == null)
+				throw new IncompletePathException(ClassInfo.class);
+			ClassNavigable navigable = gotoDeclaration(classPath);
+			navigable.requestFocus(parent.getValue());
 			return navigable;
 		} else if (path instanceof LineNumberPathNode lineNumberPath) {
 			FilePathNode parent = lineNumberPath.getParent();
@@ -945,6 +957,8 @@ public class Actions implements Service {
 				Unchecked.run(() -> renameField(memberPathNode));
 			else
 				Unchecked.run(() -> renameMethod(memberPathNode));
+		else if (path instanceof LocalVariablePathNode variablePath)
+			Unchecked.run(() -> renameVariable(variablePath));
 		else if (path instanceof FilePathNode filePath)
 			Unchecked.run(() -> renameFile(filePath));
 		else if (path instanceof DirectoryPathNode directoryPath)
@@ -1153,6 +1167,89 @@ public class Actions implements Service {
 		new NamePopup(renameTask)
 				.withInitialName(originalName)
 				.forMethodRename(declaringClass, method)
+				.show();
+	}
+
+	/**
+	 * Prompts the user to rename the given local variable.
+	 *
+	 * @param path
+	 * 		Path to variable.
+	 *
+	 * @throws IncompletePathException
+	 * 		When the path is missing parent elements.
+	 */
+	public void renameVariable(@Nonnull LocalVariablePathNode path) throws IncompletePathException {
+		Workspace workspace = path.getValueOfType(Workspace.class);
+		WorkspaceResource resource = path.getValueOfType(WorkspaceResource.class);
+		ClassBundle<?> bundle = path.getValueOfType(ClassBundle.class);
+		ClassInfo declaringClass = path.getValueOfType(ClassInfo.class);
+		MethodMember declaringMethod = path.getValueOfType(MethodMember.class);
+		LocalVariable variable = path.getValue();
+		if (workspace == null) {
+			logger.error("Cannot resolve required path nodes for variable '{}', missing workspace in path", variable.getName());
+			throw new IncompletePathException(Workspace.class);
+		}
+		if (resource == null) {
+			logger.error("Cannot resolve required path nodes for variable '{}', missing resource in path", variable.getName());
+			throw new IncompletePathException(WorkspaceResource.class);
+		}
+		if (bundle == null) {
+			logger.error("Cannot resolve required path nodes for variable '{}', missing bundle in path", variable.getName());
+			throw new IncompletePathException(ClassBundle.class);
+		}
+		if (declaringClass == null) {
+			logger.error("Cannot resolve required path nodes for variable '{}', missing class in path", variable.getName());
+			throw new IncompletePathException(ClassInfo.class);
+		}
+		if (declaringMethod == null) {
+			logger.error("Cannot resolve required path nodes for variable '{}', missing method in path", variable.getName());
+			throw new IncompletePathException(MethodMember.class);
+		}
+		renameVariable(workspace, resource, bundle, declaringClass, declaringMethod, variable);
+	}
+
+	/**
+	 * Prompts the user to rename the given local variable.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param declaringClass
+	 * 		Class containing the method.
+	 * @param declaringMethod
+	 * 		Method containing the variable.
+	 * @param variable
+	 * 		Variable to rename.
+	 */
+	public void renameVariable(@Nonnull Workspace workspace,
+	                           @Nonnull WorkspaceResource resource,
+	                           @Nonnull ClassBundle<? extends ClassInfo> bundle,
+	                           @Nonnull ClassInfo declaringClass,
+	                           @Nonnull MethodMember declaringMethod,
+	                           @Nonnull LocalVariable variable) {
+		if (variable.getIndex() < 0) {
+			logger.warn("Cannot rename variable '{}' because its local variable table index is unknown", variable.getName());
+			return;
+		}
+
+		String originalName = variable.getName();
+		Consumer<String> renameTask = newName -> {
+			IntermediateMappings mappings = new IntermediateMappings();
+			mappings.addVariable(declaringClass.getName(), declaringMethod.getName(), declaringMethod.getDescriptor(),
+					variable.getDescriptor(), originalName, variable.getIndex(), newName);
+
+			// Apply the mappings.
+			MappingApplier applier = mappingApplierService.inWorkspace(workspace);
+			MappingResults results = applier.applyToPrimaryResource(mappings);
+			results.apply();
+		};
+		new NamePopup(renameTask)
+				.withInitialName(originalName)
+				.forVariableRename(declaringMethod, variable)
 				.show();
 	}
 

@@ -94,8 +94,14 @@ public class MappingsAdapter implements Mappings {
 				String newMethodName = methodMapping.getNewName();
 				if (!oldMethodName.equals(newMethodName))
 					addMethod(methodMapping.getOwnerName(), oldMethodName, oldMethodDesc, newMethodName);
-				for (VariableMapping variableMapping : mappings.getMethodVariableMappings(className, oldMethodName, oldMethodDesc)) {
-					addVariable(className, oldMethodName, oldMethodDesc,
+			}
+			for (var entry : mappings.getVariables().entrySet()) {
+				String key = entry.getKey();
+				if (!key.startsWith(className))
+					continue;
+				List<VariableMapping> variablesPerType = entry.getValue();
+				for (VariableMapping variableMapping : variablesPerType) {
+					addVariable(className, variableMapping.getMethodName(), variableMapping.getMethodDesc(),
 							variableMapping.getOldName(), variableMapping.getDesc(), variableMapping.getIndex(),
 							variableMapping.getNewName());
 				}
@@ -266,6 +272,9 @@ public class MappingsAdapter implements Mappings {
 				String oldName = fk.getName();
 				String oldDesc = fk.getDesc();
 				intermediate.addField(oldOwner, oldDesc, oldName, newName);
+			} else if (key instanceof VariableMappingKey vk) {
+				intermediate.addVariable(vk.getOwner(), vk.getMethodName(), vk.getMethodDesc(),
+						vk.getVariableDesc(), vk.getVariableName(), -1, newName);
 			}
 		}
 		return intermediate;

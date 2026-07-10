@@ -16,6 +16,7 @@ import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.path.ClassMemberPathNode;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.DirectoryPathNode;
+import software.coley.recaf.path.LocalVariablePathNode;
 import software.coley.recaf.path.PathNodes;
 import software.coley.recaf.services.mapping.IntermediateMappings;
 import software.coley.recaf.services.mapping.Mappings;
@@ -534,10 +535,10 @@ public class AstServiceTest extends TestBase {
 			// generic methods like 'T get(int)' to T return values. In this case, a String.
 			String source = """
 					package software.coley.recaf.test.dummy;
-
+					
 					import java.util.ArrayList;
 					import java.util.List;
-
+					
 					public class HelloWorld {
 						public static void main(String[] args) {
 							List<String> foo = new ArrayList<>();
@@ -560,9 +561,9 @@ public class AstServiceTest extends TestBase {
 			// Same idea but with 'T getFirst()'
 			String source = """
 					package software.coley.recaf.test.dummy;
-
+					
 					import java.util.List;
-
+					
 					public class HelloWorld {
 						public static void main(String[] args) {
 							List<String> foo = List.of("A");
@@ -585,10 +586,10 @@ public class AstServiceTest extends TestBase {
 			// Even if we use 'var' for a variable we should be able to infer its a String.
 			String source = """
 					package software.coley.recaf.test.dummy;
-
+					
 					import java.util.ArrayList;
 					import java.util.List;
-
+					
 					public class HelloWorld {
 						public static void main(String[] args) {
 							List<String> foo = new ArrayList<>();
@@ -612,7 +613,7 @@ public class AstServiceTest extends TestBase {
 			// We should still be able to resolve the inherited get(int) method to return String.
 			String source = """
 					package software.coley.recaf.test.dummy;
-
+					
 					public class HelloWorld {
 						public static void main(String[] args) {
 							StringList list = StringList.of("foo");
@@ -636,7 +637,7 @@ public class AstServiceTest extends TestBase {
 			// If the field isn't generic and has no signature we should still be able to resolve it.
 			String source = """
 					package software.coley.recaf.test.dummy;
-
+					
 					public class HelloWorld {
 						public static void main(String[] args) {
 							AccessibleFields fields = new AccessibleFields();
@@ -650,6 +651,55 @@ public class AstServiceTest extends TestBase {
 				Resolution resolution = resolver.resolveAt(position, null);
 				FieldResolution fieldResolution = assertInstanceOf(FieldResolution.class, resolution);
 				assertEquals("I", fieldResolution.getResolvedFieldType().getDescriptor());
+			});
+		}
+
+		@Test
+		void testVariableResolutionAdaptsToLocalVariablePath() {
+			String source = """
+					package software.coley.recaf.test.dummy;
+					
+					public class VariableHost {
+						public void use(String input) {
+							String foo = input;
+							System.out.println(foo);
+						}
+					}
+					""";
+			handleUnit(source, unit -> {
+				ResolverAdapter resolver = service.newJavaResolver(unit);
+
+				// The 'input' name should resolve to a parameter variable with index 1.
+				//  - Method is non-static, so index 0 is 'this'.
+				//  - Type is 'String'
+				int parameterPosition = source.indexOf("input)") + 1;
+				AstResolveResult parameterResult = resolver.resolveThenAdapt(parameterPosition);
+				assertNotNull(parameterResult);
+				assertTrue(parameterResult.isDeclaration());
+				LocalVariablePathNode parameterPath = assertInstanceOf(LocalVariablePathNode.class, parameterResult.path());
+				assertEquals("input", parameterPath.getValue().getName());
+				assertEquals("Ljava/lang/String;", parameterPath.getValue().getDescriptor());
+				assertEquals(1, parameterPath.getValue().getIndex());
+
+				// The 'foo' name should resolve to a local variable with index 2.
+				//  - Next slot after the parameter variable, information is pulled from the local variable table.
+				int localPosition = source.indexOf("foo =") + 1;
+				AstResolveResult localResult = resolver.resolveThenAdapt(localPosition);
+				assertNotNull(localResult);
+				assertTrue(localResult.isDeclaration());
+				LocalVariablePathNode localPath = assertInstanceOf(LocalVariablePathNode.class, localResult.path());
+				assertEquals("foo", localPath.getValue().getName());
+				assertEquals("Ljava/lang/String;", localPath.getValue().getDescriptor());
+				assertEquals(2, localPath.getValue().getIndex());
+
+				// Reference to the 'foo' variable should resolve to the same local variable with index 2.
+				int localReferencePosition = source.lastIndexOf("foo") + 1;
+				AstResolveResult localReferenceResult = resolver.resolveThenAdapt(localReferencePosition);
+				assertNotNull(localReferenceResult);
+				assertFalse(localReferenceResult.isDeclaration());
+				LocalVariablePathNode localReferencePath = assertInstanceOf(LocalVariablePathNode.class, localReferenceResult.path());
+				assertEquals("foo", localReferencePath.getValue().getName());
+				assertEquals(2, localReferencePath.getValue().getIndex());
 			});
 		}
 
@@ -1129,6 +1179,30 @@ public class AstServiceTest extends TestBase {
 			});
 		}
 
+		@Test
+		void renameVariable_LocalAndReferences() {
+			String source = """
+					package software.coley.recaf.test.dummy;
+					
+					public class VariableHost {
+						public void use(String input) {
+							String foo = input;
+							System.out.println(foo);
+						}
+					}
+					""";
+			handleUnit(source, unit -> {
+				ResolverAdapter resolver = service.newJavaResolver(unit);
+				IntermediateMappings mappings = new IntermediateMappings();
+				mappings.addVariable("software/coley/recaf/test/dummy/VariableHost", "use", "(Ljava/lang/String;)V",
+						"Ljava/lang/String;", "foo", 2, "renamed");
+
+				String modified = service.applyMappings(unit, resolver, mappings);
+				assertTrue(modified.contains("String renamed = input;"));
+				assertTrue(modified.contains("System.out.println(renamed);"));
+			});
+		}
+
 		@Nonnull
 		private String applyMappings(@Nonnull CompilationUnitModel unit, @Nonnull Mappings mappings) {
 			return service.applyMappings(unit, service.newJavaResolver(unit), mappings);
@@ -1329,7 +1403,6 @@ public class AstServiceTest extends TestBase {
 		}
 	}
 
-	@SuppressWarnings("LanguageMismatch")
 	private static void handleUnit(@Nonnull String source, @Nullable Consumer<CompilationUnitModel> consumer) {
 		if (consumer != null)
 			consumer.accept(parser.parse(source));

@@ -126,6 +126,9 @@ public class IntermediateMappings implements Mappings {
 		set.addAll(classes.keySet());
 		set.addAll(fields.keySet());
 		set.addAll(methods.keySet());
+		for (List<VariableMapping> variablesInMethod : variables.values())
+			for (VariableMapping variable : variablesInMethod)
+				set.add(variable.getOwnerName());
 		return set;
 	}
 

@@ -34,6 +34,7 @@ menu.file.recent=Recent
 menu.file.close=Close
 menu.file.quit=Quit
 menu.goto.class=Go to class
+menu.goto.type.class=Go to type class
 menu.goto.field=Go to field
 menu.goto.method=Go to method
 menu.goto.instruction=Go to instruction
@@ -332,6 +333,7 @@ dialog.title.rename-file=Rename file
 dialog.title.rename-file-warning=Warning
 dialog.title.rename-method=Rename method
 dialog.title.rename-package=Rename package
+dialog.title.rename-variable=Rename variable
 dialog.header.rename-class=Provide a new name for the class.
 dialog.header.rename-class-error=The class name already exists.\nPlease choose a different name.
 dialog.header.rename-package=Provide a new name for the package.
@@ -346,6 +348,8 @@ dialog.header.rename-file=Provide a new name for the file.
 dialog.header.rename-file-error=The file name already exists.\nPlease choose a different name.
 dialog.header.rename-method=Provide a new name for the method.
 dialog.header.rename-method-error=The method name already exists.\nPlease choose a different name.
+dialog.header.rename-variable=Provide a new name for the variable.
+dialog.header.rename-variable-error=The variable name already exists in the method.\nPlease choose a different name.
 
 ## Move class/file
 dialog.title.move-class=Select a destination package

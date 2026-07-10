@@ -36,6 +36,41 @@ public class VariableMappingKey extends AbstractMappingKey {
 		this.variableDesc = variableDesc;
 	}
 
+	/**
+	 * @return Class owner.
+	 */
+	public String getOwner() {
+		return owner;
+	}
+
+	/**
+	 * @return Method name.
+	 */
+	public String getMethodName() {
+		return methodName;
+	}
+
+	/**
+	 * @return Method descriptor.
+	 */
+	public String getMethodDesc() {
+		return methodDesc;
+	}
+
+	/**
+	 * @return Variable name.
+	 */
+	public String getVariableName() {
+		return variableName;
+	}
+
+	/**
+	 * @return Variable descriptor.
+	 */
+	public String getVariableDesc() {
+		return variableDesc;
+	}
+
 	@Nonnull
 	@Override
 	protected String toText() {
