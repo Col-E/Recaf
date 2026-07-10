@@ -8,7 +8,9 @@ import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.Named;
 import software.coley.recaf.info.annotation.AnnotationInfo;
 import software.coley.recaf.info.member.ClassMember;
+import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.LocalVariable;
+import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.info.properties.builtin.MemberIndexAcceleratorProperty;
 
 import java.util.List;
@@ -62,6 +64,34 @@ public class ClassMemberPathNode extends AbstractPathNode<ClassInfo, ClassMember
 	 */
 	public boolean isMethod() {
 		return getValue().isMethod();
+	}
+
+	/**
+	 * @return {@link FieldMember} value.
+	 *
+	 * @throws IllegalStateException
+	 * 		When the {@link #getValue()} is not a field.
+	 */
+	@Nonnull
+	public FieldMember getValueAsField() {
+		ClassMember member = getValue();
+		if (member instanceof FieldMember field)
+			return field;
+		throw new IllegalStateException("Member is not a field");
+	}
+
+	/**
+	 * @return {@link MethodMember} value.
+	 *
+	 * @throws IllegalStateException
+	 * 		When the {@link #getValue()} is not a method.
+	 */
+	@Nonnull
+	public MethodMember getValueAsMethod() {
+		ClassMember member = getValue();
+		if (member instanceof MethodMember method)
+			return method;
+		throw new IllegalStateException("Member is not a method");
 	}
 
 	/**
