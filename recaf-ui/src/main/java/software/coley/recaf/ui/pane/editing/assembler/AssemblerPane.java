@@ -51,6 +51,7 @@ import software.coley.recaf.ui.control.richtext.syntax.RegexSyntaxHighlighter;
 import software.coley.recaf.ui.pane.editing.AbstractContentPane;
 import software.coley.recaf.ui.pane.editing.SideTabsInjector;
 import software.coley.recaf.ui.pane.editing.tabs.FieldsAndMethodsPane;
+import software.coley.recaf.ui.pane.editing.text.TextConfig;
 import software.coley.recaf.util.Animations;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.threading.ThreadUtil;
@@ -98,8 +99,9 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 	                     @Nonnull SideTabsInjector sideTabsInjector,
 	                     @Nonnull WorkspaceManager workspaceManager,
 	                     @Nonnull InheritanceGraphService graphService,
-						 @Nonnull CellConfigurationService cellConfigurationService,
-	                     @Nonnull TabCompletionConfig tabCompletionConfig) {
+	                     @Nonnull CellConfigurationService cellConfigurationService,
+	                     @Nonnull TabCompletionConfig tabCompletionConfig,
+	                     @Nonnull TextConfig textConfig) {
 		super(Side.BOTTOM);
 
 		this.pipelineManager = pipelineManager;
@@ -116,8 +118,8 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 			editor.setTabCompleter(tabCompleter);
 		}
 		editor.getCodeArea().getStylesheets().add(LanguageStylesheets.getJasmStylesheet());
-		editor.setSelectedWordHighlighting(new SelectedWordHighlighting());
-		editor.setSelectedBracketTracking(new SelectedBracketTracking());
+		if (textConfig.doHighlightWord()) editor.setSelectedWordHighlighting(new SelectedWordHighlighting());
+		if (textConfig.doTrackBrackets()) editor.setSelectedBracketTracking(new SelectedBracketTracking());
 		editor.setSyntaxHighlighter(new RegexSyntaxHighlighter(RegexLanguages.getJasmLanguage()));
 		editor.setProblemTracking(problemTracking);
 		editor.getRootLineGraphicFactory().addDefaultCodeGraphicFactories();

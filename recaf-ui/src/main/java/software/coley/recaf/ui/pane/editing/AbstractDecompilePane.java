@@ -53,6 +53,7 @@ import software.coley.recaf.ui.control.richtext.source.JavaContextActionSupport;
 import software.coley.recaf.ui.pane.editing.android.AndroidDecompilerPane;
 import software.coley.recaf.ui.pane.editing.jvm.DecompilerPaneConfig;
 import software.coley.recaf.ui.pane.editing.jvm.JvmDecompilerPane;
+import software.coley.recaf.ui.pane.editing.text.TextConfig;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.StringDiff;
@@ -101,7 +102,8 @@ public class AbstractDecompilePane extends BorderPane implements ClassNavigable,
 	                                @Nonnull FileTypeSyntaxAssociationService languageAssociation,
 	                                @Nonnull DecompilerManager decompilerManager,
 	                                @Nonnull JavaTypeIndexService javaTypeIndexService,
-	                                @Nonnull TabCompletionConfig tabCompletionConfig) {
+	                                @Nonnull TabCompletionConfig tabCompletionConfig,
+	                                @Nonnull TextConfig textConfig) {
 		this.astService = astService;
 		this.contextActionSupport = contextActionSupport;
 		this.decompilerManager = decompilerManager;
@@ -114,8 +116,8 @@ public class AbstractDecompilePane extends BorderPane implements ClassNavigable,
 		// Configure the editor
 		editor = new Editor();
 		languageAssociation.configureEditorSyntax("java", editor);
-		editor.setSelectedWordHighlighting(new SelectedWordHighlighting());
-		editor.setSelectedBracketTracking(new SelectedBracketTracking());
+		if (textConfig.doHighlightWord()) editor.setSelectedWordHighlighting(new SelectedWordHighlighting());
+		if (textConfig.doTrackBrackets()) editor.setSelectedBracketTracking(new SelectedBracketTracking());
 		editor.setProblemTracking(problemTracking);
 		editor.getRootLineGraphicFactory().addDefaultCodeGraphicFactories();
 		contextActionSupport.install(editor);

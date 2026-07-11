@@ -43,13 +43,14 @@ public class TextPane extends BorderPane implements FileNavigable, UpdatableNavi
 	@Inject
 	public TextPane(@Nonnull FileTypeSyntaxAssociationService languageAssociation,
 	                @Nonnull KeybindingConfig keys,
-	                @Nonnull SearchBar searchBar) {
+	                @Nonnull SearchBar searchBar,
+	                @Nonnull TextConfig textConfig) {
 		this.languageAssociation = languageAssociation;
 
 		// Configure the editor
 		editor = new Editor();
-		editor.setSelectedWordHighlighting(new SelectedWordHighlighting());
-		editor.setSelectedBracketTracking(new SelectedBracketTracking());
+		if (textConfig.doHighlightWord()) editor.setSelectedWordHighlighting(new SelectedWordHighlighting());
+		if (textConfig.doTrackBrackets()) editor.setSelectedBracketTracking(new SelectedBracketTracking());
 		editor.getRootLineGraphicFactory().addLineGraphicFactory(new BracketMatchGraphicFactory());
 		searchBar.install(editor);
 

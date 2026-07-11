@@ -25,6 +25,7 @@ import software.coley.recaf.ui.control.richtext.source.JavaContextActionSupport;
 import software.coley.recaf.ui.pane.editing.AbstractDecompilePane;
 import software.coley.recaf.ui.pane.editing.ToolsContainerComponent;
 import software.coley.recaf.ui.pane.editing.jvm.DecompilerPaneConfig;
+import software.coley.recaf.ui.pane.editing.text.TextConfig;
 
 /**
  * Displays an {@link AndroidClassInfo} via a configured {@link Editor} as decompiled by {@link DecompilerManager}.
@@ -49,9 +50,10 @@ public class AndroidDecompilerPane extends AbstractDecompilePane {
 	                             @Nonnull DecompilerManager decompilerManager,
 	                             @Nonnull JavaTypeIndexService javaTypeIndexService,
 	                             @Nonnull TabCompletionConfig tabCompletionConfig,
+								 @Nonnull TextConfig textConfig,
 	                             @Nonnull Actions actions) {
 		super(decompilerConfig, tutorialConfig, searchBar, astService, contextActionSupport, navigationHistoryService, cellConfigurationService,
-				languageAssociation, decompilerManager, javaTypeIndexService, tabCompletionConfig);
+				languageAssociation, decompilerManager, javaTypeIndexService, tabCompletionConfig, textConfig);
 
 		// Install tools container with configurator
 		new AndroidDecompilerPaneConfigurator(toolsContainer, decompilerConfig, decompiler, decompilerManager);

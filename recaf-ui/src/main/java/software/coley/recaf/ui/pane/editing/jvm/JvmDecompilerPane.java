@@ -54,6 +54,7 @@ import software.coley.recaf.ui.control.richtext.suggest.java.typeindex.JavaTypeI
 import software.coley.recaf.ui.control.richtext.source.JavaContextActionSupport;
 import software.coley.recaf.ui.pane.editing.AbstractDecompilePane;
 import software.coley.recaf.ui.pane.editing.ToolsContainerComponent;
+import software.coley.recaf.ui.pane.editing.text.TextConfig;
 import software.coley.recaf.util.Animations;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.JavaVersion;
@@ -106,9 +107,10 @@ public class JvmDecompilerPane extends AbstractDecompilePane {
 	                         @Nonnull JavacCompiler javac,
 	                         @Nonnull JavacCompilerConfig javacConfig,
 	                         @Nonnull TabCompletionConfig tabCompletionConfig,
+							 @Nonnull TextConfig textConfig,
 	                         @Nonnull Actions actions) {
 		super(decompileConfig, tutorialConfig, searchBar, astService, contextActionSupport, navigationHistoryService, cellConfigurationService,
-				languageAssociation, decompilerManager, javaTypeIndexService, tabCompletionConfig);
+				languageAssociation, decompilerManager, javaTypeIndexService, tabCompletionConfig, textConfig);
 		this.javacDebug = new ObservableBoolean(javacConfig.getDefaultEmitDebug().getValue());
 		this.javacTarget = new ObservableInteger(javacConfig.getDefaultTargetVersion().getValue());
 		this.javacDownsampleTarget = new ObservableInteger(javacConfig.getDefaultDownsampleTargetVersion().getValue());
