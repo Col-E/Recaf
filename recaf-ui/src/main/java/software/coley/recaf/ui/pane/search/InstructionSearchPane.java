@@ -99,7 +99,11 @@ public class InstructionSearchPane extends AbstractSearchPane {
 					if (line.uuid() == TOP_UID) {
 						input.addRow(input.getRowCount(), textField, modeCombo);
 					} else {
+						// Add a delete button for all lines except the first one, which is always present.
+						// These aren't focus traversable since clicking will request focus, then upon removal
+						// the focus jumps to the next input field which may be in an unrelated docking tab.
 						ActionButton delete = new ActionButton(CarbonIcons.TRASH_CAN, () -> lines.remove(line));
+						delete.setFocusTraversable(false);
 						delete.setId("delete-" + line.uuid());
 						input.addRow(input.getRowCount(), textField, modeCombo, delete);
 					}
