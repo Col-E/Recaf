@@ -3,7 +3,10 @@ package software.coley.recaf.ui.control.richtext.highlight;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import javafx.beans.value.ChangeListener;
+import javafx.event.EventHandler;
 import javafx.scene.control.IndexRange;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.model.PlainTextChange;
 import org.fxmisc.richtext.model.StyleSpan;
@@ -46,6 +49,9 @@ public class SelectedWordHighlighting implements EditorComponent {
 	private EventStream<List<PlainTextChange>> textChangeEventStream;
 	private Consumer<List<PlainTextChange>> textChangeObserver;
 	private ChangeListener<IndexRange> selectionListener;
+	private EventHandler<MouseEvent> mousePressedHandler;
+	private EventHandler<MouseEvent> mouseReleasedHandler;
+	private boolean mouseSelectionInProgress;
 
 	/**
 	 * New highlighter with default match limits.
@@ -90,6 +96,19 @@ public class SelectedWordHighlighting implements EditorComponent {
 		caretPosEventStream.addObserver(caretPosObserver);
 		selectionListener = (ob, old, cur) -> refreshSelectedWordHighlights();
 		codeArea.selectionProperty().addListener(selectionListener);
+		// Restyling while RichTextFX is processing a mouse selection can reset the drag anchor.
+		mousePressedHandler = event -> {
+			if (event.getButton() == MouseButton.PRIMARY)
+				mouseSelectionInProgress = true;
+		};
+		mouseReleasedHandler = event -> {
+			if (event.getButton() == MouseButton.PRIMARY) {
+				mouseSelectionInProgress = false;
+				refreshSelectedWordHighlights();
+			}
+		};
+		codeArea.addEventFilter(MouseEvent.MOUSE_PRESSED, mousePressedHandler);
+		codeArea.addEventHandler(MouseEvent.MOUSE_RELEASED, mouseReleasedHandler);
 		textChangeObserver = this::updateSelectedWordHighlights;
 		textChangeEventStream = editor.getTextChangeEventStream()
 				.reduceSuccessions(Collections::singletonList, Lists::add, Duration.ofMillis(Editor.SHORT_DELAY_MS));
@@ -117,11 +136,18 @@ public class SelectedWordHighlighting implements EditorComponent {
 			textChangeEventStream.removeObserver(textChangeObserver);
 		if (codeArea != null && selectionListener != null)
 			codeArea.selectionProperty().removeListener(selectionListener);
+		if (codeArea != null && mousePressedHandler != null)
+			codeArea.removeEventFilter(MouseEvent.MOUSE_PRESSED, mousePressedHandler);
+		if (codeArea != null && mouseReleasedHandler != null)
+			codeArea.removeEventHandler(MouseEvent.MOUSE_RELEASED, mouseReleasedHandler);
 		caretPosEventStream = null;
 		caretPosObserver = null;
 		textChangeEventStream = null;
 		textChangeObserver = null;
 		selectionListener = null;
+		mousePressedHandler = null;
+		mouseReleasedHandler = null;
+		mouseSelectionInProgress = false;
 
 		// Clear out references to the editor.
 		codeArea = null;
@@ -296,7 +322,7 @@ public class SelectedWordHighlighting implements EditorComponent {
 	 * Restyle any affected ranges due to a change in the selected word or caret position.
 	 */
 	private void refreshSelectedWordHighlights() {
-		if (editor == null || codeArea == null)
+		if (editor == null || codeArea == null || mouseSelectionInProgress)
 			return;
 
 		List<IntRange> affectedRanges = refreshAndGetAffectedRanges(editor.getText(), codeArea.getSelectedText(), codeArea.getCaretPosition());
@@ -310,7 +336,7 @@ public class SelectedWordHighlighting implements EditorComponent {
 	 * 		Text changes that may have affected the selected word matches.
 	 */
 	private void updateSelectedWordHighlights(@Nonnull List<PlainTextChange> changes) {
-		if (editor == null || codeArea == null)
+		if (editor == null || codeArea == null || mouseSelectionInProgress)
 			return;
 
 		List<IntRange> affectedRanges = updateMatchesAndGetAffectedRanges(editor.getText(), codeArea.getSelectedText(), codeArea.getCaretPosition());
