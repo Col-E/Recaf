@@ -67,6 +67,7 @@ import software.coley.sourcesolver.model.CompilationUnitModel;
 import software.coley.sourcesolver.model.ImportModel;
 import software.coley.sourcesolver.model.MethodBodyModel;
 import software.coley.sourcesolver.model.MethodModel;
+import software.coley.sourcesolver.model.Model;
 import software.coley.sourcesolver.model.NamedModel;
 import software.coley.sourcesolver.model.VariableModel;
 import software.coley.sourcesolver.resolve.result.DescribableResolution;
@@ -512,7 +513,7 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 			List<ClassModel> classModels = localUnit.getRecursiveChildrenOfType(ClassModel.class);
 			for (ClassModel classModel : classModels) {
 				// Resolve what class each model represents.
-				PathNode<?> classPath = getResolvedPath(localResolver, classModel.getRange().begin());
+				PathNode<?> classPath = getResolvedPath(localResolver, classModel);
 				if (classPath == null)
 					continue;
 				ClassPathNode resolvedClassPath = classPath.getPathOfType(ClassInfo.class);
@@ -541,9 +542,7 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 					int line = 1 + editor.getCodeArea().offsetToPosition(methodLinePos, TwoDimensional.Bias.Forward).getMajor();
 
 					// Resolve what method each model represents.
-					// - Underlying model is funky and resolving the modifier position is the best programmatic way to resolve the method.
-					//   The method model's start position likely has an annotation or javadoc there that throws off resolution.
-					ClassMemberPathNode resolvedMethodPath = getMemberPath(localResolver, methodResolvePos);
+					ClassMemberPathNode resolvedMethodPath = getMemberPath(localResolver, methodModel);
 					if (resolvedMethodPath == null)
 						continue;
 					ClassMember resolvedMethod = resolvedMethodPath.getValue();
@@ -800,12 +799,7 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 		for (MethodModel methodModel : classModel.getMethods()) {
 			if (!methodModel.getRange().isWithin(astPos))
 				continue;
-
-			// Try and resolve the member declaration by checking the modifier range first, then the method range.
-			ClassMemberPathNode path = getMemberPath(resolver, methodModel.getModifiers().getRange().end());
-			if (path != null)
-				return path;
-			path = getMemberPath(resolver, methodModel.getRange().begin());
+			ClassMemberPathNode path = getMemberPath(resolver, methodModel);
 			if (path != null)
 				return path;
 		}
@@ -814,12 +808,7 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 		for (VariableModel fieldModel : classModel.getFields()) {
 			if (!fieldModel.getRange().isWithin(astPos))
 				continue;
-
-			// Same idea as before.
-			ClassMemberPathNode path = getMemberPath(resolver, fieldModel.getRange().begin());
-			if (path != null)
-				return path;
-			path = getMemberPath(resolver, fieldModel.getRange().end());
+			ClassMemberPathNode path = getMemberPath(resolver, fieldModel);
 			if (path != null)
 				return path;
 		}
@@ -830,6 +819,22 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 	@Nullable
 	private static ClassMemberPathNode getMemberPath(@Nonnull ResolverAdapter resolver, int astPos) {
 		PathNode<?> path = getResolvedPath(resolver, astPos);
+		if (path == null)
+			return null;
+		return path.getPathOfType(ClassMember.class);
+	}
+
+	@Nullable
+	private static ClassMemberPathNode getMemberPath(@Nonnull ResolverAdapter resolver, @Nonnull MethodModel method) {
+		PathNode<?> path = getResolvedPath(resolver, method);
+		if (path == null)
+			return null;
+		return path.getPathOfType(ClassMember.class);
+	}
+
+	@Nullable
+	private static ClassMemberPathNode getMemberPath(@Nonnull ResolverAdapter resolver, @Nonnull VariableModel field) {
+		PathNode<?> path = getResolvedPath(resolver, field);
 		if (path == null)
 			return null;
 		return path.getPathOfType(ClassMember.class);
@@ -848,6 +853,14 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 			return fallbackPath;
 
 		return classPath;
+	}
+
+	@Nullable
+	private static PathNode<?> getResolvedPath(@Nonnull ResolverAdapter resolver, @Nonnull Model model) {
+		AstResolveResult result = resolver.adapt(model.resolve(resolver), model);
+		if (result == null)
+			return null;
+		return result.path();
 	}
 
 	@Nullable
