@@ -295,7 +295,10 @@ public class Editor extends BorderPane implements Closing {
 		int firstVisibleIndex = virtualFlow.getFirstVisibleIndex();
 		if (selectedWordHighlighting != null) // Inject selected-word highlighting into the style spans.
 			spans = selectedWordHighlighting.apply(from, spans);
-		codeArea.setStyleSpans(from, spans);
+
+		// Syntax and selection highlighting are visual changes and should not be undoable text edits.
+		StyleSpans<Collection<String>> finalSpans = spans;
+		codeArea.runWithoutUndo(() -> codeArea.setStyleSpans(from, finalSpans));
 
 		// We want to use the CodeArea variants of scrolling rather than the virtual-flow for event order reasons.
 		// Without the suspension handling of these variants some of the restores may not take effect.

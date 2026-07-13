@@ -1,5 +1,6 @@
 package software.coley.recaf.ui.control.richtext;
 
+import jakarta.annotation.Nonnull;
 import org.fxmisc.richtext.CharacterHit;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.util.UndoUtils;
@@ -17,6 +18,16 @@ public class SafeCodeArea extends CodeArea {
 	public SafeCodeArea() {
 		// Suspendable undo manager to keep fold/unfold out of the history
 		setUndoManager(UndoUtils.richTextSuspendableUndoManager(this, undoAvailability));
+	}
+
+	/**
+	 * Runs an operation without recording any changes it makes in the undo history.
+	 *
+	 * @param operation
+	 * 		Operation to run.
+	 */
+	public void runWithoutUndo(@Nonnull Runnable operation) {
+		undoAvailability.suspendWhile(operation);
 	}
 
 	/**
