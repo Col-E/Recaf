@@ -89,12 +89,15 @@ public class SelectedWordHighlighting implements EditorComponent {
 
 		// Register listeners to update highlights when the caret position or selection changes.
 		caretPosObserver = change -> {
-			if (codeArea.getSelection().getLength() == 0)
+			if (!editor.isTyping() && codeArea.getSelection().getLength() == 0)
 				refreshSelectedWordHighlights();
 		};
 		caretPosEventStream = editor.getCaretPosEventStream();
 		caretPosEventStream.addObserver(caretPosObserver);
-		selectionListener = (ob, old, cur) -> refreshSelectedWordHighlights();
+		selectionListener = (ob, old, cur) -> {
+			if (!editor.isTyping())
+				refreshSelectedWordHighlights();
+		};
 		codeArea.selectionProperty().addListener(selectionListener);
 		// Restyling while RichTextFX is processing a mouse selection can reset the drag anchor.
 		mousePressedHandler = event -> {
@@ -111,7 +114,7 @@ public class SelectedWordHighlighting implements EditorComponent {
 		codeArea.addEventHandler(MouseEvent.MOUSE_RELEASED, mouseReleasedHandler);
 		textChangeObserver = this::updateSelectedWordHighlights;
 		textChangeEventStream = editor.getTextChangeEventStream()
-				.reduceSuccessions(Collections::singletonList, Lists::add, Duration.ofMillis(Editor.SHORT_DELAY_MS));
+				.reduceSuccessions(Collections::singletonList, Lists::add, Duration.ofMillis(Editor.MEDIUM_DELAY_MS));
 		textChangeEventStream.addObserver(textChangeObserver);
 
 		// Do an initial refresh to highlight any pre-existing selected word.
@@ -322,7 +325,7 @@ public class SelectedWordHighlighting implements EditorComponent {
 	 * Restyle any affected ranges due to a change in the selected word or caret position.
 	 */
 	private void refreshSelectedWordHighlights() {
-		if (editor == null || codeArea == null || mouseSelectionInProgress)
+		if (editor == null || codeArea == null || editor.isTyping() || mouseSelectionInProgress)
 			return;
 
 		List<IntRange> affectedRanges = refreshAndGetAffectedRanges(editor.getText(), codeArea.getSelectedText(), codeArea.getCaretPosition());

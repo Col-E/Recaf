@@ -96,6 +96,7 @@ public class Editor extends BorderPane implements Closing {
 	private ReadOnlyStyledDocument<Collection<String>, String, Collection<String>> lastDocumentSnapshot;
 	private ScrollReset lastScrollReset = null;
 	private CaretReset lastCaretReset = null;
+	private boolean typing;
 	private SelectedWordHighlighting selectedWordHighlighting;
 	private TabCompleter<?> tabCompleter;
 	private SyntaxHighlighter syntaxHighlighter;
@@ -149,6 +150,7 @@ public class Editor extends BorderPane implements Closing {
 
 		// Register a text change listener for updating caret/scroll positions after text updates.
 		codeArea.plainTextChanges().addObserver(change -> {
+			typing = true;
 			if (lastCaretReset != null) {
 				lastCaretReset.changed(change);
 				lastCaretReset = null;
@@ -200,6 +202,11 @@ public class Editor extends BorderPane implements Closing {
 						logger.error("Uncaught error on editor reduced-succession update", t);
 					}
 				});
+
+		// Register a text change listener that operates on further reduces calls for typing indication.
+		codeArea.plainTextChanges()
+				.reduceSuccessions(Collections::singletonList, Lists::add, Duration.ofMillis(MEDIUM_DELAY_MS))
+				.addObserver(changes -> typing = false);
 
 		// Create event-streams for various events.
 		caretPosEventStream = EventStreams.changesOf(codeArea.caretPositionProperty());
@@ -472,6 +479,23 @@ public class Editor extends BorderPane implements Closing {
 	@Nonnull
 	public EventStream<PlainTextChange> getTextChangeEventStream() {
 		return codeArea.plainTextChanges();
+	}
+
+	/**
+	 * Typing is indicated by recent plain text changes within a duration of {@link #MEDIUM_DELAY_MS}:
+	 * <pre>{@code
+	 * codeArea.plainTextChanges()
+	 *     .addObserver(change -> typing = true);
+	 * // After ~400ms of no typing, reset the typing state.
+	 * codeArea.plainTextChanges()
+	 *     .reduceSuccessions(List::of, Lists::add, ofMillis(MEDIUM_DELAY_MS))
+	 *     .addObserver(changes -> typing = false);
+	 * }</pre>
+	 *
+	 * @return {@code true} while typing.
+	 */
+	public boolean isTyping() {
+		return typing;
 	}
 
 	/**
