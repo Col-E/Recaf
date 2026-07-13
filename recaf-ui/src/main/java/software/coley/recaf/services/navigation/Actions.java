@@ -2295,34 +2295,6 @@ public class Actions implements Service {
 	}
 
 	/**
-	 * Makes the given methods no-op.
-	 *
-	 * @param workspace
-	 * 		Containing workspace.
-	 * @param resource
-	 * 		Containing resource.
-	 * @param bundle
-	 * 		Containing bundle.
-	 * @param declaringClass
-	 * 		Class declaring the methods.
-	 * @param methods
-	 * 		Methods to noop.
-	 */
-	public void makeMethodsNoop(@Nonnull Workspace workspace,
-	                            @Nonnull WorkspaceResource resource,
-	                            @Nonnull JvmClassBundle bundle,
-	                            @Nonnull JvmClassInfo declaringClass,
-	                            @Nonnull Collection<MethodMember> methods) {
-		ClassReader reader = declaringClass.getClassReader();
-		ClassWriter writer = new ClassWriter(reader, 0);
-		MethodNoopingVisitor visitor = new MethodNoopingVisitor(writer, MethodPredicate.of(methods));
-		reader.accept(visitor, declaringClass.getClassReaderFlags());
-		bundle.put(declaringClass.toJvmClassBuilder()
-				.adaptFrom(writer.toByteArray())
-				.build());
-	}
-
-	/**
 	 * Removes variable debug info in the given methods.
 	 *
 	 * @param workspace
