@@ -5,8 +5,10 @@ import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
+import javafx.beans.property.DoubleProperty;
 import javafx.geometry.Dimension2D;
 import javafx.geometry.Rectangle2D;
+import javafx.scene.Scene;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
@@ -14,6 +16,8 @@ import org.slf4j.Logger;
 import software.coley.collections.observable.ObservableList;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.Service;
+import software.coley.recaf.ui.config.WindowScaleConfig;
+import software.coley.recaf.ui.pane.ScalePane;
 import software.coley.recaf.ui.window.IdentifiableStage;
 import software.coley.recaf.util.NodeEvents;
 
@@ -48,6 +52,7 @@ public class WindowManager implements Service {
 	// Manager instance data
 	private final WindowStyling windowStyling;
 	private final WindowManagerConfig config;
+	private final WindowScaleConfig scaleConfig;
 	private final ObservableList<Stage> activeWindows = new ObservableList<>();
 	private final Map<String, Stage> windowMappings = new HashMap<>();
 	private final Map<Stage, Screen> lastStageScreen = new IdentityHashMap<>();
@@ -55,9 +60,10 @@ public class WindowManager implements Service {
 
 	@Inject
 	public WindowManager(@Nonnull WindowStyling windowStyling, @Nonnull WindowManagerConfig config,
-	                     @Nonnull Instance<IdentifiableStage> stages) {
+	                     @Nonnull WindowScaleConfig scaleConfig, @Nonnull Instance<IdentifiableStage> stages) {
 		this.windowStyling = windowStyling;
 		this.config = config;
+		this.scaleConfig = scaleConfig;
 
 		// Register identifiable stages.
 		// These will be @Dependent scoped, so we need to be careful with their instances.
@@ -98,6 +104,8 @@ public class WindowManager implements Service {
 		// Validate input, ensuring duplicate allocations are not allowed.
 		if (windowMappings.containsKey(id))
 			throw new IllegalStateException("The stage ID was already registered: " + id);
+
+		applyScale(stage);
 
 		// Add custom stylesheets if any are registered.
 		if (!windowStyling.getStylesheetUris().isEmpty())
@@ -164,6 +172,26 @@ public class WindowManager implements Service {
 		// Register id --> stage
 		windowMappings.put(id, stage);
 		logger.trace("Register stage: {}", id);
+	}
+
+	/**
+	 * Wraps the stage's scene root in a {@link ScalePane}
+	 */
+	private void applyScale(@Nonnull Stage stage) {
+		var scale = scaleConfig.scaleProperty();
+		stage.sceneProperty().addListener((_, _, scene) -> wrapSceneRoot(scene, scale));
+		wrapSceneRoot(stage.getScene(), scale);
+	}
+
+	private static void wrapSceneRoot(@Nullable Scene scene, @Nonnull DoubleProperty scale) {
+		if (scene == null)
+			return;
+
+		var root = scene.getRoot();
+		if (root == null || root instanceof ScalePane)
+			return;
+
+		scene.setRoot(new ScalePane(root, scale));
 	}
 
 	/**
