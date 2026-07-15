@@ -215,8 +215,9 @@
 }
 
 /* Misc */
-.dock-ghost-zone {
-    -fx-opacity: 0.3;
+.dock-insertion-indicator {
+    -fx-stroke: -color-accent-4;
+    -fx-stroke-width: 2px;
 }
 
 /* Embedded context */
