@@ -361,7 +361,8 @@ public class Editor extends BorderPane implements Closing {
 		int startParagraphIndex = Math.max(0, virtualFlow.getFirstVisibleIndex() - 1);
 		int endParagraphIndex = Math.min(codeArea.getParagraphs().size() - 1, virtualFlow.getLastVisibleIndex());
 		for (int i = startParagraphIndex; i <= endParagraphIndex; i++)
-			codeArea.recreateParagraphGraphic(i);
+			if (!codeArea.isFolded(i))
+				codeArea.recreateParagraphGraphic(i);
 	}
 
 	/**
