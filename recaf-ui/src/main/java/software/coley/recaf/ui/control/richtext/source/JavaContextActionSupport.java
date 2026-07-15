@@ -539,6 +539,8 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 					int methodLinePos = methodModel.getReturnType().getRange().end();
 					if (methodLinePos <= 0)
 						methodLinePos = methodResolvePos;
+					if (methodLinePos <= 0 && methodModel.getMethodBody() != null)
+						methodLinePos = methodModel.getMethodBody().getRange().begin();
 					int line = 1 + editor.getCodeArea().offsetToPosition(methodLinePos, TwoDimensional.Bias.Forward).getMajor();
 
 					// Resolve what method each model represents.
@@ -590,7 +592,8 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 		return "java/lang/Object".equals(parent.getName())
 				&& ("toString".equals(methodName)
 				|| "hashCode".equals(methodName)
-				|| "equals".equals(methodName));
+				|| "equals".equals(methodName)
+				|| "<init>".equals(methodName));
 	}
 
 	/**
