@@ -45,6 +45,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -103,22 +104,38 @@ public class DecompileAllPopup extends RecafStage {
 				//
 				// We'll also map any class models in the bundle to JVM models (which will convert android classes if needed)
 				// since we only support decompilation of JVM classes.
-				List<JvmClassInfo> targetClasses = targetBundle.stream().filter(cls -> {
+				List<JvmClassInfo> targetClasses = new ArrayList<>();
+				for (ClassInfo cls : targetBundle.valuesAsCopy()) {
 					// Skip inner classes
 					if (cls.isInnerClass())
-						return false;
+						continue;
 
 					// Skip special case classes like 'module-info' and 'package-info'
 					String name = cls.getName();
 					if (cls.getSuperName() == null || name.equals("module-info") || name.endsWith("package-info"))
-						return false;
+						continue;
 
 					// Pass to name predicate for final say
-					return namePredicate.test(name);
-				}).map(ClassInfo::asJvmClass).toList();
+					if (!namePredicate.test(name))
+						continue;
+
+					// Require the class to be a JVM class, converting if needed.
+					// If conversion fails, skip the class.
+					try {
+						targetClasses.add(cls.asJvmClass());
+					} catch (Throwable t) {
+						logger.warn("Failed to convert Android class '{}' to JVM bytecode for decompilation", name, t);
+					}
+				}
 
 				// Determine delta of each decompilation
 				int targetCount = targetClasses.size();
+				if (targetCount == 0) {
+					logger.warn("No classes could be selected for decompilation");
+					inProgressProperty.setValue(false);
+					progress.setProgress(1);
+					return;
+				}
 				AtomicInteger actionedClasses = new AtomicInteger(targetCount);
 
 				// Decompile all classes

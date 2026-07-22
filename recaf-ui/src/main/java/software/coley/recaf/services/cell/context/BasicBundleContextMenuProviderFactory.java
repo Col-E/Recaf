@@ -16,6 +16,7 @@ import software.coley.recaf.ui.contextmenu.ContextMenuBuilder;
 import software.coley.recaf.ui.control.popup.ChangeClassVersionPopup;
 import software.coley.recaf.ui.control.popup.DecompileAllPopup;
 import software.coley.recaf.workspace.model.Workspace;
+import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.Bundle;
 import software.coley.recaf.workspace.model.bundle.FileBundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
@@ -64,11 +65,20 @@ public class BasicBundleContextMenuProviderFactory extends AbstractContextMenuPr
 					popup.show();
 				});
 
-				builder.item("menu.export.classes", DOCUMENT_EXPORT, () -> actions.exportClasses(workspace, resource, jvmBundle));
+				builder.item("menu.export.classes", DOCUMENT_EXPORT, () -> actions.exportJvmClasses(workspace, resource, jvmBundle));
 				builder.item("menu.file.decompileall", DOCUMENT_EXPORT, () -> {
 					DecompileAllPopup popup = decompileAllPaneProvider.get();
 					popup.addEventFilter(WindowEvent.WINDOW_HIDDEN, e -> decompileAllPaneProvider.destroy(popup));
 					popup.setTargetBundle(jvmBundle);
+					popup.show();
+				});
+			} else if (bundle instanceof AndroidClassBundle androidBundle) {
+				builder.item("menu.export.android.jar", DOCUMENT_EXPORT,
+						() -> actions.exportAndroidClasses(workspace, resource, androidBundle));
+				builder.item("menu.file.decompileall", DOCUMENT_EXPORT, () -> {
+					DecompileAllPopup popup = decompileAllPaneProvider.get();
+					popup.addEventFilter(WindowEvent.WINDOW_HIDDEN, e -> decompileAllPaneProvider.destroy(popup));
+					popup.setTargetBundle(androidBundle);
 					popup.show();
 				});
 			} else if (bundle instanceof FileBundle fileBundle) {

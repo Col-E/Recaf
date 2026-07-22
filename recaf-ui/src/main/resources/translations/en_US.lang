@@ -74,6 +74,7 @@ menu.edit.newclass=New class
 menu.export.class=Export class
 menu.export.file=Export file
 menu.export.classes=Export classes
+menu.export.android.jar=Export to JAR
 menu.export.files=Export files
 menu.export.package=Export package
 menu.export.directory=Export directory

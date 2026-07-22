@@ -53,11 +53,11 @@ import software.coley.recaf.path.LocalVariablePathNode;
 import software.coley.recaf.path.PathNode;
 import software.coley.recaf.path.PathNodes;
 import software.coley.recaf.services.Service;
+import software.coley.recaf.services.analysis.structure.AreaAnalysisResult;
 import software.coley.recaf.services.cell.CellConfigurationService;
 import software.coley.recaf.services.cell.icon.IconProvider;
 import software.coley.recaf.services.cell.icon.IconProviderService;
 import software.coley.recaf.services.cell.text.TextProviderService;
-import software.coley.recaf.services.analysis.structure.AreaAnalysisResult;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.inheritance.InheritanceGraphService;
 import software.coley.recaf.services.mapping.IntermediateMappings;
@@ -69,17 +69,17 @@ import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.ui.config.KeybindingConfig;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.control.graph.MethodCallGraphTreesPane;
-import software.coley.recaf.ui.pane.analysis.AreaAnalysisPane;
 import software.coley.recaf.ui.control.popup.AddMemberPopup;
 import software.coley.recaf.ui.control.popup.ItemListSelectionPopup;
 import software.coley.recaf.ui.control.popup.ItemTreeSelectionPopup;
 import software.coley.recaf.ui.control.popup.NamePopup;
 import software.coley.recaf.ui.control.popup.OverrideMethodPopup;
 import software.coley.recaf.ui.docking.DockingManager;
+import software.coley.recaf.ui.pane.WorkspaceInformationPane;
+import software.coley.recaf.ui.pane.analysis.AreaAnalysisPane;
 import software.coley.recaf.ui.pane.analysis.CommentEditPane;
 import software.coley.recaf.ui.pane.analysis.CommentListPane;
 import software.coley.recaf.ui.pane.analysis.DocumentationPane;
-import software.coley.recaf.ui.pane.WorkspaceInformationPane;
 import software.coley.recaf.ui.pane.editing.AbstractContentPane;
 import software.coley.recaf.ui.pane.editing.FileDisplayMode;
 import software.coley.recaf.ui.pane.editing.FilePane;
@@ -94,10 +94,10 @@ import software.coley.recaf.ui.pane.search.InstructionSearchPane;
 import software.coley.recaf.ui.pane.search.MemberDeclarationSearchPane;
 import software.coley.recaf.ui.pane.search.MemberReferenceSearchPane;
 import software.coley.recaf.ui.pane.search.NumberSearchPane;
-import software.coley.recaf.ui.pane.search.StringSearchPane;
-import software.coley.recaf.ui.pane.search.StringTablePane;
 import software.coley.recaf.ui.pane.search.SimilarClassTablePane;
 import software.coley.recaf.ui.pane.search.SimilarMethodTablePane;
+import software.coley.recaf.ui.pane.search.StringSearchPane;
+import software.coley.recaf.ui.pane.search.StringTablePane;
 import software.coley.recaf.util.Animations;
 import software.coley.recaf.util.ClipboardUtil;
 import software.coley.recaf.util.EscapeUtil;
@@ -112,7 +112,6 @@ import software.coley.recaf.util.visitors.MemberCopyingVisitor;
 import software.coley.recaf.util.visitors.MemberRemovingVisitor;
 import software.coley.recaf.util.visitors.MemberStubAddingVisitor;
 import software.coley.recaf.util.visitors.MethodAnnotationRemovingVisitor;
-import software.coley.recaf.util.visitors.MethodNoopingVisitor;
 import software.coley.recaf.util.visitors.MethodPredicate;
 import software.coley.recaf.util.visitors.MethodVariableRemovingVisitor;
 import software.coley.recaf.workspace.PathExportingManager;
@@ -1854,12 +1853,65 @@ public class Actions implements Service {
 	 */
 	public void exportClasses(@Nonnull Workspace workspace,
 	                          @Nonnull WorkspaceResource resource,
-	                          @Nonnull JvmClassBundle bundle) {
+	                          @Nonnull ClassBundle<?> bundle) {
+		if (bundle instanceof JvmClassBundle jvmClassBundle)
+			exportJvmClasses(workspace, resource, jvmClassBundle);
+		else if (bundle instanceof AndroidClassBundle androidClassBundle)
+			exportAndroidClasses(workspace, resource, androidClassBundle);
+		else
+			logger.warn("Cannot export classes from bundle of type {}", bundle.getClass().getName());
+	}
+
+	/**
+	 * Exports all JVM classes in a bundle, prompting the user to select a location to save the file to.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		JVM bundle with contents to export.
+	 */
+	public void exportJvmClasses(@Nonnull Workspace workspace,
+	                             @Nonnull WorkspaceResource resource,
+	                             @Nonnull JvmClassBundle bundle) {
 		BasicJvmClassBundle bundleCopy = new BasicJvmClassBundle();
 		bundle.valuesAsCopy().forEach(bundleCopy::initialPut);
 		WorkspaceResource resourceCopy = new WorkspaceResourceBuilder().withJvmClassBundle(bundleCopy).build();
 		Workspace workspaceCopy = new BasicWorkspace(resourceCopy);
 		pathExportingManager.export(workspaceCopy, "bundle", false);
+	}
+
+	/**
+	 * Exports all Android classes in a bundle, prompting the user to select a location to save the file to.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Android bundle with contents to export.
+	 */
+
+	public void exportAndroidClasses(@Nonnull Workspace workspace,
+	                                 @Nonnull WorkspaceResource resource,
+	                                 @Nonnull AndroidClassBundle bundle) {
+		// Map all Android classes to JVM classes, and export the resulting bundle.
+		BasicJvmClassBundle bundleCopy = new BasicJvmClassBundle();
+		for (AndroidClassInfo classInfo : bundle.valuesAsCopy()) {
+			try {
+				bundleCopy.initialPut(classInfo.asJvmClass());
+			} catch (Throwable t) {
+				logger.warn("Failed to convert Android class '{}' to JVM bytecode for export", classInfo.getName(), t);
+			}
+		}
+
+		if (bundleCopy.isEmpty()) {
+			logger.warn("No Android classes could be converted to JVM bytecode for export");
+			return;
+		}
+
+		exportClasses(workspace, resource, bundleCopy);
 	}
 
 	/**
