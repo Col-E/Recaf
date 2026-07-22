@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -109,6 +110,24 @@ class SelectedWordHighlightingTest {
 				span(3, "base", MATCH_STYLE),
 				span(TEXT.length() - TEXT.indexOf("foo +") - 3, "base")
 		), describe(highlighting.apply(0, spans)));
+	}
+
+	@Test
+	void skipsBlacklistedSelectedWords() {
+		// Simple single-keyword skip test.
+		String text = "class Example { class Other {} }";
+		SelectedWordHighlighting highlighting = new SelectedWordHighlighting(Set.of("class"));
+
+		// No results for blacklisted words, and no highlighting should be applied.
+		assertEquals(Collections.emptyList(), highlighting.refreshAndGetAffectedRanges(text, "class", 0));
+		assertSameSpansWithoutHighlights(highlighting, text);
+
+		// Non-blacklisted words should still be highlighted.
+		int example = text.indexOf("Example");
+		assertEquals(List.of(
+				new IntRange(example, example + 7),
+				new IntRange(text.lastIndexOf("Example"), text.lastIndexOf("Example") + 7)
+		), highlighting.refreshAndGetAffectedRanges(text, "Example", example));
 	}
 
 	@Test

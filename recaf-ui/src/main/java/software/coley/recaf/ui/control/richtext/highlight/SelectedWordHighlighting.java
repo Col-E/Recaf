@@ -26,7 +26,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 /**
  * Applies same-word match highlights to editor style spans.
@@ -40,6 +43,7 @@ public class SelectedWordHighlighting implements EditorComponent {
 	private static final int DEFAULT_MAX_MATCHES_PER_LINE = 50;
 	private final int maxMatches;
 	private final int maxMatchesPerLine;
+	private final Predicate<String> selectionBlacklist;
 	private List<IntRange> matchRanges = Collections.emptyList();
 	private List<IntRange> styledRanges = Collections.emptyList();
 	private Editor editor;
@@ -57,7 +61,7 @@ public class SelectedWordHighlighting implements EditorComponent {
 	 * New highlighter with default match limits.
 	 */
 	public SelectedWordHighlighting() {
-		this(DEFAULT_MAX_MATCHES, DEFAULT_MAX_MATCHES_PER_LINE);
+		this(DEFAULT_MAX_MATCHES, DEFAULT_MAX_MATCHES_PER_LINE, Collections.emptySet());
 	}
 
 	/**
@@ -69,8 +73,59 @@ public class SelectedWordHighlighting implements EditorComponent {
 	 * 		Max match count per line to allow.
 	 */
 	public SelectedWordHighlighting(int maxMatches, int maxMatchesPerLine) {
+		this(maxMatches, maxMatchesPerLine, Collections.emptySet());
+	}
+
+	/**
+	 * New highlighter with the given selection blacklist and default match limits.
+	 *
+	 * @param selectionBlacklist
+	 * 		Words to exclude from selected-word highlighting.
+	 */
+	public SelectedWordHighlighting(@Nonnull Collection<String> selectionBlacklist) {
+		this(DEFAULT_MAX_MATCHES, DEFAULT_MAX_MATCHES_PER_LINE, selectionBlacklist);
+	}
+
+	/**
+	 * New highlighter with the given match limits and selection blacklist.
+	 *
+	 * @param maxMatches
+	 * 		Max match count to allow.
+	 * @param maxMatchesPerLine
+	 * 		Max match count per line to allow.
+	 * @param selectionBlacklist
+	 * 		Words to exclude from selected-word highlighting.
+	 */
+	public SelectedWordHighlighting(int maxMatches, int maxMatchesPerLine,
+	                               @Nonnull Collection<String> selectionBlacklist) {
+		this(maxMatches, maxMatchesPerLine, toBlacklistPredicate(selectionBlacklist));
+	}
+
+	/**
+	 * New highlighter with the given selection blacklist predicate and default match limits.
+	 *
+	 * @param selectionBlacklist
+	 * 		Predicate returning {@code true} for words to exclude from selected-word highlighting.
+	 */
+	public SelectedWordHighlighting(@Nonnull Predicate<String> selectionBlacklist) {
+		this(DEFAULT_MAX_MATCHES, DEFAULT_MAX_MATCHES_PER_LINE, selectionBlacklist);
+	}
+
+	/**
+	 * New highlighter with the given match limits and selection blacklist predicate.
+	 *
+	 * @param maxMatches
+	 * 		Max match count to allow.
+	 * @param maxMatchesPerLine
+	 * 		Max match count per line to allow.
+	 * @param selectionBlacklist
+	 * 		Predicate returning {@code true} for words to exclude from selected-word highlighting.
+	 */
+	public SelectedWordHighlighting(int maxMatches, int maxMatchesPerLine,
+	                               @Nonnull Predicate<String> selectionBlacklist) {
 		this.maxMatches = maxMatches;
 		this.maxMatchesPerLine = maxMatchesPerLine;
+		this.selectionBlacklist = selectionBlacklist;
 	}
 
 	@Override
@@ -406,7 +461,7 @@ public class SelectedWordHighlighting implements EditorComponent {
 	@Nonnull
 	private List<IntRange> findWordMatchRanges(@Nonnull String text, @Nullable String selectedText, int caret) {
 		String selectedWord = getSelectedWord(text, selectedText, caret);
-		if (selectedWord == null || text.isEmpty())
+		if (selectedWord == null || text.isEmpty() || selectionBlacklist.test(selectedWord))
 			return Collections.emptyList();
 
 		List<IntRange> matches = new ArrayList<>();
@@ -540,5 +595,11 @@ public class SelectedWordHighlighting implements EditorComponent {
 
 	private static boolean isWordChar(char c) {
 		return Character.isJavaIdentifierPart(c);
+	}
+
+	@Nonnull
+	private static Predicate<String> toBlacklistPredicate(@Nonnull Collection<String> selectionBlacklist) {
+		Set<String> snapshot = Set.copyOf(selectionBlacklist);
+		return snapshot::contains;
 	}
 }

@@ -55,6 +55,7 @@ import software.coley.recaf.ui.pane.editing.jvm.DecompilerPaneConfig;
 import software.coley.recaf.ui.pane.editing.jvm.JvmDecompilerPane;
 import software.coley.recaf.ui.pane.editing.text.TextConfig;
 import software.coley.recaf.util.FxThreadUtil;
+import software.coley.recaf.util.Keywords;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.StringDiff;
 import software.coley.recaf.util.StringUtil;
@@ -116,7 +117,7 @@ public class AbstractDecompilePane extends BorderPane implements ClassNavigable,
 		// Configure the editor
 		editor = new Editor();
 		languageAssociation.configureEditorSyntax("java", editor);
-		if (textConfig.doHighlightWord()) editor.setSelectedWordHighlighting(new SelectedWordHighlighting());
+		if (textConfig.doHighlightWord()) editor.setSelectedWordHighlighting(new SelectedWordHighlighting(Keywords.getKeywords()));
 		if (textConfig.doTrackBrackets()) editor.setSelectedBracketTracking(new SelectedBracketTracking());
 		editor.setProblemTracking(problemTracking);
 		editor.getRootLineGraphicFactory().addDefaultCodeGraphicFactories();
