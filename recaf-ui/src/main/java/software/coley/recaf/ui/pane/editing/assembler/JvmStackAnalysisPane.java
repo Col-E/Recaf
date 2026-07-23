@@ -252,6 +252,7 @@ public class JvmStackAnalysisPane extends AstBuildConsumerComponent {
 		// Not reusing this pane, so we don't need to track for removal
 		editor.getCaretPosEventStream()
 				.reduceSuccessions(Collections::singletonList, Lists::add, Duration.ofMillis(Editor.SHORT_DELAY_MS))
+				.filter(c -> editor.getCodeArea().getSelection().getLength() == 0) // Skip updates while user is selecting text
 				.addObserver(e -> scheduleTableUpdate());
 	}
 

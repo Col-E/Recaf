@@ -161,6 +161,13 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 	 * 		Caret pos change.
 	 */
 	private void onCaretMove(@Nonnull Change<Integer> caretChange) {
+		// Skip if the user is selecting text.
+		if (editor.getCodeArea().getSelection().getLength() > 0) {
+			currentInstructionSelection.setValue(null);
+			drawLines.setValue(false);
+			return;
+		}
+
 		// Find the selected element off of the FX thread, then update our selection and line draw states on the FX thread.
 		CompletableFuture.supplyAsync(this::findSelected, ThreadUtil.executor()).thenAcceptAsync(selected -> {
 			try {

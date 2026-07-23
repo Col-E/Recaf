@@ -206,9 +206,14 @@ public class JvmVariablesPane extends AstBuildConsumerComponent {
 	 * 		Caret pos change.
 	 */
 	private void onCaretMove(Change<Integer> caretChange) {
-		int pos = caretChange.getNewValue();
+		// Skip if the user is selecting text.
+		if (editor.getCodeArea().getSelection().getLength() > 0) {
+			varHighlighter.setSelectedVariable(null);
+			return;
+		}
 
 		// Determine which variable is at the caret position
+		int pos = caretChange.getNewValue();
 		VariableData currentVarSelection = null;
 		for (VariableData item : table.getItems()) {
 			ASTElement matchedAst = item.references()
