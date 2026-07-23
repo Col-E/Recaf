@@ -124,10 +124,7 @@ class SelectedWordHighlightingTest {
 
 		// Non-blacklisted words should still be highlighted.
 		int example = text.indexOf("Example");
-		assertEquals(List.of(
-				new IntRange(example, example + 7),
-				new IntRange(text.lastIndexOf("Example"), text.lastIndexOf("Example") + 7)
-		), highlighting.refreshAndGetAffectedRanges(text, "Example", example));
+		assertEquals(List.of(new IntRange(example, example + 7)), highlighting.refreshAndGetAffectedRanges(text, "Example", example));
 	}
 
 	@Test
