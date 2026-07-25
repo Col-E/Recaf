@@ -116,6 +116,28 @@ class PhantomGeneratorTest extends CompilerTestBase implements Opcodes {
 	}
 
 	@Test
+	void testSuperHierarchyReferences() {
+		// class InheritedInterfaceExample extends KnownSuperclass implements MissingInheritedInterface
+		Workspace workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(assemble("""
+				.super java/lang/Object
+				.implements MissingInheritedInterface
+				.class public super KnownSuperclass {
+				}
+				""", true)));
+		JvmClassInfo input = assemble("""
+				.super KnownSuperclass
+				.class public super InheritedInterfaceExample {
+				}
+				""", true);
+
+		// The indirect interface should be created as a phantom.
+		JvmClassBundle phantomBundle = generatePhantoms(workspace, input).getJvmClassBundle();
+		JvmClassInfo missingInterface = assertHasPhantom(phantomBundle, "MissingInheritedInterface");
+		assertTrue(missingInterface.hasInterfaceModifier());
+		assertNoPhantom(phantomBundle, "KnownSuperclass");
+	}
+
+	@Test
 	void testMemberInsnReferences() {
 		// class MemberInferenceExample {
 		//     public static void example(MissingClass obj, MissingInterface iface) {

@@ -16,8 +16,12 @@ import org.objectweb.asm.TypePath;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 import software.coley.recaf.RecafConstants;
+import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.phantom.model.PhantomClassConstraint;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Collects raw phantom constraints from JVM bytecode.
@@ -57,6 +61,39 @@ public class PhantomConstraintCollector {
 		if (internalName == null)
 			return null;
 		return context.getOrCreateConstraint(internalName);
+	}
+
+	/**
+	 * Collects constraints from the known parents of a type.
+	 *
+	 * @param internalName
+	 * 		Type whose parents should be inspected.
+	 * @param visited
+	 * 		Types already inspected while walking the hierarchy.
+	 */
+	private void collectHierarchy(@Nullable String internalName, @Nonnull Set<String> visited) {
+		// Skip if already visited.
+		if (internalName == null || !visited.add(internalName))
+			return;
+
+		// Skip if the type is known, as we only want to collect phantom constraints.
+		ClassInfo info = context.getLookup().getKnownClassInfo(internalName);
+		if (info == null)
+			return;
+
+		// Mark the supertype and collect upward.
+		PhantomClassConstraint superConstraint = constraint(info.getSuperName());
+		if (superConstraint != null)
+			superConstraint.markClass();
+		collectHierarchy(info.getSuperName(), visited);
+
+		// Mark all interfaces and collect upward.
+		for (String interfaceName : info.getInterfaces()) {
+			PhantomClassConstraint interfaceConstraint = constraint(interfaceName);
+			if (interfaceConstraint != null)
+				interfaceConstraint.markInterface();
+			collectHierarchy(interfaceName, visited);
+		}
 	}
 
 	@Nullable
@@ -235,14 +272,24 @@ public class PhantomConstraintCollector {
 
 		@Override
 		public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+			// Mark the supertype as a phantom candidate.
 			PhantomClassConstraint superConstraint = constraint(superName);
 			if (superConstraint != null)
 				superConstraint.markClass();
+
+			// Walk the supertype hierarchy to mark any supertypes as phantom candidates.
+			Set<String> visited = new HashSet<>();
+			collectHierarchy(superName, visited);
+
+			// Mark the interfaces as phantom candidates.
 			if (interfaces != null) {
 				for (String interfaceName : interfaces) {
 					PhantomClassConstraint interfaceConstraint = constraint(interfaceName);
 					if (interfaceConstraint != null)
 						interfaceConstraint.markInterface();
+
+					// Also walk the interface hierarchy to mark any superinterfaces as phantom candidates.
+					collectHierarchy(interfaceName, visited);
 				}
 			}
 		}

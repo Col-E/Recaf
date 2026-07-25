@@ -126,9 +126,10 @@ public class JavacCompiler implements Service {
 				try {
 					WorkspaceResource phantomResource = phantomGenerator.createPhantomsForClasses(workspace, classesToScan);
 					int generatedCount = phantomResource.getJvmClassBundle().size();
-					if (generatedCount > 0)
+					if (generatedCount > 0) {
 						logger.debug("Generated {} phantoms for pre-compile", generatedCount);
-					virtualClassPath = Lists.add(virtualClassPath, phantomResource);
+						virtualClassPath = Lists.add(virtualClassPath, phantomResource);
+					}
 				} catch (PhantomGenerationException ex) {
 					logger.warn("Failed to generate phantoms for compilation against '{}'", className, ex);
 				}
