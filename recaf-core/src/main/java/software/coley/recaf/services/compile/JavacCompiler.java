@@ -50,12 +50,15 @@ public class JavacCompiler implements Service {
 	private static final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
 	private static int minTargetVersion = 7;
 	private final PhantomGenerator phantomGenerator;
+	private final CompileClasspathCache classpathCache;
 	private final JavacCompilerConfig config;
 
 	@Inject
 	public JavacCompiler(@Nonnull PhantomGenerator phantomGenerator,
+						 @Nonnull CompileClasspathCache classpathCache,
 	                     @Nonnull JavacCompilerConfig config) {
 		this.phantomGenerator = phantomGenerator;
+		this.classpathCache = classpathCache;
 		this.config = config;
 	}
 
@@ -139,13 +142,14 @@ public class JavacCompiler implements Service {
 		List<CompilerDiagnostic> diagnostics = new ArrayList<>();
 		JavacListener listenerWrapper = createRecordingListener(listener, diagnostics);
 		JavaFileManager fmFallback = compiler.getStandardFileManager(listenerWrapper, Locale.getDefault(), UTF_8);
-		JavaFileManager fm = new VirtualFileManager(unitMap, virtualClassPath, fmFallback);
+		String cp = arguments.getClassPath();
+		int target = arguments.getVersionTarget();
+		JavaFileManager fm = new VirtualFileManager(classpathCache, unitMap, virtualClassPath, fmFallback, cp, target);
 
 		// Populate arguments
 		List<String> args = new ArrayList<>();
 
 		// Classpath
-		String cp = arguments.getClassPath();
 		if (cp != null) {
 			args.add("-classpath");
 			args.add(cp);
@@ -153,7 +157,6 @@ public class JavacCompiler implements Service {
 		}
 
 		// Target version
-		int target = arguments.getVersionTarget();
 		args.add("--release");
 		args.add(Integer.toString(target));
 		logger.debugging(l -> l.info("Compiler target: {}", target));

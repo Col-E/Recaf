@@ -1,6 +1,7 @@
 package software.coley.recaf.services.compile;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import javax.tools.FileObject;
@@ -21,28 +22,49 @@ import java.util.function.Predicate;
  * @author Matt Coley
  */
 public class VirtualFileManager extends ForwardingJavaFileManager<JavaFileManager> {
+	private final CompileClasspathCache classpathCache;
 	private final VirtualUnitMap unitMap;
 	private final List<WorkspaceResource> virtualClasspath;
+	private final String classPath;
+	private final int versionTarget;
 
 	/**
+	 * @param classpathCache
+	 * 		Cache for fallback classpath listings.
 	 * @param unitMap
 	 * 		Class input map.
 	 * @param virtualClasspath
 	 * 		In-memory classpath.
 	 * @param fallback
 	 * 		Fallback manager.
+	 * @param classPath
+	 * 		Compiler classpath, used to distinguish cached fallback results from other compilations.
+	 * @param versionTarget
+	 * 		Compiler target release, used to distinguish multi-release classpath results.
 	 */
-	public VirtualFileManager(@Nonnull VirtualUnitMap unitMap, @Nonnull List<WorkspaceResource> virtualClasspath, @Nonnull JavaFileManager fallback) {
+	public VirtualFileManager(@Nonnull CompileClasspathCache classpathCache,
+	                          @Nonnull VirtualUnitMap unitMap,
+	                          @Nonnull List<WorkspaceResource> virtualClasspath,
+	                          @Nonnull JavaFileManager fallback,
+	                          @Nullable String classPath,
+	                          int versionTarget) {
 		super(fallback);
+		this.classpathCache = classpathCache;
 		this.virtualClasspath = virtualClasspath;
 		this.unitMap = unitMap;
+		this.classPath = classPath;
+		this.versionTarget = versionTarget;
 	}
 
 	@Override
 	public Iterable<JavaFileObject> list(@Nonnull Location location, @Nonnull String packageName,
 	                                     @Nonnull Set<JavaFileObject.Kind> kinds, boolean recurse) throws IOException {
-		Iterable<JavaFileObject> list = super.list(location, packageName, kinds, recurse);
 		if (StandardLocation.CLASS_PATH.equals(location) && kinds.contains(JavaFileObject.Kind.CLASS)) {
+			// First get the fallback manager's classpath listing, so we can combine it with our virtual classpath.
+			List<JavaFileObject> list = classpathCache.getFallbackClassPathList(fileManager, classPath, versionTarget,
+					location, packageName, kinds, recurse);
+
+			// Filter the virtual classpath for classes in the requested package.
 			String formatted = packageName.isEmpty() ? "" : packageName.replace('.', '/') + '/';
 			Predicate<String> check;
 			if (recurse) {
@@ -58,14 +80,15 @@ public class VirtualFileManager extends ForwardingJavaFileManager<JavaFileManage
 							entry.getValue().getBytecode(), JavaFileObject.Kind.CLASS))
 					.iterator());
 		}
-		return list;
+
+		// Defer to the fallback manager for other locations and kinds.
+		return super.list(location, packageName, kinds, recurse);
 	}
 
 	@Override
 	public String inferBinaryName(@Nonnull Location location, @Nonnull JavaFileObject file) {
-		if (file instanceof ResourceVirtualJavaFileObject virtualObject && file.getKind() == JavaFileObject.Kind.CLASS) {
+		if (file instanceof ResourceVirtualJavaFileObject virtualObject && file.getKind() == JavaFileObject.Kind.CLASS)
 			return virtualObject.getResourceName().replace('/', '.');
-		}
 		return super.inferBinaryName(location, file);
 	}
 
