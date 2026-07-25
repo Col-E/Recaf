@@ -50,6 +50,7 @@ public class ProblemOverlay extends Group implements EditorComponent, ProblemInv
 	private final ChangeListener<Boolean> handleScrollbarVisibility = (ob, old, cur) -> ScrollbarPaddingUtil.handleScrollbarVisibility(this, cur);
 	private final IntegerProperty problemCount = new SimpleIntegerProperty(-1);
 	private Editor editor;
+	private boolean dirty;
 
 	/**
 	 * New problem overlay.
@@ -286,10 +287,13 @@ public class ProblemOverlay extends Group implements EditorComponent, ProblemInv
 	@Override
 	public void onProblemInvalidation() {
 		ProblemTracking tracking = editor.getProblemTracking();
-		if (tracking != null)
+		if (tracking != null && !dirty) {
+			dirty = true;
 			FxThreadUtil.run(() -> {
 				problemCount.set(tracking.getAllItems().size());
 				editor.redrawParagraphGraphics();
+				dirty = false;
 			});
+		}
 	}
 }
