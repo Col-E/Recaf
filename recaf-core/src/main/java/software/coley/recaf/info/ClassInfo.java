@@ -196,6 +196,24 @@ public interface ClassInfo extends Info, Annotated, Accessed {
 	}
 
 	/**
+	 * @param className
+	 * 		Name of a supposed inner class.
+	 *
+	 * @return {@code true} if this class is an outer class of the given inner class.
+	 */
+	default boolean isOuterClassOf(@Nonnull String className) {
+		// If we don't start with that class name, we can't possibly be an inner class.
+		if (!className.startsWith(getName() + "$"))
+			return false;
+
+		// Sanity check against our inner class list, as a simple name check isn't foolproof.
+		for (InnerClassInfo innerClass : getInnerClasses())
+			if (innerClass.getInnerClassName().equals(className))
+				return true;
+		return false;
+	}
+
+	/**
 	 * @return {@code true} when this class is an anonymous inner class of another class.
 	 */
 	default boolean isAnonymousInnerClass() {

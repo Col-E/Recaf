@@ -119,10 +119,10 @@ public class JavacCompiler implements Service {
 		// Generate phantom classes if the workspace does not already have phantoms in it.
 		if (workspace != null && config.getGeneratePhantoms().getValue()
 				&& workspace.getSupportingResources().stream().noneMatch(resource -> resource instanceof GeneratedPhantomWorkspaceResource)) {
-			// Only scan the target classes and any of their inner classes for content to fill in.
+			// Only scan the target classes and any of their inner/outer classes for content to fill in.
 			List<JvmClassInfo> classesToScan = workspace.findJvmClasses(c ->
 							sourceClassNames.contains(c.getName()) ||
-									sourceClassNames.stream().anyMatch(c::isInnerClassOf)).stream()
+									sourceClassNames.stream().anyMatch(name -> c.isInnerClassOf(name) || c.isOuterClassOf(name))).stream()
 					.map(p -> p.getValue().asJvmClass())
 					.collect(Collectors.toList());
 			if (!classesToScan.isEmpty()) {
