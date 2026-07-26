@@ -25,9 +25,9 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 
 /**
  * Base stub generator for classes.
@@ -44,6 +44,7 @@ public abstract class ClassStubGenerator {
 	protected final List<FieldMember> fields;
 	protected final List<MethodMember> methods;
 	protected final List<InnerClassInfo> innerClasses;
+	protected final String classSignature;
 
 	/**
 	 * @param workspace
@@ -64,6 +65,8 @@ public abstract class ClassStubGenerator {
 	 * 		Host class declared methods.
 	 * @param innerClasses
 	 * 		Host class declared inner classes.
+	 * @param classSignature
+	 * 		Host class generic signature, if any.
 	 */
 	public ClassStubGenerator(@Nonnull Workspace workspace,
 	                          @Nonnull InheritanceGraph inheritanceGraph,
@@ -73,7 +76,8 @@ public abstract class ClassStubGenerator {
 	                          @Nonnull List<String> implementing,
 	                          @Nonnull List<FieldMember> fields,
 	                          @Nonnull List<MethodMember> methods,
-	                          @Nonnull List<InnerClassInfo> innerClasses) {
+	                          @Nonnull List<InnerClassInfo> innerClasses,
+	                          @Nullable String classSignature) {
 		this.workspace = workspace;
 		this.inheritanceGraph = inheritanceGraph;
 		this.classAccess = classAccess;
@@ -85,6 +89,7 @@ public abstract class ClassStubGenerator {
 		this.fields = fields;
 		this.methods = methods;
 		this.innerClasses = innerClasses;
+		this.classSignature = classSignature;
 	}
 
 	/**
@@ -131,10 +136,14 @@ public abstract class ClassStubGenerator {
 		}
 		if (!isInterface && superName != null && !superName.equals("java/lang/Object") && !superName.equals("java/lang/Enum"))
 			code.append(" extends ").append(cleanType(superName));
-		if (implementing != null && !implementing.isEmpty())
-			code.append(isInterface ? " extends " : " implements ").append(implementing.stream()
-					.map(ClassStubGenerator::cleanType)
-					.collect(Collectors.joining(", "))).append(' ');
+		if (implementing != null && !implementing.isEmpty()) {
+			code.append(isInterface ? " extends " : " implements ");
+			for (int i = 0; i < implementing.size(); i++) {
+				if (i > 0) code.append(", ");
+				code.append(sourceInterfaceType(i, implementing.get(i)));
+			}
+			code.append(' ');
+		}
 		code.append("{\n");
 	}
 
@@ -168,6 +177,7 @@ public abstract class ClassStubGenerator {
 	 * 		Class code to append the fields to.
 	 */
 	protected void appendFields(@Nonnull StringBuilder code) {
+		boolean isInterface = AccessFlag.isInterface(classAccess);
 		// Stub out fields / methods
 		for (FieldMember field : fields) {
 			// Skip stubbing compiler-generated fields.
@@ -186,14 +196,15 @@ public abstract class ClassStubGenerator {
 			if (!isSafeClassName(fieldNameType.className))
 				continue;
 
-			// Skip fields with types that aren't accessible in the workspace.
-			if (isMissingType(field.getDescriptor()))
-				continue;
-
 			// Append the field. The only modifier that we care about here is if it is static or not.
 			if (field.hasStaticModifier())
 				code.append("static ");
-			code.append(fieldNameType.className).append(' ').append(fieldNameType.name).append(";\n");
+			code.append(fieldNameType.className).append(' ').append(fieldNameType.name);
+			if (isInterface) {
+				code.append(" = ");
+				appendSourceDefaultValue(code, Type.getType(field.getDescriptor()));
+			}
+			code.append(";\n");
 		}
 	}
 
@@ -212,7 +223,9 @@ public abstract class ClassStubGenerator {
 		boolean isInterface = AccessFlag.isInterface(classAccess);
 		for (MethodMember method : methods) {
 			// Skip stubbing compiler-generated methods.
-			if (method.hasBridgeModifier() || method.hasSyntheticModifier())
+			if (method.hasSyntheticModifier() && !method.hasBridgeModifier())
+				continue;
+			if (method.hasBridgeModifier() && hasNonBridgeSourceSibling(method))
 				continue;
 
 			// Skip stubbing of illegally named methods.
@@ -231,6 +244,8 @@ public abstract class ClassStubGenerator {
 			Type localMethodType = Type.getMethodType(descriptor);
 			if (doSkipMethod(name, localMethodType))
 				continue;
+			if (hasIncompatibleInheritedMethod(method))
+				continue;
 
 			// Skip enum's 'valueOf' + 'values'
 			if (isEnum &&
@@ -247,21 +262,15 @@ public abstract class ClassStubGenerator {
 			if (!isSafeClassName(returnInfo.className))
 				continue;
 			Type[] parameterTypes = localMethodType.getArgumentTypes();
-			for (Type parameterType : parameterTypes)
-				if (!isSafeClassName(getInfo("p", parameterType.getDescriptor()).className))
-					return;
-
-			// Skip methods with return/parameter types that aren't accessible in the workspace.
-			boolean hasMissingType = false;
-			Type[] types = new Type[parameterTypes.length + 1];
-			System.arraycopy(parameterTypes, 0, types, 0, types.length - 1);
-			types[parameterTypes.length] = localMethodType.getReturnType();
-			for (Type type : types) {
-				hasMissingType = isMissingType(type);
-				if (hasMissingType)
+			boolean validParameters = true;
+			for (Type parameterType : parameterTypes) {
+				if (!isSafeClassName(getInfo("p", parameterType.getDescriptor()).className)) {
+					validParameters = false;
 					break;
+				}
 			}
-			if (hasMissingType) continue;
+			if (!validParameters)
+				continue;
 
 			// Stub the method. Start with the access modifiers.
 			if (method.hasPublicModifier())
@@ -284,21 +293,25 @@ public abstract class ClassStubGenerator {
 			// Add the parameters. We only care about the types, names don't really matter.
 			Type[] methodParameterTypes = Arrays.copyOf(parameterTypes, parameterTypes.length);
 			int parameterCount = methodParameterTypes.length;
+			int emittedParameters = 0;
+			boolean nonStaticInner = isNonStaticInnerClass();
 			for (int i = 0; i < parameterCount; i++) {
 				Type paramType = methodParameterTypes[i];
 
 				// Skip this parameter if it is an inner class's outer "this" reference
-				if (isCtor
+				if (isCtor && nonStaticInner
 						&& paramType.getSort() == Type.OBJECT
 						&& className.startsWith(paramType.getInternalName() + '$'))
 					continue;
 
 				NameType paramInfo = getInfo("p" + i, paramType.getDescriptor());
-				code.append(paramInfo.className).append(' ').append(paramInfo.name);
-				if (i < parameterCount - 1)
+				if (emittedParameters++ > 0)
 					code.append(", ");
+				code.append(paramInfo.className).append(' ').append(paramInfo.name);
 			}
 			code.append(')');
+			if (isCtor)
+				code.append(" throws Throwable");
 			if (isInterface && method.hasAbstractModifier() && !method.hasStaticModifier() && !method.hasPrivateModifier()) {
 				code.append(";\n");
 				continue;
@@ -313,46 +326,10 @@ public abstract class ClassStubGenerator {
 					// But just in case we'll keep this error handling here.
 					throw new ExpressionCompileException("Cannot generate 'super(...)' for constructor, " +
 							"missing type information for: " + superName);
-				if (superPath != null) {
-					// To make it easy, we'll find the simplest constructor in the parent class and pass dummy values.
-					// Unlike regular methods we cannot just say 'throw new RuntimeException();' since calling
-					// the 'super(...)' is required.
-					Type parentConstructor = superPath.getValue().methodStream()
-							.filter(m -> m.getName().equals("<init>"))
-							.map(m -> Type.getMethodType(m.getDescriptor()))
-							.min(Comparator.comparingInt(Type::getArgumentCount))
-							.orElse(null);
-					if (parentConstructor != null) {
-						code.append("super(");
 
-						// Filter out any leading parameters that are the outer "this" reference of an inner class,
-						// since those are not actually passed by the caller in the source code.
-						Type[] parentParameterTypes = parentConstructor.getArgumentTypes();
-						int startIndex = 0;
-						if (parentParameterTypes.length != 0) {
-							Type firstParameterType = parentParameterTypes[0];
-							if (firstParameterType.getSort() == Type.OBJECT &&
-									className.startsWith(firstParameterType.getInternalName() + '$'))
-								startIndex = 1;
-						}
-
-						parameterCount = parentParameterTypes.length;
-						for (int i = startIndex; i < parameterCount; i++) {
-							Type type = parentParameterTypes[i];
-							if (type.getSort() == Type.OBJECT) {
-								code.append("null");
-							} else {
-								char prim = type.getDescriptor().charAt(0);
-								if (prim == 'Z')
-									code.append("false");
-								else
-									code.append('0');
-							}
-							if (i < parameterCount - 1) code.append(", ");
-						}
-						code.append(");");
-					}
-				}
+				// If the parent type is known, we can hopefully generate a valid constructor.
+				if (superPath != null)
+					appendParentConstructorInvocation(code, nonStaticInner);
 			} else {
 				code.append("throw new RuntimeException();");
 			}
@@ -361,6 +338,110 @@ public abstract class ClassStubGenerator {
 	}
 
 	/**
+	 * @param constructor
+	 * 		Method type for a constructor.
+	 *
+	 * @return {@code true} if all parameter types are representable in source.
+	 */
+	private boolean isRepresentableConstructor(@Nonnull Type constructor) {
+		for (Type parameter : constructor.getArgumentTypes())
+			if (!isSafeClassName(parameter.getClassName()))
+				return false;
+		return true;
+	}
+
+	/**
+	 * Appends a call to the simplest representable constructor of the parent type.
+	 *
+	 * @param code
+	 * 		Class code to append to.
+	 * @param nonStaticInner
+	 * 		Whether the generated class is a non-static inner class.
+	 *
+	 * @throws ExpressionCompileException
+	 * 		When the parent type is known but cannot be resolved.
+	 */
+	protected void appendParentConstructorInvocation(@Nonnull StringBuilder code,
+	                                                 boolean nonStaticInner) throws ExpressionCompileException {
+		// Get the parent type, throwing if it is missing in the workspace.
+		ClassPathNode superPath = superName == null ? null : workspace.findJvmClass(superName);
+		if (superPath == null && superName != null)
+			throw new ExpressionCompileException("Cannot generate 'super(...)' for constructor, missing type information for: " + superName);
+		if (superPath == null)
+			return;
+
+		// To make it easy, we'll find the simplest constructor in the parent class and pass dummy values.
+		// Unlike regular methods we cannot just say 'throw new RuntimeException();' since calling
+		// the 'super(...)' is required.
+		Type parentConstructor = superPath.getValue().methodStream()
+				.filter(m -> m.getName().equals("<init>"))
+				.filter(m -> !m.hasPrivateModifier())
+				.map(m -> Type.getMethodType(m.getDescriptor()))
+				.filter(this::isRepresentableConstructor)
+				.min(Comparator.comparingInt(Type::getArgumentCount))
+				.orElse(null);
+
+		// If there are no representable constructors, we cannot generate a valid constructor.
+		if (parentConstructor == null)
+			return;
+
+		// Filter out any leading parameters that are the outer "this" reference of an inner class,
+		// since those are not actually passed by the caller in the source code.
+		Type[] parentParameterTypes = parentConstructor.getArgumentTypes();
+		int startIndex = 0;
+		if (parentParameterTypes.length != 0 && nonStaticInner) {
+			Type firstParameterType = parentParameterTypes[0];
+			if (firstParameterType.getSort() == Type.OBJECT && isParentSyntheticOuterParameter(firstParameterType))
+				startIndex = 1;
+		}
+
+		// Emit the super call with dummy values for the parameters.
+		code.append("super(");
+		int emittedParentParameters = 0;
+		for (int i = startIndex; i < parentParameterTypes.length; i++) {
+			Type type = parentParameterTypes[i];
+			if (emittedParentParameters++ > 0)
+				code.append(", ");
+			if (type.getSort() == Type.OBJECT || type.getSort() == Type.ARRAY) {
+				code.append('(').append(sourceType(type)).append(") null");
+			} else {
+				char prim = type.getDescriptor().charAt(0);
+				if (prim == 'Z')
+					code.append("false");
+				else
+					code.append('0');
+			}
+		}
+		code.append(");");
+	}
+
+	/**
+	 * Checks whether a parent constructor parameter is the compiler-supplied outer instance.
+	 * This also covers a child nested in a subtype of the parent's enclosing class.
+	 *
+	 * @param parameterType
+	 * 		Type of the parameter in a constructor to check.
+	 */
+	private boolean isParentSyntheticOuterParameter(@Nonnull Type parameterType) {
+		if (parameterType.getSort() != Type.OBJECT)
+			return false;
+
+		// Check if the class context is a nested class of the parameter type.
+		// This indicates that the parameter is the synthetic outer "this" reference.
+		if (className.startsWith(parameterType.getInternalName() + '$'))
+			return true;
+
+		// If we cut off the last inner class separator, we can check if the parameter type is an enclosing class of the current class.
+		int split = className.lastIndexOf('$');
+		if (split < 0)
+			return false;
+		String enclosingName = className.substring(0, split);
+		return inheritanceGraph.isAssignableFrom(parameterType.getInternalName(), enclosingName);
+	}
+
+	/**
+	 * Appends direct inner classes, skipping any that are emitted separately by the caller.
+	 *
 	 * @param code
 	 * 		Class code to append the inner classes to.
 	 *
@@ -368,12 +449,32 @@ public abstract class ClassStubGenerator {
 	 * 		When the inner classes could not be stubbed out.
 	 */
 	protected void appendInnerClasses(@Nonnull StringBuilder code) throws ExpressionCompileException {
+		appendInnerClasses(code, Set.of());
+	}
+
+	/**
+	 * Appends direct inner classes, optionally excluding selected declarations.
+	 *
+	 * @param code
+	 * 		Class code to append the inner classes to.
+	 * @param excludedNames
+	 * 		Inner class names which are emitted separately by the caller.
+	 *
+	 * @throws ExpressionCompileException
+	 * 		When the inner classes could not be stubbed out.
+	 */
+	protected void appendInnerClasses(@Nonnull StringBuilder code,
+	                                  @Nonnull Set<String> excludedNames) throws ExpressionCompileException {
 		Set<String> visited = new HashSet<>();
 		for (InnerClassInfo innerClass : innerClasses) {
 			String innerClassName = innerClass.getInnerClassName();
 
 			// Skip duplicate inner classes.
 			if (!visited.add(innerClassName))
+				continue;
+
+			// Skip inner classes that are emitted separately by the caller.
+			if (excludedNames.contains(innerClassName))
 				continue;
 
 			// If the inner class's outer class name is not an exact match, skip it.
@@ -399,12 +500,43 @@ public abstract class ClassStubGenerator {
 						innerClassInfo.getInterfaces(),
 						innerClassInfo.getFields(),
 						innerClassInfo.getMethods(),
-						innerClassInfo.getInnerClasses()
+						innerClassInfo.getInnerClasses(),
+						innerClassInfo.getSignature()
 				);
 				String inner = generator.generate();
 				code.append('\n').append(inner).append('\n');
 			}
 		}
+	}
+
+	/**
+	 * Appends all members and closes the class body. This allows nested expression
+	 * hosts to reuse the normal member stubbing while supplying their own topology.
+	 *
+	 * @param code
+	 * 		Class source to append to.
+	 * @param includeInnerClasses
+	 * 		Whether direct nested classes should also be emitted.
+	 */
+	protected void appendClassContents(@Nonnull StringBuilder code, boolean includeInnerClasses) throws ExpressionCompileException {
+		appendEnumConsts(code);
+		appendClassMembers(code, includeInnerClasses);
+		appendClassEnd(code);
+	}
+
+	/**
+	 * Appends members without closing the class body.
+	 *
+	 * @param code
+	 * 		Class source to append to.
+	 * @param includeInnerClasses
+	 * 		Whether direct nested classes should also be emitted.
+	 */
+	protected void appendClassMembers(@Nonnull StringBuilder code, boolean includeInnerClasses) throws ExpressionCompileException {
+		appendFields(code);
+		appendMethods(code);
+		if (includeInnerClasses)
+			appendInnerClasses(code);
 	}
 
 	/**
@@ -458,6 +590,311 @@ public abstract class ClassStubGenerator {
 	}
 
 	/**
+	 * @param index
+	 * 		Interface index.
+	 * @param internalName
+	 * 		Interface internal name.
+	 *
+	 * @return Interface type for source output.
+	 */
+	@Nonnull
+	protected String sourceInterfaceType(int index, @Nonnull String internalName) {
+		// If we have a generic signature, use it to get the interface type.
+		List<String> genericTypes = GenericSignatureRenderer.renderInterfaces(classSignature);
+		if (index < genericTypes.size()) {
+			String candidate = genericTypes.get(index);
+			int genericStart = candidate.indexOf('<');
+			if (genericStart > 0 && candidate.substring(0, genericStart).equals(cleanType(internalName)))
+				return candidate;
+		}
+
+		// If we don't have a generic signature, or the generic signature doesn't match the interface type,
+		// just return the cleaned type.
+		return cleanType(internalName);
+	}
+
+	/**
+	 * @param type
+	 * 		Descriptor type.
+	 *
+	 * @return Java source spelling of the type.
+	 */
+	@Nonnull
+	protected static String sourceType(@Nonnull Type type) {
+		if (type.getSort() == Type.ARRAY)
+			return sourceType(type.getElementType()) + "[]".repeat(type.getDimensions());
+		if (type.getSort() == Type.OBJECT)
+			return cleanType(type.getInternalName());
+		return type.getClassName();
+	}
+
+	/**
+	 * Appends a source-compatible default value for an interface field.
+	 *
+	 * @param code
+	 * 		Source to append to.
+	 * @param type
+	 * 		Field type.
+	 */
+	protected static void appendSourceDefaultValue(@Nonnull StringBuilder code, @Nonnull Type type) {
+		switch (type.getSort()) {
+			case Type.BOOLEAN -> code.append("false");
+			case Type.LONG -> code.append("0L");
+			case Type.FLOAT -> code.append("0.0f");
+			case Type.DOUBLE -> code.append("0.0d");
+			case Type.BYTE, Type.SHORT, Type.CHAR, Type.INT -> code.append('0');
+			default -> code.append("null");
+		}
+	}
+
+	/**
+	 * @param method
+	 * 		Method to check.
+	 *
+	 * @return {@code true} when the method cannot be represented as a Java source override of an inherited method.
+	 */
+	protected boolean hasIncompatibleInheritedMethod(@Nonnull MethodMember method) {
+		// Get the class vertex for the current class.
+		// If it doesn't exist, then we cannot check for inherited methods (we assume they are compatible).
+		InheritanceVertex classVertex = inheritanceGraph.getVertex(className);
+		if (classVertex == null)
+			return false;
+
+		// Check if any parent class has a method with the same source signature but an incompatible return type.
+		String signature = sourceSignature(method.getName(), method.getDescriptor());
+		Type methodType = Type.getMethodType(method.getDescriptor());
+		return classVertex.allParents().anyMatch(parent -> parent.getValue().getMethods().stream()
+				.anyMatch(parentMethod -> signature.equals(sourceSignature(parentMethod.getName(), parentMethod.getDescriptor())) &&
+						!isSourceReturnCompatible(Type.getMethodType(parentMethod.getDescriptor()).getReturnType(), methodType.getReturnType())));
+	}
+
+	/**
+	 * @param parentType
+	 * 		Parent method return type.
+	 * @param childType
+	 * 		Child method return type.
+	 *
+	 * @return {@code true} if the child method return type is compatible with the parent method return type.
+	 */
+	protected boolean isSourceReturnCompatible(@Nonnull Type parentType, @Nonnull Type childType) {
+		// Check for exact match first, since that is the most common case.
+		if (parentType.equals(childType))
+			return true;
+
+		// Both types must be object types.
+		if (parentType.getSort() != Type.OBJECT || childType.getSort() != Type.OBJECT)
+			return false;
+
+		// Check if the child type is assignable to the parent type in the inheritance graph.
+		return inheritanceGraph.isAssignableFrom(parentType.getInternalName(), childType.getInternalName());
+	}
+
+	/**
+	 * @return {@code true} when this class is a non-static nested class.
+	 */
+	protected boolean isNonStaticInnerClass() {
+		if (className.indexOf('$') < 0)
+			return false;
+		InnerClassInfo nestedInfo = getNestedInnerInfo();
+		return nestedInfo == null ? !AccessFlag.isStatic(classAccess) : !AccessFlag.isStatic(nestedInfo.getInnerAccess());
+	}
+
+	/**
+	 * @return Inner-class metadata for this class as recorded by its enclosing class.
+	 */
+	@Nullable
+	protected InnerClassInfo getNestedInnerInfo() {
+		int split = className.lastIndexOf('$');
+		if (split < 0)
+			return null;
+		ClassPathNode outerPath = workspace.findClass(className.substring(0, split));
+		if (outerPath == null)
+			return null;
+		return outerPath.getValue().getInnerClasses().stream()
+				.filter(inner -> className.equals(inner.getInnerClassName()))
+				.findFirst().orElse(null);
+	}
+
+	/**
+	 * Check if the given method has a non-bridge sibling with the same source signature.
+	 * <pre>{@code
+	 * class StringSupplier implements java.util.function.Supplier<String> {
+	 *     // Source method you wrote.
+	 *     // - Compiled signature is: ()Ljava/lang/String;
+	 *     @Override
+	 *     public String get() { return "Hello"; }
+	 *
+	 *     // Bridge method that satisfies the Supplier interface.
+	 *     // - Compiled signature is: ()Ljava/lang/Object;
+	 *     // - Delegates to the source-level method.
+	 *     public bridge Object get() { return get(); }
+	 *  }
+	 * }</pre>
+	 *
+	 * @param method
+	 * 		Method to check. Assumed to be a bridge method.
+	 *
+	 * @return {@code true} if there is a non-bridge method with the same source signature as the given method.
+	 *
+	 * @see #hasNonBridgeSourceSibling(MethodMember)
+	 */
+	protected boolean hasNonBridgeSourceSibling(@Nonnull MethodMember method) {
+		// If the method is not a bridge, then it cannot have a non-bridge sibling.
+		if (!method.hasBridgeModifier())
+			return false;
+
+		String sourceSignature = sourceSignature(method.getName(), method.getDescriptor());
+		for (MethodMember other : methods) {
+			// Skip self method.
+			if (other == method)
+				continue;
+
+			// Skip methods with different names.
+			if (!method.getName().equals(other.getName()))
+				continue;
+
+			// Skip bridge/synthetic methods, we only care about non-bridge source siblings.
+			if (other.hasBridgeModifier() || other.hasSyntheticModifier())
+				continue;
+
+			// Check if the candidate method has the same erased parameter shape.
+			String otherSignature = sourceSignature(other.getName(), other.getDescriptor());
+			if (sourceSignature.equals(otherSignature) || isBridgeTargetWithErasedParameterShape(method, other))
+				return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Check if the given bridge method has a source sibling.
+	 *
+	 * @param bridgeName
+	 * 		Name of the bridge method.
+	 * @param bridgeType
+	 * 		Method type of the bridge method.
+	 * @param bridgeFlags
+	 * 		Access flags of the bridge method.
+	 *
+	 * @return {@code true} if there is a non-bridge method with the same source signature as the given method.
+	 *
+	 * @see #hasNonBridgeSourceSibling(MethodMember)
+	 */
+	protected boolean hasBridgeSourceSibling(@Nonnull String bridgeName, @Nonnull Type bridgeType, int bridgeFlags) {
+		// The method context isn't a bridge, so it cannot be a bridge sibling.
+		if (!AccessFlag.isBridge(bridgeFlags))
+			return false;
+
+		// The method context is a bridge, so we need to check if there is a
+		// sibling source method that has the same name and erased parameter shape.
+		for (MethodMember method : methods) {
+			// Skip methods with different names.
+			if (!bridgeName.equals(method.getName()))
+				continue;
+
+			// Skip bridge/synthetic methods. The candidate must be a source method.
+			if (method.hasBridgeModifier() || method.hasSyntheticModifier())
+				continue;
+
+			// Check if the candidate method has the same erased parameter shape.
+			Type candidateType = Type.getMethodType(method.getDescriptor());
+			if (isBridgeTargetWithErasedParameterShape(bridgeName, bridgeType, candidateType))
+				return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Check if the given bridge method has a source sibling <i>(the candidate method)</i>.
+	 *
+	 * @param bridge
+	 * 		Bridge method.
+	 * @param candidate
+	 * 		Candidate source form associated with the bridge method.
+	 *
+	 * @see #hasNonBridgeSourceSibling(MethodMember)
+	 */
+	protected boolean isBridgeTargetWithErasedParameterShape(@Nonnull MethodMember bridge,
+	                                                         @Nonnull MethodMember candidate) {
+		// Names must match, otherwise they are not related.
+		String methodName = bridge.getName();
+		if (!methodName.equals(candidate.getName()))
+			return false;
+
+		// Parameter counts must match.
+		// Bridge return types are allowed to differ from the source method's return type because covariant returns and generic substitutions both produce return-type bridges.
+		Type bridgeType = Type.getMethodType(bridge.getDescriptor());
+		Type candidateType = Type.getMethodType(candidate.getDescriptor());
+		if (bridgeType.getArgumentTypes().length != candidateType.getArgumentTypes().length)
+			return false;
+
+		// The source signature (name + parameter types) must differ.
+		return isBridgeTargetWithErasedParameterShape(methodName, bridgeType, candidateType);
+	}
+
+	/**
+	 * Check if the given bridge method has a source sibling <i>(the candidate method)</i>.
+	 *
+	 * @param methodName
+	 * 		Name of the bridged method.
+	 * @param bridgeType
+	 * 		Method type of the bridge method.
+	 * @param candidateType
+	 * 		Method type of the candidate method.
+	 *
+	 * @see #hasNonBridgeSourceSibling(MethodMember)
+	 */
+	protected boolean isBridgeTargetWithErasedParameterShape(@Nonnull String methodName,
+	                                                         @Nonnull Type bridgeType,
+	                                                         @Nonnull Type candidateType) {
+		// If the bridge and candidate are the same method, then they are not siblings.
+		if (bridgeType.equals(candidateType))
+			return false;
+
+		// Bridge and candidate must have the same number of parameters.
+		Type[] bridgeParameters = bridgeType.getArgumentTypes();
+		Type[] candidateParameters = candidateType.getArgumentTypes();
+		if (bridgeParameters.length != candidateParameters.length)
+			return false;
+
+		// All parameters must be assignable to each other, or the same type.
+		for (int i = 0; i < bridgeParameters.length; i++) {
+			Type bridgeParameter = bridgeParameters[i];
+			Type candidateParameter = candidateParameters[i];
+			if (bridgeParameter.equals(candidateParameter))
+				continue;
+			if (bridgeParameter.getSort() != Type.OBJECT
+					|| candidateParameter.getSort() != Type.OBJECT
+					|| !inheritanceGraph.isAssignableFrom(bridgeParameter.getInternalName(), candidateParameter.getInternalName()))
+				return false;
+		}
+
+		// The source signature (name + parameter types) must differ.
+		String bridgeSignature = sourceSignature(methodName, bridgeType.getDescriptor());
+		String candidateSignature = sourceSignature(methodName, candidateType.getDescriptor());
+		return !Objects.equals(bridgeSignature, candidateSignature);
+	}
+
+	/**
+	 * In Java source, you can have multiple methods with the same name if the parameters are distinct.
+	 * However, the return type is not part of the method signature in source. So for duplication detection
+	 * we want to ignore the return type when comparing methods.
+	 *
+	 * @param name
+	 * 		Method name.
+	 * @param descriptor
+	 * 		Method descriptor.
+	 *
+	 * @return Name + method descriptor, without return type.
+	 *
+	 * @see #hasNonBridgeSourceSibling(MethodMember)
+	 */
+	@Nonnull
+	protected static String sourceSignature(@Nonnull String name, @Nonnull String descriptor) {
+		int end = descriptor.indexOf(')');
+		return name + descriptor.substring(0, end + 1);
+	}
+
+	/**
 	 * @param type
 	 * 		Some internal type name.
 	 *
@@ -507,35 +944,6 @@ public abstract class ClassStubGenerator {
 			return result.get();
 		}
 		return false;
-	}
-
-	/**
-	 * @param descriptor
-	 * 		Some non-method descriptor.
-	 *
-	 * @return {@code true} if the type in the descriptor is found in the {@link #workspace}.
-	 */
-	protected boolean isMissingType(@Nonnull String descriptor) {
-		Type type = Type.getType(descriptor);
-		return isMissingType(type);
-	}
-
-	/**
-	 * @param type
-	 * 		Some non-method type.
-	 *
-	 * @return {@code true} if the type in the descriptor is found in the {@link #workspace}.
-	 */
-	protected boolean isMissingType(@Nonnull Type type) {
-		if (type.getSort() == Type.OBJECT && workspace.findClass(type.getInternalName()) == null)
-			return true;
-		else if (type.getSort() == Type.ARRAY) {
-			Type elementType = type.getElementType();
-			if (elementType.getSort() == Type.OBJECT)
-				return workspace.findClass(elementType.getInternalName()) == null;
-			else
-				return false;
-		} else return false;
 	}
 
 	/**

@@ -38,6 +38,8 @@ public class InnerClassStubGenerator extends ClassStubGenerator {
 	 * 		Host class declared methods.
 	 * @param innerClasses
 	 * 		Host class declared inner classes.
+	 * @param classSignature
+	 * 		Host class generic signature, if any.
 	 */
 	public InnerClassStubGenerator(@Nonnull Workspace workspace,
 	                               @Nonnull InheritanceGraph inheritanceGraph,
@@ -47,8 +49,9 @@ public class InnerClassStubGenerator extends ClassStubGenerator {
 	                               @Nonnull List<String> implementing,
 	                               @Nonnull List<FieldMember> fields,
 	                               @Nonnull List<MethodMember> methods,
-	                               @Nonnull List<InnerClassInfo> innerClasses) {
-		super(workspace, inheritanceGraph, classAccess, className, superName, implementing, fields, methods, innerClasses);
+	                               @Nonnull List<InnerClassInfo> innerClasses,
+	                               @Nullable String classSignature) {
+		super(workspace, inheritanceGraph, classAccess, className, superName, implementing, fields, methods, innerClasses, classSignature);
 	}
 
 	@Nonnull
@@ -87,11 +90,7 @@ public class InnerClassStubGenerator extends ClassStubGenerator {
 		StringBuilder code = new StringBuilder();
 
 		appendClassStructure(code);
-		appendEnumConsts(code);
-		appendFields(code);
-		appendMethods(code);
-		appendInnerClasses(code);
-		appendClassEnd(code);
+		appendClassContents(code, true);
 
 		return code.toString();
 	}

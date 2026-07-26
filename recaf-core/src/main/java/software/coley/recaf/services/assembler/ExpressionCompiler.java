@@ -6,10 +6,14 @@ import jakarta.inject.Inject;
 import me.darknet.assembler.printer.JvmClassPrinter;
 import me.darknet.assembler.printer.MethodPrinter;
 import me.darknet.assembler.printer.PrintContext;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.slf4j.Logger;
 import regexodus.Pattern;
+import software.coley.recaf.RecafConstants;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.InnerClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
@@ -26,6 +30,7 @@ import software.coley.recaf.services.inheritance.InheritanceGraphService;
 import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.util.AccessFlag;
 import software.coley.recaf.util.JavaVersion;
+import software.coley.recaf.util.Keywords;
 import software.coley.recaf.util.NumberUtil;
 import software.coley.recaf.util.RegexUtil;
 import software.coley.recaf.util.StringUtil;
@@ -53,6 +58,7 @@ public class ExpressionCompiler {
 	private final InheritanceGraph inheritanceGraph;
 	private int classAccess;
 	private String className;
+	private String classSignature;
 	private String superName;
 	private List<String> implementing;
 	private int versionTarget;
@@ -66,7 +72,7 @@ public class ExpressionCompiler {
 
 	@Inject
 	public ExpressionCompiler(@Nonnull WorkspaceManager workspaceManager,
-							  @Nonnull InheritanceGraphService inheritanceGraphService,
+	                          @Nonnull InheritanceGraphService inheritanceGraphService,
 	                          @Nonnull JavacCompiler javac,
 	                          @Nonnull AssemblerPipelineGeneralConfig assemblerConfig) {
 		this.workspace = Objects.requireNonNull(workspaceManager.getCurrent(), "No open workspace");
@@ -81,6 +87,7 @@ public class ExpressionCompiler {
 	 */
 	public void clearContext() {
 		className = "RecafExpression";
+		classSignature = null;
 		classAccess = 0;
 		superName = null;
 		implementing = Collections.emptyList();
@@ -105,6 +112,7 @@ public class ExpressionCompiler {
 		String type = classInfo.getName();
 		String superType = classInfo.getSuperName();
 		className = type;
+		classSignature = classInfo.getSignature();
 		classAccess = classInfo.getAccess();
 		versionTarget = NumberUtil.intClamp(classInfo.getVersion() - JvmClassInfo.BASE_VERSION, JavacCompiler.getMinTargetVersion(), JavaVersion.get());
 		superName = classInfo.getSuperName();
@@ -169,7 +177,7 @@ public class ExpressionCompiler {
 		String code;
 		try {
 			stubber = new ExpressionHostingClassStubGenerator(workspace, inheritanceGraph, classAccess, className, superName, implementing,
-					fields, methods, innerClasses, methodFlags, methodName, methodType, methodVariables, expression);
+					fields, methods, innerClasses, methodFlags, methodName, methodType, methodVariables, expression, classSignature);
 			code = stubber.generate();
 		} catch (ExpressionCompileException ex) {
 			return new ExpressionResult(ex);
@@ -194,8 +202,22 @@ public class ExpressionCompiler {
 		try {
 			PrintContext<?> context = new PrintContext<>(assemblerConfig.getDisassemblyIndent().getValue());
 			context.setLabelPrefix("g");
+
+			// Get the adapted method name and descriptor,
+			// which may have been changed by the stub generator to avoid conflicts with existing methods.
+			//
+			// Constructors and static initializers must retain their JVM-special names, while source-only
+			// aliases are restored before printing so the returned JASM targets the original method.
+			String adaptedMethodDesc = stubber.methodDescriptorWithVariables();
+			String adaptedMethodName = stubber.getAdaptedMethodName();
+			if (!adaptedMethodName.equals(stubber.getOriginalMethodName())
+					&& isRestorableMethodName(stubber.getOriginalMethodName())) {
+				klass = renameMethod(klass, adaptedMethodName, stubber.getOriginalMethodName(), adaptedMethodDesc);
+				adaptedMethodName = stubber.getOriginalMethodName();
+			}
+
 			JvmClassPrinter printer = new JvmClassPrinter(new ByteArrayInputStream(klass));
-			MethodPrinter method = printer.method(stubber.getAdaptedMethodName(), stubber.methodDescriptorWithVariables());
+			MethodPrinter method = printer.method(adaptedMethodName, adaptedMethodDesc);
 			if (method == null)
 				return new ExpressionResult(new ExpressionCompileException("Target method was not in generated class"));
 			method.print(context);
@@ -205,6 +227,37 @@ public class ExpressionCompiler {
 		} catch (ExpressionCompileException ex) {
 			return new ExpressionResult(ex);
 		}
+	}
+
+	private static boolean isRestorableMethodName(@Nonnull String name) {
+		// Special methods must always be restored.
+		if (name.equals("<clinit>") || name.equals("<init>"))
+			return true;
+
+		// If the name is valid for a method in source form we'll restore it.
+		if (name.isEmpty() || Keywords.getKeywords().contains(name) || !Character.isJavaIdentifierStart(name.charAt(0)))
+			return false;
+		for (int i = 1; i < name.length(); i++)
+			if (!Character.isJavaIdentifierPart(name.charAt(i)))
+				return false;
+		return true;
+	}
+
+	@Nonnull
+	private static byte[] renameMethod(@Nonnull byte[] bytecode, @Nonnull String oldName,
+	                                   @Nonnull String newName, @Nonnull String descriptor) {
+		ClassReader reader = new ClassReader(bytecode);
+		ClassWriter writer = new ClassWriter(reader, 0);
+		reader.accept(new ClassVisitor(RecafConstants.getAsmVersion(), writer) {
+			@Override
+			public org.objectweb.asm.MethodVisitor visitMethod(int access, String name, String desc,
+			                                                  String signature, String[] exceptions) {
+				if (oldName.equals(name) && descriptor.equals(desc))
+					name = newName;
+				return super.visitMethod(access, name, desc, signature, exceptions);
+			}
+		}, 0);
+		return writer.toByteArray();
 	}
 
 	/**
@@ -228,9 +281,11 @@ public class ExpressionCompiler {
 		// be shifted down by three. There are two line breaks between the start and the marker, so we add plus one
 		// to consider the line the marker is itself on.
 		int exprStart = code.indexOf(EXPR_MARKER);
+		if (exprStart < 0)
+			return diagnostics;
 		int lineOffset = StringUtil.count('\n', code.substring(0, exprStart)) + 1;
 		return diagnostics.stream()
-				.map(d -> d.withLine(d.line() - lineOffset))
+				.map(d -> d.line() >= lineOffset ? d.withLine(d.line() - lineOffset) : d)
 				.toList();
 	}
 }
