@@ -212,6 +212,22 @@ menu.plugin.browse=Browse plugins
 menu.plugin.enabled=Enabled
 menu.plugin.uninstall=Uninstall
 menu.plugin.uninstall.warning=Are you sure you want to delete this plugin?
+menu.plugin.uninstall.dependants=Plugins that depend on it will also be unloaded:
+menu.plugin.install=Install plugin
+menu.plugin.install.invalid=The selected file is not a valid Recaf plugin
+menu.plugin.install.duplicate=A plugin with the same ID is already installed
+menu.plugin.none-found=No plugins installed
+menu.plugin.author=Author
+menu.plugin.version=Version
+menu.plugin.dependencies=Dependencies
+menu.plugin.refresh=Refresh
+menu.plugin.devguide=Plugin development guide
+menu.plugin.template=Plugin template workspace
+menu.plugin.error=Plugin error
+menu.plugin.error.load=Failed to load plugin
+menu.plugin.error.unload=Failed to unload plugin
+menu.plugin.error.install=Failed to install plugin
+menu.plugin.error.uninstall=Failed to uninstall plugin
 
 ##### Keybinds
 bind.inputprompt.initial=<waiting>

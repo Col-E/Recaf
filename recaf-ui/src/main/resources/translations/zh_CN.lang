@@ -141,6 +141,22 @@ menu.plugin.browse=浏览插件
 menu.plugin.enabled=启用
 menu.plugin.uninstall=卸载
 menu.plugin.uninstall.warning=你确定要删除该插件吗?
+menu.plugin.uninstall.dependants=依赖它的插件也将被一并停用:
+menu.plugin.install=安装插件
+menu.plugin.install.invalid=所选文件不是有效的 Recaf 插件
+menu.plugin.install.duplicate=已安装相同 ID 的插件
+menu.plugin.none-found=未安装任何插件
+menu.plugin.author=作者
+menu.plugin.version=版本
+menu.plugin.dependencies=依赖
+menu.plugin.refresh=刷新
+menu.plugin.devguide=插件开发指南
+menu.plugin.template=插件模板工程
+menu.plugin.error=插件错误
+menu.plugin.error.load=插件加载失败
+menu.plugin.error.unload=插件停用失败
+menu.plugin.error.install=插件安装失败
+menu.plugin.error.uninstall=插件删除失败
 
 ##### Keybinds
 bind.inputprompt.initial=<等待中>
