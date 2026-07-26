@@ -335,6 +335,48 @@ class PhantomGeneratorTest extends CompilerTestBase implements Opcodes {
 	}
 
 	@Test
+	void testReferencedKnownTypeHierarchy() {
+		// Create two types:
+		//  - KnownChild implements MissingParentInterface
+		//  - KnownTypeReference uses KnownChild as a method parameter
+		JvmClassInfo knownInterface = TestClassUtils.createClass("KnownChild", node -> {
+			node.access = ACC_PUBLIC | ACC_INTERFACE | ACC_ABSTRACT;
+			node.interfaces.add("MissingParentInterface");
+		});
+		JvmClassInfo input = TestClassUtils.createClass("KnownTypeReference", node -> {
+			MethodNode method = new MethodNode(ACC_PUBLIC, "use", "(LKnownChild;)V", null, null);
+			method.visitInsn(RETURN);
+			node.methods.add(method);
+		});
+		Workspace workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(knownInterface, input));
+
+		// When generating phantoms for KnownTypeReference, the missing parent interface should be generated as a phantom.
+		GeneratedPhantomWorkspaceResource phantoms = generatePhantoms(workspace, input);
+		assertTrue(assertHasPhantom(phantoms.getJvmClassBundle(), "MissingParentInterface").hasInterfaceModifier());
+	}
+
+	@Test
+	void testGenericArityIsRetainedInPhantoms() {
+		// class GenericTypeReference implements MissingProvider<Pair<String, Integer>> { }
+		JvmClassInfo input = TestClassUtils.createClass("GenericTypeReference", node -> {
+			node.interfaces.add("MissingProvider");
+			node.signature = "Ljava/lang/Object;LMissingProvider<Landroid/util/Pair<Ljava/lang/String;Ljava/lang/Integer;>;>;";
+		});
+
+		// The phantom for Pair should retain the generic signature, so that source referencing it can compile.
+		GeneratedPhantomWorkspaceResource phantoms = generatePhantoms(input);
+		JvmClassInfo pair = assertHasPhantom(phantoms.getJvmClassBundle(), "android/util/Pair");
+		assertEquals("<T0:Ljava/lang/Object;T1:Ljava/lang/Object;>Ljava/lang/Object;", pair.getSignature());
+
+		// Validate that source referencing the generic phantom can compile.
+		CompilerResult result = compiler.compile(new JavacArgumentsBuilder()
+				.withClassName("GenericPairUse")
+				.withClassSource("class GenericPairUse { android.util.Pair<String, Integer> value; }")
+				.build(), null, Collections.singletonList(phantoms), null);
+		assertTrue(result.wasSuccess(), () -> "Generic phantom should compile: " + result.getDiagnostics());
+	}
+
+	@Test
 	void testInvisibleAnnotationRetentionOnCompiledClassInfo() {
 		// Annotations with compile-time retention should be generated as phantoms with the annotation modifier,
 		// but their values should be invisible when compiling source that references them.

@@ -13,6 +13,8 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.TypePath;
+import org.objectweb.asm.signature.SignatureReader;
+import org.objectweb.asm.signature.SignatureVisitor;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 import software.coley.recaf.RecafConstants;
@@ -20,6 +22,8 @@ import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.phantom.model.PhantomClassConstraint;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -31,6 +35,8 @@ import java.util.Set;
 public class PhantomConstraintCollector {
 	private final PhantomGenerationContext context;
 	private final PhantomMethodConstraintAnalysis methodSubtypeAnalyzer;
+	private final Set<String> visitedKnownClasses = new HashSet<>();
+	private final Deque<JvmClassInfo> pendingKnownClasses = new ArrayDeque<>();
 
 	/**
 	 * @param context
@@ -48,12 +54,68 @@ public class PhantomConstraintCollector {
 	 * 		Class to inspect.
 	 */
 	public void collect(@Nonnull JvmClassInfo info) {
-		info.getClassReader().accept(new CollectionVisitor(), ClassReader.SKIP_FRAMES);
+		collectClass(info, true);
+		while (!pendingKnownClasses.isEmpty())
+			collectClass(pendingKnownClasses.removeFirst(), false);
+	}
 
-		ClassNode node = new ClassNode();
-		info.getClassReader().accept(node, ClassReader.SKIP_FRAMES);
-		for (MethodNode method : node.methods)
-			methodSubtypeAnalyzer.collect(node.name, method.access, method);
+	private void collectClass(@Nonnull JvmClassInfo info, boolean followReferences) {
+		// Skip if the class has already been visited.
+		// This is only relevant for known classes, as phantom classes are only visited once.
+		if (!followReferences && !visitedKnownClasses.add(info.getName()))
+			return;
+
+		// Collect constraints from the class itself.
+		int flags = ClassReader.SKIP_FRAMES;
+		if (!followReferences)
+			flags |= ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG;
+		info.getClassReader().accept(new CollectionVisitor(followReferences), flags);
+
+		// Collect constraints from the methods of the class, if requested.
+		if (followReferences) {
+			ClassNode node = new ClassNode();
+			info.getClassReader().accept(node, ClassReader.SKIP_FRAMES);
+			for (MethodNode method : node.methods)
+				methodSubtypeAnalyzer.collect(node.name, method.access, method);
+		}
+	}
+
+	private void queueKnownType(@Nullable String internalName) {
+		// Skip if the type is null or already visited.
+		if (internalName == null || visitedKnownClasses.contains(internalName))
+			return;
+
+		// Add to the queue if the type is known.
+		ClassInfo info = context.getLookup().getKnownClassInfo(internalName);
+		if (info instanceof JvmClassInfo jvmInfo)
+			pendingKnownClasses.addLast(jvmInfo);
+	}
+
+	private void queueKnownTypes(@Nonnull Type type) {
+		// For any referenced types, queue them for inspection if they are known.
+		switch (type.getSort()) {
+			case Type.ARRAY -> queueKnownTypes(type.getElementType());
+			case Type.OBJECT -> queueKnownType(type.getInternalName());
+			case Type.METHOD -> {
+				queueKnownTypes(type.getReturnType());
+				for (Type argument : type.getArgumentTypes())
+					queueKnownTypes(argument);
+			}
+			default -> {}
+		}
+	}
+
+	private void collectSignature(@Nullable String signature) {
+		// Skip if the signature is null or empty.
+		if (signature == null || signature.isEmpty())
+			return;
+
+		// Collect generic parameter counts from the signature.
+		try {
+			new SignatureReader(signature).accept(new GenericSignatureCollector());
+		} catch (RuntimeException ignored) {
+			// Invalid signatures are handled as erased declarations elsewhere.
+		}
 	}
 
 	@Nullable
@@ -266,12 +328,17 @@ public class PhantomConstraintCollector {
 	}
 
 	private class CollectionVisitor extends ClassVisitor {
-		protected CollectionVisitor() {
+		private final boolean followReferences;
+
+		protected CollectionVisitor(boolean followReferences) {
 			super(RecafConstants.getAsmVersion());
+			this.followReferences = followReferences;
 		}
 
 		@Override
 		public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+			collectSignature(signature);
+			queueKnownType(superName);
 			// Mark the supertype as a phantom candidate.
 			PhantomClassConstraint superConstraint = constraint(superName);
 			if (superConstraint != null)
@@ -284,6 +351,7 @@ public class PhantomConstraintCollector {
 			// Mark the interfaces as phantom candidates.
 			if (interfaces != null) {
 				for (String interfaceName : interfaces) {
+					queueKnownType(interfaceName);
 					PhantomClassConstraint interfaceConstraint = constraint(interfaceName);
 					if (interfaceConstraint != null)
 						interfaceConstraint.markInterface();
@@ -308,6 +376,9 @@ public class PhantomConstraintCollector {
 
 		@Override
 		public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
+			collectSignature(signature);
+			if (followReferences)
+				queueKnownTypes(Type.getType(descriptor));
 			context.collectDescriptor(descriptor);
 			collectConstant(value);
 			return new FieldVisitor(RecafConstants.getAsmVersion(), super.visitField(access, name, descriptor, signature, value)) {
@@ -327,6 +398,9 @@ public class PhantomConstraintCollector {
 
 		@Override
 		public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
+			collectSignature(signature);
+			if (followReferences)
+				queueKnownTypes(Type.getMethodType(descriptor));
 			context.collectMethodDescriptor(descriptor);
 			if (exceptions != null)
 				for (String exception : exceptions)
@@ -440,6 +514,50 @@ public class PhantomConstraintCollector {
 					super.visitTryCatchBlock(start, end, handler, type);
 				}
 			};
+		}
+	}
+
+	private class GenericSignatureCollector extends SignatureVisitor {
+		private String className;
+		private int argumentCount;
+
+		private GenericSignatureCollector() {
+			super(RecafConstants.getAsmVersion());
+		}
+
+		@Override
+		public void visitClassType(String name) {
+			className = name;
+			argumentCount = 0;
+		}
+
+		@Override
+		public void visitInnerClassType(String name) {
+			if (className != null)
+				className += '$' + name;
+			argumentCount = 0;
+		}
+
+		@Override
+		public void visitTypeArgument() {
+			argumentCount++;
+		}
+
+		@Override
+		public SignatureVisitor visitTypeArgument(char wildcard) {
+			argumentCount++;
+			return new GenericSignatureCollector();
+		}
+
+		@Override
+		public void visitEnd() {
+			if (className != null && argumentCount > 0) {
+				PhantomClassConstraint constraint = context.getOrCreateConstraint(className);
+				if (constraint != null)
+					constraint.markGenericParameterCount(argumentCount);
+			}
+			className = null;
+			argumentCount = 0;
 		}
 	}
 }

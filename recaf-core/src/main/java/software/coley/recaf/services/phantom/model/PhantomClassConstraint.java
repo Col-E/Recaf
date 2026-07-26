@@ -29,6 +29,7 @@ public class PhantomClassConstraint {
 	private boolean classEvidence;
 	private boolean annotationEvidence;
 	private boolean runtimeVisibleAnnotationEvidence;
+	private int genericParameterCount;
 	private String outerName;
 	private String innerSimpleName;
 	private String resolvedSuperName = "java/lang/Object";
@@ -195,6 +196,24 @@ public class PhantomClassConstraint {
 	 */
 	public boolean hasRuntimeVisibleAnnotationEvidence() {
 		return runtimeVisibleAnnotationEvidence;
+	}
+
+	/**
+	 * @return Number of generic type parameters required by observed signatures.
+	 */
+	public int getGenericParameterCount() {
+		return genericParameterCount;
+	}
+
+	/**
+	 * Records generic arity inferred from a JVM signature.
+	 *
+	 * @param count
+	 *		Number of type arguments observed.
+	 */
+	public void markGenericParameterCount(int count) {
+		if (count > genericParameterCount)
+			genericParameterCount = count;
 	}
 
 	/**

@@ -51,7 +51,7 @@ public class PhantomClassWriter {
 		ClassWriter writer = new ClassWriter(0);
 		String[] interfaces = constraint.getResolvedInterfaces().isEmpty() ?
 				null : constraint.getResolvedInterfaces().toArray(String[]::new);
-		writer.visit(version, access, constraint.getName(), null, constraint.getResolvedSuperName(), interfaces);
+		writer.visit(version, access, constraint.getName(), genericClassSignature(constraint), constraint.getResolvedSuperName(), interfaces);
 
 		// Mark generated phantoms so other tooling can recognize synthetic placeholders.
 		AnnotationVisitor marker = writer.visitAnnotation(GENERATED_MARKER_DESC, true);
@@ -100,6 +100,20 @@ public class PhantomClassWriter {
 
 		writer.visitEnd();
 		return writer.toByteArray();
+	}
+
+	@Nullable
+	private static String genericClassSignature(@Nonnull PhantomClassConstraint constraint) {
+		int count = constraint.getGenericParameterCount();
+		if (count == 0)
+			return null;
+		StringBuilder signature = new StringBuilder("<");
+		for (int i = 0; i < count; i++)
+			signature.append('T').append(i).append(":Ljava/lang/Object;");
+		signature.append('>').append('L').append(constraint.getResolvedSuperName()).append(';');
+		for (String interfaceName : constraint.getResolvedInterfaces())
+			signature.append('L').append(interfaceName).append(';');
+		return signature.toString();
 	}
 
 	private static int innerClassAccess(@Nullable PhantomClassConstraint constraint) {
