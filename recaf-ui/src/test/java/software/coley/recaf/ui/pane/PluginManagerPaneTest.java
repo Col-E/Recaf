@@ -3,6 +3,8 @@ package software.coley.recaf.ui.pane;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import javafx.application.Platform;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -59,6 +61,7 @@ import static org.mockito.Mockito.when;
  * @author Canrad
  */
 class PluginManagerPaneTest extends BaseFxTest {
+	private Path home;
 	private Path pluginDir;
 	private Path disabledDir;
 	private Path stagingDir;
@@ -78,11 +81,16 @@ class PluginManagerPaneTest extends BaseFxTest {
 		}
 	}
 
+	@AfterAll
+	static void stopFx() {
+		Platform.exit();
+	}
+
 	@BeforeEach
 	void setup() throws Exception {
 		// Fresh directories per test. Windows keeps memory-mapped plugin jars locked until GC,
 		// so isolating each test's files avoids cross-test delete/move conflicts.
-		Path home = Files.createTempDirectory("recaf-plugin-pane-test");
+		home = Files.createTempDirectory("recaf-plugin-pane-test");
 		pluginDir = Files.createDirectories(home.resolve("plugins"));
 		disabledDir = Files.createDirectories(pluginDir.resolve("disabled"));
 		stagingDir = Files.createDirectories(home.resolve("staging"));
@@ -93,6 +101,20 @@ class PluginManagerPaneTest extends BaseFxTest {
 
 		manager = new FakePluginManager();
 		pane = onFx(() -> new PluginManagerPane(manager, dirs));
+	}
+
+	@AfterEach
+	void cleanup() throws Exception {
+		if (home != null) {
+			try (var walk = Files.walk(home)) {
+				walk.sorted(java.util.Comparator.reverseOrder())
+						.forEach(p -> {
+							try {
+								Files.deleteIfExists(p);
+							} catch (IOException ignored) {}
+						});
+			}
+		}
 	}
 
 	@Test

@@ -197,26 +197,26 @@ public class PluginManagerPane extends BorderPane {
 			// Validate before copying: reject non-plugins and duplicates with a targeted message.
 			PluginInfo info = readPluginInfo(source);
 			if (info == null) {
-				ErrorDialogs.show(getBinding("menu.plugin.error.install"),
+				FxThreadUtil.run(() -> ErrorDialogs.show(getBinding("menu.plugin.error.install"),
 						getBinding("menu.plugin.install"),
 						getBinding("menu.plugin.install.invalid"),
-						new PluginException("Not a valid plugin: " + source.getFileName()));
+						new PluginException("Not a valid plugin: " + source.getFileName())));
 				return;
 			}
 			if (pluginManager.isPluginLoaded(info.id())) {
-				ErrorDialogs.show(getBinding("menu.plugin.error.install"),
+				FxThreadUtil.run(() -> ErrorDialogs.show(getBinding("menu.plugin.error.install"),
 						getBinding("menu.plugin.install"),
 						getBinding("menu.plugin.install.duplicate"),
-						new PluginException("Duplicate plugin id: " + info.id()));
+						new PluginException("Duplicate plugin id: " + info.id())));
 				return;
 			}
 			try {
 				installFrom(source);
 			} catch (IOException | PluginException ex) {
 				logger.error("Failed to install plugin: {}", source, ex);
-				ErrorDialogs.show(getBinding("menu.plugin.error.install"),
+				FxThreadUtil.run(() -> ErrorDialogs.show(getBinding("menu.plugin.error.install"),
 						getBinding("menu.plugin.install"),
-						getBinding("menu.plugin.error.load"), ex);
+						getBinding("menu.plugin.error.load"), ex));
 			}
 			refresh();
 		});
@@ -266,9 +266,9 @@ public class PluginManagerPane extends BorderPane {
 					applyEnabled(file, true);
 				} catch (IOException | PluginException ex) {
 					logger.error("Failed to enable plugin: {}", file.info().id(), ex);
-					ErrorDialogs.show(getBinding("menu.plugin.error"),
+					FxThreadUtil.run(() -> ErrorDialogs.show(getBinding("menu.plugin.error"),
 							literalBinding(file.displayName()),
-							getBinding("menu.plugin.error.load"), ex);
+							getBinding("menu.plugin.error.load"), ex));
 				}
 				refresh();
 			});
@@ -277,7 +277,6 @@ public class PluginManagerPane extends BorderPane {
 			List<String> dependants = dependantNames(file.info().id());
 			if (!dependants.isEmpty() && !confirm(Lang.get("menu.plugin.enabled"),
 					Lang.get("menu.plugin.uninstall.dependants") + "\n - " + String.join("\n - ", dependants))) {
-				refresh();
 				return;
 			}
 			ThreadUtil.run(() -> {
@@ -285,9 +284,9 @@ public class PluginManagerPane extends BorderPane {
 					applyEnabled(file, false);
 				} catch (IOException | PluginException ex) {
 					logger.error("Failed to disable plugin: {}", file.info().id(), ex);
-					ErrorDialogs.show(getBinding("menu.plugin.error"),
+					FxThreadUtil.run(() -> ErrorDialogs.show(getBinding("menu.plugin.error"),
 							literalBinding(file.displayName()),
-							getBinding("menu.plugin.error.unload"), ex);
+							getBinding("menu.plugin.error.unload"), ex));
 				}
 				refresh();
 			});
@@ -353,9 +352,9 @@ public class PluginManagerPane extends BorderPane {
 				applyUninstall(file);
 			} catch (IOException | PluginException ex) {
 				logger.error("Failed to uninstall plugin: {}", file.info().id(), ex);
-				ErrorDialogs.show(getBinding("menu.plugin.error"),
+				FxThreadUtil.run(() -> ErrorDialogs.show(getBinding("menu.plugin.error"),
 						literalBinding(file.displayName()),
-						getBinding("menu.plugin.error.uninstall"), ex);
+						getBinding("menu.plugin.error.uninstall"), ex));
 			}
 			refresh();
 		});
