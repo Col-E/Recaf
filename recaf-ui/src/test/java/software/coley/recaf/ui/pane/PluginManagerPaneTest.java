@@ -2,10 +2,7 @@ package software.coley.recaf.ui.pane;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
-import javafx.application.Platform;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import software.coley.recaf.plugin.Plugin;
@@ -36,9 +33,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -53,10 +47,8 @@ import static org.mockito.Mockito.when;
 /**
  * Tests for {@link PluginManagerPane} plugin file management: scanning, enable/disable, install, uninstall.
  * <p/>
- * The pane's dialog/async wrappers are not exercised here; the synchronous core operations
- * ({@link PluginManagerPane#installFrom}, {@link PluginManagerPane#applyEnabled},
- * {@link PluginManagerPane#applyUninstall}) are called directly against real plugin jars built from the
- * {@link SampleAlphaPlugin}/{@link SampleBetaPlugin} sample classes.
+ * These tests exercise only the synchronous business logic of the pane,
+ * bypassing JavaFX UI initialization via the package-private testing constructor.
  *
  * @author Canrad
  */
@@ -67,24 +59,6 @@ class PluginManagerPaneTest extends BaseFxTest {
 	private Path stagingDir;
 	private FakePluginManager manager;
 	private PluginManagerPane pane;
-
-	@BeforeAll
-	static void startFx() {
-		try {
-			CountDownLatch started = new CountDownLatch(1);
-			Platform.startup(started::countDown);
-			started.await(10, TimeUnit.SECONDS);
-		} catch (IllegalStateException alreadyRunning) {
-			// Toolkit already up, fine.
-		} catch (InterruptedException ignored) {
-			Thread.currentThread().interrupt();
-		}
-	}
-
-	@AfterAll
-	static void stopFx() {
-		Platform.exit();
-	}
 
 	@BeforeEach
 	void setup() throws Exception {
@@ -100,7 +74,7 @@ class PluginManagerPaneTest extends BaseFxTest {
 		when(dirs.getDisabledPluginDirectory()).thenReturn(disabledDir);
 
 		manager = new FakePluginManager();
-		pane = onFx(() -> new PluginManagerPane(manager, dirs));
+		pane = new PluginManagerPane(manager, dirs, true);
 	}
 
 	@AfterEach
@@ -222,30 +196,6 @@ class PluginManagerPaneTest extends BaseFxTest {
 			zos.write(pluginClass.getName().getBytes());
 			zos.closeEntry();
 		}
-	}
-
-	/**
-	 * Runs a supplier on the FX thread and returns its result.
-	 */
-	private static <T> T onFx(@Nonnull java.util.function.Supplier<T> supplier) throws InterruptedException {
-		if (Platform.isFxApplicationThread())
-			return supplier.get();
-		AtomicReference<T> ref = new AtomicReference<>();
-		AtomicReference<RuntimeException> err = new AtomicReference<>();
-		CountDownLatch latch = new CountDownLatch(1);
-		Platform.runLater(() -> {
-			try {
-				ref.set(supplier.get());
-			} catch (RuntimeException ex) {
-				err.set(ex);
-			} finally {
-				latch.countDown();
-			}
-		});
-		latch.await(10, TimeUnit.SECONDS);
-		if (err.get() != null)
-			throw err.get();
-		return ref.get();
 	}
 
 	/**

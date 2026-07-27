@@ -78,8 +78,16 @@ public class PluginManagerPane extends BorderPane {
 	@Inject
 	public PluginManagerPane(@Nonnull PluginManager pluginManager,
 	                         @Nonnull RecafDirectoriesConfig directories) {
+		this(pluginManager, directories, false);
+	}
+
+	PluginManagerPane(@Nonnull PluginManager pluginManager,
+	                  @Nonnull RecafDirectoriesConfig directories,
+	                  boolean forTesting) {
 		this.pluginManager = pluginManager;
 		this.directories = directories;
+		// UI initialization is skipped when constructed for testing.
+		if (forTesting) return;
 
 		pluginList.setFillWidth(true);
 		pluginList.setSpacing(10);
