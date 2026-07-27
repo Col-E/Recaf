@@ -21,8 +21,9 @@ public class MainMenuProvider {
 	                        @Nonnull MappingMenu mappingMenu,
 	                        @Nonnull AnalysisMenu analysisMenu,
 	                        @Nonnull ScriptMenu scriptMenu,
+	                        @Nonnull PluginMenu pluginMenu,
 	                        @Nonnull HelpMenu helpMenu) {
-		this.mainMenu = new MainMenu(fileMenu, configMenu, searchMenu, mappingMenu, analysisMenu, scriptMenu, helpMenu);
+		this.mainMenu = new MainMenu(fileMenu, configMenu, searchMenu, mappingMenu, analysisMenu, scriptMenu, pluginMenu, helpMenu);
 	}
 
 	/**

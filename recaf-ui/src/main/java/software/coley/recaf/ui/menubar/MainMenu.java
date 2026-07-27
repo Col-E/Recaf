@@ -18,6 +18,7 @@ public class MainMenu extends MenuBar {
 	private final MappingMenu mappingMenu;
 	private final AnalysisMenu analysisMenu;
 	private final ScriptMenu scriptMenu;
+	private final PluginMenu pluginMenu;
 	private final HelpMenu helpMenu;
 
 	/**
@@ -36,6 +37,8 @@ public class MainMenu extends MenuBar {
 	 * 		Analysis menu instance.
 	 * @param scriptMenu
 	 * 		Script menu instance.
+	 * @param pluginMenu
+	 * 		Plugin menu instance.
 	 * @param helpMenu
 	 * 		Help menu instance.
 	 */
@@ -45,6 +48,7 @@ public class MainMenu extends MenuBar {
 	         @Nonnull MappingMenu mappingMenu,
 	         @Nonnull AnalysisMenu analysisMenu,
 	         @Nonnull ScriptMenu scriptMenu,
+	         @Nonnull PluginMenu pluginMenu,
 	         @Nonnull HelpMenu helpMenu) {
 		this.fileMenu = fileMenu;
 		this.configMenu = configMenu;
@@ -52,9 +56,10 @@ public class MainMenu extends MenuBar {
 		this.mappingMenu = mappingMenu;
 		this.analysisMenu = analysisMenu;
 		this.scriptMenu = scriptMenu;
+		this.pluginMenu = pluginMenu;
 		this.helpMenu = helpMenu;
 
-		getMenus().addAll(fileMenu, configMenu, searchMenu, mappingMenu, analysisMenu, scriptMenu, helpMenu);
+		getMenus().addAll(fileMenu, configMenu, searchMenu, mappingMenu, analysisMenu, scriptMenu, pluginMenu, helpMenu);
 		setPadding(new Insets(0, 0, 2, 0));
 	}
 
@@ -92,6 +97,12 @@ public class MainMenu extends MenuBar {
 	@Nonnull
 	public ScriptMenu getScriptMenu() {
 		return scriptMenu;
+	}
+
+	/** @return Plugin menu instance. */
+	@Nonnull
+	public PluginMenu getPluginMenu() {
+		return pluginMenu;
 	}
 
 	/** @return Help menu instance. */
