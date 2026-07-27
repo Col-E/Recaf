@@ -330,11 +330,24 @@ public abstract class ClassStubGenerator {
 				// If the parent type is known, we can hopefully generate a valid constructor.
 				if (superPath != null)
 					appendParentConstructorInvocation(code, nonStaticInner);
+				appendConstructorBody(code, methodParameterTypes);
 			} else {
 				code.append("throw new RuntimeException();");
 			}
 			code.append(" }\n");
 		}
+	}
+
+	/**
+	 * Appends additional statements required by a generated constructor.
+	 *
+	 * @param code
+	 * 		Class source to append to.
+	 * @param parameterTypes
+	 * 		Constructor parameter types as they appear in the class-file descriptor.
+	 */
+	protected void appendConstructorBody(@Nonnull StringBuilder code, @Nonnull Type[] parameterTypes) {
+		// Default stubs only need the parent constructor invocation.
 	}
 
 	/**
@@ -586,7 +599,18 @@ public abstract class ClassStubGenerator {
 	 */
 	@Nonnull
 	protected static String cleanType(String type) {
-		return type.replace('/', '.').replace('$', '.');
+		// '$' is normally the binary separator for a nested class... However, in some cases we want to keep it.
+		// For instance, if we have 'Outer$1' as a nested class,
+		// we can't just call the class 'Outer.1' in source, not just '1'.
+		String[] binaryParts = type.replace('/', '.').split("\\$", -1);
+		if (binaryParts.length == 1)
+			return binaryParts[0];
+		StringBuilder cleaned = new StringBuilder(binaryParts[0]);
+		for (int i = 1; i < binaryParts.length; i++) {
+			String separator = isSafeName(binaryParts[i]) ? "." : "$";
+			cleaned.append(separator).append(binaryParts[i]);
+		}
+		return cleaned.toString();
 	}
 
 	/**

@@ -359,31 +359,6 @@ class ExpressionCompilerTest extends CompilerTestBase {
 	}
 
 	@Test
-	void detachedEnumSwitchContextRetainsEnumConstants() {
-		compileFull("DetachedEnumSwitch", """
-				public enum DetachedEnumSwitch {
-					FIRST, SECOND;
-				
-					static Object value = new Object() {
-						static int state;
-						static { state = 1; }
-					};
-				}
-				""");
-		JvmClassInfo synthetic = get("DetachedEnumSwitch$1");
-		ExpressionCompiler assembler = recaf.get(ExpressionCompiler.class);
-		assembler.setClassContext(synthetic);
-		assembler.setMethodContext(synthetic.getDeclaredMethod("<clinit>", "()V"));
-
-		// TODO: A further improvement would be letting the compiler emit a structure that lets us drop qualified name access to the enum consts.
-
-		// When we compile in the static initializer of the anonymous inner class,
-		// the expression compiler should be able to resolve the enum constants.
-		ExpressionResult result = compile(assembler, "String s = DetachedEnumSwitch.FIRST.name(); s = DetachedEnumSwitch.SECOND.name();");
-		assertSuccess(result);
-	}
-
-	@Test
 	void interfaceFieldsAreInitializedInSourceStubs() {
 		compileFull("InterfaceFields", """
 				public interface InterfaceFields {
@@ -407,25 +382,196 @@ class ExpressionCompilerTest extends CompilerTestBase {
 	}
 
 	@Test
-	void detachedAnonymousConstructorKeepsSyntheticOuterParameter() {
-		compileFull("DetachedAnonymousConstructor", """
-				public class DetachedAnonymousConstructor {
-					Runnable action = new Runnable() {
-						@Override
-						public void run() {}
+	void detachedEnumSwitchContextRetainsEnumConstants() {
+		compileFull("DetachedEnumSwitch", """
+				public enum DetachedEnumSwitch {
+					FIRST, SECOND;
+				
+					static Object value = new Object() {
+						static int state;
+						static { state = 1; }
 					};
 				}
 				""");
-		JvmClassInfo anonymous = get("DetachedAnonymousConstructor$1");
+		JvmClassInfo synthetic = get("DetachedEnumSwitch$1");
+		ExpressionCompiler assembler = recaf.get(ExpressionCompiler.class);
+		assembler.setClassContext(synthetic);
+		assembler.setMethodContext(synthetic.getDeclaredMethod("<clinit>", "()V"));
+
+		// When we compile in the static initializer of the anonymous inner class,
+		// the expression compiler should be able to resolve the enum constants.
+		ExpressionResult result = compile(assembler, "String s = FIRST.name(); s = SECOND.name();");
+		assertSuccess(result);
+	}
+
+	@Test
+	void detachedAnonymousClassFacilitatesOuterMethodRefs() {
+		compileFull("DetachedClass", """
+				public class DetachedClass {
+					public void outerMethod() {}
+				
+					Runnable action = new Runnable() {
+						@Override
+						public void run() { outerMethod(); }
+					};
+				}
+				""");
+		JvmClassInfo anonymous = get("DetachedClass$1");
 		ExpressionCompiler assembler = recaf.get(ExpressionCompiler.class);
 		assembler.setClassContext(anonymous);
-		assembler.setMethodContext(anonymous.getDeclaredMethod("<init>", "(LDetachedAnonymousConstructor;)V"));
 
-		// TODO: We currently just validate that this doesn't fail with an empty expression.
-		//  The stubbing places the anonymous class as a detached class with the same constructor signature as the source.
-		//  This doesn't let us call outer methods sadly...
-		ExpressionResult result = compile(assembler, "");
-		assertSuccess(result);
+		// When we compile in any method of the anonymous class, we should be able to reference
+		// both methods inside the anonymous class and the outer class.
+		for (MethodMember method : anonymous.getMethods()) {
+			assembler.setMethodContext(method);
+			assertSuccess(compile(assembler, "outerMethod(); run();"));
+		}
+	}
+
+	@Test
+	void detachedAnonymousClassFacilitatesOuterFieldRefs() {
+		compileFull("DetachedClass", """
+				public class DetachedClass {
+					int outerField = 1;
+				
+					Runnable action = new Runnable() {
+						int innerField = 1;
+				
+						@Override
+						public void run() { innerField = 2; outerField = 2; }
+					};
+				}
+				""");
+		JvmClassInfo anonymous = get("DetachedClass$1");
+		ExpressionCompiler assembler = recaf.get(ExpressionCompiler.class);
+		assembler.setClassContext(anonymous);
+
+		// When we compile in any method of the anonymous class, we should be able to reference
+		// both fields inside the anonymous class and the outer class.
+		for (MethodMember method : anonymous.getMethods()) {
+			assembler.setMethodContext(method);
+			ExpressionResult result = compile(assembler, "int value = outerField; innerField = value; outerField = value + 1;");
+			assertSuccess(result);
+
+			// Sanity check the correct field references are being used in the generated assembly.
+			assertTrue(result.getAssembly().contains("getfield DetachedClass.outerField I"));
+			assertTrue(result.getAssembly().contains("putfield DetachedClass.outerField I"));
+			assertFalse(result.getAssembly().contains("DetachedClass$1 outerField"));
+		}
+	}
+
+	@Test
+	void detachedAnonymousClassFacilitatesOuterStaticFieldRefs() {
+		compileFull("DetachedStaticClass", """
+				public class DetachedStaticClass {
+					static int outerField = 1;
+				
+					Runnable action = new Runnable() {
+						@Override
+						public void run() { outerField++; }
+					};
+				}
+				""");
+		JvmClassInfo anonymous = get("DetachedStaticClass$1");
+		ExpressionCompiler assembler = recaf.get(ExpressionCompiler.class);
+		assembler.setClassContext(anonymous);
+
+		// When we compile in any method of the anonymous class, we should be able to reference
+		// the static field inside the outer class.
+		for (MethodMember method : anonymous.getMethods()) {
+			assembler.setMethodContext(method);
+			ExpressionResult result = compile(assembler, "int value = outerField; outerField = value + 1;");
+			assertSuccess(result);
+
+			// Sanity check the correct field references are being used in the generated assembly.
+			assertTrue(result.getAssembly().contains("getstatic DetachedStaticClass.outerField I"));
+			assertTrue(result.getAssembly().contains("putstatic DetachedStaticClass.outerField I"));
+			assertFalse(result.getAssembly().contains("DetachedStaticClass$1 outerField"));
+		}
+	}
+
+	@Test
+	void detachedAnonymousClassFacilitatesOuterFinalFieldRefs() {
+		compileFull("DetachedFinalClass", """
+				public class DetachedFinalClass {
+					final int outerField = new java.util.Random().nextInt();
+				
+					Runnable action = new Runnable() {
+						@Override
+						public void run() { System.out.println(outerField); }
+					};
+				}
+				""");
+		JvmClassInfo anonymous = get("DetachedFinalClass$1");
+		ExpressionCompiler assembler = recaf.get(ExpressionCompiler.class);
+		assembler.setClassContext(anonymous);
+
+		// When we compile in any method of the anonymous class, we should be able to reference
+		// the final field inside the outer class as long as its read-only.
+		for (MethodMember method : anonymous.getMethods()) {
+			assembler.setMethodContext(method);
+
+			// The outer field is final, our detached mirror should also not allow writing to it. So this should fail.
+			ExpressionResult result = compile(assembler, "outerField = 2;");
+			assertFalse(result.wasSuccess());
+			assertFalse(result.getDiagnostics().isEmpty());
+
+			// Regular reads are fine.
+			result = compile(assembler, "System.out.println(outerField);");
+			assertSuccess(result);
+		}
+	}
+
+	@Test
+	void detachedAnonymousClassWithoutReferenceCannotAddRef() {
+		compileFull("DetachedFinalClass", """
+				public class DetachedFinalClass {
+					final int outerField = 0;
+				
+					Runnable action = new Runnable() {
+						@Override
+						public void run() {} // Note, the anonymous class has no reference to the outer class.
+					};
+				}
+				""");
+		JvmClassInfo anonymous = get("DetachedFinalClass$1");
+		MethodMember run = anonymous.getFirstDeclaredMethodByName("run");
+		ExpressionCompiler assembler = recaf.get(ExpressionCompiler.class);
+		assembler.setClassContext(anonymous);
+		assembler.setMethodContext(run);
+
+		// The anonymous class has no reference to the outer class, so we cannot read 'outerField'.
+		// In the underlying class file, there is no 'this$0' field to proxy access to the outer class with.
+		ExpressionResult result = compile(assembler, "System.out.println(outerField);");
+		assertFalse(result.wasSuccess());
+		assertFalse(result.getDiagnostics().isEmpty());
+	}
+
+	@Test
+	void detachedNestedAnonymousContextUsesBinaryTopLevelName() {
+		// Anonymous classes follow the pattern 'Outer$N' where N is an incrementing integer.
+		// For multiple nested anonymous classes the pattern continues as 'Outer$N$M'.
+		compileFull("DeepAnonymousContext", """
+				public class DeepAnonymousContext {
+					Object value = new Object() {
+						void outerContext() {}
+				
+						Object nested = new Object() {
+							void context() { outerContext(); }
+						};
+					};
+				}
+				""");
+		JvmClassInfo nested = get("DeepAnonymousContext$1$1");
+		ExpressionCompiler assembler = recaf.get(ExpressionCompiler.class);
+		assembler.setClassContext(nested);
+
+		// When we compile in any method of the anonymous class, we should be able to reference
+		// both methods inside the anonymous class and the outer class.
+		for (MethodMember method : nested.getMethods()) {
+			assembler.setMethodContext(method);
+			assertSuccess(compile(assembler, "outerContext(); context();"));
+		}
 	}
 
 	@Test
@@ -836,30 +982,6 @@ class ExpressionCompilerTest extends CompilerTestBase {
 		// When we compile in the context of the subtype child constructor,
 		// the expression compiler should drop the inherited synthetic outer parameter from the parent constructor
 		// and only keep the synthetic outer parameter of the child constructor.
-		assertSuccess(compile(assembler, ""));
-	}
-
-	@Test
-	void detachedNestedAnonymousContextUsesBinaryTopLevelName() {
-		// Anonymous classes follow the pattern 'Outer$N' where N is an incrementing integer.
-		// For multiple nested anonymous classes the pattern continues as 'Outer$N$M'.
-		compileFull("DeepAnonymousContext", """
-				public class DeepAnonymousContext {
-					Object value = new Object() {
-						Object nested = new Object() {
-							void context() {}
-						};
-					};
-				}
-				""");
-		JvmClassInfo nested = get("DeepAnonymousContext$1$1");
-		ExpressionCompiler assembler = recaf.get(ExpressionCompiler.class);
-		assembler.setClassContext(nested);
-		assembler.setMethodContext(nested.getFirstDeclaredMethodByName("context"));
-
-		// TODO: Ideally we could have methods in each level of the class topology, but for now
-		//  we're just supporting the deepest level of the nested anonymous class. We don't have
-		//  a great way to expose the outer anonymous classes to the expression compiler...
 		assertSuccess(compile(assembler, ""));
 	}
 

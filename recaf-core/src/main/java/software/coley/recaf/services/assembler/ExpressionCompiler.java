@@ -197,6 +197,11 @@ public class ExpressionCompiler {
 		byte[] klass = result.getCompilations().get(className);
 		if (klass == null)
 			return new ExpressionResult(new ExpressionCompileException("Compilation results missing the generated expression class"));
+		try {
+			klass = stubber.rewriteDetachedOuterRefs(klass);
+		} catch (ExpressionCompileException ex) {
+			return new ExpressionResult(ex);
+		}
 
 		// Convert the compiled class to JASM
 		try {
