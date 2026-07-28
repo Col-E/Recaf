@@ -49,8 +49,10 @@ import java.util.Collection;
 public class ProblemOverlay extends Group implements EditorComponent, ProblemInvalidationListener {
 	private final ChangeListener<Boolean> handleScrollbarVisibility = (ob, old, cur) -> ScrollbarPaddingUtil.handleScrollbarVisibility(this, cur);
 	private final IntegerProperty problemCount = new SimpleIntegerProperty(-1);
+	private final Object problemRefreshLock = new Object();
 	private Editor editor;
-	private boolean dirty;
+	private boolean problemRefreshPending;
+	private boolean problemRefreshDirty;
 
 	/**
 	 * New problem overlay.
@@ -286,14 +288,45 @@ public class ProblemOverlay extends Group implements EditorComponent, ProblemInv
 
 	@Override
 	public void onProblemInvalidation() {
-		ProblemTracking tracking = editor.getProblemTracking();
-		if (tracking != null && !dirty) {
-			dirty = true;
-			FxThreadUtil.run(() -> {
-				problemCount.set(tracking.getAllItems().size());
-				editor.redrawParagraphGraphics();
-				dirty = false;
-			});
+		// New incoming problem registrations can arrive off the FX thread.
+		// If we already have a refresh queued, we don't want to queue another one.
+		Editor currentEditor = editor;
+		ProblemTracking tracking = currentEditor == null ? null : currentEditor.getProblemTracking();
+		if (tracking == null)
+			return;
+
+		// Update dirty state and queue a refresh if one isn't already pending.
+		synchronized (problemRefreshLock) {
+			problemRefreshDirty = true;
+			if (problemRefreshPending)
+				return;
+			problemRefreshPending = true;
 		}
+		FxThreadUtil.run(this::refreshProblemState);
+	}
+
+	private void refreshProblemState() {
+		// If we are refreshing, then we are no longer dirty.
+		synchronized (problemRefreshLock) {
+			problemRefreshDirty = false;
+		}
+
+		// Update the problem count and redraw the editor to show the new problem state.
+		Editor currentEditor = editor;
+		ProblemTracking tracking = currentEditor == null ? null : currentEditor.getProblemTracking();
+		if (tracking != null) {
+			problemCount.set(tracking.getAllItems().size());
+			currentEditor.redrawParagraphGraphics();
+		}
+
+		// If a new problem invalidation came in while we were refreshing, queue another refresh.
+		boolean refreshAgain;
+		synchronized (problemRefreshLock) {
+			refreshAgain = problemRefreshDirty;
+			if (!refreshAgain)
+				problemRefreshPending = false;
+		}
+		if (refreshAgain)
+			FxThreadUtil.run(this::refreshProblemState);
 	}
 }
