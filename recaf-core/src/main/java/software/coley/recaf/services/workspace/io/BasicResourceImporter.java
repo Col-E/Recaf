@@ -44,6 +44,7 @@ import software.coley.recaf.util.android.DexIOUtil;
 import software.coley.recaf.util.io.ByteSource;
 import software.coley.recaf.util.io.ByteSources;
 import software.coley.recaf.util.io.LocalFileHeaderSource;
+import software.coley.recaf.util.io.ZipDecompressionLimiter;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.BasicFileBundle;
@@ -202,6 +203,10 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 		// Read ZIP
 		boolean isAndroid = zipInfo.getName().toLowerCase().endsWith(".apk");
 		ZipArchive archive = config.mapping().apply(source.readAll());
+		ZipDecompressionLimiter decompressionLimiter = new ZipDecompressionLimiter(
+				config.getMaxZipEntrySize().getValue(),
+				config.getMaxZipTotalSize().getValue(),
+				config.getMaxZipCompressionRatio().getValue());
 
 		// Sanity check, if there's data at the head of the file AND its otherwise empty its probably junk.
 		MemorySegment prefixData = archive.getPrefixData();
@@ -229,7 +234,7 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 						header.getLinkedDirectoryFileHeader().offset();
 				int entryIndex = i;
 				tasks.add(() -> {
-					LocalFileHeaderSource headerSource = new LocalFileHeaderSource(header, isAndroid);
+					LocalFileHeaderSource headerSource = new LocalFileHeaderSource(header, isAndroid, decompressionLimiter);
 					String entryName = header.getFileNameAsString();
 
 					// Skip directories. There is no such thing as a 'directory' entry in ZIP files.

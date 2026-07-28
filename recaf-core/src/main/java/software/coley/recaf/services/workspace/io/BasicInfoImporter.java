@@ -193,6 +193,12 @@ public class BasicInfoImporter implements InfoImporter {
 					.build();
 		}
 
+		// ASM recursively expands CONSTANT_Dynamic bootstrap arguments when it copies a class into a ClassWriter.
+		// Filter hostile bootstrap graphs before any validation step can trigger that expansion.
+		byte[] prefiltered = classPatcher.prefilter(name, data);
+		if (prefiltered != null)
+			data = prefiltered;
+
 		// We're doing a check-then-filter. If ASM reads the class as-is without issue, keep the result.
 		// Otherwise, patch when we encounter parse problems and try again.
 		int readerFlags = patchingMode == InfoImporterConfig.ClassPatchMode.CHECK_ADVANCED_THEN_FILTER ? ClassReader.SKIP_CODE : 0;
