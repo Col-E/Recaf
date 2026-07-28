@@ -30,6 +30,7 @@ import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.zip.ZipEntry;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -475,4 +476,82 @@ class ResourceImporterTest {
 		WorkspaceResource resource = importer.importResource(exeSource);
 		assertTrue(resource.getFileBundle().containsKey("Hello.txt"));
 	}
+	@Test
+	void testZipBombEntryIsSkipped() throws IOException {
+		ResourceImporterConfig config = new ResourceImporterConfig();
+		config.getMaxZipEntrySize().setValue(1_000_000);
+		config.getMaxZipTotalSize().setValue(2_000_000);
+		config.getMaxZipCompressionRatio().setValue(100);
+		ResourceImporter limitedImporter = new BasicResourceImporter(
+				new BasicInfoImporter(new InfoImporterConfig(), new TextFormatConfig(), new BasicClassPatcher()),
+				config
+		);
+
+		String classPath = HelloWorld.class.getName().replace('.', '/') + ".class";
+		byte[] classBytes = TestClassUtils.fromRuntimeClass(HelloWorld.class).getBytecode();
+		byte[] zipBytes = ZipCreationUtils.createZip(output -> {
+			output.putNextEntry(new ZipEntry(classPath));
+			output.write(classBytes);
+			output.closeEntry();
+
+			output.putNextEntry(new ZipEntry("payload.bin"));
+			byte[] zeros = new byte[1024];
+			for (int i = 0; i < 2048; i++)
+				output.write(zeros);
+			output.closeEntry();
+		});
+
+		WorkspaceResource resource = limitedImporter.importResource(ByteSources.wrap(zipBytes));
+		assertEquals(1, resource.getJvmClassBundle().size(), "Verifier-valid class should still be imported");
+		assertFalse(resource.getFileBundle().containsKey("payload.bin"), "Oversized entry should be skipped");
+	}
+
+	@Test
+	void testZipBombCannotUnderreportInflatedSize() throws IOException {
+		ResourceImporterConfig config = new ResourceImporterConfig();
+		config.getMaxZipEntrySize().setValue(1_000_000);
+		config.getMaxZipTotalSize().setValue(2_000_000);
+		config.getMaxZipCompressionRatio().setValue(10_000);
+		ResourceImporter limitedImporter = new BasicResourceImporter(
+				new BasicInfoImporter(new InfoImporterConfig(), new TextFormatConfig(), new BasicClassPatcher()),
+				config
+		);
+
+		// Stream 2 MiB of zeros through a reusable 1 KiB buffer. This creates a tiny, highly compressible entry
+		// without allocating the expanded payload as one large test-side byte array.
+		byte[] zipBytes = ZipCreationUtils.createZip(output -> {
+			output.putNextEntry(new ZipEntry("payload.bin"));
+			byte[] zeros = new byte[1024];
+			for (int i = 0; i < 2048; i++)
+				output.write(zeros);
+			output.closeEntry();
+		});
+
+		// Lie about the uncompressed size in both places where ZIP records it. The LFH stores the four-byte size
+		// at offset 22, while the CEN header stores it at offset 24. Declaring one byte makes the metadata precheck
+		// pass, forcing the importer to enforce its limit against bytes actually emitted by the inflater.
+		// The scan stops with enough bytes remaining for either size field; the assertion also detects an
+		// unexpected signature collision inside the compressed payload.
+		int patchedHeaders = 0;
+		for (int i = 0; i <= zipBytes.length - 28; i++) {
+			boolean localHeader = zipBytes[i] == 0x50 && zipBytes[i + 1] == 0x4B &&
+					zipBytes[i + 2] == 0x03 && zipBytes[i + 3] == 0x04;
+			boolean centralHeader = zipBytes[i] == 0x50 && zipBytes[i + 1] == 0x4B &&
+					zipBytes[i + 2] == 0x01 && zipBytes[i + 3] == 0x02;
+			if (localHeader || centralHeader) {
+				int sizeOffset = i + (localHeader ? 22 : 24);
+				zipBytes[sizeOffset] = 1;
+				zipBytes[sizeOffset + 1] = 0;
+				zipBytes[sizeOffset + 2] = 0;
+				zipBytes[sizeOffset + 3] = 0;
+				patchedHeaders++;
+			}
+		}
+		assertEquals(2, patchedHeaders, "Expected local and central ZIP headers");
+
+		WorkspaceResource resource = limitedImporter.importResource(ByteSources.wrap(zipBytes));
+		assertFalse(resource.getFileBundle().containsKey("payload.bin"),
+				"Actual inflated size must be limited when ZIP metadata lies");
+	}
+
 }

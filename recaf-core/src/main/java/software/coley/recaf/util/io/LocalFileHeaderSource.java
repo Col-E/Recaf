@@ -18,15 +18,21 @@ import java.lang.foreign.ValueLayout;
 public final class LocalFileHeaderSource implements ByteSource {
 	private final LocalFileHeader fileHeader;
 	private final boolean isAndroid;
+	private final ZipDecompressionLimiter limiter;
 	private MemorySegment decompressed;
 
 	public LocalFileHeaderSource(LocalFileHeader fileHeader) {
-		this(fileHeader, false);
+		this(fileHeader, false, null);
 	}
 
 	public LocalFileHeaderSource(LocalFileHeader fileHeader, boolean isAndroid) {
+		this(fileHeader, isAndroid, null);
+	}
+
+	public LocalFileHeaderSource(LocalFileHeader fileHeader, boolean isAndroid, ZipDecompressionLimiter limiter) {
 		this.fileHeader = fileHeader;
 		this.isAndroid = isAndroid;
+		this.limiter = limiter;
 	}
 
 	@Nonnull
@@ -78,14 +84,17 @@ public final class LocalFileHeaderSource implements ByteSource {
 				//  - If the compression mode given fails, it will get treated as STORED as a fallback
 				if (isAndroid) {
 					try {
-						return this.decompressed = ZipCompressions.decompress(fileHeader);
+						return this.decompressed = decompressEntry();
+					} catch (ZipDecompressionLimiter.ZipDecompressionLimitException ex) {
+						throw ex;
 					} catch (IOException ex) {
-						return this.decompressed = fileHeader.getFileData();
+						return this.decompressed = limiter == null ?
+								fileHeader.getFileData() : limiter.acceptStored(fileHeader);
 					}
 				}
 
 				// In other cases, malformed content should throw an exception and be handled by the caller.
-				return this.decompressed = ZipCompressions.decompress(fileHeader);
+				return this.decompressed = decompressEntry();
 			}
 			return decompressed;
 		} catch (OutOfMemoryError error) {
@@ -95,5 +104,15 @@ public final class LocalFileHeaderSource implements ByteSource {
 			System.gc();
 			throw new IOException("Insufficient memory to decompress '" + fileHeader.getFileNameAsString() + "'", error);
 		}
+	}
+
+	private MemorySegment decompressEntry() throws IOException {
+		if (limiter == null)
+			return ZipCompressions.decompress(fileHeader);
+		return switch (fileHeader.getCompressionMethod()) {
+			case ZipCompressions.STORED -> limiter.acceptStored(fileHeader);
+			case ZipCompressions.DEFLATED -> fileHeader.decompress(limiter);
+			default -> ZipCompressions.decompress(fileHeader);
+		};
 	}
 }

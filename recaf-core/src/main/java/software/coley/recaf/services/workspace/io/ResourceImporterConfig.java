@@ -43,6 +43,9 @@ public class ResourceImporterConfig extends BasicConfigContainer implements Serv
 	private final ObservableBoolean adoptStandardCenFileNames = new ObservableBoolean(false);
 	private final ObservableInteger maxEmbeddedZipDepth = new ObservableInteger(3);
 	private final ObservableBoolean parallelize = new ObservableBoolean(true);
+	private final ObservableInteger maxZipEntrySize = new ObservableInteger(100_000_000);
+	private final ObservableInteger maxZipTotalSize = new ObservableInteger(1_000_000_000);
+	private final ObservableInteger maxZipCompressionRatio = new ObservableInteger(100);
 
 	@Inject
 	public ResourceImporterConfig() {
@@ -55,6 +58,9 @@ public class ResourceImporterConfig extends BasicConfigContainer implements Serv
 		addValue(new BasicConfigValue<>("adapt-standard-cen-file-names", boolean.class, adoptStandardCenFileNames));
 		addValue(new BasicConfigValue<>("max-embedded-zip-depth", int.class, maxEmbeddedZipDepth));
 		addValue(new BasicConfigValue<>("parallelize", boolean.class, parallelize));
+		addValue(new BasicConfigValue<>("max-zip-entry-size", int.class, maxZipEntrySize));
+		addValue(new BasicConfigValue<>("max-zip-total-size", int.class, maxZipTotalSize));
+		addValue(new BasicConfigValue<>("max-zip-compression-ratio", int.class, maxZipCompressionRatio));
 	}
 
 	/**
@@ -121,6 +127,30 @@ public class ResourceImporterConfig extends BasicConfigContainer implements Serv
 	@Nonnull
 	public ObservableInteger getMaxEmbeddedZipDepth() {
 		return maxEmbeddedZipDepth;
+	}
+
+	/**
+	 * @return Maximum number of decompressed bytes retained from one ZIP entry.
+	 */
+	@Nonnull
+	public ObservableInteger getMaxZipEntrySize() {
+		return maxZipEntrySize;
+	}
+
+	/**
+	 * @return Maximum number of decompressed bytes retained from one ZIP archive.
+	 */
+	@Nonnull
+	public ObservableInteger getMaxZipTotalSize() {
+		return maxZipTotalSize;
+	}
+
+	/**
+	 * @return Maximum ratio of decompressed to compressed bytes for a ZIP entry.
+	 */
+	@Nonnull
+	public ObservableInteger getMaxZipCompressionRatio() {
+		return maxZipCompressionRatio;
 	}
 
 	/**
