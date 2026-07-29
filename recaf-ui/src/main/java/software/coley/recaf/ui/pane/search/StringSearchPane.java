@@ -80,7 +80,7 @@ public class StringSearchPane extends AbstractSearchPane {
 		EventStreams.changesOf(stringValue)
 				.or(EventStreams.changesOf(stringPredicateId))
 				.reduceSuccessions(Collections::singletonList, Lists::add, Duration.ofMillis(Editor.MEDIUM_DELAY_MS))
-				.addObserver(unused -> search());
+				.addObserver(unused -> searchLive());
 
 		setInputs(input);
 	}

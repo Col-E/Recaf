@@ -79,7 +79,7 @@ public class NumberSearchPane extends AbstractSearchPane {
 		EventStreams.changesOf(numericValueProperty)
 				.or(EventStreams.changesOf(numericPredicateId))
 				.reduceSuccessions(Collections::singletonList, Lists::add, Duration.ofMillis(Editor.MEDIUM_DELAY_MS))
-				.addObserver(unused -> search());
+				.addObserver(unused -> searchLive());
 
 		setInputs(input);
 	}

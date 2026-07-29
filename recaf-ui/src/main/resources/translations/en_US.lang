@@ -562,6 +562,11 @@ comments.search.prompt=Search for comment...
 
 ## Search
 search.run=Search
+search.live=Live results
+search.results.count=%d matches, %d paths
+search.results.title=Results #%d (%d)
+search.results.copy=Copy results
+search.results.export=Export results
 search.results=Results
 search.text=Text content
 search.textmode=Text match mode

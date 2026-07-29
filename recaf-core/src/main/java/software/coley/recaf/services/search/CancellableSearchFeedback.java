@@ -6,7 +6,7 @@ package software.coley.recaf.services.search;
  * @author Matt Coley
  */
 public class CancellableSearchFeedback implements SearchFeedback {
-	private boolean cancelled;
+	private volatile boolean cancelled;
 
 	/**
 	 * Mark search as cancelled.

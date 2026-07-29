@@ -13,14 +13,20 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Control;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import org.reactfx.EventStreams;
+import org.slf4j.Logger;
+import software.coley.bentofx.dockable.Dockable;
 import software.coley.collections.Lists;
+import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.path.IncompletePathException;
@@ -47,13 +53,17 @@ import software.coley.recaf.ui.control.tree.WorkspaceTreeNode;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.threading.Batch;
+import software.coley.recaf.util.threading.ThreadUtil;
 import software.coley.recaf.workspace.model.Workspace;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -63,6 +73,7 @@ import java.util.function.Predicate;
  * @author Matt Coley
  */
 public abstract class AbstractSearchPane extends BorderPane implements Navigable {
+	private static final Logger logger = Logging.get(AbstractSearchPane.class);
 	private final WorkspaceManager workspaceManager;
 	private final SearchService searchService;
 	private final CellConfigurationService configurationService;
@@ -71,6 +82,10 @@ public abstract class AbstractSearchPane extends BorderPane implements Navigable
 	private final SearchOptions searchOptions = new SearchOptions();
 	protected final PathNodeTree liveResultsTree;
 	protected final BooleanProperty liveResults = new SimpleBooleanProperty(true);
+	private final AtomicInteger searchGeneration = new AtomicInteger();
+	private final List<Dockable> searchResultDockables = new ArrayList<>();
+	private int searchResultSequence;
+	private boolean focusNextSearchResults;
 	private ActionButton searchOptionsButton;
 	private Popover searchOptionsPopover;
 	private CancellableSearchFeedback lastSearchFeedback;
@@ -122,8 +137,12 @@ public abstract class AbstractSearchPane extends BorderPane implements Navigable
 
 	@Override
 	public void disable() {
+		searchGeneration.incrementAndGet();
 		cancelLastSearch();
 		liveResultsTree.setRoot(null);
+		for (Dockable dockable : new ArrayList<>(searchResultDockables))
+			dockable.inContainer(container -> container.closeDockable(dockable));
+		searchResultDockables.clear();
 		getChildren().clear();
 		setDisable(true);
 	}
@@ -136,16 +155,33 @@ public abstract class AbstractSearchPane extends BorderPane implements Navigable
 	 */
 	protected void setInputs(@Nonnull Node input) {
 		Node liveResultsDisplay = createLiveResultsDisplay();
+		ActionButton searchButton = new ActionButton(CarbonIcons.SEARCH, this::searchManual);
+		searchButton.withTooltip("menu.search");
+		searchButton.setFocusTraversable(false);
+		searchButton.getStyleClass().addAll(Styles.BUTTON_ICON, Styles.ACCENT);
+		searchButton.visibleProperty().bind(liveResults.not());
+		searchButton.managedProperty().bind(liveResults.not());
+		HBox inputWrapper = new HBox(input, searchButton);
+		inputWrapper.setAlignment(Pos.CENTER_LEFT);
+		inputWrapper.setSpacing(0);
+		inputWrapper.setPadding(new Insets(0, 10, 0, 0));
+		HBox.setHgrow(input, Priority.ALWAYS);
+		input.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
+			if (event.getCode() == KeyCode.ENTER) {
+				searchManual();
+				event.consume();
+			}
+		});
 
-		setTop(input);
+		setTop(inputWrapper);
 		setCenter(liveResultsDisplay);
 
 		liveResults.addListener((ob, old, cur) -> {
-			if (cur) {
-				setCenter(liveResultsDisplay);
-			} else {
-				setCenter(null);
-			}
+			if (!cur)
+				liveResultsTree.setRoot(null);
+			setCenter(liveResultsDisplay);
+			if (cur)
+				search();
 		});
 		setupSearchOptionsListener();
 	}
@@ -186,7 +222,7 @@ public abstract class AbstractSearchPane extends BorderPane implements Navigable
 				.or(EventStreams.changesOf(searchOptions.includedDirectoriesProperty()).map(unused -> new Object()))
 				.or(EventStreams.changesOf(searchOptions.excludedDirectoriesProperty()).map(unused -> new Object()))
 				.reduceSuccessions(Collections::singletonList, Lists::add, Duration.ofMillis(Editor.SHORT_DELAY_MS))
-				.addObserver(unused -> search());
+				.addObserver(unused -> searchLive());
 	}
 
 	/**
@@ -216,6 +252,7 @@ public abstract class AbstractSearchPane extends BorderPane implements Navigable
 		content.setVgap(5);
 
 		int row = 0;
+		content.add(new BoundCheckBox(Lang.getBinding("search.live"), liveResults), 0, row++, 2, 1);
 		row = addCustomSearchOptions(content, row);
 		if (supportsFileSearchOptions()) {
 			// Can only disable class searching if file searching is enabled.
@@ -339,6 +376,27 @@ public abstract class AbstractSearchPane extends BorderPane implements Navigable
 	}
 
 	/**
+	 * Search and show results inline with this panel if the live results option is enabled.
+	 *
+	 * @see #searchManual()
+	 */
+	protected final void searchLive() {
+		if (liveResults.get())
+			search();
+	}
+
+	/**
+	 * Search and show results in a separate dockable once the search completes.
+	 *
+	 * @see #handleSearchResults(Results, boolean)
+	 * @see #searchLive()
+	 */
+	private void searchManual() {
+		focusNextSearchResults = true;
+		search();
+	}
+
+	/**
 	 * Initiates the search with current search inputs. Updates the output display.
 	 */
 	protected final void search() {
@@ -346,19 +404,25 @@ public abstract class AbstractSearchPane extends BorderPane implements Navigable
 		// Sometimes the delay between searching and the user closing will initiate a search after closing.
 		if (isDisabled()) return;
 
+		// Every search attempt invalidates completions from prior generations, including invalid queries.
+		int generation = searchGeneration.incrementAndGet();
+		boolean focusResults = focusNextSearchResults;
+		focusNextSearchResults = false;
+		cancelLastSearch();
+
 		// Must have a current workspace to search in.
 		if (!workspaceManager.hasCurrentWorkspace())
 			return;
 
-		// Create a new root.
+		// Create a new root for live searches.
 		Workspace workspace = workspaceManager.getCurrent();
-		PathNodeTree tree = liveResults.get() ? liveResultsTree : newTree();
-		WorkspaceTreeNode root = new WorkspaceTreeNode(PathNodes.workspacePath(workspace));
-		root.setExpanded(true);
-		tree.setRoot(root);
-
-		// Cancel last search before we start a new one.
-		cancelLastSearch();
+		WorkspaceTreeNode root = null;
+		if (liveResults.get()) {
+			root = new WorkspaceTreeNode(PathNodes.workspacePath(workspace));
+			root.setExpanded(true);
+			liveResultsTree.setRoot(root);
+		}
+		WorkspaceTreeNode liveRoot = root;
 
 		// Skip if the query couldn't be built (invalid inputs most likely)
 		Query query = buildQuery();
@@ -371,28 +435,61 @@ public abstract class AbstractSearchPane extends BorderPane implements Navigable
 		CancellableSearchFeedback feedback;
 		if (liveResults.get()) {
 			feedback = new LiveOnlySearchFeedback(optionsSnapshot, resultFilter, result -> {
-				WorkspaceTreeNode node = WorkspaceTreeNode.getOrInsertIntoTree(root, result.getPath());
+				if (generation != searchGeneration.get() || isDisabled())
+					return;
+				WorkspaceTreeNode node = WorkspaceTreeNode.getOrInsertIntoTree(liveRoot, result.getPath());
 				TreeItems.expandParents(node);
 			});
-			CompletableFuture.runAsync(() -> searchService.search(workspace, query, feedback));
+			lastSearchFeedback = feedback;
+			CompletableFuture.runAsync(() -> searchService.search(workspace, query, feedback), ThreadUtil.executor())
+					.whenCompleteAsync((ignored, error) -> {
+						if (lastSearchFeedback == feedback)
+							lastSearchFeedback = null;
+						if (error != null && generation == searchGeneration.get() && !feedback.hasRequestedCancellation())
+							logger.error("Search failed", error);
+					}, FxThreadUtil.executor());
 		} else {
 			feedback = new FilteringSearchFeedback(optionsSnapshot, resultFilter);
-			CompletableFuture.supplyAsync(() -> searchService.search(workspace, query, feedback))
-					.thenAccept(this::handleSearchResults);
+			lastSearchFeedback = feedback;
+			CompletableFuture.supplyAsync(() -> searchService.search(workspace, query, feedback), ThreadUtil.executor())
+					.whenCompleteAsync((results, error) -> {
+						if (generation != searchGeneration.get() || feedback.hasRequestedCancellation() || isDisabled()
+								|| !workspaceManager.hasCurrentWorkspace() || workspaceManager.getCurrent() != workspace)
+							return;
+						if (lastSearchFeedback == feedback)
+							lastSearchFeedback = null;
+						if (error != null) {
+							logger.error("Search failed", error);
+							return;
+						}
+						handleSearchResults(results, focusResults);
+					}, FxThreadUtil.executor());
 		}
-		lastSearchFeedback = feedback;
 	}
 
 	/**
-	 * Called when a search completes that is not {@link #liveResults live}.
+	 * Displays a completed manual search result set.
 	 *
 	 * @param results
-	 * 		Results of a non-live search.
+	 * 		Results of the search.
+	 * @param focusResults
+	 * 		Whether the result dockable should be selected because the user explicitly pressed Search.
 	 */
-	protected void handleSearchResults(@Nonnull Results results) {
-		// TODO: Handle displaying the results for non-live search
-		//  - put display in center, should be a PathNodeTree model, ideally dockable so user can move it around
-		//  - maybe have the toggle for "[x] live" be an overlay like the "(i)" in decompile UI
+	private void handleSearchResults(@Nonnull Results results, boolean focusResults) {
+		if (!workspaceManager.hasCurrentWorkspace())
+			return;
+
+		SearchResultsModel model = new SearchResultsModel();
+		SearchResultsPane resultsPane = new SearchResultsPane(workspaceManager.getCurrent(), configurationService,
+				actions, model);
+		resultsPane.setResults(results);
+		int resultSequence = ++searchResultSequence;
+		Dockable dockable = actions.openSearchResults(this, resultsPane,
+				Lang.format("search.results.title", resultSequence, model.getMatchCount()),
+				searchResultDockables::remove);
+		searchResultDockables.add(dockable);
+		if (focusResults)
+			dockable.inContainer(container -> container.selectDockable(dockable));
 	}
 
 	/**
@@ -408,7 +505,7 @@ public abstract class AbstractSearchPane extends BorderPane implements Navigable
 	/**
 	 * Feedback that filters which workspace items are visited.
 	 */
-	private class FilteringSearchFeedback extends CancellableSearchFeedback {
+	private static class FilteringSearchFeedback extends CancellableSearchFeedback {
 		private final SearchOptions.Snapshot optionsSnapshot;
 		private final Predicate<Result<?>> resultFilter;
 
