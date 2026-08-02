@@ -247,7 +247,7 @@ public class WorkspaceExportOptions {
 				List<ClassDefinition> classDefinitions = bundle.values().stream()
 						.map(AndroidClassInfo::getBackingDefinition)
 						.toList();
-				DexFile dexFile = new DexFile(bundle.getVersion(), classDefinitions, bundle.getLinkData());
+				DexFile dexFile = new DexFile(bundle.getVersion(), classDefinitions, bundle.getLinkData(), null);
 				DexHeader header = DexFile.CODEC.unmap(dexFile, new DexMapBuilder());
 				Output output = Output.wrap();
 				try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
