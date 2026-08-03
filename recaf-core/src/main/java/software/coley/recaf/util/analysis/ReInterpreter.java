@@ -61,6 +61,20 @@ public class ReInterpreter extends Interpreter<ReValue> implements Opcodes {
 		this.inheritanceGraph = inheritanceGraph;
 	}
 
+	/**
+	 * Checks assignability using the inheritance graph backing this interpreter.
+	 *
+	 * @param parent
+	 * 		Expected parent type, in internal-name form.
+	 * @param child
+			Actual child type, in internal-name form.
+	 *
+	 * @return {@code true} when {@code parent} can be assigned from {@code child}.
+	 */
+	public boolean isAssignableFrom(@Nonnull String parent, @Nonnull String child) {
+		return inheritanceGraph.isAssignableFrom(parent, child);
+	}
+
 	@Nullable
 	public GetStaticLookup getGetStaticLookup() {
 		return getStaticLookup;

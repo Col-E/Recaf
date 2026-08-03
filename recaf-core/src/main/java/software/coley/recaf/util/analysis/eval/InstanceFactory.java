@@ -116,6 +116,19 @@ public class InstanceFactory extends BasicLookupUtils {
 		registerMethodHandler("java/lang/String", "formatted", "([Ljava/lang/Object;)Ljava/lang/String;", (ReValue host, String receiver, List<ReValue> args) -> str(receiver.formatted(arrobj((ArrayValue) args.get(0)))));
 		registerMethodHandler("java/lang/String", "intern", "()Ljava/lang/String;", (ReValue host, String receiver, List<ReValue> args) -> str(receiver.intern()));
 
+		// java.lang.StackTraceElement
+		registerMethodHandler("java/lang/StackTraceElement", "equals", "(Ljava/lang/Object;)Z", (ReValue host, StackTraceElement receiver, List<ReValue> args) -> z(receiver.equals(objl((ObjectValue) args.get(0)))));
+		registerMethodHandler("java/lang/StackTraceElement", "toString", "()Ljava/lang/String;", (ReValue host, StackTraceElement receiver, List<ReValue> args) -> str(receiver.toString()));
+		registerMethodHandler("java/lang/StackTraceElement", "hashCode", "()I", (ReValue host, StackTraceElement receiver, List<ReValue> args) -> i(receiver.hashCode()));
+		registerMethodHandler("java/lang/StackTraceElement", "getClassName", "()Ljava/lang/String;", (ReValue host, StackTraceElement receiver, List<ReValue> args) -> str(receiver.getClassName()));
+		registerMethodHandler("java/lang/StackTraceElement", "isNativeMethod", "()Z", (ReValue host, StackTraceElement receiver, List<ReValue> args) -> z(receiver.isNativeMethod()));
+		registerMethodHandler("java/lang/StackTraceElement", "getFileName", "()Ljava/lang/String;", (ReValue host, StackTraceElement receiver, List<ReValue> args) -> str(receiver.getFileName()));
+		registerMethodHandler("java/lang/StackTraceElement", "getLineNumber", "()I", (ReValue host, StackTraceElement receiver, List<ReValue> args) -> i(receiver.getLineNumber()));
+		registerMethodHandler("java/lang/StackTraceElement", "getModuleName", "()Ljava/lang/String;", (ReValue host, StackTraceElement receiver, List<ReValue> args) -> str(receiver.getModuleName()));
+		registerMethodHandler("java/lang/StackTraceElement", "getModuleVersion", "()Ljava/lang/String;", (ReValue host, StackTraceElement receiver, List<ReValue> args) -> str(receiver.getModuleVersion()));
+		registerMethodHandler("java/lang/StackTraceElement", "getClassLoaderName", "()Ljava/lang/String;", (ReValue host, StackTraceElement receiver, List<ReValue> args) -> str(receiver.getClassLoaderName()));
+		registerMethodHandler("java/lang/StackTraceElement", "getMethodName", "()Ljava/lang/String;", (ReValue host, StackTraceElement receiver, List<ReValue> args) -> str(receiver.getMethodName()));
+
 		// java.lang.StringBuilder
 		registerMethodHandler("java/lang/StringBuilder", "toString", "()Ljava/lang/String;", (ReValue host, StringBuilder receiver, List<ReValue> args) -> str(receiver.toString()));
 		registerMethodHandler("java/lang/StringBuilder", "append", "(Ljava/lang/CharSequence;)Ljava/lang/StringBuilder;", (ReValue host, StringBuilder receiver, List<ReValue> args) -> {
@@ -507,6 +520,10 @@ public class InstanceFactory extends BasicLookupUtils {
 		// java.util.Random
 		registerMapper(Random.class, "(J)V", (host, parameters) -> new Random(j((LongValue) parameters.get(0))));
 		registerMapper(Random.class, "()V", (host, parameters) -> new Random(0));
+
+		// java.lang.StackTraceElement
+		registerMapper(StackTraceElement.class, "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;I)V", (host, parameters) -> new StackTraceElement(str((StringValue)parameters.get(0)), str((StringValue)parameters.get(1)), str((StringValue)parameters.get(2)), str((StringValue)parameters.get(3)), str((StringValue)parameters.get(4)), str((StringValue)parameters.get(5)), i((IntValue)parameters.get(6))));
+		registerMapper(StackTraceElement.class, "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;I)V", (host, parameters) -> new StackTraceElement(str((StringValue)parameters.get(0)), str((StringValue)parameters.get(1)), str((StringValue)parameters.get(2)), i((IntValue)parameters.get(3))));
 
 		// java.util.ArrayList
 		registerMapper(ArrayList.class, "()V", (host, parameters) -> new ArrayList());

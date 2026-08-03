@@ -18,6 +18,7 @@ import software.coley.recaf.util.analysis.value.IntValue;
 import software.coley.recaf.util.analysis.value.ObjectValue;
 import software.coley.recaf.util.analysis.value.ReValue;
 import software.coley.recaf.util.analysis.value.StringValue;
+import software.coley.recaf.util.analysis.value.ThrowableValue;
 import software.coley.recaf.workspace.model.Workspace;
 
 import java.util.ArrayList;
@@ -28,6 +29,9 @@ import java.util.Random;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
+/**
+ * Tests for {@link Evaluator}.
+ */
 public class EvaluatorTest extends TransformerTestBase {
 	@Test
 	void testSimpleCharArrayToString() {
@@ -168,15 +172,126 @@ public class EvaluatorTest extends TransformerTestBase {
 			fail("Evaluation failure, unexpected return value: " + retVal);
 	}
 
+	@Test
+	void testStackTrace() {
+		String compiled = compile("""
+				static String prior() {
+				     StackTraceElement ste = new RuntimeException().getStackTrace()[1];
+				     return ste.getClassName() + ":" + ste.getMethodName();
+				}
+				static String foo() {
+				     return prior();
+				}
+				""");
+		ReValue retVal = evaluate(compiled, "foo", "()Ljava/lang/String;", null, List.of());
+		if (retVal instanceof StringValue str)
+			assertEquals(CLASS_NAME + ":" + "foo", str.getText().orElse(null));
+		else
+			fail("Evaluation failure, unexpected return value: " + retVal);
+	}
+
+	@Test
+	void testExplicitThrowCaughtBySubtype() {
+		String compiled = compile("""
+				static String caught() {
+				    try { throw new IllegalArgumentException("bad"); }
+				    catch (RuntimeException ex) { return "caught"; }
+				}
+				""");
+		ReValue retVal = evaluate(compiled, "caught", "()Ljava/lang/String;", null, List.of());
+		if (retVal instanceof StringValue str)
+			assertEquals("caught", str.getText().orElse(null));
+		else
+			fail("Evaluation failure, unexpected return value: " + retVal);
+	}
+
+	@Test
+	void testNestedThrowPropagatesToCallerHandler() {
+		String compiled = compile("""
+				static void inner() { throw new IllegalStateException(); }
+				static String outer() {
+				    try { inner(); return "bad"; }
+				    catch (Exception ex) { return "caught"; }
+				}
+				""");
+		if (evaluate(compiled, "outer", "()Ljava/lang/String;", null, List.of()) instanceof StringValue str)
+			assertEquals("caught", str.getText().orElse(null));
+		else
+			fail("Evaluation failure, unexpected return value");
+	}
+
+	@Test
+	void testUncaughtThrowProducesThrowableResult() {
+		String compiled = compile("""
+				static String fail() { throw new IllegalStateException(); }
+				""");
+		EvaluationResult result = evaluateResult(compiled, "fail", "()Ljava/lang/String;", null, List.of());
+		if (result instanceof EvaluationThrowsResult(ReValue exception)
+				&& exception instanceof ThrowableValue throwable) {
+			assertEquals("java/lang/IllegalStateException", throwable.type().getInternalName());
+
+			StackTraceElement ste = throwable.getStackTrace().getFirst();
+			assertEquals(CLASS_NAME, ste.getClassName());
+			assertEquals("fail", ste.getMethodName());
+		} else
+			fail("Expected thrown result, got: " + result);
+	}
+
+	@Test
+	void testWorkspaceThrowableSubtypeAndArbitraryConstructor() {
+		// Define a custom exception class in the workspace.
+		compileFull("CustomException", """
+				public class CustomException extends Exception {
+				    public CustomException(int code) { super(); }
+				}
+				""");
+
+		// Using it should still retain throwable handling.
+		String compiled = compile("""
+				static String caught() {
+				    try { throw new CustomException(7); }
+				    catch (Exception ex) { return "custom"; }
+				}
+				""");
+		EvaluationResult result = evaluateResult(compiled, "caught", "()Ljava/lang/String;", null, List.of(), get("CustomException"));
+		if (result instanceof EvaluationYieldResult(ReValue value) && value instanceof StringValue str)
+			assertEquals("custom", str.getText().orElse(null));
+		else
+			fail("Evaluation failed: " + result);
+	}
+
+	@Test
+	void testKnownImplicitFaultsAreCaught() {
+		// Non-explicit exceptions caused by things like division by zero, null dereference,
+		// and array access out of bounds should be caught by the evaluator.
+		String compiled = compile("""
+				static String arithmetic() {
+				    try { int zero = 0; return String.valueOf(1 / zero); }
+				    catch (ArithmeticException ex) { return "arith"; }
+				}
+				static String nullReceiver() {
+				    try { String value = null; return value.length() + ""; }
+				    catch (NullPointerException ex) { return "null"; }
+				}
+				static String array() {
+				    try { int[] values = new int[1]; return String.valueOf(values[2]); }
+				    catch (ArrayIndexOutOfBoundsException ex) { return "array"; }
+				}
+				static String negativeArray() {
+				    try { int size = -1; int[] values = new int[size]; return "bad"; }
+				    catch (NegativeArraySizeException ex) { return "negative"; }
+				}
+				""");
+		assertEquals("arith", ((StringValue) evaluate(compiled, "arithmetic", "()Ljava/lang/String;", null, List.of())).getText().orElse(null));
+		assertEquals("null", ((StringValue) evaluate(compiled, "nullReceiver", "()Ljava/lang/String;", null, List.of())).getText().orElse(null));
+		assertEquals("array", ((StringValue) evaluate(compiled, "array", "()Ljava/lang/String;", null, List.of())).getText().orElse(null));
+		assertEquals("negative", ((StringValue) evaluate(compiled, "negativeArray", "()Ljava/lang/String;", null, List.of())).getText().orElse(null));
+	}
+
 	@Nonnull
 	private ReValue evaluate(@Nonnull String src, @Nonnull String name, @Nonnull String desc,
 	                         @Nullable ReValue classInstance, @Nonnull List<ReValue> parameters) {
-		JvmClassInfo assembled = assemble(src, src.contains(".class"));
-		Workspace workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(assembled));
-		JvmTransformerContext ctx = new JvmTransformerContext(workspace, workspace.getPrimaryResource(), Collections.emptyList());
-		ReInterpreter interpreter = ctx.newInterpreter(new InheritanceGraph(workspace));
-		EvaluationResult result = new Evaluator(workspace, interpreter, new FieldCacheManager(), 1000, false)
-				.evaluate(CLASS_NAME, name, desc, classInstance, parameters);
+		EvaluationResult result = evaluateResult(src, name, desc, classInstance, parameters);
 		switch (result) {
 			case EvaluationYieldResult(ReValue value) -> {
 				return value;
@@ -189,5 +304,20 @@ public class EvaluatorTest extends TransformerTestBase {
 
 		// Won't reach here due to calls to 'fail()' above, but the compiler doesn't know that.
 		throw new IllegalStateException();
+	}
+
+	@Nonnull
+	private EvaluationResult evaluateResult(@Nonnull String src, @Nonnull String name, @Nonnull String desc,
+	                                        @Nullable ReValue classInstance, @Nonnull List<ReValue> parameters,
+	                                        @Nonnull JvmClassInfo... additionalClasses) {
+		JvmClassInfo assembled = assemble(src, src.contains(".class"));
+		JvmClassInfo[] classes = new JvmClassInfo[additionalClasses.length + 1];
+		classes[0] = assembled;
+		System.arraycopy(additionalClasses, 0, classes, 1, additionalClasses.length);
+		Workspace workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(classes));
+		JvmTransformerContext ctx = new JvmTransformerContext(workspace, workspace.getPrimaryResource(), Collections.emptyList());
+		ReInterpreter interpreter = ctx.newInterpreter(new InheritanceGraph(workspace));
+		return new Evaluator(workspace, interpreter, new FieldCacheManager(), 1000, false)
+				.evaluate(CLASS_NAME, name, desc, classInstance, parameters);
 	}
 }

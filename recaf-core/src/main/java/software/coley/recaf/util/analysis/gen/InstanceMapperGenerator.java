@@ -7,6 +7,7 @@ import software.coley.recaf.util.Types;
 import software.coley.recaf.util.analysis.eval.InstanceFactory;
 import software.coley.recaf.util.analysis.eval.InstanceMapper;
 
+import java.lang.reflect.AccessFlag;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +32,7 @@ public class InstanceMapperGenerator extends GenUtils {
 			Double.class,
 			Random.class,
 			List.class,
+			StackTraceElement.class,
 			// Support classes
 			CharSequence.class,
 			ArrayList.class
@@ -43,6 +45,10 @@ public class InstanceMapperGenerator extends GenUtils {
 		for (Class<?> type : emitTargets) {
 			System.out.println(" // " + type.getName());
 			for (Constructor<?> constructor : type.getDeclaredConstructors()) {
+				// Skip inaccessible methods
+				if (!constructor.accessFlags().contains(AccessFlag.PUBLIC))
+					continue;
+
 				// Skip if we don't support a parameter type
 				boolean supportedParameters = true;
 				Class<?>[] parameterTypes = constructor.getParameterTypes();

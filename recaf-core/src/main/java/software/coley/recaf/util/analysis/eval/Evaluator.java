@@ -12,6 +12,7 @@ import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.InsnList;
+import org.objectweb.asm.tree.InvokeDynamicInsnNode;
 import org.objectweb.asm.tree.JumpInsnNode;
 import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.LookupSwitchInsnNode;
@@ -36,6 +37,8 @@ import software.coley.recaf.util.analysis.value.ArrayValue;
 import software.coley.recaf.util.analysis.value.IntValue;
 import software.coley.recaf.util.analysis.value.ObjectValue;
 import software.coley.recaf.util.analysis.value.ReValue;
+import software.coley.recaf.util.analysis.value.ThrowableValue;
+import software.coley.recaf.util.analysis.value.UninitializedValue;
 import software.coley.recaf.util.analysis.value.impl.ArrayValueImpl;
 import software.coley.recaf.util.collect.primitive.Object2IntMap;
 import software.coley.recaf.util.visitors.MemberFilteringVisitor;
@@ -61,7 +64,6 @@ public class Evaluator {
 	private final FieldCacheManager fieldCacheManager;
 	private final boolean evaluateInternals;
 	private final int maxSteps;
-	private int stepAllocation;
 
 	/**
 	 * @param workspace
@@ -82,7 +84,6 @@ public class Evaluator {
 		this.interpreter = interpreter;
 		this.fieldCacheManager = fieldCacheManager;
 		this.maxSteps = maxSteps;
-		this.stepAllocation = maxSteps;
 		this.evaluateInternals = evaluateInternals;
 	}
 
@@ -133,7 +134,7 @@ public class Evaluator {
 			return false;
 
 		// Must not have any unsupported instructions
-		ExecutingFrame frame = new ExecutingFrame(method);
+		ExecutingFrame frame = new ExecutingFrame(method, new EvaluationContext(maxSteps));
 		for (AbstractInsnNode instruction : method.instructions)
 			if (!frame.canEvaluateInsn(instruction, interpreter))
 				return false;
@@ -156,7 +157,7 @@ public class Evaluator {
 	                                @Nonnull ReFrame originFrame,
 	                                int methodAccess) {
 		// Must not have any unsupported instructions
-		ExecutingFrame frame = new ExecutingFrame(0xFF, 0xFF, methodAccess);
+		ExecutingFrame frame = new ExecutingFrame(null, 0xFF, 0xFF, methodAccess, new EvaluationContext(maxSteps));
 		for (AbstractInsnNode instruction : instructionBlock)
 			if (!frame.canEvaluateInsn(instruction, interpreter))
 				return false;
@@ -184,10 +185,18 @@ public class Evaluator {
 	                                 @Nonnull String methodDescriptor,
 	                                 @Nullable ReValue classInstance,
 	                                 @Nonnull List<ReValue> parameters) {
-		Type methodType = Type.getMethodType(methodDescriptor);
-		if (methodType.getReturnType() == Type.VOID_TYPE)
+		if (Type.getReturnType(methodDescriptor) == Type.VOID_TYPE)
 			return EvaluationResult.cannotEvaluate("Method must yield a value");
+		return evaluate(className, methodName, methodDescriptor, classInstance, parameters, new EvaluationContext(maxSteps));
+	}
 
+	@Nonnull
+	private EvaluationResult evaluate(@Nonnull String className,
+	                                  @Nonnull String methodName,
+	                                  @Nonnull String methodDescriptor,
+	                                  @Nullable ReValue classInstance,
+	                                  @Nonnull List<ReValue> parameters,
+	                                  @Nonnull EvaluationContext context) {
 		ClassPathNode classPath = workspace.findClass(evaluateInternals, className);
 		if (classPath == null)
 			return EvaluationResult.cannotEvaluate("Class not found in workspace: " + className);
@@ -202,7 +211,7 @@ public class Evaluator {
 
 		for (MethodNode methodNode : classNode.methods)
 			if (methodName.equals(methodNode.name) && methodDescriptor.equals(methodNode.desc))
-				return evaluate(classNode, methodNode, classInstance, parameters);
+				return evaluate(classNode, methodNode, classInstance, parameters, context);
 
 		return EvaluationResult.cannotEvaluate("Method exists in class model, but not in tree node representation");
 	}
@@ -225,6 +234,17 @@ public class Evaluator {
 	                                 @Nonnull MethodNode methodNode,
 	                                 @Nullable ReValue classInstance,
 	                                 @Nonnull List<ReValue> parameters) {
+		if (Type.getReturnType(methodNode.desc) == Type.VOID_TYPE)
+			return EvaluationResult.cannotEvaluate("Method must yield a value");
+		return evaluate(classNode, methodNode, classInstance, parameters, new EvaluationContext(maxSteps));
+	}
+
+	@Nonnull
+	private EvaluationResult evaluate(@Nonnull ClassNode classNode,
+	                                  @Nonnull MethodNode methodNode,
+	                                  @Nullable ReValue classInstance,
+	                                  @Nonnull List<ReValue> parameters,
+	                                  @Nonnull EvaluationContext context) {
 		// Must support evaluation
 		if (!canEvaluate(methodNode))
 			return EvaluationResult.cannotEvaluate("Target method does not support evaluation: " + classNode.name + "." + methodNode.name + methodNode.desc);
@@ -246,32 +266,39 @@ public class Evaluator {
 		}
 
 		// Create initial frame
-		ExecutingFrame frame = new ExecutingFrame(methodNode);
+		ExecutingFrame frame = new ExecutingFrame(methodNode, context);
 		for (int i = 0; i < methodNode.maxLocals; i++)
 			frame.setLocal(i, i < parameters.size() ? parameters.get(i) : interpreter.newEmptyValue(i));
 		if (!AccessFlag.isStatic(methodNode.access))
 			frame.setLocal(0, classInstance);
 
 		// Handle execution
-		InsnList instructions = methodNode.instructions;
-		AbstractInsnNode pc = instructions.getFirst();
-		while (stepAllocation > 0) {
-			try {
-				pc = frame.evaluate(pc, interpreter);
-				ReValue retVal = frame.returnValue;
-				if (retVal != null) {
-					if (retVal instanceof InstancedObjectValue<?> instanced && instanced.getRealInstance() != null)
-						retVal = instanced.unmap();
-					return new EvaluationYieldResult(retVal);
+		context.callStack.add(new EvaluationFrame(classNode.name, methodNode.name));
+		try {
+			InsnList instructions = methodNode.instructions;
+			AbstractInsnNode pc = instructions.getFirst();
+			while (context.stepAllocation > 0) {
+				try {
+					pc = frame.evaluate(pc, interpreter);
+					ReValue retVal = frame.returnValue;
+					if (retVal != null) {
+						if (retVal instanceof InstancedObjectValue<?> instanced && instanced.getRealInstance() != null)
+							retVal = instanced.unmap();
+						return new EvaluationYieldResult(retVal);
+					}
+				} catch (AnalyzerException e) {
+					return EvaluationResult.cannotEvaluate("Failed executing instruction: " + JvmPrinterUtil.toString(pc), e);
+				} catch (NoNextException e) {
+					return EvaluationResult.cannotEvaluate("Execution falls through end", e);
+				} catch (ExceptionHandler.ThrownException e) {
+					return new EvaluationThrowsResult(e.getExceptionValue());
 				}
-			} catch (AnalyzerException e) {
-				return EvaluationResult.cannotEvaluate("Failed executing instruction: " + JvmPrinterUtil.toString(pc), e);
-			} catch (NoNextException e) {
-				return EvaluationResult.cannotEvaluate("Execution falls through end", e);
+				context.stepAllocation--;
 			}
-			stepAllocation--;
+			return EvaluationResult.cannotEvaluate("Method did not yield an value in " + maxSteps + " steps");
+		} finally {
+			context.callStack.removeLast();
 		}
-		return EvaluationResult.cannotEvaluate("Method did not yield an value in " + maxSteps + " steps");
 	}
 
 	/**
@@ -295,7 +322,8 @@ public class Evaluator {
 			return EvaluationResult.cannotEvaluate("Target block does not support evaluation");
 
 		// Create initial frame
-		ExecutingFrame frame = new ExecutingFrame(originFrame.getLocals(), originFrame.getMaxStackSize(), methodAccess);
+		EvaluationContext context = new EvaluationContext(maxSteps);
+		ExecutingFrame frame = new ExecutingFrame(null, originFrame.getLocals(), originFrame.getMaxStackSize(), methodAccess, context);
 		for (int i = 0; i < originFrame.getLocals(); i++)
 			frame.setLocal(i, originFrame.getLocal(i));
 		for (int i = 0; i < originFrame.getStackSize(); i++)
@@ -303,7 +331,7 @@ public class Evaluator {
 
 		// Handle execution
 		AbstractInsnNode pc = instructionBlock.getFirst();
-		while (stepAllocation > 0) {
+		while (context.stepAllocation > 0) {
 			try {
 				pc = frame.evaluate(pc, interpreter);
 
@@ -317,25 +345,35 @@ public class Evaluator {
 				// The intended use case for this is to be given incomplete segments of code and see what's on the
 				// top at the end, so we will yield that here.
 				return new EvaluationYieldResult(frame.getStack(frame.getStackSize() - 1));
+			} catch (ExceptionHandler.ThrownException e) {
+				return new EvaluationThrowsResult(e.getExceptionValue());
 			}
-			stepAllocation--;
+			context.stepAllocation--;
 		}
 		return EvaluationResult.cannotEvaluate("Block did not yield an value in " + maxSteps + " steps");
 	}
 
 	/** Frame extension to support control flow processing of this evaluator. */
 	private class ExecutingFrame extends ReFrame implements Opcodes {
+		@Nullable
+		private final MethodNode method;
+		private final EvaluationContext context;
+		private final ExceptionHandler exceptionHandler;
 		private AbstractInsnNode next;
 		private ReValue returnValue;
 		private final boolean isStatic;
 
-		public ExecutingFrame(@Nonnull MethodNode method) {
-			this(method.maxLocals, method.maxStack, method.access);
+		public ExecutingFrame(@Nonnull MethodNode method, @Nonnull EvaluationContext context) {
+			this(method, method.maxLocals, method.maxStack, method.access, context);
 		}
 
-		public ExecutingFrame(int maxLocals, int maxStack, int access) {
+		public ExecutingFrame(@Nullable MethodNode method, int maxLocals, int maxStack, int access,
+		                      @Nonnull EvaluationContext context) {
 			super(null, maxLocals, maxStack);
 
+			this.method = method;
+			this.context = context;
+			this.exceptionHandler = new ExceptionHandler(Evaluator.this.interpreter, method, context::stackTrace);
 			isStatic = AccessFlag.isStatic(access);
 		}
 
@@ -351,8 +389,7 @@ public class Evaluator {
 		 */
 		public boolean canEvaluateInsn(@Nonnull AbstractInsnNode insn, @Nonnull ReInterpreter interpreter) {
 			return switch (insn.getOpcode()) {
-				case JSR, RET, // Legacy instructions
-				     INVOKEDYNAMIC // Dynamic linking not supported
+				case JSR, RET // Legacy instructions
 						-> false;
 				case ALOAD -> {
 					// Local variable 'this' is not supported until we make some form of instance tracking
@@ -364,13 +401,14 @@ public class Evaluator {
 					Object cst = ((LdcInsnNode) insn).cst;
 					yield !(cst instanceof ConstantDynamic || cst instanceof Handle);
 				}
-				case ATHROW -> {
-					// TODO: Need to finish control-flow handling for this, then this would yield true.
-					yield false;
-				}
-				case NEW -> insn instanceof TypeInsnNode tin && instanceFactory.isSupportedType(tin.desc);
+				case ATHROW -> true;
+				case NEW ->
+						insn instanceof TypeInsnNode tin && (instanceFactory.isSupportedType(tin.desc) || exceptionHandler.isThrowableType(tin.desc));
 				case INVOKESPECIAL, INVOKEINTERFACE, INVOKEVIRTUAL -> {
 					if (insn instanceof MethodInsnNode min) {
+						if (exceptionHandler.isThrowableConstructor(min) || exceptionHandler.isThrowableGetStackTrace(min))
+							yield true;
+
 						// Check if the method can be instanced.
 						if (instanceFactory.getMethodHandler(min) != null || instanceFactory.getMapper(min) != null)
 							yield true;
@@ -386,6 +424,8 @@ public class Evaluator {
 					}
 					yield false;
 				}
+				case INVOKEDYNAMIC ->
+						insn instanceof InvokeDynamicInsnNode indy && InvokeDynamicExecutor.canEvaluate(indy);
 				case INVOKESTATIC -> {
 					if (insn instanceof MethodInsnNode min) {
 						// Check if the method can be instanced.
@@ -423,7 +463,12 @@ public class Evaluator {
 		 * 		When there is no next instruction to execute.
 		 */
 		@Nonnull
-		public AbstractInsnNode evaluate(@Nonnull AbstractInsnNode insn, @Nonnull ReInterpreter interpreter) throws AnalyzerException, NoNextException {
+		public AbstractInsnNode evaluate(@Nonnull AbstractInsnNode insn, @Nonnull ReInterpreter interpreter)
+				throws AnalyzerException, NoNextException, ExceptionHandler.ThrownException {
+			ReValue implicitException = exceptionHandler.knownFault(insn, this);
+			if (implicitException != null)
+				return exceptionHandler.routeException(this, implicitException, insn);
+
 			AbstractInsnNode next = switch (insn.getOpcode()) {
 				case GOTO -> ((JumpInsnNode) insn).label;
 				case IFEQ -> conditional(insn, i -> i.isEqualTo(0));
@@ -495,17 +540,25 @@ public class Evaluator {
 					returnValue = peek();
 					yield insn;
 				}
+				case RETURN -> {
+					returnValue = UninitializedValue.UNINITIALIZED_VALUE;
+					yield insn;
+				}
 				case ATHROW -> {
-					// TODO: Find handler and set instruction pointer 'insn' there with exception being only stack element
-					//  - Need to also support this for other exception throwing behavior for other instructions
-					//    - Math operations that fail (div by zero)
-					//    - Null pointer exceptions from field/method ops
-					//    - Array ops (index out of bounds, null pointer)
-					throw new UnsupportedOperationException();
+					ReValue value = pop();
+					if (value instanceof ObjectValue object && object.isNull())
+						yield exceptionHandler.routeException(this,
+								exceptionHandler.newThrowable("java/lang/NullPointerException", null), insn);
+					if (!(value instanceof ObjectValue) || !exceptionHandler.isThrowableType(value.type().getInternalName()))
+						throw new AnalyzerException(insn, "ATHROW value is not throwable");
+					yield exceptionHandler.routeException(this, value, insn);
 				}
 				case NEW -> {
 					if (insn instanceof TypeInsnNode tin) {
-						push(new InstancedObjectValue<>(Type.getObjectType(tin.desc)));
+						Type type = Type.getObjectType(tin.desc);
+						push(exceptionHandler.isThrowableType(tin.desc) ?
+								exceptionHandler.newThrowable(tin.desc, null) :
+								new InstancedObjectValue<>(type));
 						yield insn.getNext();
 					}
 					throw new AnalyzerException(insn, "Invalid new state");
@@ -565,6 +618,15 @@ public class Evaluator {
 					if (insn instanceof MethodInsnNode min) {
 						String methodDescriptor = min.desc;
 
+						// Special case for throwable constructors, which we can handle without executing the constructor.
+						// The value on the stack should be a ThrowableValue, which fills in the stack trace when the constructor is called.
+						if (exceptionHandler.isThrowableConstructor(min)) {
+							for (int i = Type.getArgumentCount(methodDescriptor); i > 0; --i)
+								pop();
+							pop();
+							yield insn.getNext();
+						}
+
 						// Handle instance initialization for supported types.
 						InstanceMapper mapper = instanceFactory.getMapper(min);
 						if (mapper != null) {
@@ -598,8 +660,15 @@ public class Evaluator {
 						for (int i = Type.getArgumentCount(min.desc); i > 0; --i)
 							valueList.addFirst(pop());
 
-						// Get the receiver and check if we can handle the invoke with instance support or a value lookup.
+						// Get the receiver and check if it's a throwable, in which case we can handle the getStackTrace call.
 						ReValue receiver = pop();
+						if (exceptionHandler.isThrowableGetStackTrace(min) && receiver instanceof ThrowableValue throwable) {
+							// TODO: Not all throwable types fill in the stack trace, we just assume they do here.
+							push(exceptionHandler.createStackTrace(throwable));
+							yield insn.getNext();
+						}
+
+						// Check if we can handle the invoke with instance support or a value lookup.
 						boolean isVoid = Type.getReturnType(min.desc) == Type.VOID_TYPE;
 						if (receiver instanceof InstancedObjectValue<?> instancedReceiver && instancedReceiver.getRealInstance() != null) {
 							MethodInvokeHandler<?> handler = instanceFactory.getMethodHandler(min);
@@ -613,25 +682,23 @@ public class Evaluator {
 										yield insn.getNext();
 									}
 								} catch (Throwable t) {
-									// TODO: Need to handle exception throwing control flow
-									//  - Yield appropriate exception block handler instead of normal next instruction
-									//  - Need to have some way to determine if the exception should be thrown (bad usage of method)
-									//    vs a problem with our handler logic itself.
+									yield exceptionHandler.routeException(this, exceptionHandler.newThrowable(t), insn);
 								}
 							}
 						}
 
 						// Check if the method is defined in the workspace and can be evaluated.
 						if (canEvaluate(min.owner, min.name, min.desc)) {
-							EvaluationResult result = Evaluator.this.evaluate(min.owner, min.name, min.desc, receiver, valueList);
+							EvaluationResult result = Evaluator.this.evaluate(min.owner, min.name, min.desc, receiver, valueList, context);
 							switch (result) {
 								case EvaluationYieldResult yielded -> {
+									if (isVoid)
+										yield insn.getNext();
 									push(yielded.value());
 									yield insn.getNext();
 								}
 								case EvaluationThrowsResult thrown -> {
-									// TODO: Need to handle exception throwing control flow
-									//  - Yield appropriate exception block handler instead of normal next instruction
+									yield exceptionHandler.routeException(this, thrown.exception(), insn);
 								}
 								case EvaluationFailureResult failure -> {
 									// No-op, fallthrough will attempt to handle this.
@@ -672,25 +739,23 @@ public class Evaluator {
 									push(returnValue);
 									yield insn.getNext();
 								} catch (Throwable t) {
-									// TODO: Need to handle exception throwing control flow
-									//  - Yield appropriate exception block handler instead of normal next instruction
-									//  - Need to have some way to determine if the exception should be thrown (bad usage of method)
-									//    vs a problem with our handler logic itself.
+									yield exceptionHandler.routeException(this, exceptionHandler.newThrowable(t), insn);
 								}
 							}
 						}
 
 						// Check if the method is defined in the workspace and can be evaluated.
 						if (canEvaluate(min.owner, min.name, min.desc)) {
-							EvaluationResult result = Evaluator.this.evaluate(min.owner, min.name, min.desc, null, valueList);
+							EvaluationResult result = Evaluator.this.evaluate(min.owner, min.name, min.desc, null, valueList, context);
 							switch (result) {
 								case EvaluationYieldResult yielded -> {
+									if (isVoid)
+										yield insn.getNext();
 									push(yielded.value());
 									yield insn.getNext();
 								}
 								case EvaluationThrowsResult thrown -> {
-									// TODO: Need to handle exception throwing control flow
-									//  - Yield appropriate exception block handler instead of normal next instruction
+									yield exceptionHandler.routeException(this, thrown.exception(), insn);
 								}
 								case EvaluationFailureResult failure -> {
 									// No-op, fallthrough will attempt to handle this.
@@ -710,6 +775,18 @@ public class Evaluator {
 					}
 					throw new AnalyzerException(insn, "Invalid invokestatic state");
 
+				}
+				case INVOKEDYNAMIC -> {
+					if (insn instanceof InvokeDynamicInsnNode indy) {
+						List<ReValue> valueList = new ArrayList<>();
+						for (int i = Type.getArgumentCount(indy.desc); i > 0; --i)
+							valueList.addFirst(pop());
+
+						ReValue result = InvokeDynamicExecutor.evaluate(indy, valueList);
+						push(result != null ? result : interpreter.naryOperation(insn, valueList));
+						yield insn.getNext();
+					}
+					throw new AnalyzerException(insn, "Invalid invokedynamic state");
 				}
 				case JSR, RET -> {
 					throw new UnsupportedOperationException();
@@ -748,12 +825,7 @@ public class Evaluator {
 
 		@Nonnull
 		public ReValue peek() {
-			return peek(0);
-		}
-
-		@Nonnull
-		public ReValue peek(int offset) {
-			return getStack(getStackSize() - 1 - offset);
+			return getStack(getStackSize() - 1);
 		}
 
 		@Nonnull
@@ -778,6 +850,36 @@ public class Evaluator {
 						return v;
 					})
 					.toList();
+		}
+	}
+
+	/**
+	 * Frame for evaluation. Consider it like a {@link StackTraceElement}.
+	 *
+	 * @param className
+	 * 		Name of the class being evaluated.
+	 * @param methodName
+	 * 		Name of the method being evaluated.
+	 */
+	private record EvaluationFrame(@Nonnull String className, @Nonnull String methodName) {}
+
+	/** Context for evaluation, including the call stack and step allocation. */
+	private static final class EvaluationContext {
+		private final List<EvaluationFrame> callStack = new ArrayList<>();
+		private int stepAllocation;
+
+		private EvaluationContext(int stepAllocation) {
+			this.stepAllocation = stepAllocation;
+		}
+
+		@Nonnull
+		private List<StackTraceElement> stackTrace() {
+			List<StackTraceElement> trace = new ArrayList<>(callStack.size());
+			for (int i = callStack.size() - 1; i >= 0; i--) {
+				EvaluationFrame frame = callStack.get(i);
+				trace.add(new StackTraceElement(frame.className().replace('/', '.'), frame.methodName(), null, -1));
+			}
+			return trace;
 		}
 	}
 
