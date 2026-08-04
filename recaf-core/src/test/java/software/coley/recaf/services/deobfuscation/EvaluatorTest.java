@@ -3,11 +3,13 @@ package software.coley.recaf.services.deobfuscation;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import org.junit.jupiter.api.Test;
+import org.objectweb.asm.Type;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.transform.JvmTransformerContext;
 import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.util.analysis.ReInterpreter;
+import software.coley.recaf.util.analysis.Nullness;
 import software.coley.recaf.util.analysis.eval.EvaluationFailureResult;
 import software.coley.recaf.util.analysis.eval.EvaluationResult;
 import software.coley.recaf.util.analysis.eval.EvaluationThrowsResult;
@@ -331,6 +333,61 @@ public class EvaluatorTest extends TransformerTestBase {
 		assertEquals("null", ((StringValue) evaluate(compiled, "nullReceiver", "()Ljava/lang/String;", null, List.of())).getText().orElse(null));
 		assertEquals("array", ((StringValue) evaluate(compiled, "array", "()Ljava/lang/String;", null, List.of())).getText().orElse(null));
 		assertEquals("negative", ((StringValue) evaluate(compiled, "negativeArray", "()Ljava/lang/String;", null, List.of())).getText().orElse(null));
+	}
+
+	@Test
+	void testUnknownBranchBails() {
+		String compiled = compile("""
+				static int unary(int input) {
+				    if (input == 0) return 1;
+				    return 2;
+				}
+
+				static int binary(int left, int right) {
+				    if (left == right) return 1;
+				    return 2;
+				}
+
+				static int nullCheck(String input) {
+				    if (input == null) return 1;
+				    return 2;
+				}
+
+				static int referenceCheck(Object left, Object right) {
+				    if (left == right) return 1;
+				    return 2;
+				}
+
+				static int switchCheck(int input) {
+				    switch (input) {
+				        case 1: return 1;
+				        case 2: return 2;
+				        default: return 3;
+				    }
+				}
+				""");
+
+		// We currently don't support evaluating branches with unknown values,
+		// so we should get an evaluation failure for each of these.
+		//
+		// At some later point we may be able to split into multiple
+		// branches and see if we collapse into a shared result.
+		assertUnknownBranchFailure(evaluateResult(compiled, "unary", "(I)I", null, List.of(IntValue.UNKNOWN)));
+		assertUnknownBranchFailure(evaluateResult(compiled, "binary", "(II)I", null,
+				List.of(IntValue.UNKNOWN, IntValue.of(1))));
+		assertUnknownBranchFailure(evaluateResult(compiled, "nullCheck", "(Ljava/lang/String;)I", null,
+				List.of(StringValue.VAL_STRING_MAYBE_NULL)));
+		assertUnknownBranchFailure(evaluateResult(compiled, "referenceCheck", "(Ljava/lang/Object;Ljava/lang/Object;)I", null,
+				List.of(ObjectValue.object(Type.getObjectType("unknown/Left"), Nullness.UNKNOWN),
+						ObjectValue.object(Type.getObjectType("unknown/Right"), Nullness.UNKNOWN))));
+		assertUnknownBranchFailure(evaluateResult(compiled, "switchCheck", "(I)I", null, List.of(IntValue.UNKNOWN)));
+	}
+
+	private void assertUnknownBranchFailure(@Nonnull EvaluationResult result) {
+		if (result instanceof EvaluationFailureResult failure)
+			assertEquals("Encountered unknown value while evaluating branch", failure.reason());
+		else
+			fail("Expected unknown-branch evaluation failure, got: " + result);
 	}
 
 	@Nonnull

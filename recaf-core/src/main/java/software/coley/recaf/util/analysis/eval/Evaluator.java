@@ -20,7 +20,6 @@ import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TableSwitchInsnNode;
 import org.objectweb.asm.tree.TypeInsnNode;
-import org.objectweb.asm.tree.VarInsnNode;
 import org.objectweb.asm.tree.analysis.AnalyzerException;
 import org.objectweb.asm.tree.analysis.Interpreter;
 import software.coley.collections.Unchecked;
@@ -28,6 +27,7 @@ import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.util.AccessFlag;
+import software.coley.recaf.util.analysis.Branching;
 import software.coley.recaf.util.analysis.Nullness;
 import software.coley.recaf.util.analysis.ReFrame;
 import software.coley.recaf.util.analysis.ReInterpreter;
@@ -57,6 +57,8 @@ import java.util.function.Predicate;
  * @author Matt Coley
  */
 public class Evaluator {
+	private static final String UNKNOWN_VALUE_REASON = "Encountered unknown value while evaluating branch";
+
 	private static final Object2IntMap<String> evaluationSupportCache = new Object2IntMap<>();
 	private static final InstanceFactory instanceFactory = new InstanceFactory();
 	private final Workspace workspace;
@@ -187,7 +189,11 @@ public class Evaluator {
 	                                 @Nonnull List<ReValue> parameters) {
 		if (Type.getReturnType(methodDescriptor) == Type.VOID_TYPE)
 			return EvaluationResult.cannotEvaluate("Method must yield a value");
-		return evaluate(className, methodName, methodDescriptor, classInstance, parameters, new EvaluationContext(maxSteps));
+		try {
+			return evaluate(className, methodName, methodDescriptor, classInstance, parameters, new EvaluationContext(maxSteps));
+		} catch (UnknownValueException e) {
+			return EvaluationResult.cannotEvaluate(UNKNOWN_VALUE_REASON, e);
+		}
 	}
 
 	@Nonnull
@@ -196,7 +202,7 @@ public class Evaluator {
 	                                  @Nonnull String methodDescriptor,
 	                                  @Nullable ReValue classInstance,
 	                                  @Nonnull List<ReValue> parameters,
-	                                  @Nonnull EvaluationContext context) {
+	                                  @Nonnull EvaluationContext context) throws UnknownValueException {
 		ClassPathNode classPath = workspace.findClass(evaluateInternals, className);
 		if (classPath == null)
 			return EvaluationResult.cannotEvaluate("Class not found in workspace: " + className);
@@ -236,7 +242,11 @@ public class Evaluator {
 	                                 @Nonnull List<ReValue> parameters) {
 		if (Type.getReturnType(methodNode.desc) == Type.VOID_TYPE)
 			return EvaluationResult.cannotEvaluate("Method must yield a value");
-		return evaluate(classNode, methodNode, classInstance, parameters, new EvaluationContext(maxSteps));
+		try {
+			return evaluate(classNode, methodNode, classInstance, parameters, new EvaluationContext(maxSteps));
+		} catch (UnknownValueException e) {
+			return EvaluationResult.cannotEvaluate(UNKNOWN_VALUE_REASON, e);
+		}
 	}
 
 	@Nonnull
@@ -244,7 +254,7 @@ public class Evaluator {
 	                                  @Nonnull MethodNode methodNode,
 	                                  @Nullable ReValue classInstance,
 	                                  @Nonnull List<ReValue> parameters,
-	                                  @Nonnull EvaluationContext context) {
+	                                  @Nonnull EvaluationContext context) throws UnknownValueException {
 		// Must support evaluation
 		if (!canEvaluate(methodNode))
 			return EvaluationResult.cannotEvaluate("Target method does not support evaluation: " + classNode.name + "." + methodNode.name + methodNode.desc);
@@ -351,6 +361,8 @@ public class Evaluator {
 				// Check if return instruction assigned a value.
 				if (frame.returnValue != null)
 					return new EvaluationYieldResult(frame.returnValue);
+			} catch (UnknownValueException e) {
+				return EvaluationResult.cannotEvaluate(UNKNOWN_VALUE_REASON, e);
 			} catch (AnalyzerException e) {
 				return EvaluationResult.cannotEvaluate("Failed executing instruction: " + JvmPrinterUtil.toString(pc), e);
 			} catch (NoNextException e) {
@@ -364,6 +376,95 @@ public class Evaluator {
 			context.stepAllocation--;
 		}
 		return EvaluationResult.cannotEvaluate("Block did not yield an value in " + maxSteps + " steps");
+	}
+
+	/**
+	 * @param insn
+	 * 		Instruction to follow.
+	 * @param branching
+	 * 		Branching result to follow.
+	 *
+	 * @return Next instruction to evaluate.
+	 *
+	 * @throws UnknownValueException
+	 * 		When the branching result is {@link Branching#UNKNOWN}.
+	 */
+	@Nonnull
+	private AbstractInsnNode followBranch(@Nonnull AbstractInsnNode insn, @Nonnull Branching branching)
+			throws UnknownValueException {
+		return switch (branching) {
+			case TAKEN -> ((JumpInsnNode) insn).label;
+			case NOT_TAKEN -> insn.getNext();
+			case UNKNOWN -> throw UnknownValueException.INSTANCE;
+		};
+	}
+
+	/**
+	 * @param value
+	 * 		Value to check.
+	 *
+	 * @return The value as an {@link IntValue} if it has a known value.
+	 *
+	 * @throws UnknownValueException
+	 * 		When the value is not an {@link IntValue} or has unknown value.
+	 */
+	@Nonnull
+	private IntValue requireKnownInt(@Nonnull ReValue value) throws UnknownValueException {
+		if (value instanceof IntValue intValue && intValue.hasKnownValue())
+			return intValue;
+		throw UnknownValueException.INSTANCE;
+	}
+
+	/**
+	 * @param value
+	 * 		Value to check.
+	 *
+	 * @return The value as an {@link ObjectValue} if it has known nullness.
+	 *
+	 * @throws UnknownValueException
+	 * 		When the value is not an {@link ObjectValue} or has unknown nullness.
+	 */
+	@Nonnull
+	private ObjectValue requireKnownNullness(@Nonnull ReValue value) throws UnknownValueException {
+		if (value instanceof ObjectValue objectValue && objectValue.nullness() != Nullness.UNKNOWN)
+			return objectValue;
+		throw UnknownValueException.INSTANCE;
+	}
+
+	/**
+	 * Handles {@code IF_ACMPEQ} and {@code IF_ACMPNE} instructions.
+	 *
+	 * @param left
+	 * 		Left value to compare.
+	 * @param right
+	 * 		Right value to compare.
+	 *
+	 * @return Branching result of the comparison.
+	 *
+	 * @throws UnknownValueException
+	 * 		When the comparison cannot be determined due to unknown values.
+	 */
+	@Nonnull
+	private Branching referenceBranching(@Nonnull ReValue left, @Nonnull ReValue right)
+			throws UnknownValueException {
+		// The illusion of free choice...
+		if (left == right)
+			return Branching.TAKEN;
+
+		if (left instanceof ObjectValue leftObject && right instanceof ObjectValue rightObject) {
+			// If both values are known to be null, the branch is taken.
+			if (leftObject.isNull() && rightObject.isNull())
+				return Branching.TAKEN;
+
+			// If both values are known to be non-null, the branch is not taken.
+			if ((leftObject.isNull() && rightObject.isNotNull())
+					|| (leftObject.isNotNull() && rightObject.isNull()))
+				return Branching.NOT_TAKEN;
+
+			// TODO: If we can safely assert that we can compare object identity, we can determine the branch result.
+		}
+
+		throw UnknownValueException.INSTANCE;
 	}
 
 	/** Frame extension to support control flow processing of this evaluator. */
@@ -470,10 +571,12 @@ public class Evaluator {
 		 * 		When the instruction cannot be evaluated.
 		 * @throws NoNextException
 		 * 		When there is no next instruction to execute.
+		 * @throws UnknownValueException
+		 * 		When a branch depends on an unknown value.
 		 */
 		@Nonnull
 		public AbstractInsnNode evaluate(@Nonnull AbstractInsnNode insn, @Nonnull ReInterpreter interpreter)
-				throws AnalyzerException, NoNextException, ExceptionHandler.ThrownException {
+				throws AnalyzerException, NoNextException, UnknownValueException, ExceptionHandler.ThrownException {
 			ReValue implicitException = exceptionHandler.knownFault(insn, this);
 			if (implicitException != null)
 				return exceptionHandler.routeException(this, implicitException, insn);
@@ -487,16 +590,12 @@ public class Evaluator {
 				case IFGT -> conditional(insn, i -> i.isGreaterThan(0));
 				case IFLE -> conditional(insn, i -> i.isLessThanOrEqual(0));
 				case IFNULL -> {
-					ReValue value = pop();
-					if (value instanceof ObjectValue ov && ov.isNull())
-						yield ((JumpInsnNode) insn).label;
-					yield insn.getNext();
+					ObjectValue value = requireKnownNullness(pop());
+					yield followBranch(insn, value.isNull() ? Branching.TAKEN : Branching.NOT_TAKEN);
 				}
 				case IFNONNULL -> {
-					ReValue value = pop();
-					if (value instanceof ObjectValue ov && ov.isNotNull())
-						yield ((JumpInsnNode) insn).label;
-					yield insn.getNext();
+					ObjectValue value = requireKnownNullness(pop());
+					yield followBranch(insn, value.isNotNull() ? Branching.TAKEN : Branching.NOT_TAKEN);
 				}
 				case IF_ICMPEQ -> conditional(insn, IntValue::isEqualTo);
 				case IF_ICMPNE -> conditional(insn, IntValue::isNotEqualTo);
@@ -507,20 +606,17 @@ public class Evaluator {
 				case IF_ACMPEQ -> {
 					ReValue value2 = pop();
 					ReValue value1 = pop();
-					if (value1 == value2)
-						yield ((JumpInsnNode) insn).label;
-					yield insn.getNext();
+					yield followBranch(insn, referenceBranching(value1, value2));
 				}
 				case IF_ACMPNE -> {
 					ReValue value2 = pop();
 					ReValue value1 = pop();
-					if (value1 != value2)
-						yield ((JumpInsnNode) insn).label;
-					yield insn.getNext();
+					yield followBranch(insn, referenceBranching(value1, value2).invert());
 				}
 				case TABLESWITCH -> {
 					ReValue value = pop();
-					if (insn instanceof TableSwitchInsnNode table && value instanceof IntValue iv && iv.hasKnownValue()) {
+					if (insn instanceof TableSwitchInsnNode table) {
+						IntValue iv = requireKnownInt(value);
 						int arg = iv.value().getAsInt();
 						int keyIndex = (arg > table.max || arg < table.min) ? -1 : (arg - table.min);
 						yield keyIndex == -1 ? table.dflt : table.labels.get(keyIndex);
@@ -530,7 +626,8 @@ public class Evaluator {
 				}
 				case LOOKUPSWITCH -> {
 					ReValue value = pop();
-					if (insn instanceof LookupSwitchInsnNode table && value instanceof IntValue iv && iv.hasKnownValue()) {
+					if (insn instanceof LookupSwitchInsnNode table) {
+						IntValue iv = requireKnownInt(value);
 						int arg = iv.value().getAsInt();
 						int keyIndex = -1;
 						for (int j = 0; j < table.keys.size(); j++) {
@@ -816,20 +913,18 @@ public class Evaluator {
 		}
 
 		@Nonnull
-		private AbstractInsnNode conditional(@Nonnull AbstractInsnNode insn, @Nonnull Predicate<IntValue> cmp) {
-			ReValue value = pop();
-			if (value instanceof IntValue iv && cmp.test(iv))
-				return ((JumpInsnNode) insn).label;
-			return insn.getNext();
+		private AbstractInsnNode conditional(@Nonnull AbstractInsnNode insn, @Nonnull Predicate<IntValue> cmp)
+				throws UnknownValueException {
+			IntValue value = requireKnownInt(pop());
+			return followBranch(insn, cmp.test(value) ? Branching.TAKEN : Branching.NOT_TAKEN);
 		}
 
 		@Nonnull
-		private AbstractInsnNode conditional(@Nonnull AbstractInsnNode insn, @Nonnull BiPredicate<IntValue, IntValue> cmp) {
-			ReValue value2 = pop();
-			ReValue value1 = pop();
-			if (value1 instanceof IntValue i1 && value2 instanceof IntValue i2 && cmp.test(i1, i2))
-				return ((JumpInsnNode) insn).label;
-			return insn.getNext();
+		private AbstractInsnNode conditional(@Nonnull AbstractInsnNode insn, @Nonnull BiPredicate<IntValue, IntValue> cmp)
+				throws UnknownValueException {
+			IntValue value2 = requireKnownInt(pop());
+			IntValue value1 = requireKnownInt(pop());
+			return followBranch(insn, cmp.test(value1, value2) ? Branching.TAKEN : Branching.NOT_TAKEN);
 		}
 
 		@Nonnull
@@ -901,6 +996,18 @@ public class Evaluator {
 		@Override
 		public synchronized Throwable fillInStackTrace() {
 			// Don't care.
+			return this;
+		}
+	}
+
+	/** Dummy exception to signal an unknown branch decision. */
+	private static final class UnknownValueException extends Exception {
+		private static final UnknownValueException INSTANCE = new UnknownValueException();
+
+		private UnknownValueException() {}
+
+		@Override
+		public synchronized Throwable fillInStackTrace() {
 			return this;
 		}
 	}
