@@ -15,6 +15,7 @@ import software.coley.recaf.util.analysis.eval.EvaluationYieldResult;
 import software.coley.recaf.util.analysis.eval.Evaluator;
 import software.coley.recaf.util.analysis.eval.FieldCacheManager;
 import software.coley.recaf.util.analysis.value.IntValue;
+import software.coley.recaf.util.analysis.value.LongValue;
 import software.coley.recaf.util.analysis.value.ObjectValue;
 import software.coley.recaf.util.analysis.value.ReValue;
 import software.coley.recaf.util.analysis.value.StringValue;
@@ -27,6 +28,7 @@ import java.util.List;
 import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.fail;
 
 /**
@@ -142,6 +144,49 @@ public class EvaluatorTest extends TransformerTestBase {
 	}
 
 	@Test
+	void testFrameInitializationForLocalThis() {
+		String compiled = compile("""
+				String instanceStr() { return "instance"; }
+				Example receiver() { return this; }
+				String run() { return receiver().instanceStr(); }
+				""");
+		ReValue instance = ObjectValue.VAL_OBJECT;
+		List<ReValue> arguments = List.of(IntValue.of(4), LongValue.of(5), IntValue.of(6));
+
+		// Validate a method that returns 'this' is the same instance we pass to the evaluator as the class instance.
+		ReValue receiver = evaluate(compiled, "receiver", "()L" + CLASS_NAME + ";", instance, List.of());
+		assertSame(instance, receiver);
+
+		// Validate that calling an instance method without a class instance fails.
+		EvaluationResult failure = evaluateResult(compiled, "receiver", "()L" + CLASS_NAME + ";", null, List.of());
+		if (failure instanceof EvaluationFailureResult result)
+			assertEquals("Instance method requires a class instance", result.reason());
+		else
+			fail("Expected instance evaluation failure, got: " + failure);
+
+		// Validate that the instance method can be called and returns the expected value.
+		ReValue runResult = evaluate(compiled, "run", "()Ljava/lang/String;", instance, List.of());
+		if (runResult instanceof StringValue str)
+			assertEquals("instance", str.getText().orElse(null));
+		else
+			fail("Evaluation failure, unexpected return value: " + runResult);
+	}
+
+	@Test
+	void testFrameInitializationForWideParams() {
+		String compiled = compile("""
+				static int staticWide(int first, long wide, int last) { return first + last; }
+				int instanceWide(int first, long wide, int last) { return first + last; }
+				""");
+		ReValue instance = ObjectValue.VAL_OBJECT;
+		List<ReValue> arguments = List.of(IntValue.of(4), LongValue.of(5), IntValue.of(6));
+
+		// Validate that the wide arguments are properly handled and the correct result is returned.
+		assertEquals(10, ((IntValue) evaluate(compiled, "staticWide", "(IJI)I", null, arguments)).value().orElseThrow());
+		assertEquals(10, ((IntValue) evaluate(compiled, "instanceWide", "(IJI)I", instance, arguments)).value().orElseThrow());
+	}
+
+	@Test
 	void testRandom() {
 		String compiled = compile("""
 				static int notSoRandom() { return new Random(1234).nextInt(1000); }
@@ -156,7 +201,7 @@ public class EvaluatorTest extends TransformerTestBase {
 	@Test
 	void testArrayList() {
 		String compiled = compile("""
-				String helloWorld() {
+				static String helloWorld() {
 				    List<String> strings = new ArrayList<>();
 				    strings.add("World");
 				    strings.add(0, "Hello");

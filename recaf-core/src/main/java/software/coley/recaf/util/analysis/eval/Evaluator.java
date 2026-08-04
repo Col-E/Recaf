@@ -265,12 +265,25 @@ public class Evaluator {
 				return EvaluationResult.cannotEvaluate("Mismatched parameter type at index " + i);
 		}
 
-		// Create initial frame
+		// Instance methods need a concrete receiver ("this" reference) before their local frame is created.
+		if (!AccessFlag.isStatic(methodNode.access) && classInstance == null)
+			return EvaluationResult.cannotEvaluate("Instance method requires a class instance");
+
+		// Create initial frame with every slot empty so unused and wide-value slots have valid state.
 		ExecutingFrame frame = new ExecutingFrame(methodNode, context);
 		for (int i = 0; i < methodNode.maxLocals; i++)
-			frame.setLocal(i, i < parameters.size() ? parameters.get(i) : interpreter.newEmptyValue(i));
+			frame.setLocal(i, interpreter.newEmptyValue(i));
+
+		// Reserve local zero for the receiver before placing descriptor arguments.
+		int local = AccessFlag.isStatic(methodNode.access) ? 0 : 1;
 		if (!AccessFlag.isStatic(methodNode.access))
 			frame.setLocal(0, classInstance);
+
+		// Advance by slot width so arguments after long and double land correctly.
+		for (int i = 0; i < argumentTypes.length; i++) {
+			frame.setLocal(local, parameters.get(i));
+			local += argumentTypes[i].getSize();
+		}
 
 		// Handle execution
 		context.callStack.add(new EvaluationFrame(classNode.name, methodNode.name));
@@ -391,11 +404,7 @@ public class Evaluator {
 			return switch (insn.getOpcode()) {
 				case JSR, RET // Legacy instructions
 						-> false;
-				case ALOAD -> {
-					// Local variable 'this' is not supported until we make some form of instance tracking
-					int local = ((VarInsnNode) insn).var;
-					yield isStatic || local != 0;
-				}
+				case ALOAD -> true;
 				case LDC -> {
 					// Dynamic linking + method handles not supported
 					Object cst = ((LdcInsnNode) insn).cst;
