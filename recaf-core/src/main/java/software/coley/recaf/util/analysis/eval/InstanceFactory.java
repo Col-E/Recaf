@@ -260,6 +260,36 @@ public class InstanceFactory extends BasicLookupUtils {
 			receiver.deleteCharAt(i((IntValue) args.get(0)));
 			return host;
 		});
+		registerMethodHandler("java/lang/StringBuilder", "length", "()I", (ReValue host, StringBuilder receiver, List<ReValue> args) -> i(receiver.length()));
+		registerMethodHandler("java/lang/StringBuilder", "getChars", "(II[CI)V", (ReValue host, StringBuilder receiver, List<ReValue> args) -> {
+			receiver.getChars(i((IntValue) args.get(0)), i((IntValue) args.get(1)), arrc((ArrayValue) args.get(2)), i((IntValue) args.get(3)));
+			return null;
+		});
+		registerMethodHandler("java/lang/StringBuilder", "charAt", "(I)C", (ReValue host, StringBuilder receiver, List<ReValue> args) -> c(receiver.charAt(i((IntValue) args.get(0)))));
+		registerMethodHandler("java/lang/StringBuilder", "codePointAt", "(I)I", (ReValue host, StringBuilder receiver, List<ReValue> args) -> i(receiver.codePointAt(i((IntValue) args.get(0)))));
+		registerMethodHandler("java/lang/StringBuilder", "codePointBefore", "(I)I", (ReValue host, StringBuilder receiver, List<ReValue> args) -> i(receiver.codePointBefore(i((IntValue) args.get(0)))));
+		registerMethodHandler("java/lang/StringBuilder", "codePointCount", "(II)I", (ReValue host, StringBuilder receiver, List<ReValue> args) -> i(receiver.codePointCount(i((IntValue) args.get(0)), i((IntValue) args.get(1)))));
+		registerMethodHandler("java/lang/StringBuilder", "offsetByCodePoints", "(II)I", (ReValue host, StringBuilder receiver, List<ReValue> args) -> i(receiver.offsetByCodePoints(i((IntValue) args.get(0)), i((IntValue) args.get(1)))));
+		registerMethodHandler("java/lang/StringBuilder", "substring", "(II)Ljava/lang/String;", (ReValue host, StringBuilder receiver, List<ReValue> args) -> str(receiver.substring(i((IntValue) args.get(0)), i((IntValue) args.get(1)))));
+		registerMethodHandler("java/lang/StringBuilder", "substring", "(I)Ljava/lang/String;", (ReValue host, StringBuilder receiver, List<ReValue> args) -> str(receiver.substring(i((IntValue) args.get(0)))));
+		registerMethodHandler("java/lang/StringBuilder", "subSequence", "(II)Ljava/lang/CharSequence;", (ReValue host, StringBuilder receiver, List<ReValue> args) -> str(receiver.subSequence(i((IntValue) args.get(0)), i((IntValue) args.get(1)))));
+		registerMethodHandler("java/lang/StringBuilder", "setLength", "(I)V", (ReValue host, StringBuilder receiver, List<ReValue> args) -> {
+			receiver.setLength(i((IntValue) args.get(0)));
+			return null;
+		});
+		registerMethodHandler("java/lang/StringBuilder", "capacity", "()I", (ReValue host, StringBuilder receiver, List<ReValue> args) -> i(receiver.capacity()));
+		registerMethodHandler("java/lang/StringBuilder", "ensureCapacity", "(I)V", (ReValue host, StringBuilder receiver, List<ReValue> args) -> {
+			receiver.ensureCapacity(i((IntValue) args.get(0)));
+			return null;
+		});
+		registerMethodHandler("java/lang/StringBuilder", "trimToSize", "()V", (ReValue host, StringBuilder receiver, List<ReValue> args) -> {
+			receiver.trimToSize();
+			return null;
+		});
+		registerMethodHandler("java/lang/StringBuilder", "setCharAt", "(IC)V", (ReValue host, StringBuilder receiver, List<ReValue> args) -> {
+			receiver.setCharAt(i((IntValue) args.get(0)), c((IntValue) args.get(1)));
+			return null;
+		});
 
 		// java.lang.Boolean
 		registerMethodHandler("java/lang/Boolean", "equals", "(Ljava/lang/Object;)Z", (ReValue host, Boolean receiver, List<ReValue> args) -> z(receiver.equals(objl((ObjectValue) args.get(0)))));
@@ -522,8 +552,8 @@ public class InstanceFactory extends BasicLookupUtils {
 		registerMapper(Random.class, "()V", (host, parameters) -> new Random(0));
 
 		// java.lang.StackTraceElement
-		registerMapper(StackTraceElement.class, "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;I)V", (host, parameters) -> new StackTraceElement(str((StringValue)parameters.get(0)), str((StringValue)parameters.get(1)), str((StringValue)parameters.get(2)), str((StringValue)parameters.get(3)), str((StringValue)parameters.get(4)), str((StringValue)parameters.get(5)), i((IntValue)parameters.get(6))));
-		registerMapper(StackTraceElement.class, "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;I)V", (host, parameters) -> new StackTraceElement(str((StringValue)parameters.get(0)), str((StringValue)parameters.get(1)), str((StringValue)parameters.get(2)), i((IntValue)parameters.get(3))));
+		registerMapper(StackTraceElement.class, "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;I)V", (host, parameters) -> new StackTraceElement(str((StringValue) parameters.get(0)), str((StringValue) parameters.get(1)), str((StringValue) parameters.get(2)), str((StringValue) parameters.get(3)), str((StringValue) parameters.get(4)), str((StringValue) parameters.get(5)), i((IntValue) parameters.get(6))));
+		registerMapper(StackTraceElement.class, "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;I)V", (host, parameters) -> new StackTraceElement(str((StringValue) parameters.get(0)), str((StringValue) parameters.get(1)), str((StringValue) parameters.get(2)), i((IntValue) parameters.get(3))));
 
 		// java.util.ArrayList
 		registerMapper(ArrayList.class, "()V", (host, parameters) -> new ArrayList());

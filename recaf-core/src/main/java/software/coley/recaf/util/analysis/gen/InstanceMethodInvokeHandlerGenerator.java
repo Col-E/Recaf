@@ -9,6 +9,8 @@ import software.coley.recaf.util.analysis.eval.MethodInvokeHandler;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * Generator for items in {@link InstanceFactory} to generate {@link MethodInvokeHandler} implementations.
@@ -22,45 +24,64 @@ public class InstanceMethodInvokeHandlerGenerator extends GenUtils {
 	public static void main(String[] args) {
 		for (Class<?> type : InstanceMapperGenerator.emitTargets) {
 			System.out.println(" // " + type.getName());
-			for (Method method : type.getDeclaredMethods()) {
-				// Skip inaccessible methods
-				int modifiers = method.getModifiers();
-				if (!Modifier.isPublic(modifiers))
-					continue;
-				if (Modifier.isStatic(modifiers))
-					continue;
-				if (AccessFlag.isBridge(modifiers) || AccessFlag.isSynthetic(modifiers))
-					continue;
 
-				// Skip static initializer and constructors
-				String methodName = method.getName();
-				if (method.getName().charAt(0) == '<')
-					continue;
+			// Print declared methods for the type.
+			Set<String> methodKeys = new TreeSet<>();
+			Method[] declaredMethods = type.getDeclaredMethods();
+			printMethods(type, declaredMethods, methodKeys);
 
-				// Skip if we don't support the return type
-				if (!isSupportedTypeOrEmitTarget(method.getReturnType()))
-					continue;
+			// Some types we need to also print their super-type methods.
+			if (type == StringBuilder.class) {
+				declaredMethods = type.getSuperclass().getDeclaredMethods();
+				printMethods(type, declaredMethods, methodKeys);
+			}
 
-				// Skip if we don't support a parameter type
-				boolean supportedParameters = true;
-				Class<?>[] parameterTypes = method.getParameterTypes();
-				for (Class<?> parameterType : parameterTypes) {
-					if (!isSupportedTypeOrEmitTarget(parameterType)) {
-						supportedParameters = false;
-						break;
-					}
+			System.out.println();
+		}
+	}
+
+	private static Set<String> printMethods(Class<?> type, Method[] methods, Set<String> methodKeys) {
+		for (Method method : methods) {
+			// Skip inaccessible methods
+			int modifiers = method.getModifiers();
+			if (!Modifier.isPublic(modifiers))
+				continue;
+			if (Modifier.isStatic(modifiers))
+				continue;
+			if (AccessFlag.isBridge(modifiers) || AccessFlag.isSynthetic(modifiers))
+				continue;
+
+			// Skip static initializer and constructors
+			String methodName = method.getName();
+			if (method.getName().charAt(0) == '<')
+				continue;
+
+			// Skip if we don't support the return type
+			if (!isSupportedTypeOrEmitTarget(method.getReturnType()))
+				continue;
+
+			// Skip if we don't support a parameter type
+			boolean supportedParameters = true;
+			Class<?>[] parameterTypes = method.getParameterTypes();
+			for (Class<?> parameterType : parameterTypes) {
+				if (!isSupportedTypeOrEmitTarget(parameterType)) {
+					supportedParameters = false;
+					break;
 				}
-				if (!supportedParameters)
-					continue;
+			}
+			if (!supportedParameters)
+				continue;
 
-				// Build final output
-				String methodDescriptor = Type.getMethodDescriptor(method);
+			// Build final output
+			String methodDescriptor = Type.getMethodDescriptor(method);
+			String methodKey = methodName + methodDescriptor;
+			if (methodKeys.add(methodKey)) {
 				String template = buildImplementation(type, method);
 				System.out.println(" registerMethodHandler(\"" + type.getName().replace('.', '/') +
 						"\", \"" + methodName + "\", \"" + methodDescriptor + "\", " + template + "  );");
 			}
-			System.out.println();
 		}
+		return methodKeys;
 	}
 
 	@Nonnull
