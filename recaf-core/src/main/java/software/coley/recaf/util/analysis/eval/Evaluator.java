@@ -24,9 +24,11 @@ import org.objectweb.asm.tree.analysis.AnalyzerException;
 import org.objectweb.asm.tree.analysis.Interpreter;
 import software.coley.collections.Unchecked;
 import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.util.AccessFlag;
+import software.coley.recaf.util.ClassMethodPair;
 import software.coley.recaf.util.analysis.Branching;
 import software.coley.recaf.util.analysis.Nullness;
 import software.coley.recaf.util.analysis.ReFrame;
@@ -40,14 +42,15 @@ import software.coley.recaf.util.analysis.value.ReValue;
 import software.coley.recaf.util.analysis.value.ThrowableValue;
 import software.coley.recaf.util.analysis.value.UninitializedValue;
 import software.coley.recaf.util.analysis.value.impl.ArrayValueImpl;
-import software.coley.recaf.util.collect.primitive.Object2IntMap;
 import software.coley.recaf.util.visitors.MemberFilteringVisitor;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.RuntimeWorkspaceResource;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.OptionalInt;
+import java.util.Set;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
@@ -59,7 +62,6 @@ import java.util.function.Predicate;
 public class Evaluator {
 	private static final String UNKNOWN_VALUE_REASON = "Encountered unknown value while evaluating branch";
 
-	private static final Object2IntMap<String> evaluationSupportCache = new Object2IntMap<>();
 	private static final InstanceFactory instanceFactory = new InstanceFactory();
 	private final Workspace workspace;
 	private final ReInterpreter interpreter;
@@ -102,26 +104,21 @@ public class Evaluator {
 	public boolean canEvaluate(@Nonnull String className,
 	                           @Nonnull String methodName,
 	                           @Nonnull String methodDescriptor) {
-		String key = className + '.' + methodName + methodDescriptor;
-		synchronized (evaluationSupportCache) {
-			return evaluationSupportCache.computeIfAbsent(key, k -> {
-				// Find class in workspace.
-				ClassPathNode classPath = workspace.findClass(evaluateInternals, className);
-				if (classPath == null)
-					return 0;
+		// Find class in workspace.
+		ClassPathNode classPath = workspace.findClass(evaluateInternals, className);
+		if (classPath == null)
+			return false;
 
-				// Ensure method exists in class.
-				JvmClassInfo jvmClass = classPath.getValue().asJvmClass();
-				MethodMember method = jvmClass.getDeclaredMethod(methodName, methodDescriptor);
-				if (method == null)
-					return 0;
+		// Ensure method exists in class.
+		JvmClassInfo jvmClass = classPath.getValue().asJvmClass();
+		MethodMember method = jvmClass.getDeclaredMethod(methodName, methodDescriptor);
+		if (method == null || AccessFlag.isAbstract(method.getAccess()) || AccessFlag.isNative(method.getAccess()))
+			return false;
 
-				// Extract method-node model and delegate to evaluate check.
-				ClassNode node = new ClassNode();
-				jvmClass.getClassReader().accept(new MemberFilteringVisitor(node, method), ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG);
-				return (node.methods.size() == 1 && canEvaluate(node.methods.getFirst())) ? 1 : 0;
-			}) != 0;
-		}
+		// Extract method-node model and delegate to evaluate check.
+		ClassNode node = new ClassNode();
+		jvmClass.getClassReader().accept(new MemberFilteringVisitor(node, method), ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG);
+		return node.methods.size() == 1 && canEvaluate(node.methods.getFirst());
 	}
 
 	/**
@@ -131,12 +128,13 @@ public class Evaluator {
 	 * @return {@code true} when all instructions in the method can be evaluated.
 	 */
 	public boolean canEvaluate(@Nonnull MethodNode method) {
-		// Cannot be abstract / have no instructions.
-		if (method.instructions == null || method.instructions.size() == 0)
+		// Cannot be abstract, native, or have no instructions.
+		if (AccessFlag.isAbstract(method.access) || AccessFlag.isNative(method.access)
+				|| method.instructions == null || method.instructions.size() == 0)
 			return false;
 
 		// Must not have any unsupported instructions
-		ExecutingFrame frame = new ExecutingFrame(method, new EvaluationContext(maxSteps));
+		ExecutingFrame frame = new ExecutingFrame(method, new EvaluationContext(maxSteps), null);
 		for (AbstractInsnNode instruction : method.instructions)
 			if (!frame.canEvaluateInsn(instruction, interpreter))
 				return false;
@@ -185,7 +183,7 @@ public class Evaluator {
 	public EvaluationResult evaluate(@Nonnull String className,
 	                                 @Nonnull String methodName,
 	                                 @Nonnull String methodDescriptor,
-	                                 @Nullable ReValue classInstance,
+	                                 @Nullable ObjectValue classInstance,
 	                                 @Nonnull List<ReValue> parameters) {
 		if (Type.getReturnType(methodDescriptor) == Type.VOID_TYPE)
 			return EvaluationResult.cannotEvaluate("Method must yield a value");
@@ -200,7 +198,7 @@ public class Evaluator {
 	private EvaluationResult evaluate(@Nonnull String className,
 	                                  @Nonnull String methodName,
 	                                  @Nonnull String methodDescriptor,
-	                                  @Nullable ReValue classInstance,
+	                                  @Nullable ObjectValue classInstance,
 	                                  @Nonnull List<ReValue> parameters,
 	                                  @Nonnull EvaluationContext context) throws UnknownValueException {
 		ClassPathNode classPath = workspace.findClass(evaluateInternals, className);
@@ -238,7 +236,7 @@ public class Evaluator {
 	@Nonnull
 	public EvaluationResult evaluate(@Nonnull ClassNode classNode,
 	                                 @Nonnull MethodNode methodNode,
-	                                 @Nullable ReValue classInstance,
+	                                 @Nullable ObjectValue classInstance,
 	                                 @Nonnull List<ReValue> parameters) {
 		if (Type.getReturnType(methodNode.desc) == Type.VOID_TYPE)
 			return EvaluationResult.cannotEvaluate("Method must yield a value");
@@ -252,7 +250,7 @@ public class Evaluator {
 	@Nonnull
 	private EvaluationResult evaluate(@Nonnull ClassNode classNode,
 	                                  @Nonnull MethodNode methodNode,
-	                                  @Nullable ReValue classInstance,
+	                                  @Nullable ObjectValue classInstance,
 	                                  @Nonnull List<ReValue> parameters,
 	                                  @Nonnull EvaluationContext context) throws UnknownValueException {
 		// Must support evaluation
@@ -279,8 +277,12 @@ public class Evaluator {
 		if (!AccessFlag.isStatic(methodNode.access) && classInstance == null)
 			return EvaluationResult.cannotEvaluate("Instance method requires a class instance");
 
+		// For instance methods, initialize the instance fields of the receiver so that they have a known state.
+		if (!AccessFlag.isStatic(methodNode.access) && classInstance instanceof InstancedObjectValue<?>)
+			initializeInstanceFields(classInstance, classNode.name);
+
 		// Create initial frame with every slot empty so unused and wide-value slots have valid state.
-		ExecutingFrame frame = new ExecutingFrame(methodNode, context);
+		ExecutingFrame frame = new ExecutingFrame(methodNode, context, classNode.name);
 		for (int i = 0; i < methodNode.maxLocals; i++)
 			frame.setLocal(i, interpreter.newEmptyValue(i));
 
@@ -309,6 +311,8 @@ public class Evaluator {
 							retVal = instanced.unmap();
 						return new EvaluationYieldResult(retVal);
 					}
+				} catch (NestedEvaluationFailure e) {
+					return e.result;
 				} catch (AnalyzerException e) {
 					return EvaluationResult.cannotEvaluate("Failed executing instruction: " + JvmPrinterUtil.toString(pc), e);
 				} catch (NoNextException e) {
@@ -321,6 +325,40 @@ public class Evaluator {
 			return EvaluationResult.cannotEvaluate("Method did not yield an value in " + maxSteps + " steps");
 		} finally {
 			context.callStack.removeLast();
+		}
+	}
+
+	/**
+	 * Initializes all fields declared by an allocated class and its resolvable parents.
+	 * Defaults are inserted once so a cached known-null remains distinguishable from an absent field.
+	 *
+	 * @param instance
+	 * 		Value to initialize fields for.
+	 * @param allocatedClassName
+	 * 		Internal name of the class that was allocated for the given instance.
+	 */
+	private void initializeInstanceFields(@Nonnull ReValue instance, @Nonnull String allocatedClassName) {
+		FieldCache cache = fieldCacheManager.getInstanceFieldCache(instance);
+		Set<String> visited = new HashSet<>();
+		String className = allocatedClassName;
+		while (className != null && visited.add(className)) {
+			ClassPathNode classPath = workspace.findClass(evaluateInternals, className);
+			if (classPath == null)
+				return;
+			JvmClassInfo classInfo = classPath.getValue().asJvmClass();
+			for (FieldMember field : classInfo.getFields()) {
+				if (AccessFlag.isStatic(field.getAccess()))
+					continue;
+				if (!cache.containsField(className, field.getName(), field.getDescriptor())) {
+					try {
+						cache.setField(className, field.getName(), field.getDescriptor(),
+								ReValue.ofTypeDefaultValue(Type.getType(field.getDescriptor())));
+					} catch (Exception ex) {
+						throw new IllegalStateException("Failed to initialize field " + className + '.' + field.getName(), ex);
+					}
+				}
+			}
+			className = classInfo.getSuperName();
 		}
 	}
 
@@ -361,6 +399,8 @@ public class Evaluator {
 				// Check if return instruction assigned a value.
 				if (frame.returnValue != null)
 					return new EvaluationYieldResult(frame.returnValue);
+			} catch (NestedEvaluationFailure e) {
+				return e.result;
 			} catch (UnknownValueException e) {
 				return EvaluationResult.cannotEvaluate(UNKNOWN_VALUE_REASON, e);
 			} catch (AnalyzerException e) {
@@ -397,6 +437,22 @@ public class Evaluator {
 			case NOT_TAKEN -> insn.getNext();
 			case UNKNOWN -> throw UnknownValueException.INSTANCE;
 		};
+	}
+
+	/**
+	 * @param value
+	 * 		Value to check.
+	 *
+	 * @return The value as an {@link ObjectValue} if it is one.
+	 *
+	 * @throws NestedEvaluationFailure
+	 * 		When the value is not an {@link ObjectValue}.
+	 */
+	@Nonnull
+	private ObjectValue requireObject(@Nonnull ReValue value) throws NestedEvaluationFailure {
+		if (value instanceof ObjectValue objectValue)
+			return objectValue;
+		throw new NestedEvaluationFailure(new EvaluationFailureResult("Expected object value, but got: " + value, null));
 	}
 
 	/**
@@ -456,15 +512,206 @@ public class Evaluator {
 			if (leftObject.isNull() && rightObject.isNull())
 				return Branching.TAKEN;
 
-			// If both values are known to be non-null, the branch is not taken.
-			if ((leftObject.isNull() && rightObject.isNotNull())
-					|| (leftObject.isNotNull() && rightObject.isNull()))
+			// Distinct known non-null wrappers cannot be the same reference (see the `==` check above).
+			if (leftObject.isNotNull() && rightObject.isNotNull())
 				return Branching.NOT_TAKEN;
-
-			// TODO: If we can safely assert that we can compare object identity, we can determine the branch result.
 		}
 
 		throw UnknownValueException.INSTANCE;
+	}
+
+	/**
+	 * @param className
+	 * 		Internal name of the class to get.
+	 *
+	 * @return Class node for the given class, or {@code null} if the class is not in the workspace.
+	 */
+	@Nullable
+	private ClassNode getNode(@Nonnull String className) {
+		ClassPathNode classPath = workspace.findClass(evaluateInternals, className);
+		if (classPath == null)
+			return null;
+
+		ClassNode classNode = new ClassNode();
+		classPath.getValue().asJvmClass().getClassReader().accept(classNode, ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG);
+		return classNode;
+	}
+
+	/**
+	 * @param className
+	 * 		Internal name of the class to check.
+	 *
+	 * @return {@code true} if the class is concrete <i>(not abstract or an interface)</i> and can be instantiated.
+	 */
+	private boolean isConcreteClass(@Nonnull String className) {
+		ClassPathNode classPath = workspace.findClass(evaluateInternals, className);
+		if (classPath == null)
+			return false;
+		int access = classPath.getValue().asJvmClass().getAccess();
+		return !AccessFlag.isAbstract(access) && !AccessFlag.isInterface(access);
+	}
+
+	/**
+	 * Resolves a workspace implementation for an instance call:
+	 * <ul>
+	 *     <li>INVOKEVIRTUAL: Uses the receiver's concrete type to find a concrete implementation of the method.</li>
+	 *     <li>INVOKEINTERFACE: Uses the receiver's concrete type to find a concrete implementation of the method, or a default method from an interface.</li>
+	 *     <li>INVOKESPECIAL: Uses the symbolic owner to find a concrete implementation of the method.</li>
+	 * </ul>
+	 *
+	 * @param instruction
+	 * 		Instance method instruction to resolve.
+	 * @param receiver
+	 * 		Receiver value being invoked.
+	 * @param receiverType
+	 * 		Internal name of the receiver class when the receiver is known to be {@code this},
+	 * 		or {@code null} when that attribution is unavailable.
+	 *
+	 * @return Resolved method, or {@code null} if no concrete, unambiguous workspace implementation is available.
+	 */
+	@Nullable
+	private ClassMethodPair resolveMethod(@Nonnull MethodInsnNode instruction,
+	                                      @Nonnull ReValue receiver,
+	                                      @Nullable String receiverType) {
+		// Special calls use the symbolic owner exactly. No special resolution needed.
+		if (instruction.getOpcode() == Opcodes.INVOKESPECIAL)
+			return resolveConcreteMethod(getNode(instruction.owner), instruction.name, instruction.desc);
+
+		// Virtual and interface calls use the receiver's concrete type when available, otherwise the symbolic owner.
+		// First get the receiver's concrete type, if it is known.
+		String receiverClassName = receiver instanceof InstancedObjectValue<?> instanced
+				? instanced.type().getInternalName() : receiverType;
+		if (receiverClassName == null)
+			return null;
+
+		// Walk up the class hierarchy to find a concrete implementation of the method.
+		Set<String> visitedClasses = new HashSet<>();
+		String className = receiverClassName;
+		while (className != null && visitedClasses.add(className)) {
+			ClassNode classNode = getNode(className);
+			if (classNode == null)
+				break;
+
+			// Check for a concrete implementation of the method in this class.
+			ClassMethodPair method = resolveConcreteMethod(classNode, instruction.name, instruction.desc);
+			if (method != null)
+				return method;
+
+			// Continue looking in the parent class.
+			className = classNode.superName;
+		}
+
+		// Interface defaults are selected only when one candidate is strictly most specific.
+		List<ClassMethodPair> interfaceMethods = new ArrayList<>();
+		Set<String> visitedInterfaces = new HashSet<>();
+		Set<String> interfaceClassChain = new HashSet<>();
+		className = receiverClassName;
+		while (className != null && interfaceClassChain.add(className)) {
+			ClassNode classNode = getNode(className);
+			if (classNode == null)
+				break;
+
+			// Collect concrete implementations of the method in this class's interfaces and their parents.
+			for (String interfaceName : classNode.interfaces)
+				collectInterfaceMethods(interfaceName, instruction, visitedInterfaces, interfaceMethods);
+
+			className = classNode.superName;
+		}
+		if (interfaceMethods.isEmpty())
+			return null;
+
+		// We have at least one candidate, but we need to find the most specific one.
+		ClassMethodPair selected = null;
+		for (ClassMethodPair candidate : interfaceMethods) {
+			boolean isMostSpecific = true;
+			for (ClassMethodPair other : interfaceMethods) {
+				if (candidate == other)
+					continue;
+
+				// If the candidate is not assignable to the other, then it is not the most specific.
+				if (!interpreter.isAssignableFrom(candidate.classNode().name, other.classNode().name)) {
+					isMostSpecific = false;
+					break;
+				}
+			}
+
+			// If the candidate is not the most specific, skip it.
+			if (!isMostSpecific)
+				continue;
+
+			// If we already have a selected candidate, then there is no unique most specific candidate.
+			if (selected != null)
+				return null;
+
+			selected = candidate;
+		}
+		return selected;
+	}
+
+	/**
+	 * Recursively collects concrete implementations of the given method in the given interface and its parent interfaces.
+	 *
+	 * @param interfaceName
+	 * 		Internal name of the interface to check.
+	 * @param instruction
+	 * 		Method instruction to resolve.
+	 * @param visited
+	 * 		Set of visited interfaces to avoid cycles.
+	 * @param methods
+	 * 		Result list to add any found concrete methods to.
+	 */
+	private void collectInterfaceMethods(@Nonnull String interfaceName, @Nonnull MethodInsnNode instruction,
+	                                     @Nonnull Set<String> visited, @Nonnull List<ClassMethodPair> methods) {
+		// Skip visited to avoid cycles.
+		if (!visited.add(interfaceName))
+			return;
+
+		// Must be a known interface in the workspace.
+		ClassNode interfaceNode = getNode(interfaceName);
+		if (interfaceNode == null)
+			return;
+
+		// Check for a concrete implementation of the method in this interface.
+		ClassMethodPair method = resolveConcreteMethod(interfaceNode, instruction.name, instruction.desc);
+		if (method != null)
+			methods.add(method);
+
+		// Continue looking in the parent interfaces.
+		for (String parentName : interfaceNode.interfaces)
+			collectInterfaceMethods(parentName, instruction, visited, methods);
+	}
+
+	/**
+	 * Resolves a concrete implementation of the given method in the given class.
+	 *
+	 * @param classNode
+	 * 		Class to check for a concrete implementation of the method.
+	 * @param methodName
+	 * 		Name of the method to check for.
+	 * @param descriptor
+	 * 		Descriptor of the method to check for.
+	 *
+	 * @return The concrete method if found, or {@code null} if no concrete implementation exists in the given class.
+	 */
+	@Nullable
+	private ClassMethodPair resolveConcreteMethod(@Nullable ClassNode classNode,
+	                                              @Nonnull String methodName,
+	                                              @Nonnull String descriptor) {
+		if (classNode == null)
+			return null;
+
+		// Check for a concrete implementation of the method in this class.
+		for (MethodNode methodNode : classNode.methods) {
+			if (methodName.equals(methodNode.name)
+					&& descriptor.equals(methodNode.desc)
+					&& !AccessFlag.isAbstract(methodNode.access)
+					&& !AccessFlag.isNative(methodNode.access)
+					&& methodNode.instructions != null
+					&& methodNode.instructions.size() > 0)
+				return new ClassMethodPair(classNode, methodNode);
+		}
+
+		return null;
 	}
 
 	/** Frame extension to support control flow processing of this evaluator. */
@@ -476,19 +723,37 @@ public class Evaluator {
 		private AbstractInsnNode next;
 		private ReValue returnValue;
 		private final boolean isStatic;
+		@Nullable
+		private final String currentClassName;
 
-		public ExecutingFrame(@Nonnull MethodNode method, @Nonnull EvaluationContext context) {
-			this(method, method.maxLocals, method.maxStack, method.access, context);
+		public ExecutingFrame(@Nonnull MethodNode method, @Nonnull EvaluationContext context,
+		                      @Nullable String currentClassName) {
+			this(method, method.maxLocals, method.maxStack, method.access, context, currentClassName);
 		}
 
 		public ExecutingFrame(@Nullable MethodNode method, int maxLocals, int maxStack, int access,
 		                      @Nonnull EvaluationContext context) {
+			this(method, maxLocals, maxStack, access, context, null);
+		}
+
+		public ExecutingFrame(@Nullable MethodNode method, int maxLocals, int maxStack, int access,
+		                      @Nonnull EvaluationContext context, @Nullable String currentClassName) {
 			super(null, maxLocals, maxStack);
 
 			this.method = method;
 			this.context = context;
-			this.exceptionHandler = new ExceptionHandler(Evaluator.this.interpreter, method, context::stackTrace);
+			this.exceptionHandler = new ExceptionHandler(interpreter, method, context::stackTrace);
+			this.currentClassName = currentClassName;
+
 			isStatic = AccessFlag.isStatic(access);
+		}
+
+		/**
+		 * @return Top value of the stack without popping it.
+		 */
+		@Nonnull
+		public ReValue peek() {
+			return getStack(getStackSize() - 1);
 		}
 
 		/**
@@ -512,10 +777,18 @@ public class Evaluator {
 					yield !(cst instanceof ConstantDynamic || cst instanceof Handle);
 				}
 				case ATHROW -> true;
-				case NEW ->
-						insn instanceof TypeInsnNode tin && (instanceFactory.isSupportedType(tin.desc) || exceptionHandler.isThrowableType(tin.desc));
+				case NEW -> insn instanceof TypeInsnNode tin && (instanceFactory.isSupportedType(tin.desc)
+						|| exceptionHandler.isThrowableType(tin.desc)
+						|| isConcreteClass(tin.desc));
 				case INVOKESPECIAL, INVOKEINTERFACE, INVOKEVIRTUAL -> {
 					if (insn instanceof MethodInsnNode min) {
+						// Object initializer is no-op and inherently safe to evaluate.
+						if (min.getOpcode() == INVOKESPECIAL && min.owner.equals("java/lang/Object")
+								&& min.name.equals("<init>") && min.desc.equals("()V"))
+							yield true;
+
+						// Check if the method is a known exception constructor or stack trace getter.
+						// These are special cases in our evaluation engine and are safe to evaluate.
 						if (exceptionHandler.isThrowableConstructor(min) || exceptionHandler.isThrowableGetStackTrace(min))
 							yield true;
 
@@ -523,7 +796,7 @@ public class Evaluator {
 						if (instanceFactory.getMethodHandler(min) != null || instanceFactory.getMapper(min) != null)
 							yield true;
 
-						// Check if the method is declared in the workspace, meaning we can evaluate it.
+						// Check if the symbolic owner exists for runtime receiver dispatch.
 						ClassPathNode targetClassPath = workspace.findClass(evaluateInternals, min.owner);
 						if (targetClassPath != null)
 							yield true;
@@ -573,10 +846,15 @@ public class Evaluator {
 		 * 		When there is no next instruction to execute.
 		 * @throws UnknownValueException
 		 * 		When a branch depends on an unknown value.
+		 * @throws ExceptionHandler.ThrownException
+		 * 		When an exception is thrown during evaluation.
+		 * @throws NestedEvaluationFailure
+		 * 		When a nested evaluation fails and yields a result.
 		 */
 		@Nonnull
 		public AbstractInsnNode evaluate(@Nonnull AbstractInsnNode insn, @Nonnull ReInterpreter interpreter)
-				throws AnalyzerException, NoNextException, UnknownValueException, ExceptionHandler.ThrownException {
+				throws AnalyzerException, NoNextException, UnknownValueException,
+				ExceptionHandler.ThrownException, NestedEvaluationFailure {
 			ReValue implicitException = exceptionHandler.knownFault(insn, this);
 			if (implicitException != null)
 				return exceptionHandler.routeException(this, implicitException, insn);
@@ -662,9 +940,13 @@ public class Evaluator {
 				case NEW -> {
 					if (insn instanceof TypeInsnNode tin) {
 						Type type = Type.getObjectType(tin.desc);
-						push(exceptionHandler.isThrowableType(tin.desc) ?
-								exceptionHandler.newThrowable(tin.desc, null) :
-								new InstancedObjectValue<>(type));
+						if (exceptionHandler.isThrowableType(tin.desc)) {
+							push(exceptionHandler.newThrowable(tin.desc, null));
+						} else {
+							InstancedObjectValue<?> instance = new InstancedObjectValue<>(type);
+							initializeInstanceFields(instance, tin.desc);
+							push(instance);
+						}
 						yield insn.getNext();
 					}
 					throw new AnalyzerException(insn, "Invalid new state");
@@ -673,7 +955,8 @@ public class Evaluator {
 					if (insn instanceof FieldInsnNode fieldInsn) {
 						// Try to get the field value from the instance cache.
 						ReValue receiver = peek();
-						ReValue value = fieldCacheManager.getInstanceFieldCache(receiver).getField(fieldInsn.name, fieldInsn.desc);
+						ReValue value = fieldCacheManager.getInstanceFieldCache(receiver)
+								.getField(fieldInsn.owner, fieldInsn.name, fieldInsn.desc);
 						if (value != null) {
 							pop(); // Pop receiver
 							push(value); // Push field value
@@ -689,7 +972,8 @@ public class Evaluator {
 				case GETSTATIC -> {
 					if (insn instanceof FieldInsnNode fieldInsn) {
 						// Try to get the field value from the static cache.
-						ReValue value = fieldCacheManager.getStaticFieldCache(fieldInsn.owner).getField(fieldInsn.name, fieldInsn.desc);
+						ReValue value = fieldCacheManager.getStaticFieldCache(fieldInsn.owner)
+								.getField(fieldInsn.owner, fieldInsn.name, fieldInsn.desc);
 						if (value != null) {
 							push(value);
 							yield insn.getNext();
@@ -706,7 +990,8 @@ public class Evaluator {
 					if (insn instanceof FieldInsnNode fin) {
 						ReValue value = pop();
 						ReValue receiver = pop();
-						fieldCacheManager.getInstanceFieldCache(receiver).setField(fin.name, fin.desc, value);
+						fieldCacheManager.getInstanceFieldCache(receiver)
+								.setField(fin.owner, fin.name, fin.desc, value);
 						yield insn.getNext();
 					}
 					throw new AnalyzerException(insn, "Invalid putfield state");
@@ -715,7 +1000,8 @@ public class Evaluator {
 					// Assign the top value to the static field in the cache.
 					if (insn instanceof FieldInsnNode fin) {
 						ReValue value = pop();
-						fieldCacheManager.getStaticFieldCache(fin.owner).setField(fin.name, fin.desc, value);
+						fieldCacheManager.getStaticFieldCache(fin.owner)
+								.setField(fin.owner, fin.name, fin.desc, value);
 						yield insn.getNext();
 					}
 					throw new AnalyzerException(insn, "Invalid putstatic state");
@@ -724,8 +1010,7 @@ public class Evaluator {
 					if (insn instanceof MethodInsnNode min) {
 						String methodDescriptor = min.desc;
 
-						// Special case for throwable constructors, which we can handle without executing the constructor.
-						// The value on the stack should be a ThrowableValue, which fills in the stack trace when the constructor is called.
+						// Throwable constructors are modeled so their stack traces remain evaluator-owned.
 						if (exceptionHandler.isThrowableConstructor(min)) {
 							for (int i = Type.getArgumentCount(methodDescriptor); i > 0; --i)
 								pop();
@@ -733,28 +1018,66 @@ public class Evaluator {
 							yield insn.getNext();
 						}
 
-						// Handle instance initialization for supported types.
+						// Collect workspace-call arguments and the receiver in their original order.
+						List<ReValue> valueList = new ArrayList<>();
+						for (int i = Type.getArgumentCount(methodDescriptor); i > 0; --i)
+							valueList.addFirst(pop());
+						ObjectValue receiver = requireObject(pop());
+
+						// Registered host mappers remain the only allocation path for supported host-backed types.
 						InstanceMapper mapper = instanceFactory.getMapper(min);
 						if (mapper != null) {
-							// Collect parameters.
-							List<ReValue> valueList = new ArrayList<>();
-							for (int i = Type.getArgumentCount(methodDescriptor); i > 0; --i)
-								valueList.addFirst(pop());
-
-							// Get the receiver and populate the instance if it's a supported type.
-							ReValue receiver = pop();
 							if (receiver instanceof InstancedObjectValue<?> instancedReceiver) {
 								try {
 									Object instance = mapper.map(instancedReceiver, valueList);
 									instancedReceiver.setRealInstance(Unchecked.cast(instance));
 								} catch (Throwable t) {
-									// If the mapper fails, we can still fall back to normal execution, which may be able to handle some cases.
+									// A failed host mapper still falls through to the existing lookup path.
 								}
 							}
-						} else {
-							// Fall back to normal execution, which can handle some remaining cases, including value lookups.
-							execute(insn, interpreter);
+							yield insn.getNext();
 						}
+
+						// Object initialization is the one unconditional no-op constructor.
+						if (min.owner.equals("java/lang/Object") && min.name.equals("<init>") && methodDescriptor.equals("()V"))
+							yield insn.getNext();
+
+						// Extract current class name for method resolution using 'this' receiver.
+						String resolutionClassName = !isStatic
+								&& currentClassName != null
+								&& getLocals() > 0
+								&& receiver == getLocal(0)
+								? currentClassName : null;
+
+						// Resolve the method to evaluate, preferring the receiver type when available, and falling back to the current class.
+						ClassMethodPair resolvedMethod = resolveMethod(min, receiver, resolutionClassName);
+						if (resolvedMethod != null) {
+							EvaluationResult result = Evaluator.this.evaluate(resolvedMethod.classNode(), resolvedMethod.methodNode(),
+									receiver, valueList, context);
+							switch (result) {
+								case EvaluationYieldResult yielded -> {
+									if (Type.getReturnType(min.desc) != Type.VOID_TYPE)
+										push(yielded.value());
+									yield insn.getNext();
+								}
+								case EvaluationThrowsResult thrown -> {
+									yield exceptionHandler.routeException(this, thrown.exception(), insn);
+								}
+								case EvaluationFailureResult failure -> throw new NestedEvaluationFailure(failure);
+							}
+						}
+						if (isWorkspaceClass(receiver, resolutionClassName))
+							throw new NestedEvaluationFailure(EvaluationResult.cannotEvaluate(
+									"Invoke-special call could not be resolved: " + min.owner + '.' + min.name + min.desc));
+
+						// Fall back to normal interpreter execution, which can handle some remaining cases, including value lookups.
+						// - Need to unmap values here since the underlying lookup system doesn't know how to handle our wrapped values.
+						valueList.addFirst(receiver);
+						List<ReValue> unmappedValueList = unmapValues(valueList);
+						if (Type.getReturnType(min.desc) != Type.VOID_TYPE)
+							push(interpreter.naryOperation(insn, unmappedValueList));
+						else
+							interpreter.naryOperation(insn, unmappedValueList);
 						yield insn.getNext();
 					}
 					throw new AnalyzerException(insn, "Invalid invokespecial state");
@@ -767,7 +1090,7 @@ public class Evaluator {
 							valueList.addFirst(pop());
 
 						// Get the receiver and check if it's a throwable, in which case we can handle the getStackTrace call.
-						ReValue receiver = pop();
+						ObjectValue receiver = requireObject(pop());
 						if (exceptionHandler.isThrowableGetStackTrace(min) && receiver instanceof ThrowableValue throwable) {
 							// TODO: Not all throwable types fill in the stack trace, we just assume they do here.
 							push(exceptionHandler.createStackTrace(throwable));
@@ -793,9 +1116,18 @@ public class Evaluator {
 							}
 						}
 
-						// Check if the method is defined in the workspace and can be evaluated.
-						if (canEvaluate(min.owner, min.name, min.desc)) {
-							EvaluationResult result = Evaluator.this.evaluate(min.owner, min.name, min.desc, receiver, valueList, context);
+						// Extract current class name for method resolution using 'this' receiver.
+						String resolutionClassName = !isStatic
+								&& currentClassName != null
+								&& getLocals() > 0
+								&& receiver == getLocal(0)
+								? currentClassName : null;
+
+						// Resolve the method to evaluate, preferring the receiver type when available, and falling back to the current class.
+						ClassMethodPair resolvedMethod = resolveMethod(min, receiver, resolutionClassName);
+						if (resolvedMethod != null) {
+							EvaluationResult result = Evaluator.this.evaluate(resolvedMethod.classNode(), resolvedMethod.methodNode(),
+									receiver, valueList, context);
 							switch (result) {
 								case EvaluationYieldResult yielded -> {
 									if (isVoid)
@@ -806,20 +1138,22 @@ public class Evaluator {
 								case EvaluationThrowsResult thrown -> {
 									yield exceptionHandler.routeException(this, thrown.exception(), insn);
 								}
-								case EvaluationFailureResult failure -> {
-									// No-op, fallthrough will attempt to handle this.
-								}
+								case EvaluationFailureResult failure -> throw new NestedEvaluationFailure(failure);
 							}
 						}
 
-						// Fall back to normal execution, which can handle some remaining cases, including value lookups.
+						if (isWorkspaceClass(receiver, resolutionClassName))
+							throw new NestedEvaluationFailure(EvaluationResult.cannotEvaluate(
+									"Invoke-Virtual/Interface call could not be resolved: " + min.owner + '.' + min.name + min.desc));
+
+						// Fall back to normal interpreter execution, which can handle some remaining cases, including value lookups.
 						// - Need to unmap values here since the underlying lookup system doesn't know how to handle our wrapped values.
 						valueList.addFirst(receiver);
 						List<ReValue> unmappedValueList = unmapValues(valueList);
 						if (isVoid) {
-							interpreter.naryOperation(insn, valueList);
+							interpreter.naryOperation(insn, unmappedValueList);
 						} else {
-							push(interpreter.naryOperation(insn, valueList));
+							push(interpreter.naryOperation(insn, unmappedValueList));
 						}
 						yield insn.getNext();
 					}
@@ -869,7 +1203,7 @@ public class Evaluator {
 							}
 						}
 
-						// Fall back to normal execution, which can handle some remaining cases, including value lookups.
+						// Fall back to normal interpreter execution, which can handle some remaining cases, including value lookups.
 						// - Need to unmap values here since the underlying lookup system doesn't know how to handle our wrapped values.
 						List<ReValue> unmappedValueList = unmapValues(valueList);
 						if (isVoid) {
@@ -912,6 +1246,17 @@ public class Evaluator {
 			return next;
 		}
 
+		/**
+		 * @param insn
+		 * 		Instruction to evaluate.
+		 * @param cmp
+		 * 		Comparison predicate to evaluate the popped value.
+		 *
+		 * @return Next instruction to evaluate, following the branch decision.
+		 *
+		 * @throws UnknownValueException
+		 * 		When the popped value is unknown.
+		 */
 		@Nonnull
 		private AbstractInsnNode conditional(@Nonnull AbstractInsnNode insn, @Nonnull Predicate<IntValue> cmp)
 				throws UnknownValueException {
@@ -919,6 +1264,17 @@ public class Evaluator {
 			return followBranch(insn, cmp.test(value) ? Branching.TAKEN : Branching.NOT_TAKEN);
 		}
 
+		/**
+		 * @param insn
+		 * 		Instruction to evaluate.
+		 * @param cmp
+		 * 		Comparison predicate to evaluate the two popped values.
+		 *
+		 * @return Next instruction to evaluate, following the branch decision.
+		 *
+		 * @throws UnknownValueException
+		 * 		When either of the two popped values is unknown.
+		 */
 		@Nonnull
 		private AbstractInsnNode conditional(@Nonnull AbstractInsnNode insn, @Nonnull BiPredicate<IntValue, IntValue> cmp)
 				throws UnknownValueException {
@@ -927,9 +1283,24 @@ public class Evaluator {
 			return followBranch(insn, cmp.test(value1, value2) ? Branching.TAKEN : Branching.NOT_TAKEN);
 		}
 
-		@Nonnull
-		public ReValue peek() {
-			return getStack(getStackSize() - 1);
+		/**
+		 * Checks whether an unresolved instance call supposedly should exist in the workspace.
+		 * This is called after {@link #resolveMethod(MethodInsnNode, ReValue, String)}, which means
+		 * we only call this after a resolution attempt has failed.
+		 *
+		 * @param receiver
+		 * 		Receiver of the unresolved instance call.
+		 * @param currentClassName
+		 * 		Current workspace class when the receiver is known to be {@code this}, or {@code null}.
+		 *
+		 * @return {@code true} when the receiver is a class defined in the workspace,
+		 * and so the unresolved call must be treated as a conservative failure.
+		 */
+		private boolean isWorkspaceClass(@Nonnull ReValue receiver, @Nullable String currentClassName) {
+			if (receiver instanceof InstancedObjectValue<?> instanced
+					&& workspace.findClass(evaluateInternals, instanced.type().getInternalName()) != null)
+				return true;
+			return currentClassName != null && workspace.findClass(evaluateInternals, currentClassName) != null;
 		}
 
 		@Nonnull
@@ -984,6 +1355,15 @@ public class Evaluator {
 				trace.add(new StackTraceElement(frame.className().replace('/', '.'), frame.methodName(), null, -1));
 			}
 			return trace;
+		}
+	}
+
+	/** Dummy exception to signal a nested evaluation failure. */
+	private static final class NestedEvaluationFailure extends Exception {
+		private final EvaluationFailureResult result;
+
+		private NestedEvaluationFailure(@Nonnull EvaluationFailureResult result) {
+			this.result = result;
 		}
 	}
 

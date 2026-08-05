@@ -369,10 +369,23 @@ public class ReInterpreter extends Interpreter<ReValue> implements Opcodes {
 				return IntValue.UNKNOWN;
 			case CHECKCAST:
 				Type targetType = Type.getObjectType(((TypeInsnNode) insn).desc);
+				if (value instanceof ObjectValue object && object.isNull())
+					return newValue(targetType, Nullness.NULL);
 				if (value instanceof InstancedObjectValue<?> instancedValue && isAssignableFrom(targetType, instancedValue.type()))
 					return value;
 				return newValue(targetType);
 			case INSTANCEOF:
+				if (value instanceof ObjectValue object) {
+					if (object.isNull())
+						return IntValue.VAL_0;
+					if (value instanceof InstancedObjectValue<?> instanced && instanced.type().getSort() == Type.OBJECT) {
+						String descriptor = ((TypeInsnNode) insn).desc;
+						if (descriptor.startsWith("["))
+							return IntValue.UNKNOWN;
+						Type target = Type.getObjectType(descriptor);
+						return IntValue.of(isAssignableFrom(target, instanced.type()) ? 1 : 0);
+					}
+				}
 				return IntValue.UNKNOWN;
 			default:
 				throw new AnalyzerException(insn, "Unknown unary op: " + insn.getOpcode());

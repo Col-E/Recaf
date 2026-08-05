@@ -8,14 +8,15 @@ import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.transform.JvmTransformerContext;
 import software.coley.recaf.test.TestClassUtils;
-import software.coley.recaf.util.analysis.ReInterpreter;
 import software.coley.recaf.util.analysis.Nullness;
+import software.coley.recaf.util.analysis.ReInterpreter;
 import software.coley.recaf.util.analysis.eval.EvaluationFailureResult;
 import software.coley.recaf.util.analysis.eval.EvaluationResult;
 import software.coley.recaf.util.analysis.eval.EvaluationThrowsResult;
 import software.coley.recaf.util.analysis.eval.EvaluationYieldResult;
 import software.coley.recaf.util.analysis.eval.Evaluator;
 import software.coley.recaf.util.analysis.eval.FieldCacheManager;
+import software.coley.recaf.util.analysis.lookup.InvokeVirtualLookup;
 import software.coley.recaf.util.analysis.value.IntValue;
 import software.coley.recaf.util.analysis.value.LongValue;
 import software.coley.recaf.util.analysis.value.ObjectValue;
@@ -29,9 +30,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests for {@link Evaluator}.
@@ -152,7 +151,7 @@ public class EvaluatorTest extends TransformerTestBase {
 				Example receiver() { return this; }
 				String run() { return receiver().instanceStr(); }
 				""");
-		ReValue instance = ObjectValue.VAL_OBJECT;
+		ObjectValue instance = ObjectValue.VAL_OBJECT;
 		List<ReValue> arguments = List.of(IntValue.of(4), LongValue.of(5), IntValue.of(6));
 
 		// Validate a method that returns 'this' is the same instance we pass to the evaluator as the class instance.
@@ -180,7 +179,7 @@ public class EvaluatorTest extends TransformerTestBase {
 				static int staticWide(int first, long wide, int last) { return first + last; }
 				int instanceWide(int first, long wide, int last) { return first + last; }
 				""");
-		ReValue instance = ObjectValue.VAL_OBJECT;
+		ObjectValue instance = ObjectValue.VAL_OBJECT;
 		List<ReValue> arguments = List.of(IntValue.of(4), LongValue.of(5), IntValue.of(6));
 
 		// Validate that the wide arguments are properly handled and the correct result is returned.
@@ -342,22 +341,22 @@ public class EvaluatorTest extends TransformerTestBase {
 				    if (input == 0) return 1;
 				    return 2;
 				}
-
+				
 				static int binary(int left, int right) {
 				    if (left == right) return 1;
 				    return 2;
 				}
-
+				
 				static int nullCheck(String input) {
 				    if (input == null) return 1;
 				    return 2;
 				}
-
+				
 				static int referenceCheck(Object left, Object right) {
 				    if (left == right) return 1;
 				    return 2;
 				}
-
+				
 				static int switchCheck(int input) {
 				    switch (input) {
 				        case 1: return 1;
@@ -383,6 +382,172 @@ public class EvaluatorTest extends TransformerTestBase {
 		assertUnknownBranchFailure(evaluateResult(compiled, "switchCheck", "(I)I", null, List.of(IntValue.UNKNOWN)));
 	}
 
+	@Test
+	void testWorkspaceObjectState() {
+		// Create a workspace class that has a field and methods to read and write it.
+		compileFull("Holder", """
+				public class Holder {
+				    private int value;
+				    public Holder() {}
+				    public Holder(int value) { this.value = value; }
+				    public int read() { return value; }
+				    public int add(int amount) { value += amount; return value; }
+				    public int addThenRead(int amount) { add(amount); return read(); }
+				}
+				""");
+
+		// Validate that we can create an instance of the workspace class, call methods on it, and read the field value.
+		String compiled = compile("""
+				static int run() { return new Holder(7).addThenRead(5); }
+				static int zero() { return new Holder().read(); }
+				""");
+		assertEquals(12, ((IntValue) evaluate(compiled, "run", "()I", null, List.of(), get("Holder"))).value().orElseThrow());
+		assertEquals(0, ((IntValue) evaluate(compiled, "zero", "()I", null, List.of(), get("Holder"))).value().orElseThrow());
+	}
+
+	@Test
+	void testWorkspaceObjectAliasing() {
+		// Create a workspace class that has a field and methods to read and write it.
+		compileFull("Holder", """
+				public class Holder {
+				    private int value;
+				    public Holder(int value) { this.value = value; }
+				    public int read() { return value; }
+				    public void add(int amount) { value += amount; }
+				}
+				""");
+
+		// Validate that we can create an instance of the workspace class, alias it,
+		// and see that changes to one reference are reflected in the other.
+		// The unique instances of 'Holder' should not affect each other.
+		String compiled = compile("""
+				static int run() {
+				    Holder first = new Holder(1);
+				
+				    Holder alias = first;
+				    alias.add(4);
+				
+				    Holder other = new Holder(1);
+				    other.add(2);
+				
+				    return first.read() * 10 + other.read();
+				}
+				""");
+
+		assertEquals(53, ((IntValue) evaluate(compiled, "run", "()I", null, List.of(), get("Holder"))).value().orElseThrow());
+	}
+
+	@Test
+	void testWorkspaceVirtualAndInterfaceDispatch() {
+		// Create workspace classes in a hierarchy.
+		compileFull("Base", """
+				class Base {
+				    public int value() { return 1; }
+				}
+				interface Op {
+				    int value();
+				}
+				class Child extends Base implements Op {
+				    @Override public int value() { return 2; }
+				    int parentValue() { return super.value(); }
+				}
+				""");
+
+		// Validate invokevirtual and invokeinterface dispatch works as expected, and that super calls work as expected.
+		String compiled = compile("""
+				static int run() {
+				    Base base = new Child();
+				    Op op = new Child();
+				    return base.value() * 10 + op.value();
+				}
+				static int superValue() { return new Child().parentValue(); }
+				""");
+
+		assertEquals(22, ((IntValue) evaluate(compiled, "run", "()I", null, List.of(), get("Base"), get("Child"), get("Op"))).value().orElseThrow());
+		assertEquals(1, ((IntValue) evaluate(compiled, "superValue", "()I", null, List.of(), get("Base"), get("Child"), get("Op"))).value().orElseThrow());
+	}
+
+	@Test
+	void testWorkspaceInstanceOfKnownTypes() {
+		// Compile simple Base + Child hierarchy.
+		compileBaseChildHierarchy();
+
+		// Validate that instanceof works as expected for known types,
+		// and that null is not an instance of any type.
+		String compiled = compile("""
+				static int run() {
+				    return (new Child() instanceof Base ? 1 : 0)
+				            + (null instanceof Child ? 10 : 0);
+				}
+				""");
+
+		assertEquals(1, ((IntValue) evaluate(compiled, "run", "()I", null, List.of(),
+				get("Base"), get("Child"))).value().orElseThrow());
+	}
+
+	@Test
+	void testWorkspaceSuccessfulCastPreservesIdentity() {
+		// Compile simple Base + Child hierarchy.
+		compileBaseChildHierarchy();
+
+		// Validate that casting an object to a known type preserves identity.
+		String compiled = compile("""
+				static int run() {
+				    Object object = new Child();
+				    Child cast = (Child) object;
+				    return object == cast ? 1 : 0;
+				}
+				""");
+
+		assertEquals(1, ((IntValue) evaluate(compiled, "run", "()I", null, List.of(),
+				get("Base"), get("Child"))).value().orElseThrow());
+	}
+
+	@Test
+	void testWorkspaceInvalidCastIsCaught() {
+		// Compile simple Base + Child hierarchy.
+		compileBaseChildHierarchy();
+
+		// Validate that casting an object to an incompatible type throws a ClassCastException.
+		String compiled = compile("""
+				static int run() {
+				    try {
+				        return ((Child) new Base()).value();
+				    } catch (ClassCastException ex) {
+				        return 1;
+				    }
+				}
+				""");
+
+		assertEquals(1, ((IntValue) evaluate(compiled, "run", "()I", null, List.of(),
+				get("Base"), get("Child"))).value().orElseThrow());
+	}
+
+	@Test
+	void testWorkspaceDistinctAllocationsHaveDistinctIdentity() {
+		// Compile simple Base + Child hierarchy.
+		compileBaseChildHierarchy();
+
+		// Validate two distinct allocations of the same type are not equal.
+		String compiled = compile("""
+				static int run() { return new Child() == new Child() ? 1 : 0; }
+				""");
+
+		assertEquals(0, ((IntValue) evaluate(compiled, "run", "()I", null, List.of(),
+				get("Base"), get("Child"))).value().orElseThrow());
+	}
+
+	private void compileBaseChildHierarchy() {
+		compileFull("Base", """
+				class Base {
+				    int value() { return 1; }
+				}
+				class Child extends Base {
+				    @Override int value() { return 2; }
+				}
+				""");
+	}
+
 	private void assertUnknownBranchFailure(@Nonnull EvaluationResult result) {
 		if (result instanceof EvaluationFailureResult failure)
 			assertEquals("Encountered unknown value while evaluating branch", failure.reason());
@@ -392,13 +557,14 @@ public class EvaluatorTest extends TransformerTestBase {
 
 	@Nonnull
 	private ReValue evaluate(@Nonnull String src, @Nonnull String name, @Nonnull String desc,
-	                         @Nullable ReValue classInstance, @Nonnull List<ReValue> parameters) {
-		EvaluationResult result = evaluateResult(src, name, desc, classInstance, parameters);
+	                         @Nullable ObjectValue classInstance, @Nonnull List<ReValue> parameters,
+	                         @Nonnull JvmClassInfo... additionalClasses) {
+		EvaluationResult result = evaluateResult(src, name, desc, classInstance, parameters, additionalClasses);
 		switch (result) {
 			case EvaluationYieldResult(ReValue value) -> {
 				return value;
 			}
-			case EvaluationFailureResult fail -> fail("Evaluation failed", fail.cause());
+			case EvaluationFailureResult failure -> fail("Evaluation failed for " + name, failure.cause());
 			case EvaluationThrowsResult(ReValue exception) ->
 					fail("Evaluation yielded a thrown exception: " + exception);
 			default -> {}
@@ -410,7 +576,7 @@ public class EvaluatorTest extends TransformerTestBase {
 
 	@Nonnull
 	private EvaluationResult evaluateResult(@Nonnull String src, @Nonnull String name, @Nonnull String desc,
-	                                        @Nullable ReValue classInstance, @Nonnull List<ReValue> parameters,
+	                                        @Nullable ObjectValue classInstance, @Nonnull List<ReValue> parameters,
 	                                        @Nonnull JvmClassInfo... additionalClasses) {
 		JvmClassInfo assembled = assemble(src, src.contains(".class"));
 		JvmClassInfo[] classes = new JvmClassInfo[additionalClasses.length + 1];
@@ -422,4 +588,21 @@ public class EvaluatorTest extends TransformerTestBase {
 		return new Evaluator(workspace, interpreter, new FieldCacheManager(), 1000, false)
 				.evaluate(CLASS_NAME, name, desc, classInstance, parameters);
 	}
+
+	@Nonnull
+	private ReValue evaluateWithVirtualLookup(@Nonnull String src, @Nonnull String name, @Nonnull String desc,
+	                                          @Nonnull InvokeVirtualLookup lookup) {
+		JvmClassInfo assembled = assemble(src, src.contains(".class"));
+		Workspace workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(assembled));
+		JvmTransformerContext ctx = new JvmTransformerContext(workspace, workspace.getPrimaryResource(), Collections.emptyList());
+		ReInterpreter interpreter = ctx.newInterpreter(new InheritanceGraph(workspace));
+		interpreter.setInvokeVirtualLookup(lookup);
+		EvaluationResult result = new Evaluator(workspace, interpreter, new FieldCacheManager(), 1000, false)
+				.evaluate(CLASS_NAME, name, desc, null, List.of());
+		if (result instanceof EvaluationYieldResult yielded)
+			return yielded.value();
+		fail("Lookup evaluation failed: " + result);
+		throw new IllegalStateException();
+	}
+
 }
