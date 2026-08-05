@@ -11,6 +11,7 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldInsnNode;
+import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InvokeDynamicInsnNode;
 import org.objectweb.asm.tree.JumpInsnNode;
@@ -47,8 +48,10 @@ import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.RuntimeWorkspaceResource;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.OptionalInt;
 import java.util.Set;
 import java.util.function.BiPredicate;
@@ -67,6 +70,7 @@ public class Evaluator {
 	private final ReInterpreter interpreter;
 	private final FieldCacheManager fieldCacheManager;
 	private final boolean evaluateInternals;
+	private final boolean evaluateClassInitializers;
 	private final int maxSteps;
 
 	/**
@@ -81,14 +85,18 @@ public class Evaluator {
 	 * @param evaluateInternals
 	 * 		Flag to allow evaluation of methods defined by classes of internal resources
 	 * 		<i>(Mainly the {@link RuntimeWorkspaceResource} to facilitate emulating core JDK methods)</i>
+	 * @param evaluateClassInitializers
+	 * 		Flag to allow evaluation of workspace class initializers.
 	 */
 	public Evaluator(@Nonnull Workspace workspace, @Nonnull ReInterpreter interpreter,
-	                 @Nonnull FieldCacheManager fieldCacheManager, int maxSteps, boolean evaluateInternals) {
+	                 @Nonnull FieldCacheManager fieldCacheManager, int maxSteps, boolean evaluateInternals,
+	                 boolean evaluateClassInitializers) {
 		this.workspace = workspace;
 		this.interpreter = interpreter;
 		this.fieldCacheManager = fieldCacheManager;
 		this.maxSteps = maxSteps;
 		this.evaluateInternals = evaluateInternals;
+		this.evaluateClassInitializers = evaluateClassInitializers;
 	}
 
 	/**
@@ -253,11 +261,18 @@ public class Evaluator {
 	                                  @Nullable ObjectValue classInstance,
 	                                  @Nonnull List<ReValue> parameters,
 	                                  @Nonnull EvaluationContext context) throws UnknownValueException {
-		// Must support evaluation
+		// Active method entry is a JVM class-initialization boundary.
+		if (!methodNode.name.equals("<clinit>")) {
+			EvaluationResult initializationResult = initializeClassIfNeeded(classNode.name, context);
+			if (initializationResult != null)
+				return initializationResult;
+		}
+
+		// Must support evaluation.
 		if (!canEvaluate(methodNode))
 			return EvaluationResult.cannotEvaluate("Target method does not support evaluation: " + classNode.name + "." + methodNode.name + methodNode.desc);
 
-		// Sanity check parameters
+		// Sanity check parameters.
 		Type methodType = Type.getMethodType(methodNode.desc);
 		if (parameters.size() != methodType.getArgumentCount())
 			return EvaluationResult.cannotEvaluate("Mismatched parameter count, method expects "
@@ -359,6 +374,129 @@ public class Evaluator {
 				}
 			}
 			className = classInfo.getSuperName();
+		}
+	}
+
+	/**
+	 * Evaluates the static initializer once for the given class in the current evaluation context.
+	 * Since the initializers are... well, initializers, the return values are just used to evaluate success or failure.
+	 * <p>
+	 * Initialization is opt-in, see {@link #evaluateClassInitializers}.
+	 *
+	 * @param className
+	 * 		Internal name of the class to initialize.
+	 * @param context
+	 * 		Per-evaluation context sharing initialization state across nested calls.
+	 *
+	 * @return {@code null} when initialization succeeded or was skipped, otherwise the failure or
+	 * thrown result produced while initializing the class.
+	 */
+	@Nullable
+	private EvaluationResult initializeClassIfNeeded(@Nonnull String className, @Nonnull EvaluationContext context) {
+		// Skip if we aren't evaluating class initializers or the class is not in the workspace.
+		if (!evaluateClassInitializers || workspace.findClass(evaluateInternals, className) == null)
+			return null;
+
+		// Skip if the class has already been initialized in this evaluation.
+		if (context.initializedClasses.contains(className))
+			return null;
+
+		// An initializer that previously failed isn't going to magically work the next time around.
+		// Skip if we already tried and saw a failure, and return the same failure result.
+		EvaluationResult failed = context.failedClassInitializers.get(className);
+		if (failed != null)
+			return failed;
+
+		// Skip if the class is already being initialized in this evaluation (cycle-breaking).
+		if (!context.initializingClasses.add(className))
+			return null;
+
+		try {
+			ClassNode classNode = getNode(className);
+			if (classNode == null)
+				return null;
+
+			// Seed JVM field defaults before the initializer can read or increment them.
+			initializeStaticFields(classNode);
+
+			// JVM initialization runs a resolvable superclass before the current class.
+			if (classNode.superName != null) {
+				EvaluationResult superclassResult = initializeClassIfNeeded(classNode.superName, context);
+				if (superclassResult != null) {
+					context.failedClassInitializers.put(className, superclassResult);
+					return superclassResult;
+				}
+			}
+
+			// Find the static initializer method, if it exists.
+			MethodNode clinit = null;
+			for (MethodNode methodNode : classNode.methods) {
+				if (methodNode.name.equals("<clinit>") && methodNode.desc.equals("()V")) {
+					clinit = methodNode;
+					break;
+				}
+			}
+
+			// Classes without executable static initialization are complete after default seeding.
+			if (clinit == null) {
+				context.initializedClasses.add(className);
+				return null;
+			}
+
+			// Run the static initializer and cache the result for future calls.
+			EvaluationResult result;
+			try {
+				result = evaluate(classNode, clinit, null, List.of(), context);
+			} catch (UnknownValueException e) {
+				result = EvaluationResult.cannotEvaluate(UNKNOWN_VALUE_REASON, e);
+			}
+			if (result instanceof EvaluationYieldResult) {
+				context.initializedClasses.add(className);
+				return null;
+			}
+			context.failedClassInitializers.put(className, result);
+			return result;
+		} finally {
+			context.initializingClasses.remove(className);
+		}
+	}
+
+	/**
+	 * Seeds declared static fields with their JVM defaults unless the static cache already knows them.
+	 *
+	 * @param classNode
+	 * 		Class whose static fields should be seeded.
+	 */
+	private void initializeStaticFields(@Nonnull ClassNode classNode) {
+		FieldCache cache = fieldCacheManager.getStaticFieldCache(classNode.name);
+		for (FieldNode field : classNode.fields) {
+			// Skip instance fields.
+			if (!AccessFlag.isStatic(field.access))
+				continue;
+
+			// Skip if the field is already known in the cache.
+			if (cache.containsField(classNode.name, field.name, field.desc))
+				continue;
+
+			// Seed the field with its constant value if it has one,
+			// otherwise seed it with the JVM default for its type.
+			ReValue value;
+			try {
+				if (field.value != null) {
+					try {
+						value = ReValue.ofConstant(field.value);
+					} catch (Exception ignored) {
+						// Invalid constants keep JVM default semantics instead of invoking host conversion.
+						value = ReValue.ofTypeDefaultValue(Type.getType(field.desc));
+					}
+				} else {
+					value = ReValue.ofTypeDefaultValue(Type.getType(field.desc));
+				}
+			} catch (Exception ex) {
+				throw new IllegalStateException("Failed to initialize static field "
+						+ classNode.name + '.' + field.name, ex);
+			}
+			cache.setField(classNode.name, field.name, field.desc, value);
 		}
 	}
 
@@ -939,6 +1077,15 @@ public class Evaluator {
 				}
 				case NEW -> {
 					if (insn instanceof TypeInsnNode tin) {
+						// NEW is a JVM active-use boundary, so run static initialization before allocation.
+						EvaluationResult initializationResult = initializeClassIfNeeded(tin.desc, context);
+						if (initializationResult instanceof EvaluationFailureResult failure)
+							throw new NestedEvaluationFailure(failure);
+						if (initializationResult instanceof EvaluationThrowsResult(ReValue exception))
+							yield exceptionHandler.routeException(this, exception, insn);
+
+						// Now allocate the instance.
+						// If the type is a known throwable, we will use the exception handler to create it.
 						Type type = Type.getObjectType(tin.desc);
 						if (exceptionHandler.isThrowableType(tin.desc)) {
 							push(exceptionHandler.newThrowable(tin.desc, null));
@@ -971,6 +1118,13 @@ public class Evaluator {
 				}
 				case GETSTATIC -> {
 					if (insn instanceof FieldInsnNode fieldInsn) {
+						// GETSTATIC is a JVM active-use boundary,so run static initialization before cache lookup.
+						EvaluationResult initializationResult = initializeClassIfNeeded(fieldInsn.owner, context);
+						if (initializationResult instanceof EvaluationFailureResult failure)
+							throw new NestedEvaluationFailure(failure);
+						if (initializationResult instanceof EvaluationThrowsResult(ReValue exception))
+							yield exceptionHandler.routeException(this, exception, insn);
+
 						// Try to get the field value from the static cache.
 						ReValue value = fieldCacheManager.getStaticFieldCache(fieldInsn.owner)
 								.getField(fieldInsn.owner, fieldInsn.name, fieldInsn.desc);
@@ -997,8 +1151,15 @@ public class Evaluator {
 					throw new AnalyzerException(insn, "Invalid putfield state");
 				}
 				case PUTSTATIC -> {
-					// Assign the top value to the static field in the cache.
 					if (insn instanceof FieldInsnNode fin) {
+						// PUTSTATIC is a JVM active-use boundary, so run static initialization before caching the write.
+						EvaluationResult initializationResult = initializeClassIfNeeded(fin.owner, context);
+						if (initializationResult instanceof EvaluationFailureResult failure)
+							throw new NestedEvaluationFailure(failure);
+						if (initializationResult instanceof EvaluationThrowsResult(ReValue exception))
+							yield exceptionHandler.routeException(this, exception, insn);
+
+						// Assign the top value to the static field in the cache.
 						ReValue value = pop();
 						fieldCacheManager.getStaticFieldCache(fin.owner)
 								.setField(fin.owner, fin.name, fin.desc, value);
@@ -1161,6 +1322,13 @@ public class Evaluator {
 				}
 				case INVOKESTATIC -> {
 					if (insn instanceof MethodInsnNode min) {
+						// INVOKESTATIC is a JVM active-use boundary, so run static initialization before static dispatch.
+						EvaluationResult initializationResult = initializeClassIfNeeded(min.owner, context);
+						if (initializationResult instanceof EvaluationFailureResult failure)
+							throw new NestedEvaluationFailure(failure);
+						if (initializationResult instanceof EvaluationThrowsResult(ReValue exception))
+							yield exceptionHandler.routeException(this, exception, insn);
+
 						// Collect parameters.
 						List<ReValue> valueList = new ArrayList<>();
 						for (int i = Type.getArgumentCount(min.desc); i > 0; --i)
@@ -1338,13 +1506,20 @@ public class Evaluator {
 	 */
 	private record EvaluationFrame(@Nonnull String className, @Nonnull String methodName) {}
 
-	/** Context for evaluation, including the call stack and step allocation. */
+	/** Context for evaluation, including the call stack, step allocation, and class initialization state. */
 	private static final class EvaluationContext {
 		private final List<EvaluationFrame> callStack = new ArrayList<>();
+		private final Set<String> initializedClasses;
+		private final Set<String> initializingClasses;
+		private final Map<String, EvaluationResult> failedClassInitializers;
 		private int stepAllocation;
 
 		private EvaluationContext(int stepAllocation) {
 			this.stepAllocation = stepAllocation;
+
+			initializedClasses = new HashSet<>();
+			initializingClasses = new HashSet<>();
+			failedClassInitializers = new HashMap<>();
 		}
 
 		@Nonnull

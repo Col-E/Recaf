@@ -406,6 +406,75 @@ public class EvaluatorTest extends TransformerTestBase {
 	}
 
 	@Test
+	void testWorkspaceClassInitializerOptIn() {
+		// Compile class with static int field initialized to 1.
+		compileStaticState();
+
+		// Validate that the workspace class initializer runs before reading the static field value.
+		// We should be able to get the '1' value from a GETSTATIC instruction.
+		String compiled = compile("""
+				static int run() { return StaticState.VALUE; }
+				""");
+		EvaluationResult result = evaluateResult(compiled, "run", "()I", null, List.of(), true, get("StaticState"));
+		EvaluationYieldResult yielded = assertInstanceOf(EvaluationYieldResult.class, result);
+		assertEquals(1, ((IntValue) yielded.value()).value().orElseThrow());
+	}
+
+	@Test
+	void testWorkspaceClassInitializerOptOut() {
+		// Compile class with static int field initialized to 1.
+		compileStaticState();
+
+		// Same test as above, but without initialization enabled.
+		// The static field value should be unknown.
+		String compiled = compile("""
+				static int run() { return StaticState.VALUE; }
+				""");
+
+		EvaluationResult result = evaluateResult(compiled, "run", "()I", null, List.of(), false, get("StaticState"));
+		EvaluationYieldResult yielded = assertInstanceOf(EvaluationYieldResult.class, result);
+		assertSame(IntValue.UNKNOWN, yielded.value());
+	}
+
+	@Test
+	void testWorkspaceClassInitializerRunsOnce() {
+		// Compile class with static int field initialized to 1.
+		compileStaticState();
+
+		// Validate that methods that rely on that static field initialization work and
+		// JVM initialization bounds (method calls, field access, etc.) don't cause the initializer to run multiple times.
+		String compiled = compile("""
+				static int run() { return StaticState.read() * 10 + StaticState.VALUE; }
+				""");
+
+		EvaluationResult result = evaluateResult(compiled, "run", "()I", null, List.of(), true, get("StaticState"));
+		EvaluationYieldResult yielded = assertInstanceOf(EvaluationYieldResult.class, result);
+		assertEquals(11, ((IntValue) yielded.value()).value().orElseThrow());
+	}
+
+	@Test
+	void testWorkspaceClassInitializerFailurePropagates() {
+		// Compile class that fails during static initialization.
+		// The failure should propagate to the evaluator.
+		compileFull("FailingState", """
+				public class FailingState {
+				    public static int VALUE;
+				    static { VALUE = fail(); }
+				    private static int fail() { throw new IllegalStateException(); }
+				}
+				""");
+
+		// Validate that when we try to read the static field, the initializer runs and throws an exception.
+		String compiled = compile("""
+				static int run() { return FailingState.VALUE; }
+				""");
+		EvaluationResult result = evaluateResult(compiled, "run", "()I", null, List.of(), true, get("FailingState"));
+		EvaluationThrowsResult thrown = assertInstanceOf(EvaluationThrowsResult.class, result);
+		ThrowableValue throwable = assertInstanceOf(ThrowableValue.class, thrown.exception());
+		assertEquals("java/lang/IllegalStateException", throwable.type().getInternalName());
+	}
+
+	@Test
 	void testWorkspaceObjectAliasing() {
 		// Create a workspace class that has a field and methods to read and write it.
 		compileFull("Holder", """
@@ -537,6 +606,16 @@ public class EvaluatorTest extends TransformerTestBase {
 				get("Base"), get("Child"))).value().orElseThrow());
 	}
 
+	private void compileStaticState() {
+		compileFull("StaticState", """
+				public class StaticState {
+				    public static int VALUE;
+				    static { VALUE++; }
+				    public static int read() { return VALUE; }
+				}
+				""");
+	}
+
 	private void compileBaseChildHierarchy() {
 		compileFull("Base", """
 				class Base {
@@ -578,6 +657,14 @@ public class EvaluatorTest extends TransformerTestBase {
 	private EvaluationResult evaluateResult(@Nonnull String src, @Nonnull String name, @Nonnull String desc,
 	                                        @Nullable ObjectValue classInstance, @Nonnull List<ReValue> parameters,
 	                                        @Nonnull JvmClassInfo... additionalClasses) {
+		return evaluateResult(src, name, desc, classInstance, parameters, false, additionalClasses);
+	}
+
+	@Nonnull
+	private EvaluationResult evaluateResult(@Nonnull String src, @Nonnull String name, @Nonnull String desc,
+	                                        @Nullable ObjectValue classInstance, @Nonnull List<ReValue> parameters,
+	                                        boolean evaluateClassInitializers,
+	                                        @Nonnull JvmClassInfo... additionalClasses) {
 		JvmClassInfo assembled = assemble(src, src.contains(".class"));
 		JvmClassInfo[] classes = new JvmClassInfo[additionalClasses.length + 1];
 		classes[0] = assembled;
@@ -585,7 +672,7 @@ public class EvaluatorTest extends TransformerTestBase {
 		Workspace workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(classes));
 		JvmTransformerContext ctx = new JvmTransformerContext(workspace, workspace.getPrimaryResource(), Collections.emptyList());
 		ReInterpreter interpreter = ctx.newInterpreter(new InheritanceGraph(workspace));
-		return new Evaluator(workspace, interpreter, new FieldCacheManager(), 1000, false)
+		return new Evaluator(workspace, interpreter, new FieldCacheManager(), 1000, false, evaluateClassInitializers)
 				.evaluate(CLASS_NAME, name, desc, classInstance, parameters);
 	}
 
@@ -597,7 +684,7 @@ public class EvaluatorTest extends TransformerTestBase {
 		JvmTransformerContext ctx = new JvmTransformerContext(workspace, workspace.getPrimaryResource(), Collections.emptyList());
 		ReInterpreter interpreter = ctx.newInterpreter(new InheritanceGraph(workspace));
 		interpreter.setInvokeVirtualLookup(lookup);
-		EvaluationResult result = new Evaluator(workspace, interpreter, new FieldCacheManager(), 1000, false)
+		EvaluationResult result = new Evaluator(workspace, interpreter, new FieldCacheManager(), 1000, false, false)
 				.evaluate(CLASS_NAME, name, desc, null, List.of());
 		if (result instanceof EvaluationYieldResult yielded)
 			return yielded.value();

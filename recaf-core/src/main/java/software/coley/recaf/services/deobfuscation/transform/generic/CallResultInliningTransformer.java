@@ -60,7 +60,7 @@ public class CallResultInliningTransformer implements JvmClassTransformer {
 	@Override
 	public void setup(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace) {
 		inheritanceGraph = graphService.getOrCreateInheritanceGraph(workspace);
-		evaluator = new Evaluator(workspace, context.newInterpreter(inheritanceGraph), fieldCacheManager, MAX_STEPS, false);
+		evaluator = new Evaluator(workspace, context.newInterpreter(inheritanceGraph), fieldCacheManager, MAX_STEPS, false, false);
 	}
 
 	@Override

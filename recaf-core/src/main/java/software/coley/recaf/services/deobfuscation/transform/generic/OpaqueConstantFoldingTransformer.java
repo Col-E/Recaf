@@ -537,7 +537,7 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 		// match the sequence length with a little leeway should be alright.
 		final int maxSteps = sequence.size() + 10;
 		ReFrame initialBlockFrame = (ReFrame) frames[Math.max(0, sequenceStartIndex)];
-		Evaluator evaluator = new Evaluator(context.getWorkspace(), context.newInterpreter(inheritanceGraph), new FieldCacheManager(), maxSteps, false);
+		Evaluator evaluator = new Evaluator(context.getWorkspace(), context.newInterpreter(inheritanceGraph), new FieldCacheManager(), maxSteps, false, false);
 
 		// Evaluate the sequence and return the result.
 		// If evaluation fails, return the original unknown top value.
