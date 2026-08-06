@@ -2,8 +2,6 @@ package software.coley.recaf.util.analysis.gen;
 
 import jakarta.annotation.Nonnull;
 import org.objectweb.asm.Type;
-import software.coley.recaf.util.StringUtil;
-import software.coley.recaf.util.Types;
 import software.coley.recaf.util.analysis.lookup.BasicInvokeStaticLookup;
 import software.coley.recaf.util.analysis.lookup.BasicInvokeVirtualLookup;
 
@@ -127,7 +125,6 @@ public class LookupGenerator extends GenUtils {
 		String methodDescriptor = Type.getMethodDescriptor(method);
 		StringBuilder sb = new StringBuilder("METHODS.put(\"");
 		sb.append(typeName).append(".").append(methodName).append(methodDescriptor).append("\", ");
-
 
 		// (Func_1<IntValue>) (a)
 		// (Func_2<IntValue, IntValue>) (a, b)

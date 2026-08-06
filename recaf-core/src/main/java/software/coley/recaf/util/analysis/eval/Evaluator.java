@@ -1264,7 +1264,7 @@ public class Evaluator {
 							MethodInvokeHandler<?> handler = instanceFactory.getMethodHandler(min);
 							if (handler != null) {
 								try {
-									ReValue result = handler.invoke(instancedReceiver, Unchecked.cast(instancedReceiver.getRealInstance()), valueList);
+									ReValue result = handler.invoke(this, instancedReceiver, Unchecked.cast(instancedReceiver.getRealInstance()), valueList);
 									if (isVoid)
 										yield insn.getNext();
 									if (result != null) {

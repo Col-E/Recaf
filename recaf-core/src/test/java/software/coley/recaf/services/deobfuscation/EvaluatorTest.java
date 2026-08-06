@@ -16,6 +16,7 @@ import software.coley.recaf.util.analysis.eval.EvaluationThrowsResult;
 import software.coley.recaf.util.analysis.eval.EvaluationYieldResult;
 import software.coley.recaf.util.analysis.eval.Evaluator;
 import software.coley.recaf.util.analysis.eval.FieldCacheManager;
+import software.coley.recaf.util.analysis.eval.InstancedObjectValue;
 import software.coley.recaf.util.analysis.lookup.InvokeVirtualLookup;
 import software.coley.recaf.util.analysis.value.IntValue;
 import software.coley.recaf.util.analysis.value.LongValue;
@@ -25,7 +26,12 @@ import software.coley.recaf.util.analysis.value.StringValue;
 import software.coley.recaf.util.analysis.value.ThrowableValue;
 import software.coley.recaf.workspace.model.Workspace;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
@@ -197,6 +203,448 @@ public class EvaluatorTest extends TransformerTestBase {
 			assertEquals(new Random(1234).nextInt(1000), str.value().orElseThrow());
 		else
 			fail("Evaluation failure, unexpected return value: " + retVal);
+	}
+
+	@Test
+	void testBase64ScalarAndMime() {
+		String compiled = compile("""
+				static String basic() {
+				    byte[] input = "Hello".getBytes();
+				    String encoded = Base64.getEncoder().encodeToString(input);
+				    return new String(Base64.getDecoder().decode(encoded));
+				}
+				static String scalar() {
+				    byte[] input = "Hello".getBytes();
+				    return new String(Base64.getDecoder().decode(Base64.getEncoder().encode(input)));
+				}
+				static String url() {
+				    String encoded = Base64.getUrlEncoder().withoutPadding().encodeToString(">>>>".getBytes());
+				    return encoded + ":" + new String(Base64.getUrlDecoder().decode(encoded));
+				}
+				static String mimeDefault() {
+				    return Base64.getMimeEncoder().encodeToString("HelloWorld".getBytes());
+				}
+				static String mimeCustom() {
+				    return Base64.getMimeEncoder(4, "!".getBytes()).encodeToString("HelloWorld".getBytes());
+				}
+				static String mimeDecode() {
+				    String encoded = Base64.getMimeEncoder(4, "!".getBytes()).encodeToString("HelloWorld".getBytes());
+				    return new String(Base64.getMimeDecoder().decode(encoded));
+				}
+				""", Base64.class);
+
+		// Verify we can round-trip 'Hello'
+		assertEquals("Hello", ((StringValue) evaluate(compiled, "basic", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+		assertEquals("Hello", ((StringValue) evaluate(compiled, "scalar", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+
+		// Verify URL-safe encoding and decoding of '>>>>' with no padding.
+		assertEquals("Pj4-Pg:>>>>", ((StringValue) evaluate(compiled, "url", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+
+		// Verify default MIME output, custom separators, and MIME decoding.
+		assertEquals("SGVsbG9Xb3JsZA==", ((StringValue) evaluate(compiled, "mimeDefault", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+		assertEquals("SGVs!bG9X!b3Js!ZA==", ((StringValue) evaluate(compiled, "mimeCustom", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+		assertEquals("HelloWorld", ((StringValue) evaluate(compiled, "mimeDecode", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+	}
+
+	@Test
+	void testBase64DestinationArrays() {
+		// A number of Base64 methods have overloads that write to a destination array and return the number of bytes written.
+		String compiled = compile("""
+				static String destination() {
+				    byte[] source = "Hello".getBytes();
+				    byte[] encoded = new byte[8];
+				    int encodedCount = Base64.getEncoder().encode(source, encoded);
+				    byte[] decoded = new byte[5];
+				    int decodedCount = Base64.getDecoder().decode(encoded, decoded);
+				    return encodedCount + ":" + decodedCount + ":" + new String(decoded);
+				}
+				""", Base64.class);
+
+		// Confirm both destination arrays are visible after host-side writes.
+		assertEquals("8:5:Hello", ((StringValue) evaluate(compiled, "destination", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+	}
+
+	@Test
+	void testBase64ByteBuffers() {
+		String compiled = compile("""
+				static String bufferEncode(ByteBuffer input) {
+				    ByteBuffer encoded = Base64.getEncoder().encode(input);
+				    return new String(encoded.array(), encoded.position(), encoded.remaining());
+				}
+				static String bufferDecode(ByteBuffer input) {
+				    ByteBuffer decoded = Base64.getDecoder().decode(input);
+				    return new String(decoded.array(), decoded.position(), decoded.remaining());
+				}
+				""", Base64.class, ByteBuffer.class);
+
+		// Construct byte-buffers with known content and verify the Base64 encoder/decoder round-trip through the evaluator.
+		InstancedObjectValue<ByteBuffer> input = new InstancedObjectValue<>(ByteBuffer.wrap("Hello".getBytes()));
+		assertEquals("SGVsbG8=", ((StringValue) evaluate(compiled, "bufferEncode",
+				"(Ljava/nio/ByteBuffer;)Ljava/lang/String;", null, List.of(input))).getText().orElseThrow());
+		input = new InstancedObjectValue<>(ByteBuffer.wrap("SGVsbG8=".getBytes()));
+		assertEquals("Hello", ((StringValue) evaluate(compiled, "bufferDecode",
+				"(Ljava/nio/ByteBuffer;)Ljava/lang/String;", null, List.of(input))).getText().orElseThrow());
+	}
+
+	@Test
+	void testBase64Streams() {
+		// Encoding with byte-array streams
+		String compiled = compile("""
+				static String streamEncode(ByteArrayOutputStream output) throws Exception {
+				    var encoded = Base64.getEncoder().wrap(output);
+				    encoded.write('H');
+				    encoded.write("el".getBytes(), 0, 2);
+				    encoded.write("lo".getBytes());
+				    encoded.flush();
+				    encoded.close();
+				    return new String(output.toByteArray());
+				}
+				static String streamEncodeCreated() throws Exception {
+				    ByteArrayOutputStream output = new ByteArrayOutputStream(8);
+				    var encoded = Base64.getEncoder().wrap(output);
+				    encoded.write("Hello".getBytes());
+				    encoded.close();
+				    return new String(output.toByteArray());
+				}
+				static String streamDecode(ByteArrayInputStream input) throws Exception {
+				    return new String(Base64.getDecoder().wrap(input).readAllBytes());
+				}
+				static String streamDecodeRead(ByteArrayInputStream input) throws Exception {
+				    var decoded = Base64.getDecoder().wrap(input);
+				    byte[] output = new byte[5];
+				    int first = decoded.read(output, 0, 2);
+				    int second = decoded.read(output, 2, 3);
+				    return first + ":" + second + ":" + new String(output);
+				}
+				static String streamDecodeCreated() throws Exception {
+				    ByteArrayInputStream input = new ByteArrayInputStream("SGVsbG8=".getBytes());
+				    return new String(Base64.getDecoder().wrap(input).readAllBytes());
+				}
+				""", Base64.class, ByteArrayInputStream.class, ByteArrayOutputStream.class);
+
+		// Verify writes through an externally supplied output stream and a stream created in the evaluator.
+		ByteArrayOutputStream output = new ByteArrayOutputStream();
+		assertEquals("SGVsbG8=", ((StringValue) evaluate(compiled, "streamEncode",
+				"(Ljava/io/ByteArrayOutputStream;)Ljava/lang/String;", null,
+				List.of(new InstancedObjectValue<>(output)))).getText().orElseThrow());
+		assertEquals("SGVsbG8=", ((StringValue) evaluate(compiled, "streamEncodeCreated",
+				"()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+
+		// Verify complete reads and split reads through a wrapped input stream.
+		ByteArrayInputStream input = new ByteArrayInputStream("SGVsbG8=".getBytes());
+		assertEquals("Hello", ((StringValue) evaluate(compiled, "streamDecode",
+				"(Ljava/io/ByteArrayInputStream;)Ljava/lang/String;", null,
+				List.of(new InstancedObjectValue<>(input)))).getText().orElseThrow());
+		assertEquals("2:3:Hello", ((StringValue) evaluate(compiled, "streamDecodeRead",
+				"(Ljava/io/ByteArrayInputStream;)Ljava/lang/String;", null,
+				List.of(new InstancedObjectValue<>(new ByteArrayInputStream("SGVsbG8=".getBytes()))))).getText().orElseThrow());
+		assertEquals("Hello", ((StringValue) evaluate(compiled, "streamDecodeCreated",
+				"()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+	}
+
+	@Test
+	void testBase64InvalidInput() {
+		// Bad base64 usage
+		String compiled = compile("""
+				static String invalid() {
+				    return new String(Base64.getDecoder().decode("%%%"));
+				}
+				""", Base64.class);
+
+		// We should get the expected illegal argument exception from the decoder, not a generic evaluation failure.
+		EvaluationResult invalid = evaluateResult(compiled, "invalid", "()Ljava/lang/String;", null, List.of());
+		EvaluationThrowsResult thrown = assertInstanceOf(EvaluationThrowsResult.class, invalid);
+		ThrowableValue exception = assertInstanceOf(ThrowableValue.class, thrown.exception());
+		assertEquals("java/lang/IllegalArgumentException", exception.type().getInternalName());
+	}
+
+	@Test
+	void testByteBufferFactories() {
+		// Compile each factory independently so capacity, range, and directness assertions stay local.
+		String compiled = compile("""
+				static ByteBuffer wrapped() { return ByteBuffer.wrap(new byte[] { 1, 2, 3, 4 }); }
+				static ByteBuffer ranged() { return ByteBuffer.wrap(new byte[] { 1, 2, 3, 4 }, 1, 2); }
+				static ByteBuffer allocated() { return ByteBuffer.allocate(4); }
+				static ByteBuffer direct() { return ByteBuffer.allocateDirect(4); }
+				""", ByteBuffer.class);
+
+		// A plain wrap starts at zero and exposes the whole backing array.
+		InstancedObjectValue<ByteBuffer> wrapped = assertInstanceOf(InstancedObjectValue.class,
+				evaluate(compiled, "wrapped", "()Ljava/nio/ByteBuffer;", null, List.of()));
+		assertEquals(4, wrapped.getRealInstance().capacity());
+		assertEquals(0, wrapped.getRealInstance().position());
+		assertEquals(4, wrapped.getRealInstance().limit());
+
+		// A ranged wrap preserves the requested position and limit over the same capacity.
+		InstancedObjectValue<ByteBuffer> ranged = assertInstanceOf(InstancedObjectValue.class,
+				evaluate(compiled, "ranged", "()Ljava/nio/ByteBuffer;", null, List.of()));
+		assertEquals(4, ranged.getRealInstance().capacity());
+		assertEquals(1, ranged.getRealInstance().position());
+		assertEquals(3, ranged.getRealInstance().limit());
+
+		// Heap allocation and direct allocation must remain distinguishable host-backed results.
+		InstancedObjectValue<ByteBuffer> allocated = assertInstanceOf(InstancedObjectValue.class,
+				evaluate(compiled, "allocated", "()Ljava/nio/ByteBuffer;", null, List.of()));
+		assertEquals(4, allocated.getRealInstance().capacity());
+		assertFalse(allocated.getRealInstance().isDirect());
+		InstancedObjectValue<ByteBuffer> direct = assertInstanceOf(InstancedObjectValue.class,
+				evaluate(compiled, "direct", "()Ljava/nio/ByteBuffer;", null, List.of()));
+		assertEquals(4, direct.getRealInstance().capacity());
+		assertTrue(direct.getRealInstance().isDirect());
+	}
+
+	@Test
+	void testByteBufferStateAndBacking() {
+		// Compile state transitions and backing-array queries together because both inspect the same receiver contract.
+		// TLDR: "Random bullshit, go!"
+		String compiled = compile("""
+				static String state(ByteBuffer buffer) {
+				    buffer.position(2);
+				    buffer.limit(6);
+				    buffer.mark();
+				    buffer.position(4);
+				    buffer.reset();
+				    int marked = buffer.position();
+				    buffer.clear();
+				    int cleared = buffer.position() + buffer.limit();
+				    buffer.position(3);
+				    buffer.flip();
+				    int flippedPosition = buffer.position();
+				    int flippedLimit = buffer.limit();
+				    buffer.rewind();
+				    int rewoundPosition = buffer.position();
+				    buffer.position(1);
+				    buffer.compact();
+				    return buffer.capacity() + ":" + marked + ":" + cleared + ":" + flippedPosition + ":" +
+				            flippedLimit + ":" + rewoundPosition + ":" + buffer.position() + ":" + buffer.limit() + ":" +
+				            buffer.remaining() + ":" + buffer.hasRemaining();
+				}
+				static String backing(ByteBuffer buffer) {
+				    return buffer.isDirect() + ":" + buffer.isReadOnly() + ":" + buffer.hasArray() + ":" +
+				            buffer.arrayOffset() + ":" + buffer.array().length;
+				}
+				""", ByteBuffer.class);
+
+		// Mark/reset, clear, flip, rewind, and compact must all update the host receiver in order.
+		assertEquals("8:2:8:0:3:0:2:8:6:true", ((StringValue) evaluate(compiled, "state",
+				"(Ljava/nio/ByteBuffer;)Ljava/lang/String;", null,
+				List.of(new InstancedObjectValue<>(ByteBuffer.allocate(8))))).getText().orElseThrow());
+
+		// Heap buffers expose their backing array while remaining non-direct and writable.
+		assertEquals("false:false:true:0:4", ((StringValue) evaluate(compiled, "backing",
+				"(Ljava/nio/ByteBuffer;)Ljava/lang/String;", null,
+				List.of(new InstancedObjectValue<>(ByteBuffer.wrap(new byte[4]))))).getText().orElseThrow());
+	}
+
+	@Test
+	void testByteBufferPrimitiveAccess() {
+		// Compile absolute writes and relative reads with fixed-width values at non-overlapping offsets.
+		String compiled = compile("""
+				static String primitives(ByteBuffer buffer, ByteOrder order) {
+				    buffer.order(order);
+				    buffer.put(0, (byte) 1);
+				    buffer.putChar(1, 'A');
+				    buffer.putShort(3, (short) 4660);
+				    buffer.putInt(5, 16909060);
+				    buffer.putLong(9, 72623859790382856L);
+				    buffer.putFloat(17, 1.5f);
+				    buffer.putDouble(21, 2.5d);
+				    char relativeChar;
+				    short relativeShort;
+				    int relativeInt;
+				    long relativeLong;
+				    float relativeFloat;
+				    double relativeDouble;
+				    buffer.position(1);
+				    relativeChar = buffer.getChar();
+				    relativeShort = buffer.getShort();
+				    relativeInt = buffer.getInt();
+				    relativeLong = buffer.getLong();
+				    relativeFloat = buffer.getFloat();
+				    relativeDouble = buffer.getDouble();
+				    return buffer.get(0) + ":" + buffer.getChar(1) + ":" + buffer.getShort(3) + ":" +
+				            buffer.getInt(5) + ":" + buffer.getLong(9) + ":" + buffer.getFloat(17) + ":" +
+				            buffer.getDouble(21) + ":" + relativeChar + ":" + relativeShort + ":" + relativeInt + ":" +
+				            relativeLong + ":" + relativeFloat + ":" + relativeDouble;
+				}
+				""", ByteBuffer.class, ByteOrder.class);
+
+		// Exact values prove both relative and absolute primitive access use the selected byte order.
+		assertEquals("1:A:4660:16909060:72623859790382856:1.5:2.5:A:4660:16909060:72623859790382856:1.5:2.5",
+				((StringValue) evaluate(compiled, "primitives",
+						"(Ljava/nio/ByteBuffer;Ljava/nio/ByteOrder;)Ljava/lang/String;", null,
+						List.of(new InstancedObjectValue<>(ByteBuffer.allocate(32)),
+								new InstancedObjectValue<>(ByteOrder.BIG_ENDIAN)))).getText().orElseThrow());
+	}
+
+	@Test
+	void testByteBufferFluentMutationsAndOrder() {
+		// Compile fluent writes and order changes separately from the primitive value matrix.
+		String compiled = compile("""
+				static String fluent(ByteBuffer buffer) {
+				    boolean same = buffer.put((byte) 7) == buffer;
+				    return same + ":" + buffer.position();
+				}
+				static String order(ByteBuffer buffer, ByteOrder order) {
+				    buffer.order(order);
+				    return buffer.order().toString() + ":" + (buffer.put(0, (byte) 8) == buffer);
+				}
+				""", ByteBuffer.class, ByteOrder.class);
+
+		// Fluent mutations must return the original evaluator-backed receiver and advance relative position.
+		assertEquals("true:1", ((StringValue) evaluate(compiled, "fluent",
+				"(Ljava/nio/ByteBuffer;)Ljava/lang/String;", null,
+				List.of(new InstancedObjectValue<>(ByteBuffer.allocate(4))))).getText().orElseThrow());
+
+		// order(ByteOrder) is also fluent, while order() exposes a host-backed ByteOrder result.
+		assertEquals("LITTLE_ENDIAN:true", ((StringValue) evaluate(compiled, "order",
+				"(Ljava/nio/ByteBuffer;Ljava/nio/ByteOrder;)Ljava/lang/String;", null,
+				List.of(new InstancedObjectValue<>(ByteBuffer.allocate(4)),
+						new InstancedObjectValue<>(ByteOrder.LITTLE_ENDIAN)))).getText().orElseThrow());
+	}
+
+	@Test
+	void testByteBufferBulkGets() {
+		// Compile all four array-writing get() variants.
+		String compiled = compile("""
+				static String bulkGets(ByteBuffer input) {
+				    byte[] relative = new byte[3];
+				    input.position(0);
+				    input.get(relative);
+				    int relativePosition = input.position();
+				    byte[] ranged = new byte[] { 99, 99, 99, 99 };
+				    input.position(0);
+				    input.get(ranged, 1, 2);
+				    byte[] absolute = new byte[3];
+				    input.get(1, absolute);
+				    byte[] absoluteRanged = new byte[] { 99, 99, 99, 99 };
+				    input.get(2, absoluteRanged, 1, 2);
+				    return relative[0] + "," + relative[1] + "," + relative[2] + ":" +
+				            ranged[0] + "," + ranged[1] + "," + ranged[2] + "," + ranged[3] + ":" +
+				            absolute[0] + "," + absolute[1] + "," + absolute[2] + ":" +
+				            absoluteRanged[0] + "," + absoluteRanged[1] + "," + absoluteRanged[2] + "," +
+				            absoluteRanged[3] + ":" + relativePosition;
+				}
+				""", ByteBuffer.class);
+
+		// Bulk get operations use ReFrame.replaceValue()
+		// So we should see the host-backed array values updated and the relative position advanced as expected.
+		assertEquals("10,11,12:99,10,11,99:11,12,13:99,12,13,99:3",
+				((StringValue) evaluate(compiled, "bulkGets",
+						"(Ljava/nio/ByteBuffer;)Ljava/lang/String;", null,
+						List.of(new InstancedObjectValue<>(ByteBuffer.wrap(new byte[]{10, 11, 12, 13}))))).getText().orElseThrow());
+	}
+
+	@Test
+	void testByteBufferBulkPuts() {
+		String compiled = compile("""
+				static String putArrays() {
+					// Relative puts advance the source and target
+				    ByteBuffer relative = ByteBuffer.allocate(6);
+				    relative.put(new byte[] { 1, 2 });
+				    relative.put(new byte[] { 3, 4, 5 }, 1, 2);
+				
+				    // Absolute puts leave both positions unchanged
+				    ByteBuffer absolute = ByteBuffer.allocate(5);
+				    absolute.put(1, new byte[] { 6, 7 });
+				    absolute.put(2, new byte[] { 8, 9, 10 }, 1, 2);
+				    return relative.position() + ":" + relative.get(0) + "," + relative.get(1) + "," +
+				            relative.get(2) + "," + relative.get(3) + ":" + absolute.position() + ":" +
+				            absolute.get(0) + "," + absolute.get(1) + "," + absolute.get(2) + "," +
+				            absolute.get(3) + "," + absolute.get(4);
+				}
+				static String putBuffers() {
+				    ByteBuffer target = ByteBuffer.allocate(4);
+				    ByteBuffer source = ByteBuffer.wrap(new byte[] { 11, 12, 13 });
+				    target.put(source);
+				
+				    ByteBuffer absoluteTarget = ByteBuffer.allocate(4);
+				    ByteBuffer absoluteSource = ByteBuffer.wrap(new byte[] { 21, 22, 23 });
+				
+				    absoluteTarget.put(1, absoluteSource, 1, 2);
+				
+				    return target.position() + ":" + source.position() + ":" + target.get(0) + "," +
+				            target.get(1) + "," + target.get(2) + ":" + absoluteTarget.position() + ":" +
+				            absoluteSource.position() + ":" + absoluteTarget.get(0) + "," +
+				            absoluteTarget.get(1) + "," + absoluteTarget.get(2) + "," + absoluteTarget.get(3);
+				}
+				""", ByteBuffer.class);
+
+		// Array puts must preserve relative positions and write only the requested absolute ranges.
+		assertEquals("4:1,2,4,5:0:0,6,9,10,0",
+				((StringValue) evaluate(compiled, "putArrays", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+
+		// Relative buffer puts advance the source and target.
+		// Absolute buffer puts leave both positions unchanged.
+		assertEquals("3:3:11,12,13:0:0:0,22,23,0",
+				((StringValue) evaluate(compiled, "putBuffers", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+	}
+
+	@Test
+	void testByteBufferDistinctResults() {
+		String compiled = compile("""
+				static ByteBuffer duplicate(ByteBuffer buffer) { return buffer.duplicate(); }
+				static ByteBuffer slice(ByteBuffer buffer) { return buffer.slice(1, 2); }
+				static ByteBuffer aligned(ByteBuffer buffer) { return buffer.alignedSlice(1); }
+				static ByteBuffer readOnly(ByteBuffer buffer) { return buffer.asReadOnlyBuffer(); }
+				static int readPosition(ByteBuffer buffer) { return buffer.position(); }
+				""", ByteBuffer.class);
+
+		// The duplicate() creates an independent position/limit state while sharing content with the original.
+		InstancedObjectValue<ByteBuffer> input = new InstancedObjectValue<>(ByteBuffer.wrap(new byte[]{1, 2, 3, 4}));
+		InstancedObjectValue<ByteBuffer> duplicate = assertInstanceOf(InstancedObjectValue.class,
+				evaluate(compiled, "duplicate", "(Ljava/nio/ByteBuffer;)Ljava/nio/ByteBuffer;", null, List.of(input)));
+		assertNotSame(input, duplicate);
+		assertEquals(4, duplicate.getRealInstance().capacity());
+		assertEquals(0, duplicate.getRealInstance().position());
+		duplicate.getRealInstance().put(0, (byte) 9);
+		assertEquals(9, input.getRealInstance().get(0));
+		assertEquals(0, ((IntValue) evaluate(compiled, "readPosition",
+				"(Ljava/nio/ByteBuffer;)I", null, List.of(duplicate))).value().orElseThrow());
+
+		// slice() is a distinct host-backed view with the requested content window.
+		InstancedObjectValue<ByteBuffer> slice = assertInstanceOf(InstancedObjectValue.class,
+				evaluate(compiled, "slice", "(Ljava/nio/ByteBuffer;)Ljava/nio/ByteBuffer;", null, List.of(input)));
+		assertEquals(2, slice.getRealInstance().capacity());
+		assertEquals(2, slice.getRealInstance().get(0));
+
+		// aligned() must also produce distinct host-backed results with the expected properties.
+		InstancedObjectValue<ByteBuffer> aligned = assertInstanceOf(InstancedObjectValue.class,
+				evaluate(compiled, "aligned", "(Ljava/nio/ByteBuffer;)Ljava/nio/ByteBuffer;", null, List.of(input)));
+		assertEquals(4, aligned.getRealInstance().capacity());
+
+		// readOnly() must also produce distinct host-backed results with the expected properties.
+		InstancedObjectValue<ByteBuffer> readOnly = assertInstanceOf(InstancedObjectValue.class,
+				evaluate(compiled, "readOnly", "(Ljava/nio/ByteBuffer;)Ljava/nio/ByteBuffer;", null, List.of(input)));
+		assertTrue(readOnly.getRealInstance().isReadOnly());
+	}
+
+	@Test
+	void testByteBufferExceptions() {
+		// Bunch of example bad ByteBuffer usage that should produce exceptions.
+		String compiled = compile("""
+				static ByteBuffer negativeAllocation() { return ByteBuffer.allocate(-1); }
+				static ByteBuffer invalidWrap() { return ByteBuffer.wrap(new byte[] { 1 }, 1, 2); }
+				static byte invalidAbsolute(ByteBuffer buffer) { return buffer.get(4); }
+				static byte[] directArray() { return ByteBuffer.allocateDirect(1).array(); }
+				static ByteBuffer readOnlyWrite(ByteBuffer buffer) { return buffer.asReadOnlyBuffer().put(0, (byte) 1); }
+				""", ByteBuffer.class);
+
+		// Negative capacities are rejected by the allocation factory.
+		assertByteBufferException(compiled, "negativeAllocation", "()Ljava/nio/ByteBuffer;",
+				"java/lang/IllegalArgumentException");
+
+		// Invalid wrap ranges and absolute indexes retain their modeled index exception.
+		assertByteBufferException(compiled, "invalidWrap", "()Ljava/nio/ByteBuffer;",
+				"java/lang/IndexOutOfBoundsException");
+		assertByteBufferException(compiled, "invalidAbsolute", "(Ljava/nio/ByteBuffer;)B",
+				"java/lang/IndexOutOfBoundsException", new InstancedObjectValue<>(ByteBuffer.allocate(4)));
+
+		// Direct buffers have no accessible array, and read-only views reject writes.
+		assertByteBufferException(compiled, "directArray", "()[B",
+				"java/lang/UnsupportedOperationException");
+		assertByteBufferException(compiled, "readOnlyWrite", "(Ljava/nio/ByteBuffer;)Ljava/nio/ByteBuffer;",
+				"java/nio/ReadOnlyBufferException", new InstancedObjectValue<>(ByteBuffer.allocate(4)));
 	}
 
 	@Test
@@ -625,6 +1073,17 @@ public class EvaluatorTest extends TransformerTestBase {
 				    @Override int value() { return 2; }
 				}
 				""");
+	}
+
+	private void assertByteBufferException(@Nonnull String compiled,
+	                                       @Nonnull String name,
+	                                       @Nonnull String descriptor,
+	                                       @Nonnull String expectedType,
+	                                       ReValue... parameters) {
+		EvaluationResult result = evaluateResult(compiled, name, descriptor, null, List.of(parameters));
+		EvaluationThrowsResult thrown = assertInstanceOf(EvaluationThrowsResult.class, result);
+		ThrowableValue exception = assertInstanceOf(ThrowableValue.class, thrown.exception());
+		assertEquals(expectedType, exception.type().getInternalName());
 	}
 
 	private void assertUnknownBranchFailure(@Nonnull EvaluationResult result) {
