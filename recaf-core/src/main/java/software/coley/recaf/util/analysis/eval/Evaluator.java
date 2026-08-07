@@ -144,7 +144,7 @@ public class Evaluator {
 		// Must not have any unsupported instructions
 		ExecutingFrame frame = new ExecutingFrame(method, new EvaluationContext(maxSteps), null);
 		for (AbstractInsnNode instruction : method.instructions)
-			if (!frame.canEvaluateInsn(instruction, interpreter))
+			if (!frame.canEvaluateInsn(instruction, interpreter, method.instructions))
 				return false;
 		return true;
 	}
@@ -167,7 +167,7 @@ public class Evaluator {
 		// Must not have any unsupported instructions
 		ExecutingFrame frame = new ExecutingFrame(null, 0xFF, 0xFF, methodAccess, new EvaluationContext(maxSteps));
 		for (AbstractInsnNode instruction : instructionBlock)
-			if (!frame.canEvaluateInsn(instruction, interpreter))
+			if (!frame.canEvaluateInsn(instruction, interpreter, instructionBlock))
 				return false;
 		return true;
 	}
@@ -901,10 +901,13 @@ public class Evaluator {
 		 * 		Instruction to evaluate.
 		 * @param interpreter
 		 * 		Interpreter to evaluate with.
+		 * @param instructionScope
+		 * 		Method or block instructions used for scoped support checks.
 		 *
 		 * @return {@code true} when the given instruction can be evaluated via {@link #evaluate(AbstractInsnNode, ReInterpreter)}.
 		 */
-		public boolean canEvaluateInsn(@Nonnull AbstractInsnNode insn, @Nonnull ReInterpreter interpreter) {
+		public boolean canEvaluateInsn(@Nonnull AbstractInsnNode insn, @Nonnull ReInterpreter interpreter,
+		                               @Nonnull InsnList instructionScope) {
 			return switch (insn.getOpcode()) {
 				case JSR, RET // Legacy instructions
 						-> false;
@@ -932,6 +935,10 @@ public class Evaluator {
 
 						// Check if the method can be instanced.
 						if (instanceFactory.getMethodHandler(min) != null || instanceFactory.getMapper(min) != null)
+							yield true;
+						// Lambda calls are eligible only when this scope creates the matching functional value.
+						if (min.getOpcode() != INVOKESPECIAL
+								&& InvokeDynamicExecutor.canEvaluateLambdaInvocation(min, instructionScope))
 							yield true;
 
 						// Check if the symbolic owner exists for runtime receiver dispatch.
@@ -1259,6 +1266,22 @@ public class Evaluator {
 							yield insn.getNext();
 						}
 
+						// Dispatch modeled lambdas through workspace evaluation instead of host metafactory execution.
+						if (receiver instanceof InvokeDynamicExecutor.EvaluatedLambdaValue lambda
+								&& lambda.supportsInvocation(min)) {
+							EvaluationResult result = evaluateLambda(lambda, valueList, context);
+							switch (result) {
+								case EvaluationYieldResult yielded -> {
+									push(yielded.value());
+									yield insn.getNext();
+								}
+								case EvaluationThrowsResult thrown -> {
+									yield exceptionHandler.routeException(this, thrown.exception(), insn);
+								}
+								case EvaluationFailureResult failure -> throw new NestedEvaluationFailure(failure);
+							}
+						}
+
 						// Check if we can handle the invoke with instance support or a value lookup.
 						boolean isVoid = Type.getReturnType(min.desc) == Type.VOID_TYPE;
 						if (receiver instanceof InstancedObjectValue<?> instancedReceiver && instancedReceiver.getRealInstance() != null) {
@@ -1400,6 +1423,7 @@ public class Evaluator {
 				case JSR, RET -> {
 					throw new UnsupportedOperationException();
 				}
+
 				case AASTORE -> {
 					execute(insn, interpreter);
 					yield insn.getNext();
@@ -1413,6 +1437,48 @@ public class Evaluator {
 			if (next == null)
 				throw NoNextException.INSTANCE;
 			return next;
+		}
+
+		/**
+		 * Evaluates a modeled lambda invocation through the normal workspace method path.
+		 *
+		 * @param lambda
+		 * 		Modeled lambda receiver.
+		 * @param arguments
+		 * 		Functional-interface invocation arguments.
+		 * @param context
+		 * 		Current evaluation context.
+		 *
+		 * @return Result of evaluating the static implementation method.
+		 */
+		@Nonnull
+		private EvaluationResult evaluateLambda(@Nonnull InvokeDynamicExecutor.EvaluatedLambdaValue lambda,
+		                                        @Nonnull List<ReValue> arguments,
+		                                        @Nonnull EvaluationContext context) throws UnknownValueException {
+			// Abort if the lambda implementation handle is not a static method.
+			// At some later point we may want to support non-static lambda implementations, but for now we only support static ones.
+			Handle handle = lambda.implementationHandle();
+			if (handle.getTag() != Opcodes.H_INVOKESTATIC)
+				return EvaluationResult.cannotEvaluate("Lambda implementation handle is not static");
+
+			// Abort if the lambda invocation argument count does not match the static implementation method argument count.
+			int invocationArgumentCount = lambda.instantiatedMethodType().getArgumentCount();
+			if (arguments.size() != invocationArgumentCount)
+				return EvaluationResult.cannotEvaluate("Mismatched lambda invocation argument count");
+
+			// Capture preceding invocation arguments in the static implementation method descriptor.
+			List<ReValue> targetArguments = new ArrayList<>(lambda.capturedValues().size() + arguments.size());
+			targetArguments.addAll(lambda.capturedValues());
+			targetArguments.addAll(arguments);
+
+			// Abort if the descriptor of the static implementation method does not match the expected argument count.
+			Type handleType = Type.getMethodType(handle.getDesc());
+			if (handleType.getArgumentCount() != targetArguments.size())
+				return EvaluationResult.cannotEvaluate("Mismatched lambda implementation argument count");
+
+			// Delegate lookup, initialization, step accounting, and exception behavior to nested evaluation.
+			return Evaluator.this.evaluate(handle.getOwner(), handle.getName(), handle.getDesc(),
+					null, targetArguments, context);
 		}
 
 		/**

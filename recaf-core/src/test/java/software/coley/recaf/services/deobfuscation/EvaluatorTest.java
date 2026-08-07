@@ -45,6 +45,9 @@ import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -211,6 +214,42 @@ public class EvaluatorTest extends TransformerTestBase {
 		ReValue retVal = evaluate(compiled, "notSoRandom", "()I", null, List.of());
 		if (retVal instanceof IntValue str)
 			assertEquals(new Random(1234).nextInt(1000), str.value().orElseThrow());
+		else
+			fail("Evaluation failure, unexpected return value: " + retVal);
+	}
+
+	@Test
+	void testSupplierLambda() {
+		String compiled = compile("""
+				static String supply() { return ((Supplier<String>) () -> "Hello").get(); }
+				""", Supplier.class);
+		ReValue retVal = evaluate(compiled, "supply", "()Ljava/lang/String;", null, List.of());
+		if (retVal instanceof StringValue str)
+			assertEquals("Hello", str.getText().orElseThrow());
+		else
+			fail("Evaluation failure, unexpected return value: " + retVal);
+	}
+
+	@Test
+	void testFunctionLambda() {
+		String compiled = compile("""
+				static String apply() { return ((Function<String, String>) (s -> s + " World")).apply("Hello"); }
+				""", Function.class);
+		ReValue retVal = evaluate(compiled, "apply", "()Ljava/lang/String;", null, List.of());
+		if (retVal instanceof StringValue str)
+			assertEquals("Hello World", str.getText().orElseThrow());
+		else
+			fail("Evaluation failure, unexpected return value: " + retVal);
+	}
+
+	@Test
+	void testPredicateLambda() {
+		String compiled = compile("""
+				static boolean test() { return ((Predicate<String>) (s -> s.length() > 5)).test("Hello World"); }
+				""", Predicate.class);
+		ReValue retVal = evaluate(compiled, "test", "()Z", null, List.of());
+		if (retVal instanceof IntValue intVal)
+			assertEquals(1, intVal.value().orElseThrow());
 		else
 			fail("Evaluation failure, unexpected return value: " + retVal);
 	}
