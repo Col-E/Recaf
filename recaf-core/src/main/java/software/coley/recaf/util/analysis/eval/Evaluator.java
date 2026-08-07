@@ -328,9 +328,11 @@ public class Evaluator {
 		}
 
 		// Handle execution
-		context.callStack.add(new EvaluationFrame(classNode.name, methodNode.name));
+		context.callStack.add(new ClassMethodPair(classNode, methodNode));
+		List<ClassMethodPair> stack = List.copyOf(context.callStack);
+		InsnList instructions = methodNode.instructions;
+		notifyMethodEnter(classNode, methodNode, frame, stack);
 		try {
-			InsnList instructions = methodNode.instructions;
 			AbstractInsnNode pc = instructions.getFirst();
 			while (context.stepAllocation > 0) {
 				try {
@@ -355,6 +357,7 @@ public class Evaluator {
 					if (retVal != null) {
 						if (retVal instanceof InstancedObjectValue<?> instanced && instanced.getRealInstance() != null)
 							retVal = instanced.unmap();
+						notifyMethodReturn(classNode, methodNode, frame, retVal, stack);
 						return new EvaluationYieldResult(retVal);
 					}
 				} catch (NestedEvaluationFailure e) {
@@ -364,6 +367,7 @@ public class Evaluator {
 				} catch (NoNextException e) {
 					return EvaluationResult.cannotEvaluate("Execution falls through end", e);
 				} catch (ExceptionHandler.ThrownException e) {
+					notifyMethodThrow(classNode, methodNode, frame, e.getExceptionValue(), stack);
 					return new EvaluationThrowsResult(e.getExceptionValue());
 				}
 				context.stepAllocation--;
@@ -894,6 +898,87 @@ public class Evaluator {
 		}
 
 		return null;
+	}
+
+	/**
+	 * Notifies listeners that a workspace method has begun evaluation.
+	 *
+	 * @param classNode
+	 * 		Class defining the method.
+	 * @param methodNode
+	 * 		Method beginning evaluation.
+	 * @param frame
+	 * 		Live executing frame at method entry.
+	 * @param stack
+	 * 		Immutable snapshot of the root-relative method call stack, including the current method.
+	 */
+	private void notifyMethodEnter(@Nonnull ClassNode classNode, @Nonnull MethodNode methodNode,
+	                               @Nonnull ReFrame frame, @Nonnull List<ClassMethodPair> stack) {
+		if (!listeners.isEmpty())
+			Unchecked.checkedForEach(listeners,
+					listener -> listener.onMethodEnter(classNode, methodNode, frame, stack),
+					(listener, error) -> {
+						logger.error("Listener {} failed to observe method entry in {}.{}{}",
+								listener.getClass().getName(),
+								classNode.name, methodNode.name, methodNode.desc,
+								error);
+					});
+	}
+
+	/**
+	 * Notifies listeners that a workspace method has returned normally.
+	 *
+	 * @param classNode
+	 * 		Class defining the method.
+	 * @param methodNode
+	 * 		Method that returned.
+	 * @param frame
+	 * 		Live executing frame at method return.
+	 * @param value
+	 * 		Normalized method return value.
+	 * @param stack
+	 * 		Immutable snapshot of the root-relative method call stack, including the current method.
+	 */
+	private void notifyMethodReturn(@Nonnull ClassNode classNode, @Nonnull MethodNode methodNode,
+	                                @Nonnull ReFrame frame, @Nonnull ReValue value,
+	                                @Nonnull List<ClassMethodPair> stack) {
+		if (!listeners.isEmpty())
+			Unchecked.checkedForEach(listeners,
+					listener -> listener.onMethodReturn(classNode, methodNode, frame, value, stack),
+					(listener, error) -> {
+						logger.error("Listener {} failed to observe method return in {}.{}{}",
+								listener.getClass().getName(),
+								classNode.name, methodNode.name, methodNode.desc,
+								error);
+					});
+	}
+
+	/**
+	 * Notifies listeners that a workspace method exited with an uncaught exception.
+	 *
+	 * @param classNode
+	 * 		Class defining the method.
+	 * @param methodNode
+	 * 		Method that threw.
+	 * @param frame
+	 * 		Live executing frame at method throw.
+	 * @param exception
+	 * 		Exception value that left the method.
+	 * @param stack
+	 * 		Immutable snapshot of the root-relative method call stack, including the current method.
+	 */
+	private void notifyMethodThrow(@Nonnull ClassNode classNode, @Nonnull MethodNode methodNode,
+	                               @Nonnull ReFrame frame, @Nonnull ReValue exception,
+	                               @Nonnull List<ClassMethodPair> stack) {
+		if (!listeners.isEmpty())
+			Unchecked.checkedForEach(listeners,
+					listener -> listener.onMethodThrow(classNode, methodNode, frame, exception, stack),
+					(listener, error) -> {
+						logger.error("Listener {} failed to observe method throw in {}.{}{}",
+								listener.getClass().getName(),
+								classNode.name, methodNode.name, methodNode.desc,
+								error);
+					});
 	}
 
 	/** Frame extension to support control flow processing of this evaluator. */
@@ -1629,19 +1714,9 @@ public class Evaluator {
 		}
 	}
 
-	/**
-	 * Frame for evaluation. Consider it like a {@link StackTraceElement}.
-	 *
-	 * @param className
-	 * 		Name of the class being evaluated.
-	 * @param methodName
-	 * 		Name of the method being evaluated.
-	 */
-	private record EvaluationFrame(@Nonnull String className, @Nonnull String methodName) {}
-
 	/** Context for evaluation, including the call stack, step allocation, and class initialization state. */
 	private static final class EvaluationContext {
-		private final List<EvaluationFrame> callStack = new ArrayList<>();
+		private final List<ClassMethodPair> callStack = new ArrayList<>();
 		private final Set<String> initializedClasses;
 		private final Set<String> initializingClasses;
 		private final Map<String, EvaluationResult> failedClassInitializers;
@@ -1659,8 +1734,10 @@ public class Evaluator {
 		private List<StackTraceElement> stackTrace() {
 			List<StackTraceElement> trace = new ArrayList<>(callStack.size());
 			for (int i = callStack.size() - 1; i >= 0; i--) {
-				EvaluationFrame frame = callStack.get(i);
-				trace.add(new StackTraceElement(frame.className().replace('/', '.'), frame.methodName(), null, -1));
+				ClassMethodPair pair = callStack.get(i);
+				ClassNode classNode = pair.classNode();
+				MethodNode methodNode = pair.methodNode();
+				trace.add(new StackTraceElement(classNode.name.replace('/', '.'), methodNode.name, null, -1));
 			}
 			return trace;
 		}

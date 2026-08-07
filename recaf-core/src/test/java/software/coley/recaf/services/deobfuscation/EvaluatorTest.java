@@ -2,14 +2,20 @@ package software.coley.recaf.services.deobfuscation;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import me.darknet.assembler.printer.JvmPrinterUtil;
 import org.junit.jupiter.api.Test;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.MethodNode;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.transform.JvmTransformerContext;
 import software.coley.recaf.test.TestClassUtils;
+import software.coley.recaf.util.ClassMethodPair;
 import software.coley.recaf.util.analysis.Nullness;
+import software.coley.recaf.util.analysis.ReFrame;
 import software.coley.recaf.util.analysis.ReInterpreter;
 import software.coley.recaf.util.analysis.eval.EvaluationFailureResult;
 import software.coley.recaf.util.analysis.eval.EvaluationListener;
@@ -37,6 +43,7 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -265,17 +272,11 @@ public class EvaluatorTest extends TransformerTestBase {
 	@Test
 	void testEvaluationCallback() {
 		// Compile a simple method that calls a helper method and multiplies the result.
-		String compiled = compile("""
+		compile("""
 				static int helper(int value) { return value * 3; }
 				static int run() { return helper(2) * 4; }
 				""");
-		JvmClassInfo assembled = get(CLASS_NAME);
-		Workspace workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(assembled));
-
-		// Build the evaluator for the workspace.
-		JvmTransformerContext ctx = new JvmTransformerContext(workspace, workspace.getPrimaryResource(), Collections.emptyList());
-		ReInterpreter interpreter = ctx.newInterpreter(new InheritanceGraph(workspace));
-		Evaluator evaluator = new Evaluator(workspace, interpreter, new FieldCacheManager(), 1000, false, false);
+		Evaluator evaluator = createEvaluator();
 
 		// Sets for tracking which methods and classes were observed during evaluation (ordered, de-duplicating)
 		Set<String> observedMethods = new LinkedHashSet<>();
@@ -306,6 +307,108 @@ public class EvaluatorTest extends TransformerTestBase {
 		assertEquals(Set.of("helper", "run"), observedMethods);
 		assertEquals(6, postImulValues.get("helper"));
 		assertEquals(24, postImulValues.get("run"));
+	}
+
+	@Test
+	void testEvaluationCallbackEnterExit() {
+		// Compile a method that re-enters the same method until the base case returns.
+		compile("""
+				static int countdown(int value) {
+				    if (value == 0) return 1;
+				    return countdown(value - 1) + 1;
+				}
+				""");
+		Evaluator evaluator = createEvaluator();
+		List<List<String>> entries = new ArrayList<>();
+		List<List<String>> returns = new ArrayList<>();
+		EvaluationListener listener = new EvaluationListener() {
+			@Override
+			public void onInstruction(@Nullable ClassNode classNode,
+			                          @Nullable MethodNode methodNode,
+			                          @Nonnull AbstractInsnNode instruction,
+			                          @Nonnull ReFrame frame) {
+				// no-op
+			}
+
+			@Override
+			public void onMethodEnter(@Nonnull ClassNode classNode, @Nonnull MethodNode methodNode,
+			                          @Nonnull ReFrame frame, @Nonnull List<ClassMethodPair> stack) {
+				entries.add(stackMethodNames(stack));
+			}
+
+			@Override
+			public void onMethodReturn(@Nonnull ClassNode classNode, @Nonnull MethodNode methodNode,
+			                           @Nonnull ReFrame frame, @Nonnull ReValue value,
+			                           @Nonnull List<ClassMethodPair> stack) {
+				returns.add(stackMethodNames(stack));
+			}
+		};
+		evaluator.addListener(listener);
+
+		// Evaluate enough recursive calls to prove repeated method invocations can be observed through the listener.
+		EvaluationResult result = evaluator.evaluate(CLASS_NAME, "countdown", "(I)I", null, List.of(IntValue.of(3)));
+		EvaluationYieldResult yielded = assertInstanceOf(EvaluationYieldResult.class, result);
+		assertEquals(4, ((IntValue) yielded.value()).value().orElseThrow());
+		assertEquals(List.of(
+				List.of("countdown"),
+				List.of("countdown", "countdown"),
+				List.of("countdown", "countdown", "countdown"),
+				List.of("countdown", "countdown", "countdown", "countdown")), entries);
+		assertEquals(List.of(
+				List.of("countdown", "countdown", "countdown", "countdown"),
+				List.of("countdown", "countdown", "countdown"),
+				List.of("countdown", "countdown"),
+				List.of("countdown")), returns);
+	}
+
+	@Test
+	void testEvaluationCallbackThrowing() {
+		// Compile a method that re-enters the same method until the base case throws an exception.
+		compile("""
+				static int countdown(int value) {
+				    if (value == 0) throw new RuntimeException("The end");
+				    return countdown(value - 1) + 1;
+				}
+				""");
+		Evaluator evaluator = createEvaluator();
+		List<String> thrown = new ArrayList<>();
+		EvaluationListener listener = new EvaluationListener() {
+			private final Map<MethodNode, AbstractInsnNode> lastInstruction = new IdentityHashMap<>();
+
+			@Override
+			public void onInstruction(@Nullable ClassNode classNode,
+			                          @Nullable MethodNode methodNode,
+			                          @Nonnull AbstractInsnNode instruction,
+			                          @Nonnull ReFrame frame) {
+				lastInstruction.put(methodNode, instruction);
+			}
+
+			@Override
+			public void onMethodThrow(@Nonnull ClassNode classNode,
+			                          @Nonnull MethodNode methodNode,
+			                          @Nonnull ReFrame frame,
+			                          @Nonnull ReValue exception,
+			                          @Nonnull List<ClassMethodPair> stack) {
+				AbstractInsnNode throwingInsn = lastInstruction.get(methodNode).getNext();
+				thrown.add(String.join(":", stackMethodNames(stack)) + ":" + JvmPrinterUtil.toString(throwingInsn) + ":" + exception);
+			}
+		};
+		evaluator.addListener(listener);
+
+		// Evaluate the method, and validate we observe throwing through the listener.
+		// - The exception propagates up the call stack, so we should see the throw event for each method invocation.
+		EvaluationResult result = evaluator.evaluate(CLASS_NAME, "countdown", "(I)I", null, List.of(IntValue.of(3)));
+		if (result instanceof EvaluationThrowsResult(ReValue exception)) {
+			assertEquals("java/lang/RuntimeException", exception.type().getInternalName());
+			assertEquals(List.of(
+					"countdown:countdown:countdown:countdown:athrow:java/lang/RuntimeException",
+					"countdown:countdown:countdown:invokestatic Example.countdown (I)I:java/lang/RuntimeException",
+					"countdown:countdown:invokestatic Example.countdown (I)I:java/lang/RuntimeException",
+					"countdown:invokestatic Example.countdown (I)I:java/lang/RuntimeException"
+			), thrown);
+		} else {
+			fail("Expected evaluation to throw RuntimeException, got: " + result);
+		}
 	}
 
 	@Test
@@ -1612,6 +1715,23 @@ public class EvaluatorTest extends TransformerTestBase {
 			assertEquals("Encountered unknown value while evaluating branch", failure.reason());
 		else
 			fail("Expected unknown-branch evaluation failure, got: " + result);
+	}
+
+	@Nonnull
+	private static List<String> stackMethodNames(@Nonnull List<ClassMethodPair> stack) {
+		List<String> names = new ArrayList<>(stack.size());
+		for (ClassMethodPair pair : stack)
+			names.add(pair.methodNode().name);
+		return names;
+	}
+
+	@Nonnull
+	private Evaluator createEvaluator() {
+		JvmClassInfo assembled = get(CLASS_NAME);
+		Workspace workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(assembled));
+		JvmTransformerContext ctx = new JvmTransformerContext(workspace, workspace.getPrimaryResource(), Collections.emptyList());
+		ReInterpreter interpreter = ctx.newInterpreter(new InheritanceGraph(workspace));
+		return new Evaluator(workspace, interpreter, new FieldCacheManager(), 1000, false, false);
 	}
 
 	@Nonnull
