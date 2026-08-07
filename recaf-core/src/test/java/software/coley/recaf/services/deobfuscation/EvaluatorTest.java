@@ -228,6 +228,41 @@ public class EvaluatorTest extends TransformerTestBase {
 	}
 
 	@Test
+	void testStringMakeConcatWithConstants() {
+		// Basic concat uses 'makeConcatWithConstants'
+		String compiled = compile("""
+				static String concat(String left, String right) { return left + " " + right; }
+				""");
+		assertEquals("Hello World", ((StringValue) evaluate(compiled, "concat",
+				"(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;", null,
+				List.of(ObjectValue.string("Hello"), ObjectValue.string("World")))).getText().orElseThrow());
+	}
+
+	@Test
+	void testStringConcatWithoutConstants() {
+		// Cannot figure out a java source form for 'makeConcat' so we have to assemble it manually.
+		String assembly = """
+				.super java/lang/Object
+				.class public super Example {
+					.method static concat (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String; {
+					    parameters: { left, right },
+					    code: {
+					    A:
+					        aload left
+					        aload right
+					        invokedynamic makeConcat (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String; { invokestatic, java/lang/invoke/StringConcatFactory.makeConcat, (Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;[Ljava/lang/Object;)Ljava/lang/invoke/CallSite; } {}
+					        areturn
+					    B:
+					    }
+					}
+				}
+				""";
+		assertEquals("HelloWorld", ((StringValue) evaluate(assembly, "concat",
+				"(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;", null,
+				List.of(ObjectValue.string("Hello"), ObjectValue.string("World")))).getText().orElseThrow());
+	}
+
+	@Test
 	void testEvaluationCallback() {
 		// Compile a simple method that calls a helper method and multiplies the result.
 		String compiled = compile("""
@@ -824,6 +859,7 @@ public class EvaluatorTest extends TransformerTestBase {
 		else
 			fail("Evaluation failure, unexpected return value: " + retVal);
 	}
+
 	@Test
 	void testListOf() {
 		String compiled = compile("""
@@ -1095,6 +1131,7 @@ public class EvaluatorTest extends TransformerTestBase {
 				""", TreeMap.class, Map.class);
 		assertEquals("a:b:a", ((StringValue) evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
 	}
+
 	@Test
 	void testCollectionConstructorFailures() {
 		String compiled = compile("""
@@ -1557,6 +1594,7 @@ public class EvaluatorTest extends TransformerTestBase {
 		ThrowableValue exception = assertInstanceOf(ThrowableValue.class, thrown.exception());
 		assertEquals(expectedType, exception.type().getInternalName());
 	}
+
 	private void assertEvaluationThrows(@Nonnull String compiled,
 	                                    @Nonnull String name,
 	                                    @Nonnull String descriptor,
