@@ -23,7 +23,9 @@ import org.objectweb.asm.tree.TableSwitchInsnNode;
 import org.objectweb.asm.tree.TypeInsnNode;
 import org.objectweb.asm.tree.analysis.AnalyzerException;
 import org.objectweb.asm.tree.analysis.Interpreter;
+import org.slf4j.Logger;
 import software.coley.collections.Unchecked;
+import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
@@ -54,6 +56,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.OptionalInt;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
@@ -65,7 +68,9 @@ import java.util.function.Predicate;
 public class Evaluator {
 	private static final String UNKNOWN_VALUE_REASON = "Encountered unknown value while evaluating branch";
 
+	private static final Logger logger = Logging.get(Evaluator.class);
 	private static final InstanceFactory instanceFactory = new InstanceFactory();
+	private final List<EvaluationListener> listeners = new CopyOnWriteArrayList<>();
 	private final Workspace workspace;
 	private final ReInterpreter interpreter;
 	private final FieldCacheManager fieldCacheManager;
@@ -97,6 +102,16 @@ public class Evaluator {
 		this.maxSteps = maxSteps;
 		this.evaluateInternals = evaluateInternals;
 		this.evaluateClassInitializers = evaluateClassInitializers;
+	}
+
+	/**
+	 * Registers a listener for successfully executed instructions.
+	 *
+	 * @param listener
+	 * 		Listener to invoke after each successfully executed instruction.
+	 */
+	public void addListener(@Nonnull EvaluationListener listener) {
+		listeners.add(listener);
 	}
 
 	/**
@@ -319,7 +334,23 @@ public class Evaluator {
 			AbstractInsnNode pc = instructions.getFirst();
 			while (context.stepAllocation > 0) {
 				try {
-					pc = frame.evaluate(pc, interpreter);
+					// Evaluate the instruction and advance the program counter.
+					AbstractInsnNode executedInstruction = pc;
+					pc = frame.evaluate(executedInstruction, interpreter);
+
+					// Notify observers after state changes so they see the completed instruction.
+					if (!listeners.isEmpty())
+						Unchecked.checkedForEach(listeners,
+								listener -> listener.onInstruction(classNode, methodNode, executedInstruction, frame),
+								(listener, error) -> {
+									logger.error("Listener {} failed to observe instruction {} in {}.{}{}",
+											listener.getClass().getName(),
+											JvmPrinterUtil.toString(executedInstruction),
+											classNode.name, methodNode.name, methodNode.desc,
+											error);
+								});
+
+					// Check for a return value after the instruction executes, since the instruction may have been a return.
 					ReValue retVal = frame.returnValue;
 					if (retVal != null) {
 						if (retVal instanceof InstancedObjectValue<?> instanced && instanced.getRealInstance() != null)
@@ -532,9 +563,22 @@ public class Evaluator {
 		AbstractInsnNode pc = instructionBlock.getFirst();
 		while (context.stepAllocation > 0) {
 			try {
-				pc = frame.evaluate(pc, interpreter);
+				// Evaluate the instruction and advance the program counter.
+				AbstractInsnNode executedInstruction = pc;
+				pc = frame.evaluate(executedInstruction, interpreter);
 
-				// Check if return instruction assigned a value.
+				// Notify observers after state changes so they see the completed instruction.
+				if (!listeners.isEmpty())
+					Unchecked.checkedForEach(listeners,
+							listener -> listener.onInstruction(null, null, executedInstruction, frame),
+							(listener, error) -> {
+								logger.error("Listener {} failed to observe instruction {} in block evaluation",
+										listener.getClass().getName(),
+										JvmPrinterUtil.toString(executedInstruction),
+										error);
+							});
+
+				// Check for a return value after the instruction executes, since the instruction may have been a return.
 				if (frame.returnValue != null)
 					return new EvaluationYieldResult(frame.returnValue);
 			} catch (NestedEvaluationFailure e) {

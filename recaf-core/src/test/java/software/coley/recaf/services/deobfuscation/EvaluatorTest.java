@@ -3,6 +3,7 @@ package software.coley.recaf.services.deobfuscation;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import org.junit.jupiter.api.Test;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
@@ -11,6 +12,7 @@ import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.util.analysis.Nullness;
 import software.coley.recaf.util.analysis.ReInterpreter;
 import software.coley.recaf.util.analysis.eval.EvaluationFailureResult;
+import software.coley.recaf.util.analysis.eval.EvaluationListener;
 import software.coley.recaf.util.analysis.eval.EvaluationResult;
 import software.coley.recaf.util.analysis.eval.EvaluationThrowsResult;
 import software.coley.recaf.util.analysis.eval.EvaluationYieldResult;
@@ -161,6 +163,52 @@ public class EvaluatorTest extends TransformerTestBase {
 			assertEquals("TestTest", str.getText().orElse(null));
 		else
 			fail("Evaluation failure, unexpected return value: " + retVal);
+	}
+
+	@Test
+	void testEvaluationCallback() {
+		// Compile a simple method that calls a helper method and multiplies the result.
+		String compiled = compile("""
+				static int helper(int value) { return value * 3; }
+				static int run() { return helper(2) * 4; }
+				""");
+		JvmClassInfo assembled = get(CLASS_NAME);
+		Workspace workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(assembled));
+
+		// Build the evaluator for the workspace.
+		JvmTransformerContext ctx = new JvmTransformerContext(workspace, workspace.getPrimaryResource(), Collections.emptyList());
+		ReInterpreter interpreter = ctx.newInterpreter(new InheritanceGraph(workspace));
+		Evaluator evaluator = new Evaluator(workspace, interpreter, new FieldCacheManager(), 1000, false, false);
+
+		// Sets for tracking which methods and classes were observed during evaluation (ordered, de-duplicating)
+		Set<String> observedMethods = new LinkedHashSet<>();
+		Set<String> observedClasses = new LinkedHashSet<>();
+		Map<String, Integer> postImulValues = new HashMap<>();
+
+		// Add a listener to the evaluator that tracks which methods and classes are observed, and captures the result of the IMUL instruction.
+		EvaluationListener listener = (classNode, methodNode, instruction, frame) -> {
+			// Class/method should be non-null given we are evaluating a method, not a block.
+			assertNotNull(classNode);
+			assertNotNull(methodNode);
+			observedClasses.add(classNode.name);
+			observedMethods.add(methodNode.name);
+
+			// Capture the result of the IMUL instruction for later validation.
+			if (instruction.getOpcode() == Opcodes.IMUL) {
+				IntValue value = assertInstanceOf(IntValue.class, frame.getStackTop().orElseThrow());
+				postImulValues.put(methodNode.name, value.value().orElseThrow());
+			}
+		};
+		evaluator.addListener(listener);
+
+		// Eval the method and validate the result, observed classes/methods, and the post-IMUL values.
+		EvaluationResult result = evaluator.evaluate(CLASS_NAME, "run", "()I", null, List.of());
+		EvaluationYieldResult yielded = assertInstanceOf(EvaluationYieldResult.class, result);
+		assertEquals(24, ((IntValue) yielded.value()).value().orElseThrow());
+		assertEquals(Set.of(CLASS_NAME), observedClasses);
+		assertEquals(Set.of("helper", "run"), observedMethods);
+		assertEquals(6, postImulValues.get("helper"));
+		assertEquals(24, postImulValues.get("run"));
 	}
 
 	@Test
