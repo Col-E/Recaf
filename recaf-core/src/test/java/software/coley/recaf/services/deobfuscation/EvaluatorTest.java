@@ -153,6 +153,68 @@ public class EvaluatorTest extends TransformerTestBase {
 	}
 
 	@Test
+	void testSystemArraycopy() {
+		String compiled = compile("""
+				static String copy() {
+				    int[] source = {1, 2, 3, 4};
+				    int[] destination = {9, 9, 9, 9};
+				    System.arraycopy(source, 1, destination, 0, 3);
+				    return destination[0] + ":" + destination[1] + ":" + destination[2] + ":" + destination[3];
+				}
+				static String overlap() {
+				    int[] values = {1, 2, 3, 4, 5};
+				    System.arraycopy(values, 0, values, 1, 4);
+				    return values[0] + ":" + values[1] + ":" + values[2] + ":" + values[3] + ":" + values[4];
+				}
+				static int nullSource() {
+				    int[] source = null;
+				    int[] destination = new int[1];
+				    System.arraycopy(source, 0, destination, 0, 1);
+				    return 0;
+				}
+				static int outOfBounds() {
+				    int[] source = {1};
+				    int[] destination = new int[1];
+				    System.arraycopy(source, 1, destination, 0, 1);
+				    return 0;
+				}
+				static int primitiveMismatch() {
+				    int[] source = {1};
+				    long[] destination = {0};
+				    System.arraycopy(source, 0, destination, 0, 1);
+				    return 0;
+				}
+				static int referenceMismatch() {
+				    Object[] source = {Integer.valueOf(1)};
+				    String[] destination = new String[1];
+				    System.arraycopy(source, 0, destination, 0, 1);
+				    return 0;
+				}
+				static int caught() {
+				    try {
+				        int[] source = {1};
+				        int[] destination = new int[1];
+				        System.arraycopy(source, 1, destination, 0, 1);
+				    } catch (ArrayIndexOutOfBoundsException ex) {
+				        return 7;
+				    }
+				    return 0;
+				}
+				""");
+
+		// Validate ordinary and overlapping copies through the evaluator only.
+		assertEquals("2:3:4:9", ((StringValue) evaluate(compiled, "copy", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+		assertEquals("1:1:2:3:4", ((StringValue) evaluate(compiled, "overlap", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+
+		// Validate deterministic JVM faults are routed through the evaluator's exception model.
+		assertEvaluationThrows(compiled, "nullSource", "()I", "java/lang/NullPointerException");
+		assertEvaluationThrows(compiled, "outOfBounds", "()I", "java/lang/ArrayIndexOutOfBoundsException");
+		assertEvaluationThrows(compiled, "primitiveMismatch", "()I", "java/lang/ArrayStoreException");
+		assertEvaluationThrows(compiled, "referenceMismatch", "()I", "java/lang/ArrayStoreException");
+		assertEquals(7, ((IntValue) evaluate(compiled, "caught", "()I", null, List.of())).value().orElseThrow());
+	}
+
+	@Test
 	void testStringBuilder() {
 		String compiled = compile("""
 				static String make() { return new StringBuilder().append('T').append("est").toString(); }

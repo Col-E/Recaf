@@ -15,6 +15,7 @@ import java.util.List;
  * 		Type of the real instance.
  *
  * @author Matt Coley
+ * @see MethodInvokeStaticHandler
  * @see InstanceMethodInvokeHandlerGenerator
  */
 public interface MethodInvokeHandler<T> {

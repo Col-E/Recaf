@@ -2,8 +2,11 @@ package software.coley.recaf.util.analysis.eval;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.MethodInsnNode;
+import org.objectweb.asm.tree.analysis.AnalyzerException;
 import software.coley.recaf.util.analysis.ReFrame;
+import software.coley.recaf.util.analysis.ReInterpreter;
 import software.coley.recaf.util.analysis.gen.InstanceMapperGenerator;
 import software.coley.recaf.util.analysis.gen.InstanceMethodInvokeHandlerGenerator;
 import software.coley.recaf.util.analysis.gen.InstanceStaticMapperGenerator;
@@ -54,6 +57,7 @@ import java.util.TreeSet;
 public class InstanceFactory extends BasicLookupUtils {
 	private final Map<String, InstanceMapper> mappers = new HashMap<>();
 	private final Map<String, MethodInvokeHandler<?>> methodHandlers = new HashMap<>();
+	private final Map<String, MethodInvokeStaticHandler> staticMethodHandlers = new HashMap<>();
 	private final Set<String> supportedTypes = new HashSet<>();
 
 	/**
@@ -65,6 +69,7 @@ public class InstanceFactory extends BasicLookupUtils {
 
 		registerStaticMappers();
 		registerCollectionStaticMappers();
+		registerStaticMethodHandlers();
 
 		registerMethodHandlers();
 		registerCollectionMethodHandlers();
@@ -1185,6 +1190,126 @@ public class InstanceFactory extends BasicLookupUtils {
 	}
 
 	/**
+	 * Register static methods that mutate evaluator state rather than mapping a host instance.
+	 */
+	private void registerStaticMethodHandlers() {
+		// Its just one method. How complex can it be?
+		//  [aware.gif]
+		registerStaticMethodHandler("java/lang/System", "arraycopy", "(Ljava/lang/Object;ILjava/lang/Object;II)V", new MethodInvokeStaticHandler() {
+			@Nullable
+			@Override
+			public ReValue invoke(@Nonnull ReFrame frame, @Nonnull ReInterpreter interpreter,
+			                      @Nonnull MethodInsnNode instruction, @Nonnull List<ReValue> args) throws Throwable {
+				// Resolve references first so known nulls retain the JVM's exception precedence.
+				ReValue sourceValue = args.get(0);
+				ReValue destinationValue = args.get(2);
+				if (sourceValue instanceof ObjectValue sourceObject
+						&& sourceObject.isNull()
+						|| destinationValue instanceof ObjectValue destinationObject
+						&& destinationObject.isNull())
+					throw new NullPointerException();
+				ArrayValue source = requireArray(sourceValue, instruction, "source");
+				ArrayValue destination = requireArray(destinationValue, instruction, "destination");
+
+				// Resolve concrete positions and lengths before checking the copy range.
+				int sourcePosition = requireIndex(args.get(1), instruction, "source position");
+				int destinationPosition = requireIndex(args.get(3), instruction, "destination position");
+				int length = requireIndex(args.get(4), instruction, "length");
+				int sourceLength = requireLength(source, instruction, "source");
+				int destinationLength = requireLength(destination, instruction, "destination");
+
+				// Check for out-of-bounds copy ranges. The JVM checks for negative values first, then overflows.
+				if (sourcePosition < 0
+						|| destinationPosition < 0
+						|| length < 0
+						|| (long) sourcePosition + length > sourceLength
+						|| (long) destinationPosition + length > destinationLength)
+					throw new ArrayIndexOutOfBoundsException();
+
+				// Primitive arrays require exact component types while reference elements are checked individually.
+				Type sourceComponentType = getComponentType(source);
+				Type destinationComponentType = getComponentType(destination);
+				boolean sourceReferenceArray = sourceComponentType.getSort() == Type.OBJECT || sourceComponentType.getSort() == Type.ARRAY;
+				boolean destinationReferenceArray = destinationComponentType.getSort() == Type.OBJECT || destinationComponentType.getSort() == Type.ARRAY;
+				if (sourceReferenceArray != destinationReferenceArray || !sourceReferenceArray && !sourceComponentType.equals(destinationComponentType))
+					throw new ArrayStoreException();
+
+				// Snapshot the source before constructing the destination so overlaps have std::memmove semantics.
+				List<ReValue> copiedValues = new ArrayList<>(length);
+				for (int i = 0; i < length; i++) {
+					ReValue value = source.getValue(sourcePosition + i);
+					if (value == null)
+						throw new AnalyzerException(instruction, "Unknown source value in System.arraycopy");
+					if (destinationReferenceArray)
+						validateReference(destinationComponentType, value, interpreter, instruction);
+					copiedValues.add(value);
+				}
+
+				// Preserve every destination slot outside the copied range in one replacement value.
+				List<ReValue> destinationValues = new ArrayList<>(destinationLength);
+				for (int i = 0; i < destinationLength; i++) {
+					ReValue value = i >= destinationPosition
+							&& i < (long) destinationPosition + length
+							? copiedValues.get(i - destinationPosition)
+							: destination.getValue(i);
+					if (value == null)
+						throw new AnalyzerException(instruction, "Unknown destination value in System.arraycopy");
+					destinationValues.add(value);
+				}
+
+				// Create a replacement array value with the new contents and replace the destination value in the frame.
+				ArrayValue replacement = new ArrayValueImpl(destination.type(), destination.nullness(), destinationLength, destinationValues::get);
+				frame.replaceValue(destination, replacement);
+				return null;
+			}
+
+			@Nonnull
+			private static ArrayValue requireArray(@Nonnull ReValue value, @Nonnull MethodInsnNode instruction,
+			                                       @Nonnull String role) throws AnalyzerException {
+				if (!(value instanceof ArrayValue array)) {
+					if (value instanceof ObjectValue object && object.isNotNull())
+						throw new ArrayStoreException();
+					throw new AnalyzerException(instruction, "System.arraycopy " + role + " is not a known array");
+				}
+				if (!array.isNotNull())
+					throw new AnalyzerException(instruction, "System.arraycopy " + role + " may be null");
+				return array;
+			}
+
+			private static int requireIndex(@Nonnull ReValue value, @Nonnull MethodInsnNode instruction,
+			                                @Nonnull String role) throws AnalyzerException {
+				if (value instanceof IntValue intValue && intValue.value().isPresent())
+					return intValue.value().getAsInt();
+				throw new AnalyzerException(instruction, "System.arraycopy " + role + " is unknown");
+			}
+
+			private static int requireLength(@Nonnull ArrayValue array, @Nonnull MethodInsnNode instruction,
+			                                 @Nonnull String role) throws AnalyzerException {
+				if (array.getFirstDimensionLength().isPresent())
+					return array.getFirstDimensionLength().getAsInt();
+				throw new AnalyzerException(instruction, "System.arraycopy " + role + " length is unknown");
+			}
+
+			@Nonnull
+			private static Type getComponentType(@Nonnull ArrayValue array) {
+				return Type.getType(array.type().getDescriptor().substring(1));
+			}
+
+			private static void validateReference(@Nonnull Type destinationComponentType, @Nonnull ReValue value,
+			                                      @Nonnull ReInterpreter interpreter, @Nonnull MethodInsnNode instruction) throws AnalyzerException {
+				if (!(value instanceof ObjectValue object))
+					throw new AnalyzerException(instruction, "System.arraycopy contains an unknown reference value");
+				if (object.isNull())
+					return;
+				if (!object.isNotNull())
+					throw new AnalyzerException(instruction, "System.arraycopy contains a possibly null reference value");
+				if (!interpreter.isAssignableFrom(destinationComponentType.getInternalName(), object.type().getInternalName()))
+					throw new ArrayStoreException();
+			}
+		});
+	}
+
+	/**
 	 * Similar to {@link #registerCollectionMethodHandlers()} this is a collection of static mappers
 	 * that are manually written to allow re-use across multiple collection types.
 	 */
@@ -1338,6 +1463,19 @@ public class InstanceFactory extends BasicLookupUtils {
 	}
 
 	/**
+	 * Finds a frame-aware handler for a static method invocation.
+	 *
+	 * @param method
+	 * 		Method instruction to find a handler for.
+	 *
+	 * @return Handler for the method instruction, or {@code null} if no handler is registered.
+	 */
+	@Nullable
+	public MethodInvokeStaticHandler getStaticMethodHandler(@Nonnull MethodInsnNode method) {
+		return staticMethodHandlers.get(method.owner + '.' + method.name + method.desc);
+	}
+
+	/**
 	 * @param min
 	 * 		Method instruction to find a mapper for.
 	 *
@@ -1372,6 +1510,21 @@ public class InstanceFactory extends BasicLookupUtils {
 	private void registerStaticMapper(@Nonnull Class<?> owner, @Nonnull String desc, @Nonnull InstanceMapper mapper) {
 		String internalName = owner.getName().replace('.', '/');
 		mappers.put(internalName + '.' + desc, mapper);
+	}
+
+	/**
+	 * @param owner
+	 * 		Internal name of the method owner.
+	 * @param name
+	 * 		Method name.
+	 * @param desc
+	 * 		Method descriptor.
+	 * @param handler
+	 * 		Handler to register.
+	 */
+	private void registerStaticMethodHandler(@Nonnull String owner, @Nonnull String name, @Nonnull String desc,
+	                                         @Nonnull MethodInvokeStaticHandler handler) {
+		staticMethodHandlers.put(owner + '.' + name + desc, handler);
 	}
 
 	/**

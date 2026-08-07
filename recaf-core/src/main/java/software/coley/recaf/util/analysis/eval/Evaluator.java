@@ -1000,6 +1000,10 @@ public class Evaluator {
 						insn instanceof InvokeDynamicInsnNode indy && InvokeDynamicExecutor.canEvaluate(indy);
 				case INVOKESTATIC -> {
 					if (insn instanceof MethodInsnNode min) {
+						// Frame-aware handlers run before host mappers and nested workspace evaluation.
+						if (instanceFactory.getStaticMethodHandler(min) != null)
+							yield true;
+
 						// Check if the method can be instanced.
 						if (instanceFactory.getMapper(min) != null || instanceFactory.getMethodHandler(min) != null)
 							yield true;
@@ -1402,9 +1406,27 @@ public class Evaluator {
 						for (int i = Type.getArgumentCount(min.desc); i > 0; --i)
 							valueList.addFirst(pop());
 
-						// Check if we have a mapper for this method (assuming it is a static factory for a supported type)
+						// Invoke the registered frame-aware handler before any static fallback.
 						Type returnType = Type.getReturnType(min.desc);
 						boolean isVoid = returnType == Type.VOID_TYPE;
+						MethodInvokeStaticHandler handler = instanceFactory.getStaticMethodHandler(min);
+						if (handler != null) {
+							try {
+								ReValue result = handler.invoke(this, interpreter, min, valueList);
+								if (!isVoid) {
+									if (result == null)
+										throw new AnalyzerException(min, "Static method handler returned no value");
+									push(result);
+								}
+								yield insn.getNext();
+							} catch (AnalyzerException ex) {
+								throw ex;
+							} catch (Throwable t) {
+								yield exceptionHandler.routeException(this, exceptionHandler.newThrowable(t), insn);
+							}
+						}
+
+						// Check if we have a mapper for this method (assuming it is a static factory for a supported type)
 						if (!isVoid) {
 							InstanceMapper mapper = instanceFactory.getMapper(min);
 							if (mapper != null) {
