@@ -33,8 +33,18 @@ import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -665,6 +675,319 @@ public class EvaluatorTest extends TransformerTestBase {
 		else
 			fail("Evaluation failure, unexpected return value: " + retVal);
 	}
+	@Test
+	void testListOf() {
+		String compiled = compile("""
+				static String run() {
+				    List<String> values = List.of("a", "b");
+				    return values.get(1);
+				}
+				""", List.class);
+		assertEquals("b", ((StringValue) evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+	}
+
+	@Test
+	void testCopyOfArrayListOfListOf() {
+		// Yeah that name's a mouth-full ain't it?
+		String compiled = compile("""
+				static String run() {
+				    String[] source = {"a", "b"};
+				    List<String> values = List.copyOf(new ArrayList<>(List.of(source)));
+				    return values.get(1);
+				}
+				""", ArrayList.class, List.class);
+		assertEquals("b", ((StringValue) evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+	}
+
+	@Test
+	void testSetOfAndCopyOfUniqueness() {
+		String compiled = compile("""
+				static String run() {
+				    Set<String> values = Set.of("a", "b");
+				    Set<String> copy = Set.copyOf(new ArrayList<>(List.of("a", "b", "a")));
+				    return values.size() + ":" + values.contains("b") + ":" + copy.size();
+				}
+				""", Set.class, List.class, ArrayList.class);
+		assertEquals("2:true:2", ((StringValue) evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+	}
+
+	@Test
+	void testSetOfDuplicateFailure() {
+		String compiled = compile("""
+				static Set<String> run() {
+				    return Set.of("a", "a");
+				}
+				""", Set.class);
+		assertEvaluationThrows(compiled, "run", "()Ljava/util/Set;", "java/lang/IllegalArgumentException");
+	}
+
+	@Test
+	void testMapFactoriesAndCopyOf() {
+		String compiled = compile("""
+				static String run() {
+				    Map<String, String> values = Map.of("a", "one", "b", "two");
+				    Map.Entry<String, String> entry = Map.entry("c", "three");
+				    Map<String, String> entries = Map.ofEntries(entry);
+				    Map<String, String> copy = Map.copyOf(values);
+				    return values.get("b") + ":" + entries.get("c") + ":" + copy.get("a");
+				}
+				""", Map.class);
+		assertEquals("two:three:one", ((StringValue) evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+	}
+
+	@Test
+	void testCollectionsBasicFactories() {
+		String compiled = compile("""
+				static String run() {
+				    return Collections.emptyList().size() + ":"
+				            + Collections.singleton("a").contains("a") + ":"
+				            + Collections.singletonList("b").get(0) + ":"
+				            + Collections.singletonMap("c", "d").get("c") + ":"
+				            + Collections.nCopies(2, "e").get(1);
+				}
+				""", Collections.class);
+		assertEquals("0:true:b:d:e", ((StringValue) evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+	}
+
+	@Test
+	void testUnmodifiableListReads() {
+		String compiled = compile("""
+				static String run() {
+				    List<String> values = Collections.unmodifiableList(new ArrayList<>(List.of("a", "b")));
+				    return values.size() + ":" + values.get(1);
+				}
+				""", Collections.class, ArrayList.class, List.class);
+		assertEquals("2:b", ((StringValue) evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+	}
+
+	@Test
+	void testUnmodifiableListMutationFailure() {
+		String compiled = compile("""
+				static boolean run() {
+				    List<String> values = Collections.unmodifiableList(new ArrayList<>(List.of("a")));
+				    return values.add("b");
+				}
+				""", Collections.class, ArrayList.class, List.class);
+		assertEvaluationThrows(compiled, "run", "()Z", "java/lang/UnsupportedOperationException");
+	}
+
+	@Test
+	void testUnmodifiableSetAndMapReads() {
+		String compiled = compile("""
+				static String run() {
+				    Set<String> set = Collections.unmodifiableSet(Set.of("a"));
+				    Map<String, String> map = Collections.unmodifiableMap(Map.of("b", "c"));
+				    return set.contains("a") + ":" + map.get("b");
+				}
+				""", Collections.class, Set.class, Map.class);
+		assertEquals("true:c", ((StringValue) evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+	}
+
+	@Test
+	void testUnmodifiableSetAndMapMutationFailures() {
+		String compiled = compile("""
+				static boolean runSet() {
+				    Collections.unmodifiableSet(Set.of("a")).clear();
+				    return false;
+				}
+				static boolean runMap() {
+				    Collections.unmodifiableMap(Map.of("a", "b")).clear();
+				    return false;
+				}
+				""", Collections.class, Set.class, Map.class);
+		assertEvaluationThrows(compiled, "runSet", "()Z", "java/lang/UnsupportedOperationException");
+		assertEvaluationThrows(compiled, "runMap", "()Z", "java/lang/UnsupportedOperationException");
+	}
+
+	@Test
+	void testSynchronizedListOperations() {
+		String compiled = compile("""
+				static String run() {
+				    List<String> values = Collections.synchronizedList(new ArrayList<>());
+				    values.add("a");
+				    values.add(0, "b");
+				    return values.get(1) + ":" + values.size();
+				}
+				""", Collections.class, ArrayList.class, List.class);
+		assertEquals("a:2", ((StringValue) evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+	}
+
+	@Test
+	void testSynchronizedSetOperations() {
+		String compiled = compile("""
+				static boolean run() {
+				    Set<String> values = Collections.synchronizedSet(new HashSet<>());
+				    values.add("a");
+				    return values.contains("a");
+				}
+				""", Collections.class, HashSet.class, Set.class);
+		assertEquals(1, ((IntValue) evaluate(compiled, "run", "()Z", null, List.of())).value().orElseThrow());
+	}
+
+	@Test
+	void testSynchronizedMapOperations() {
+		String compiled = compile("""
+				static String run() {
+				    Map<String, String> values = Collections.synchronizedMap(new HashMap<>());
+				    values.put("a", "b");
+				    return values.get("a");
+				}
+				""", Collections.class, HashMap.class, Map.class);
+		assertEquals("b", ((StringValue) evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+	}
+
+	@Test
+	void testArrayListOperations() {
+		String compiled = compile("""
+				static String run() {
+				    ArrayList<String> values = new ArrayList<>(4);
+				    values.add("a");
+				    values.add(0, "b");
+				    values.set(1, "c");
+				    values.addAll(new ArrayList<>(List.of("d")));
+				    values.remove("b");
+				    Object[] all = values.toArray();
+				    Object[] typed = values.toArray(new Object[0]);
+				    return values.get(0) + ":" + values.size() + ":" + values.containsAll(List.of("c", "d"))
+				            + ":" + all.length + ":" + typed.length;
+				}
+				""", ArrayList.class, List.class);
+		assertEquals("c:2:true:2:2", ((StringValue) evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+	}
+
+	@Test
+	void testLinkedListOperations() {
+		String compiled = compile("""
+				static String run() {
+				    LinkedList<String> values = new LinkedList<>(List.of("a", "b"));
+				    values.add(0, "z");
+				    values.add("c");
+				    values.remove(1);
+				    return values.get(0) + ":" + values.get(2) + ":" + values.size();
+				}
+				""", LinkedList.class, List.class);
+		assertEquals("z:c:3", ((StringValue) evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+	}
+
+	@Test
+	void testHashSetOperations() {
+		String compiled = compile("""
+				static String run() {
+				    HashSet<String> values = new HashSet<>(4, 0.75f);
+				    values.addAll(new ArrayList<>(List.of("a", "b", "a")));
+				    HashSet<String> copy = new HashSet<>(values);
+				    return copy.size() + ":" + copy.contains("b");
+				}
+				""", HashSet.class, ArrayList.class, List.class);
+		assertEquals("2:true", ((StringValue) evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+	}
+
+	@Test
+	void testLinkedHashSetOperations() {
+		String compiled = compile("""
+				static String run() {
+				    LinkedHashSet<String> values = new LinkedHashSet<>(4, 0.75f);
+				    values.add("a");
+				    values.add("b");
+				    LinkedHashSet<String> copy = new LinkedHashSet<>(values);
+				    return copy.iterator().next();
+				}
+				""", LinkedHashSet.class);
+		assertEquals("a", ((StringValue) evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+	}
+
+	@Test
+	void testTreeSetSortedOperations() {
+		String compiled = compile("""
+				static String run() {
+				    TreeSet<String> values = new TreeSet<>(List.of("b", "a"));
+				    return values.first() + ":" + values.last() + ":" + values.ceiling("a");
+				}
+				""", TreeSet.class, List.class);
+		assertEquals("a:b:a", ((StringValue) evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+	}
+
+	@Test
+	void testHashMapOperations() {
+		String compiled = compile("""
+				static String run() {
+				    HashMap<String, String> values = new HashMap<>(4, 0.75f);
+				    values.put("a", "one");
+				    values.putIfAbsent("b", "two");
+				    HashMap<String, String> copy = new HashMap<>(values);
+				    return copy.getOrDefault("a", "missing") + ":" + copy.size();
+				}
+				""", HashMap.class);
+		assertEquals("one:2", ((StringValue) evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+	}
+
+	@Test
+	void testLinkedHashMapOperations() {
+		String compiled = compile("""
+				static String run() {
+				    LinkedHashMap<String, String> values = new LinkedHashMap<>(4, 0.75f, true);
+				    values.put("a", "one");
+				    values.put("b", "two");
+				    values.get("a");
+				    LinkedHashMap<String, String> copy = new LinkedHashMap<>(values);
+				    return copy.keySet().iterator().next();
+				}
+				""", LinkedHashMap.class);
+		assertEquals("b", ((StringValue) evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+	}
+
+	@Test
+	void testTreeMapSortedOperations() {
+		String compiled = compile("""
+				static String run() {
+				    TreeMap<String, String> values = new TreeMap<>(Map.of("b", "two", "a", "one"));
+				    return values.firstKey() + ":" + values.lastKey() + ":" + values.ceilingKey("a");
+				}
+				""", TreeMap.class, Map.class);
+		assertEquals("a:b:a", ((StringValue) evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+	}
+	@Test
+	void testCollectionConstructorFailures() {
+		String compiled = compile("""
+				static ArrayList<String> badArrayList() { return new ArrayList<>(-1); }
+				static HashSet<String> badHashSet() { return new HashSet<>(-1); }
+				static HashMap<String, String> badHashMap() { return new HashMap<>(-1); }
+				static TreeSet<String> badTreeSet() {
+				    ArrayList<String> values = new ArrayList<>();
+				    values.add(null);
+				    return new TreeSet<>(values);
+				}
+				""", ArrayList.class, HashSet.class, HashMap.class, TreeSet.class);
+		assertEvaluationThrows(compiled, "badArrayList", "()Ljava/util/ArrayList;", "java/lang/IllegalArgumentException");
+		assertEvaluationThrows(compiled, "badHashSet", "()Ljava/util/HashSet;", "java/lang/IllegalArgumentException");
+		assertEvaluationThrows(compiled, "badHashMap", "()Ljava/util/HashMap;", "java/lang/IllegalArgumentException");
+		assertEvaluationThrows(compiled, "badTreeSet", "()Ljava/util/TreeSet;", "java/lang/NullPointerException");
+	}
+
+	@Test
+	void testIteratorNext() {
+		String compiled = compile("""
+				static String run() {
+				    Iterator<String> iterator = List.of("a").iterator();
+				    return iterator.hasNext() ? iterator.next() : "missing";
+				}
+				""", Iterator.class, List.class);
+		assertEquals("a", ((StringValue) evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+	}
+
+	@Test
+	void testMapEntryView() {
+		String compiled = compile("""
+				static String run() {
+				    Map<String, String> values = new HashMap<>();
+				    values.put("a", "one");
+				    Map.Entry<String, String> entry = values.entrySet().iterator().next();
+				    String old = entry.setValue("two");
+				    return entry.getKey() + ":" + old + ":" + entry.getValue() + ":" + values.get("a");
+				}
+				""", HashMap.class, Map.class, Set.class, Iterator.class);
+		assertEquals("a:one:two:two", ((StringValue) evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+	}
 
 	@Test
 	void testStackTrace() {
@@ -1081,6 +1404,17 @@ public class EvaluatorTest extends TransformerTestBase {
 	                                       @Nonnull String expectedType,
 	                                       ReValue... parameters) {
 		EvaluationResult result = evaluateResult(compiled, name, descriptor, null, List.of(parameters));
+		EvaluationThrowsResult thrown = assertInstanceOf(EvaluationThrowsResult.class, result);
+		ThrowableValue exception = assertInstanceOf(ThrowableValue.class, thrown.exception());
+		assertEquals(expectedType, exception.type().getInternalName());
+	}
+	private void assertEvaluationThrows(@Nonnull String compiled,
+	                                    @Nonnull String name,
+	                                    @Nonnull String descriptor,
+	                                    @Nonnull String expectedType) {
+		EvaluationResult result = evaluateResult(compiled, name, descriptor, null, List.of());
+		if (result instanceof EvaluationFailureResult failure)
+			fail("Evaluation failed: " + failure.reason(), failure.cause());
 		EvaluationThrowsResult thrown = assertInstanceOf(EvaluationThrowsResult.class, result);
 		ThrowableValue exception = assertInstanceOf(ThrowableValue.class, thrown.exception());
 		assertEquals(expectedType, exception.type().getInternalName());

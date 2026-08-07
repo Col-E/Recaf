@@ -1193,7 +1193,8 @@ public class Evaluator {
 									Object instance = mapper.map(instancedReceiver, valueList);
 									instancedReceiver.setRealInstance(Unchecked.cast(instance));
 								} catch (Throwable t) {
-									// A failed host mapper still falls through to the existing lookup path.
+									// A failed registered mapper must surface instead of leaving the host-backed receiver uninitialized.
+									yield exceptionHandler.routeException(this, exceptionHandler.newThrowable(t), insn);
 								}
 							}
 							yield insn.getNext();

@@ -27,12 +27,24 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
+import java.util.NavigableSet;
 import java.util.Random;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.SortedSet;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 /**
  * Factory for creating real instances of supported types and handling method calls on them.
@@ -49,8 +61,13 @@ public class InstanceFactory extends BasicLookupUtils {
 	 */
 	public InstanceFactory() {
 		registerCtorMappers();
+		registerCollectionCtorMappers();
+
 		registerStaticMappers();
+		registerCollectionStaticMappers();
+
 		registerMethodHandlers();
+		registerCollectionMethodHandlers();
 	}
 
 	/**
@@ -897,6 +914,179 @@ public class InstanceFactory extends BasicLookupUtils {
 	}
 
 	/**
+	 * Unlike others which are generated via {@link InstanceMapperGenerator} most of these are
+	 * manually written in such a way that allows re-use across multiple collection types.
+	 */
+	@SuppressWarnings("all")
+	private void registerCollectionMethodHandlers() {
+		String[] collectionOwners = {
+				"java/util/Collection",
+				"java/util/List",
+				"java/util/Set",
+				"java/util/SortedSet",
+				"java/util/NavigableSet",
+				"java/util/ArrayList",
+				"java/util/LinkedList",
+				"java/util/HashSet",
+				"java/util/LinkedHashSet",
+				"java/util/TreeSet"
+		};
+		for (String owner : collectionOwners)
+			registerCollectionMethods(owner);
+
+		String[] listOwners = {"java/util/List", "java/util/ArrayList", "java/util/LinkedList"};
+		for (String owner : listOwners)
+			registerListMethods(owner);
+
+		String[] sortedSetOwners = {"java/util/SortedSet", "java/util/TreeSet"};
+		for (String owner : sortedSetOwners) {
+			registerMethodHandler(owner, "first", "()Ljava/lang/Object;", (ReFrame frame, ReValue host, SortedSet<?> receiver, List<ReValue> args) -> fromHostObject(receiver.first()));
+			registerMethodHandler(owner, "last", "()Ljava/lang/Object;", (ReFrame frame, ReValue host, SortedSet<?> receiver, List<ReValue> args) -> fromHostObject(receiver.last()));
+		}
+
+		String[] navigableSetOwners = {"java/util/NavigableSet", "java/util/TreeSet"};
+		for (String owner : navigableSetOwners) {
+			registerMethodHandler(owner, "lower", "(Ljava/lang/Object;)Ljava/lang/Object;", (ReFrame frame, ReValue host, NavigableSet<Object> receiver, List<ReValue> args) -> fromHostObject(receiver.lower(toHostObject(args.get(0)))));
+			registerMethodHandler(owner, "floor", "(Ljava/lang/Object;)Ljava/lang/Object;", (ReFrame frame, ReValue host, NavigableSet<Object> receiver, List<ReValue> args) -> fromHostObject(receiver.floor(toHostObject(args.get(0)))));
+			registerMethodHandler(owner, "ceiling", "(Ljava/lang/Object;)Ljava/lang/Object;", (ReFrame frame, ReValue host, NavigableSet<Object> receiver, List<ReValue> args) -> fromHostObject(receiver.ceiling(toHostObject(args.get(0)))));
+			registerMethodHandler(owner, "higher", "(Ljava/lang/Object;)Ljava/lang/Object;", (ReFrame frame, ReValue host, NavigableSet<Object> receiver, List<ReValue> args) -> fromHostObject(receiver.higher(toHostObject(args.get(0)))));
+		}
+
+		String[] mapOwners = {
+				"java/util/Map", "java/util/SortedMap", "java/util/NavigableMap",
+				"java/util/HashMap", "java/util/LinkedHashMap", "java/util/TreeMap"
+		};
+		for (String owner : mapOwners)
+			registerMapMethods(owner);
+
+		String[] sortedMapOwners = {"java/util/SortedMap", "java/util/TreeMap"};
+		for (String owner : sortedMapOwners) {
+			registerMethodHandler(owner, "firstKey", "()Ljava/lang/Object;", (ReFrame frame, ReValue host, SortedMap<?, ?> receiver, List<ReValue> args) -> fromHostObject(receiver.firstKey()));
+			registerMethodHandler(owner, "lastKey", "()Ljava/lang/Object;", (ReFrame frame, ReValue host, SortedMap<?, ?> receiver, List<ReValue> args) -> fromHostObject(receiver.lastKey()));
+		}
+
+		String[] navigableMapOwners = {"java/util/NavigableMap", "java/util/TreeMap"};
+		for (String owner : navigableMapOwners) {
+			registerMethodHandler(owner, "lowerKey", "(Ljava/lang/Object;)Ljava/lang/Object;", (ReFrame frame, ReValue host, NavigableMap<Object, ?> receiver, List<ReValue> args) -> fromHostObject(receiver.lowerKey(toHostObject(args.get(0)))));
+			registerMethodHandler(owner, "floorKey", "(Ljava/lang/Object;)Ljava/lang/Object;", (ReFrame frame, ReValue host, NavigableMap<Object, ?> receiver, List<ReValue> args) -> fromHostObject(receiver.floorKey(toHostObject(args.get(0)))));
+			registerMethodHandler(owner, "ceilingKey", "(Ljava/lang/Object;)Ljava/lang/Object;", (ReFrame frame, ReValue host, NavigableMap<Object, ?> receiver, List<ReValue> args) -> fromHostObject(receiver.ceilingKey(toHostObject(args.get(0)))));
+			registerMethodHandler(owner, "higherKey", "(Ljava/lang/Object;)Ljava/lang/Object;", (ReFrame frame, ReValue host, NavigableMap<Object, ?> receiver, List<ReValue> args) -> fromHostObject(receiver.higherKey(toHostObject(args.get(0)))));
+		}
+
+		registerIteratorMethods();
+		registerEntryMethods();
+	}
+
+	@SuppressWarnings("all")
+	private void registerCollectionMethods(@Nonnull String owner) {
+		registerMethodHandler(owner, "size", "()I", (ReFrame frame, ReValue host, Collection<?> receiver, List<ReValue> args) -> i(receiver.size()));
+		registerMethodHandler(owner, "isEmpty", "()Z", (ReFrame frame, ReValue host, Collection<?> receiver, List<ReValue> args) -> z(receiver.isEmpty()));
+		registerMethodHandler(owner, "contains", "(Ljava/lang/Object;)Z", (ReFrame frame, ReValue host, Collection<?> receiver, List<ReValue> args) -> z(receiver.contains(toHostObject(args.get(0)))));
+		registerMethodHandler(owner, "add", "(Ljava/lang/Object;)Z", (ReFrame frame, ReValue host, Collection<Object> receiver, List<ReValue> args) -> z(receiver.add(toHostObject(args.get(0)))));
+		registerMethodHandler(owner, "remove", "(Ljava/lang/Object;)Z", (ReFrame frame, ReValue host, Collection<?> receiver, List<ReValue> args) -> z(receiver.remove(toHostObject(args.get(0)))));
+		registerMethodHandler(owner, "containsAll", "(Ljava/util/Collection;)Z", (ReFrame frame, ReValue host, Collection<?> receiver, List<ReValue> args) -> z(receiver.containsAll((Collection<?>) toHostObject(args.get(0)))));
+		registerMethodHandler(owner, "addAll", "(Ljava/util/Collection;)Z", (ReFrame frame, ReValue host, Collection<Object> receiver, List<ReValue> args) -> z(receiver.addAll((Collection<?>) toHostObject(args.get(0)))));
+		registerMethodHandler(owner, "removeAll", "(Ljava/util/Collection;)Z", (ReFrame frame, ReValue host, Collection<?> receiver, List<ReValue> args) -> z(receiver.removeAll((Collection<?>) toHostObject(args.get(0)))));
+		registerMethodHandler(owner, "retainAll", "(Ljava/util/Collection;)Z", (ReFrame frame, ReValue host, Collection<?> receiver, List<ReValue> args) -> z(receiver.retainAll((Collection<?>) toHostObject(args.get(0)))));
+		registerMethodHandler(owner, "clear", "()V", (ReFrame frame, ReValue host, Collection<?> receiver, List<ReValue> args) -> {
+			receiver.clear();
+			return null;
+		});
+		registerMethodHandler(owner, "iterator", "()Ljava/util/Iterator;", (ReFrame frame, ReValue host, Collection<?> receiver, List<ReValue> args) -> fromHostObject(receiver.iterator()));
+		registerMethodHandler(owner, "toArray", "()[Ljava/lang/Object;", (ReFrame frame, ReValue host, Collection<?> receiver, List<ReValue> args) -> fromHostObject(receiver.toArray()));
+		registerMethodHandler(owner, "toArray", "([Ljava/lang/Object;)[Ljava/lang/Object;", (ReFrame frame, ReValue host, Collection<?> receiver, List<ReValue> args) -> fromHostObject(receiver.toArray(toHostObjectArray(args.get(0)))));
+	}
+
+	@SuppressWarnings("all")
+	private void registerListMethods(@Nonnull String owner) {
+		registerMethodHandler(owner, "get", "(I)Ljava/lang/Object;", (ReFrame frame, ReValue host, List<?> receiver, List<ReValue> args) -> fromHostObject(receiver.get(i((IntValue) args.get(0)))));
+		registerMethodHandler(owner, "set", "(ILjava/lang/Object;)Ljava/lang/Object;", (ReFrame frame, ReValue host, List<Object> receiver, List<ReValue> args) -> fromHostObject(receiver.set(i((IntValue) args.get(0)), toHostObject(args.get(1)))));
+		registerMethodHandler(owner, "add", "(ILjava/lang/Object;)V", (ReFrame frame, ReValue host, List<Object> receiver, List<ReValue> args) -> {
+			receiver.add(i((IntValue) args.get(0)), toHostObject(args.get(1)));
+			return null;
+		});
+		registerMethodHandler(owner, "remove", "(I)Ljava/lang/Object;", (ReFrame frame, ReValue host, List<?> receiver, List<ReValue> args) -> fromHostObject(receiver.remove(i((IntValue) args.get(0)))));
+		registerMethodHandler(owner, "indexOf", "(Ljava/lang/Object;)I", (ReFrame frame, ReValue host, List<?> receiver, List<ReValue> args) -> i(receiver.indexOf(toHostObject(args.get(0)))));
+		registerMethodHandler(owner, "lastIndexOf", "(Ljava/lang/Object;)I", (ReFrame frame, ReValue host, List<?> receiver, List<ReValue> args) -> i(receiver.lastIndexOf(toHostObject(args.get(0)))));
+		registerMethodHandler(owner, "subList", "(II)Ljava/util/List;", (ReFrame frame, ReValue host, List<?> receiver, List<ReValue> args) -> fromHostObject(receiver.subList(i((IntValue) args.get(0)), i((IntValue) args.get(1)))));
+	}
+
+	@SuppressWarnings("all")
+	private void registerMapMethods(@Nonnull String owner) {
+		registerMethodHandler(owner, "size", "()I", (ReFrame frame, ReValue host, Map<?, ?> receiver, List<ReValue> args) -> i(receiver.size()));
+		registerMethodHandler(owner, "isEmpty", "()Z", (ReFrame frame, ReValue host, Map<?, ?> receiver, List<ReValue> args) -> z(receiver.isEmpty()));
+		registerMethodHandler(owner, "containsKey", "(Ljava/lang/Object;)Z", (ReFrame frame, ReValue host, Map<?, ?> receiver, List<ReValue> args) -> z(receiver.containsKey(toHostObject(args.get(0)))));
+		registerMethodHandler(owner, "containsValue", "(Ljava/lang/Object;)Z", (ReFrame frame, ReValue host, Map<?, ?> receiver, List<ReValue> args) -> z(receiver.containsValue(toHostObject(args.get(0)))));
+		registerMethodHandler(owner, "get", "(Ljava/lang/Object;)Ljava/lang/Object;", (ReFrame frame, ReValue host, Map<?, ?> receiver, List<ReValue> args) -> fromHostObject(receiver.get(toHostObject(args.get(0)))));
+		registerMethodHandler(owner, "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", (ReFrame frame, ReValue host, Map<Object, Object> receiver, List<ReValue> args) -> fromHostObject(receiver.put(toHostObject(args.get(0)), toHostObject(args.get(1)))));
+		registerMethodHandler(owner, "remove", "(Ljava/lang/Object;)Ljava/lang/Object;", (ReFrame frame, ReValue host, Map<?, ?> receiver, List<ReValue> args) -> fromHostObject(receiver.remove(toHostObject(args.get(0)))));
+		registerMethodHandler(owner, "putAll", "(Ljava/util/Map;)V", (ReFrame frame, ReValue host, Map<Object, Object> receiver, List<ReValue> args) -> {
+			receiver.putAll((Map<?, ?>) toHostObject(args.get(0)));
+			return null;
+		});
+		registerMethodHandler(owner, "clear", "()V", (ReFrame frame, ReValue host, Map<?, ?> receiver, List<ReValue> args) -> {
+			receiver.clear();
+			return null;
+		});
+		registerMethodHandler(owner, "keySet", "()Ljava/util/Set;", (ReFrame frame, ReValue host, Map<?, ?> receiver, List<ReValue> args) -> fromHostObject(receiver.keySet()));
+		registerMethodHandler(owner, "values", "()Ljava/util/Collection;", (ReFrame frame, ReValue host, Map<?, ?> receiver, List<ReValue> args) -> fromHostObject(receiver.values()));
+		registerMethodHandler(owner, "entrySet", "()Ljava/util/Set;", (ReFrame frame, ReValue host, Map<?, ?> receiver, List<ReValue> args) -> fromHostObject(receiver.entrySet()));
+		registerMethodHandler(owner, "getOrDefault", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", (ReFrame frame, ReValue host, Map<Object, Object> receiver, List<ReValue> args) -> fromHostObject(receiver.getOrDefault(toHostObject(args.get(0)), toHostObject(args.get(1)))));
+		registerMethodHandler(owner, "putIfAbsent", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", (ReFrame frame, ReValue host, Map<Object, Object> receiver, List<ReValue> args) -> fromHostObject(receiver.putIfAbsent(toHostObject(args.get(0)), toHostObject(args.get(1)))));
+		registerMethodHandler(owner, "remove", "(Ljava/lang/Object;Ljava/lang/Object;)Z", (ReFrame frame, ReValue host, Map<?, ?> receiver, List<ReValue> args) -> z(receiver.remove(toHostObject(args.get(0)), toHostObject(args.get(1)))));
+		registerMethodHandler(owner, "replace", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", (ReFrame frame, ReValue host, Map<Object, Object> receiver, List<ReValue> args) -> fromHostObject(receiver.replace(toHostObject(args.get(0)), toHostObject(args.get(1)))));
+		registerMethodHandler(owner, "replace", "(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Z", (ReFrame frame, ReValue host, Map<Object, Object> receiver, List<ReValue> args) -> z(receiver.replace(toHostObject(args.get(0)), toHostObject(args.get(1)), toHostObject(args.get(2)))));
+	}
+
+	@SuppressWarnings("all")
+	private void registerIteratorMethods() {
+		String owner = "java/util/Iterator";
+		registerMethodHandler(owner, "hasNext", "()Z", (ReFrame frame, ReValue host, Iterator<?> receiver, List<ReValue> args) -> z(receiver.hasNext()));
+		registerMethodHandler(owner, "next", "()Ljava/lang/Object;", (ReFrame frame, ReValue host, Iterator<?> receiver, List<ReValue> args) -> fromHostObject(receiver.next()));
+		registerMethodHandler(owner, "remove", "()V", (ReFrame frame, ReValue host, Iterator<?> receiver, List<ReValue> args) -> {
+			receiver.remove();
+			return null;
+		});
+	}
+
+	@SuppressWarnings("all")
+	private void registerEntryMethods() {
+		String owner = "java/util/Map$Entry";
+		registerMethodHandler(owner, "getKey", "()Ljava/lang/Object;", (ReFrame frame, ReValue host, Map.Entry<?, ?> receiver, List<ReValue> args) -> fromHostObject(receiver.getKey()));
+		registerMethodHandler(owner, "getValue", "()Ljava/lang/Object;", (ReFrame frame, ReValue host, Map.Entry<?, ?> receiver, List<ReValue> args) -> fromHostObject(receiver.getValue()));
+		registerMethodHandler(owner, "setValue", "(Ljava/lang/Object;)Ljava/lang/Object;", (ReFrame frame, ReValue host, Map.Entry<Object, Object> receiver, List<ReValue> args) -> fromHostObject(receiver.setValue(toHostObject(args.get(0)))));
+	}
+
+	@SuppressWarnings("all")
+	private void registerCollectionCtorMappers() {
+		// Copy constructors retain the source collection's host-backed identity and contents.
+		registerMapper(ArrayList.class, "(Ljava/util/Collection;)V", (host, parameters) -> new ArrayList<>((Collection<?>) toHostObject(parameters.get(0))));
+		registerMapper(LinkedList.class, "()V", (host, parameters) -> new LinkedList<>());
+		registerMapper(LinkedList.class, "(Ljava/util/Collection;)V", (host, parameters) -> new LinkedList<>((Collection<?>) toHostObject(parameters.get(0))));
+		registerMapper(HashSet.class, "()V", (host, parameters) -> new HashSet<>());
+		registerMapper(HashSet.class, "(I)V", (host, parameters) -> new HashSet<>(i((IntValue) parameters.get(0))));
+		registerMapper(HashSet.class, "(IF)V", (host, parameters) -> new HashSet<>(i((IntValue) parameters.get(0)), f((FloatValue) parameters.get(1))));
+		registerMapper(HashSet.class, "(Ljava/util/Collection;)V", (host, parameters) -> new HashSet<>((Collection<?>) toHostObject(parameters.get(0))));
+		registerMapper(LinkedHashSet.class, "()V", (host, parameters) -> new LinkedHashSet<>());
+		registerMapper(LinkedHashSet.class, "(I)V", (host, parameters) -> new LinkedHashSet<>(i((IntValue) parameters.get(0))));
+		registerMapper(LinkedHashSet.class, "(IF)V", (host, parameters) -> new LinkedHashSet<>(i((IntValue) parameters.get(0)), f((FloatValue) parameters.get(1))));
+		registerMapper(LinkedHashSet.class, "(Ljava/util/Collection;)V", (host, parameters) -> new LinkedHashSet<>((Collection<?>) toHostObject(parameters.get(0))));
+		registerMapper(TreeSet.class, "()V", (host, parameters) -> new TreeSet<>());
+		registerMapper(TreeSet.class, "(Ljava/util/Collection;)V", (host, parameters) -> new TreeSet<>((Collection<?>) toHostObject(parameters.get(0))));
+		registerMapper(HashMap.class, "()V", (host, parameters) -> new HashMap<>());
+		registerMapper(HashMap.class, "(I)V", (host, parameters) -> new HashMap<>(i((IntValue) parameters.get(0))));
+		registerMapper(HashMap.class, "(IF)V", (host, parameters) -> new HashMap<>(i((IntValue) parameters.get(0)), f((FloatValue) parameters.get(1))));
+		registerMapper(HashMap.class, "(Ljava/util/Map;)V", (host, parameters) -> new HashMap<>((Map<?, ?>) toHostObject(parameters.get(0))));
+		registerMapper(LinkedHashMap.class, "()V", (host, parameters) -> new LinkedHashMap<>());
+		registerMapper(LinkedHashMap.class, "(I)V", (host, parameters) -> new LinkedHashMap<>(i((IntValue) parameters.get(0))));
+		registerMapper(LinkedHashMap.class, "(IF)V", (host, parameters) -> new LinkedHashMap<>(i((IntValue) parameters.get(0)), f((FloatValue) parameters.get(1))));
+		registerMapper(LinkedHashMap.class, "(IFZ)V", (host, parameters) -> new LinkedHashMap<>(i((IntValue) parameters.get(0)), f((FloatValue) parameters.get(1)), z((IntValue) parameters.get(2))));
+		registerMapper(LinkedHashMap.class, "(Ljava/util/Map;)V", (host, parameters) -> new LinkedHashMap<>((Map<?, ?>) toHostObject(parameters.get(0))));
+		registerMapper(TreeMap.class, "()V", (host, parameters) -> new TreeMap<>());
+		registerMapper(TreeMap.class, "(Ljava/util/Map;)V", (host, parameters) -> new TreeMap<>((Map<?, ?>) toHostObject(parameters.get(0))));
+	}
+
+	/**
 	 * @see InstanceMapperGenerator
 	 */
 	@SuppressWarnings("all")
@@ -995,6 +1185,148 @@ public class InstanceFactory extends BasicLookupUtils {
 	}
 
 	/**
+	 * Similar to {@link #registerCollectionMethodHandlers()} this is a collection of static mappers
+	 * that are manually written to allow re-use across multiple collection types.
+	 */
+	@SuppressWarnings("all")
+	private void registerCollectionStaticMappers() {
+		// java.util.List
+		registerStaticMapper(List.class, "of()Ljava/util/List;", (host, parameters) -> List.of());
+		for (int count = 1; count <= 10; count++)
+			registerStaticMapper(List.class, "of(" + "Ljava/lang/Object;".repeat(count) + ")Ljava/util/List;", (host, parameters) -> listOf(parameters));
+		registerStaticMapper(List.class, "of([Ljava/lang/Object;)Ljava/util/List;", (host, parameters) -> List.of(toHostObjectArray(parameters.get(0))));
+		registerStaticMapper(List.class, "copyOf(Ljava/util/Collection;)Ljava/util/List;", (host, parameters) -> List.copyOf((Collection<?>) toHostObject(parameters.get(0))));
+
+		// java.util.Set
+		registerStaticMapper(Set.class, "of()Ljava/util/Set;", (host, parameters) -> Set.of());
+		for (int count = 1; count <= 10; count++)
+			registerStaticMapper(Set.class, "of(" + "Ljava/lang/Object;".repeat(count) + ")Ljava/util/Set;", (host, parameters) -> setOf(parameters));
+		registerStaticMapper(Set.class, "of([Ljava/lang/Object;)Ljava/util/Set;", (host, parameters) -> Set.of(toHostObjectArray(parameters.get(0))));
+		registerStaticMapper(Set.class, "copyOf(Ljava/util/Collection;)Ljava/util/Set;", (host, parameters) -> Set.copyOf((Collection<?>) toHostObject(parameters.get(0))));
+
+		// java.util.Map
+		registerStaticMapper(Map.class, "of()Ljava/util/Map;", (host, parameters) -> Map.of());
+		for (int count = 1; count <= 10; count++)
+			registerStaticMapper(Map.class, "of(" + "Ljava/lang/Object;Ljava/lang/Object;".repeat(count) + ")Ljava/util/Map;", (host, parameters) -> mapOf(parameters));
+		registerStaticMapper(Map.class, "entry(Ljava/lang/Object;Ljava/lang/Object;)Ljava/util/Map$Entry;", (host, parameters) -> Map.entry(toHostObject(parameters.get(0)), toHostObject(parameters.get(1))));
+		registerStaticMapper(Map.class, "ofEntries([Ljava/util/Map$Entry;)Ljava/util/Map;", (host, parameters) -> mapOfEntries(toHostObjectArray(parameters.get(0))));
+		registerStaticMapper(Map.class, "copyOf(Ljava/util/Map;)Ljava/util/Map;", (host, parameters) -> Map.copyOf((Map<?, ?>) toHostObject(parameters.get(0))));
+
+		// java.util.Collections
+		registerStaticMapper(Collections.class, "emptyList()Ljava/util/List;", (host, parameters) -> Collections.emptyList());
+		registerStaticMapper(Collections.class, "emptySet()Ljava/util/Set;", (host, parameters) -> Collections.emptySet());
+		registerStaticMapper(Collections.class, "emptyMap()Ljava/util/Map;", (host, parameters) -> Collections.emptyMap());
+		registerStaticMapper(Collections.class, "emptySortedSet()Ljava/util/SortedSet;", (host, parameters) -> Collections.emptySortedSet());
+		registerStaticMapper(Collections.class, "emptyNavigableSet()Ljava/util/NavigableSet;", (host, parameters) -> Collections.emptyNavigableSet());
+		registerStaticMapper(Collections.class, "emptySortedMap()Ljava/util/SortedMap;", (host, parameters) -> Collections.emptySortedMap());
+		registerStaticMapper(Collections.class, "emptyNavigableMap()Ljava/util/NavigableMap;", (host, parameters) -> Collections.emptyNavigableMap());
+		registerStaticMapper(Collections.class, "singleton(Ljava/lang/Object;)Ljava/util/Set;", (host, parameters) -> Collections.singleton(toHostObject(parameters.get(0))));
+		registerStaticMapper(Collections.class, "singletonList(Ljava/lang/Object;)Ljava/util/List;", (host, parameters) -> Collections.singletonList(toHostObject(parameters.get(0))));
+		registerStaticMapper(Collections.class, "singletonMap(Ljava/lang/Object;Ljava/lang/Object;)Ljava/util/Map;", (host, parameters) -> Collections.singletonMap(toHostObject(parameters.get(0)), toHostObject(parameters.get(1))));
+		registerStaticMapper(Collections.class, "nCopies(ILjava/lang/Object;)Ljava/util/List;", (host, parameters) -> Collections.nCopies(i((IntValue) parameters.get(0)), toHostObject(parameters.get(1))));
+		registerStaticMapper(Collections.class, "unmodifiableCollection(Ljava/util/Collection;)Ljava/util/Collection;", (host, parameters) -> Collections.unmodifiableCollection((Collection<?>) toHostObject(parameters.get(0))));
+		registerStaticMapper(Collections.class, "unmodifiableList(Ljava/util/List;)Ljava/util/List;", (host, parameters) -> Collections.unmodifiableList((List<?>) toHostObject(parameters.get(0))));
+		registerStaticMapper(Collections.class, "unmodifiableSet(Ljava/util/Set;)Ljava/util/Set;", (host, parameters) -> Collections.unmodifiableSet((Set<?>) toHostObject(parameters.get(0))));
+		registerStaticMapper(Collections.class, "unmodifiableSortedSet(Ljava/util/SortedSet;)Ljava/util/SortedSet;", (host, parameters) -> Collections.unmodifiableSortedSet((SortedSet<?>) toHostObject(parameters.get(0))));
+		registerStaticMapper(Collections.class, "unmodifiableNavigableSet(Ljava/util/NavigableSet;)Ljava/util/NavigableSet;", (host, parameters) -> Collections.unmodifiableNavigableSet((NavigableSet<?>) toHostObject(parameters.get(0))));
+		registerStaticMapper(Collections.class, "unmodifiableMap(Ljava/util/Map;)Ljava/util/Map;", (host, parameters) -> Collections.unmodifiableMap((Map<?, ?>) toHostObject(parameters.get(0))));
+		registerStaticMapper(Collections.class, "unmodifiableSortedMap(Ljava/util/SortedMap;)Ljava/util/SortedMap;", (host, parameters) -> Collections.unmodifiableSortedMap((SortedMap<?, ?>) toHostObject(parameters.get(0))));
+		registerStaticMapper(Collections.class, "unmodifiableNavigableMap(Ljava/util/NavigableMap;)Ljava/util/NavigableMap;", (host, parameters) -> Collections.unmodifiableNavigableMap((NavigableMap<?, ?>) toHostObject(parameters.get(0))));
+		registerStaticMapper(Collections.class, "synchronizedCollection(Ljava/util/Collection;)Ljava/util/Collection;", (host, parameters) -> Collections.synchronizedCollection((Collection<?>) toHostObject(parameters.get(0))));
+		registerStaticMapper(Collections.class, "synchronizedList(Ljava/util/List;)Ljava/util/List;", (host, parameters) -> Collections.synchronizedList((List<?>) toHostObject(parameters.get(0))));
+		registerStaticMapper(Collections.class, "synchronizedSet(Ljava/util/Set;)Ljava/util/Set;", (host, parameters) -> Collections.synchronizedSet((Set<?>) toHostObject(parameters.get(0))));
+		registerStaticMapper(Collections.class, "synchronizedSortedSet(Ljava/util/SortedSet;)Ljava/util/SortedSet;", (host, parameters) -> Collections.synchronizedSortedSet((SortedSet<?>) toHostObject(parameters.get(0))));
+		registerStaticMapper(Collections.class, "synchronizedNavigableSet(Ljava/util/NavigableSet;)Ljava/util/NavigableSet;", (host, parameters) -> Collections.synchronizedNavigableSet((NavigableSet<?>) toHostObject(parameters.get(0))));
+		registerStaticMapper(Collections.class, "synchronizedMap(Ljava/util/Map;)Ljava/util/Map;", (host, parameters) -> Collections.synchronizedMap((Map<?, ?>) toHostObject(parameters.get(0))));
+		registerStaticMapper(Collections.class, "synchronizedSortedMap(Ljava/util/SortedMap;)Ljava/util/SortedMap;", (host, parameters) -> Collections.synchronizedSortedMap((SortedMap<?, ?>) toHostObject(parameters.get(0))));
+		registerStaticMapper(Collections.class, "synchronizedNavigableMap(Ljava/util/NavigableMap;)Ljava/util/NavigableMap;", (host, parameters) -> Collections.synchronizedNavigableMap((NavigableMap<?, ?>) toHostObject(parameters.get(0))));
+	}
+
+	@SuppressWarnings("all")
+	private static List<?> listOf(@Nonnull List<ReValue> parameters) {
+		return switch (parameters.size()) {
+			case 1 -> List.of((Object) toHostObject(parameters.get(0)));
+			case 2 -> List.of(toHostObject(parameters.get(0)), toHostObject(parameters.get(1)));
+			case 3 ->
+					List.of(toHostObject(parameters.get(0)), toHostObject(parameters.get(1)), toHostObject(parameters.get(2)));
+			case 4 ->
+					List.of(toHostObject(parameters.get(0)), toHostObject(parameters.get(1)), toHostObject(parameters.get(2)), toHostObject(parameters.get(3)));
+			case 5 ->
+					List.of(toHostObject(parameters.get(0)), toHostObject(parameters.get(1)), toHostObject(parameters.get(2)), toHostObject(parameters.get(3)), toHostObject(parameters.get(4)));
+			case 6 ->
+					List.of(toHostObject(parameters.get(0)), toHostObject(parameters.get(1)), toHostObject(parameters.get(2)), toHostObject(parameters.get(3)), toHostObject(parameters.get(4)), toHostObject(parameters.get(5)));
+			case 7 ->
+					List.of(toHostObject(parameters.get(0)), toHostObject(parameters.get(1)), toHostObject(parameters.get(2)), toHostObject(parameters.get(3)), toHostObject(parameters.get(4)), toHostObject(parameters.get(5)), toHostObject(parameters.get(6)));
+			case 8 ->
+					List.of(toHostObject(parameters.get(0)), toHostObject(parameters.get(1)), toHostObject(parameters.get(2)), toHostObject(parameters.get(3)), toHostObject(parameters.get(4)), toHostObject(parameters.get(5)), toHostObject(parameters.get(6)), toHostObject(parameters.get(7)));
+			case 9 ->
+					List.of(toHostObject(parameters.get(0)), toHostObject(parameters.get(1)), toHostObject(parameters.get(2)), toHostObject(parameters.get(3)), toHostObject(parameters.get(4)), toHostObject(parameters.get(5)), toHostObject(parameters.get(6)), toHostObject(parameters.get(7)), toHostObject(parameters.get(8)));
+			case 10 ->
+					List.of(toHostObject(parameters.get(0)), toHostObject(parameters.get(1)), toHostObject(parameters.get(2)), toHostObject(parameters.get(3)), toHostObject(parameters.get(4)), toHostObject(parameters.get(5)), toHostObject(parameters.get(6)), toHostObject(parameters.get(7)), toHostObject(parameters.get(8)), toHostObject(parameters.get(9)));
+			default -> throw new IllegalArgumentException("Unsupported List.of arity: " + parameters.size());
+		};
+	}
+
+	@SuppressWarnings("all")
+	private static Set<?> setOf(@Nonnull List<ReValue> parameters) {
+		return switch (parameters.size()) {
+			case 1 -> Set.of((Object) toHostObject(parameters.get(0)));
+			case 2 -> Set.of(toHostObject(parameters.get(0)), toHostObject(parameters.get(1)));
+			case 3 ->
+					Set.of(toHostObject(parameters.get(0)), toHostObject(parameters.get(1)), toHostObject(parameters.get(2)));
+			case 4 ->
+					Set.of(toHostObject(parameters.get(0)), toHostObject(parameters.get(1)), toHostObject(parameters.get(2)), toHostObject(parameters.get(3)));
+			case 5 ->
+					Set.of(toHostObject(parameters.get(0)), toHostObject(parameters.get(1)), toHostObject(parameters.get(2)), toHostObject(parameters.get(3)), toHostObject(parameters.get(4)));
+			case 6 ->
+					Set.of(toHostObject(parameters.get(0)), toHostObject(parameters.get(1)), toHostObject(parameters.get(2)), toHostObject(parameters.get(3)), toHostObject(parameters.get(4)), toHostObject(parameters.get(5)));
+			case 7 ->
+					Set.of(toHostObject(parameters.get(0)), toHostObject(parameters.get(1)), toHostObject(parameters.get(2)), toHostObject(parameters.get(3)), toHostObject(parameters.get(4)), toHostObject(parameters.get(5)), toHostObject(parameters.get(6)));
+			case 8 ->
+					Set.of(toHostObject(parameters.get(0)), toHostObject(parameters.get(1)), toHostObject(parameters.get(2)), toHostObject(parameters.get(3)), toHostObject(parameters.get(4)), toHostObject(parameters.get(5)), toHostObject(parameters.get(6)), toHostObject(parameters.get(7)));
+			case 9 ->
+					Set.of(toHostObject(parameters.get(0)), toHostObject(parameters.get(1)), toHostObject(parameters.get(2)), toHostObject(parameters.get(3)), toHostObject(parameters.get(4)), toHostObject(parameters.get(5)), toHostObject(parameters.get(6)), toHostObject(parameters.get(7)), toHostObject(parameters.get(8)));
+			case 10 ->
+					Set.of(toHostObject(parameters.get(0)), toHostObject(parameters.get(1)), toHostObject(parameters.get(2)), toHostObject(parameters.get(3)), toHostObject(parameters.get(4)), toHostObject(parameters.get(5)), toHostObject(parameters.get(6)), toHostObject(parameters.get(7)), toHostObject(parameters.get(8)), toHostObject(parameters.get(9)));
+			default -> throw new IllegalArgumentException("Unsupported Set.of arity: " + parameters.size());
+		};
+	}
+
+	@SuppressWarnings("all")
+	private static Map<?, ?> mapOf(@Nonnull List<ReValue> parameters) {
+		return switch (parameters.size()) {
+			case 2 -> Map.of(toHostObject(parameters.get(0)), toHostObject(parameters.get(1)));
+			case 4 ->
+					Map.of(toHostObject(parameters.get(0)), toHostObject(parameters.get(1)), toHostObject(parameters.get(2)), toHostObject(parameters.get(3)));
+			case 6 ->
+					Map.of(toHostObject(parameters.get(0)), toHostObject(parameters.get(1)), toHostObject(parameters.get(2)), toHostObject(parameters.get(3)), toHostObject(parameters.get(4)), toHostObject(parameters.get(5)));
+			case 8 ->
+					Map.of(toHostObject(parameters.get(0)), toHostObject(parameters.get(1)), toHostObject(parameters.get(2)), toHostObject(parameters.get(3)), toHostObject(parameters.get(4)), toHostObject(parameters.get(5)), toHostObject(parameters.get(6)), toHostObject(parameters.get(7)));
+			case 10 ->
+					Map.of(toHostObject(parameters.get(0)), toHostObject(parameters.get(1)), toHostObject(parameters.get(2)), toHostObject(parameters.get(3)), toHostObject(parameters.get(4)), toHostObject(parameters.get(5)), toHostObject(parameters.get(6)), toHostObject(parameters.get(7)), toHostObject(parameters.get(8)), toHostObject(parameters.get(9)));
+			case 12 ->
+					Map.of(toHostObject(parameters.get(0)), toHostObject(parameters.get(1)), toHostObject(parameters.get(2)), toHostObject(parameters.get(3)), toHostObject(parameters.get(4)), toHostObject(parameters.get(5)), toHostObject(parameters.get(6)), toHostObject(parameters.get(7)), toHostObject(parameters.get(8)), toHostObject(parameters.get(9)), toHostObject(parameters.get(10)), toHostObject(parameters.get(11)));
+			case 14 ->
+					Map.of(toHostObject(parameters.get(0)), toHostObject(parameters.get(1)), toHostObject(parameters.get(2)), toHostObject(parameters.get(3)), toHostObject(parameters.get(4)), toHostObject(parameters.get(5)), toHostObject(parameters.get(6)), toHostObject(parameters.get(7)), toHostObject(parameters.get(8)), toHostObject(parameters.get(9)), toHostObject(parameters.get(10)), toHostObject(parameters.get(11)), toHostObject(parameters.get(12)), toHostObject(parameters.get(13)));
+			case 16 ->
+					Map.of(toHostObject(parameters.get(0)), toHostObject(parameters.get(1)), toHostObject(parameters.get(2)), toHostObject(parameters.get(3)), toHostObject(parameters.get(4)), toHostObject(parameters.get(5)), toHostObject(parameters.get(6)), toHostObject(parameters.get(7)), toHostObject(parameters.get(8)), toHostObject(parameters.get(9)), toHostObject(parameters.get(10)), toHostObject(parameters.get(11)), toHostObject(parameters.get(12)), toHostObject(parameters.get(13)), toHostObject(parameters.get(14)), toHostObject(parameters.get(15)));
+			case 18 ->
+					Map.of(toHostObject(parameters.get(0)), toHostObject(parameters.get(1)), toHostObject(parameters.get(2)), toHostObject(parameters.get(3)), toHostObject(parameters.get(4)), toHostObject(parameters.get(5)), toHostObject(parameters.get(6)), toHostObject(parameters.get(7)), toHostObject(parameters.get(8)), toHostObject(parameters.get(9)), toHostObject(parameters.get(10)), toHostObject(parameters.get(11)), toHostObject(parameters.get(12)), toHostObject(parameters.get(13)), toHostObject(parameters.get(14)), toHostObject(parameters.get(15)), toHostObject(parameters.get(16)), toHostObject(parameters.get(17)));
+			case 20 ->
+					Map.of(toHostObject(parameters.get(0)), toHostObject(parameters.get(1)), toHostObject(parameters.get(2)), toHostObject(parameters.get(3)), toHostObject(parameters.get(4)), toHostObject(parameters.get(5)), toHostObject(parameters.get(6)), toHostObject(parameters.get(7)), toHostObject(parameters.get(8)), toHostObject(parameters.get(9)), toHostObject(parameters.get(10)), toHostObject(parameters.get(11)), toHostObject(parameters.get(12)), toHostObject(parameters.get(13)), toHostObject(parameters.get(14)), toHostObject(parameters.get(15)), toHostObject(parameters.get(16)), toHostObject(parameters.get(17)), toHostObject(parameters.get(18)), toHostObject(parameters.get(19)));
+			default -> throw new IllegalArgumentException("Unsupported Map.of arity: " + parameters.size());
+		};
+	}
+
+	@SuppressWarnings("all")
+	private static Map<?, ?> mapOfEntries(@Nonnull Object[] entries) {
+		Map.Entry<?, ?>[] mapEntries = new Map.Entry<?, ?>[entries.length];
+		for (int i = 0; i < entries.length; i++)
+			mapEntries[i] = (Map.Entry<?, ?>) entries[i];
+		return Map.ofEntries(mapEntries);
+	}
+
+	/**
 	 * @param min
 	 * 		Method instruction to find a handler for.
 	 *
@@ -1056,10 +1388,87 @@ public class InstanceFactory extends BasicLookupUtils {
 		methodHandlers.put(owner + '.' + name + desc, handler);
 	}
 
+	/**
+	 * @param type
+	 * 		Class to register as allocatable.
+	 * @param desc
+	 * 		Constructor descriptor to register.
+	 * @param mapper
+	 * 		Mapper to register for the constructor.
+	 */
 	private void registerMapper(@Nonnull Class<?> type, @Nonnull String desc, @Nonnull InstanceMapper mapper) {
 		String internalName = type.getName().replace('.', '/');
 		supportedTypes.add(internalName);
 		mappers.put(internalName + '.' + desc, mapper);
+	}
+
+	/**
+	 * Convert an evaluator object into the host object expected by a collection API.
+	 *
+	 * @param value
+	 * 		Evaluator object to unwrap.
+	 *
+	 * @return Host-backed object, scalar, or {@code null}.
+	 *
+	 * @throws IllegalArgumentException
+	 * 		When the value is unknown or evaluator-only.
+	 */
+	private static Object toHostObject(@Nonnull ReValue value) {
+		if (value instanceof InstancedObjectValue<?> instanced) {
+			Object realInstance = instanced.getRealInstance();
+			if (realInstance != null)
+				return realInstance;
+		}
+		if (value instanceof ObjectValue objectValue)
+			return obj(objectValue);
+		throw new IllegalArgumentException("Unsupported evaluator object: " + value);
+	}
+
+	/**
+	 * Convert an evaluator object array into host objects.
+	 *
+	 * @param value
+	 * 		Evaluator array to unwrap.
+	 *
+	 * @return Host array containing the converted elements.
+	 *
+	 * @throws IllegalArgumentException
+	 * 		When the value is not a known object array.
+	 */
+	@Nullable
+	private static Object[] toHostObjectArray(@Nonnull ReValue value) {
+		if (!(value instanceof ArrayValue array))
+			throw new IllegalArgumentException("Expected evaluator object array: " + value);
+		if (array.isNull())
+			return null;
+		if (array.getFirstDimensionLength().isEmpty() || !array.hasKnownValue())
+			throw new IllegalArgumentException("Unknown evaluator object array: " + value);
+		int length = array.getFirstDimensionLength().getAsInt();
+		Object[] objects = new Object[length];
+		for (int i = 0; i < length; i++)
+			objects[i] = toHostObject(array.getValue(i));
+		return objects;
+	}
+
+	/**
+	 * Convert a host result back into the evaluator representation while retaining host identity.
+	 *
+	 * @param value
+	 * 		Host result, possibly {@code null}.
+	 *
+	 * @return Evaluator representation, using the evaluator null value for a {@code null} host result.
+	 */
+	@Nonnull
+	private static ReValue fromHostObject(@Nullable Object value) {
+		if (value == null)
+			return ObjectValue.VAL_OBJECT_NULL;
+		if (value.getClass().isArray())
+			return new InstancedObjectValue<>(value).unmap();
+		if (value instanceof CharSequence || value instanceof Number || value instanceof Character)
+			return obj(value);
+		if (value instanceof Boolean bool)
+			return new software.coley.recaf.util.analysis.value.impl.BoxedBooleanValueImpl(bool);
+		return new InstancedObjectValue<>(value);
 	}
 
 	/**

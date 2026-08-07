@@ -371,6 +371,8 @@ public class ReInterpreter extends Interpreter<ReValue> implements Opcodes {
 				Type targetType = Type.getObjectType(((TypeInsnNode) insn).desc);
 				if (value instanceof ObjectValue object && object.isNull())
 					return newValue(targetType, Nullness.NULL);
+				if (value instanceof ObjectValue object && object.hasKnownValue() && isAssignableFrom(targetType, object.type()))
+					return value;
 				if (value instanceof InstancedObjectValue<?> instancedValue && isAssignableFrom(targetType, instancedValue.type()))
 					return value;
 				return newValue(targetType);
