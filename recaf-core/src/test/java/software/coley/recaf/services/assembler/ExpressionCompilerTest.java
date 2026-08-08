@@ -170,6 +170,22 @@ class ExpressionCompilerTest extends CompilerTestBase {
 	}
 
 	@Test
+	void clearContextRemovesClassAndMethodContext() {
+		ExpressionCompiler assembler = recaf.get(ExpressionCompiler.class);
+		assembler.setClassContext(targetClass);
+		assembler.setMethodContext(targetClass.getFirstDeclaredMethodByName("methodWithLocalVariables"));
+
+		// Confirm both context layers resolve before clearing them.
+		assertSuccess(compile(assembler, "int value = CONST_INT;"));
+		assertSuccess(compile(assembler, "String value = message;"));
+
+		// Clearing the compiler must remove class members and method locals together.
+		assembler.clearContext();
+		assertFalse(compile(assembler, "int value = CONST_INT;").wasSuccess());
+		assertFalse(compile(assembler, "String value = message;").wasSuccess());
+	}
+
+	@Test
 	void classAndMethodContextForConstructor() {
 		// Tests that the assembler works for constructor method contexts
 		ExpressionCompiler assembler = recaf.get(ExpressionCompiler.class);
