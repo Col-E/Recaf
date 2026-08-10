@@ -55,7 +55,7 @@ public class BasicInfoImporter implements InfoImporter {
 	@Nonnull
 	@Override
 	public Info readInfo(@Nonnull String name, @Nonnull ByteSource source) throws IOException {
-		byte[] data = source.readAll();
+		byte[] data = source.readAll().raw();
 
 		// Check for Java classes
 		if (matchesClass(data)) {

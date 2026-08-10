@@ -37,8 +37,8 @@ public final class LocalFileHeaderSource implements ByteSource {
 
 	@Nonnull
 	@Override
-	public byte[] readAll() throws IOException {
-		return MemorySegmentUtil.toByteArray(decompress());
+	public LargeByteArray readAll() throws IOException {
+		return LargeByteArray.from(MemorySegmentUtil.toByteArray(decompress()));
 	}
 
 	@Nonnull

@@ -120,7 +120,7 @@ final class PluginClassLoaderImpl extends ClassLoader implements PluginClassLoad
 		if (classBytes != null) {
 			byte[] bytes;
 			try {
-				bytes = classBytes.readAll();
+				bytes = classBytes.readAll().raw();
 			} catch (IOException ex) {
 				throw new ClassNotFoundException(name, ex);
 			}

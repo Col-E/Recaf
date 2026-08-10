@@ -29,8 +29,8 @@ final class PathByteSource implements ByteSource {
 
 	@Nonnull
 	@Override
-	public byte[] readAll() throws IOException {
-		return Files.readAllBytes(path);
+	public LargeByteArray readAll() throws IOException {
+		return LargeByteArray.readAllBytes(path);
 	}
 
 	@Nonnull

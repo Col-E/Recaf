@@ -50,7 +50,7 @@ public class AndroidApiResource extends BasicPropertyContainer implements Worksp
 				for (LocalFileHeader fileEntry : archive.getLocalFiles()) {
 					String name = fileEntry.getFileNameAsString();
 					if (name.endsWith(".class")) {
-						byte[] bytecode = new LocalFileHeaderSource(fileEntry).readAll();
+						byte[] bytecode = new LocalFileHeaderSource(fileEntry).readAll().raw();
 						JvmClassInfo info = new JvmClassInfoBuilder(bytecode).build();
 						bundle.put(info);
 					}

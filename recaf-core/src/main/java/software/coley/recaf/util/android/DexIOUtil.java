@@ -31,7 +31,7 @@ public class DexIOUtil {
 	 */
 	@Nonnull
 	public static AndroidClassBundle read(@Nonnull ByteSource source) throws IOException {
-		return read(source.readAll());
+		return read(source.readAll().raw());
 	}
 
 	/**
