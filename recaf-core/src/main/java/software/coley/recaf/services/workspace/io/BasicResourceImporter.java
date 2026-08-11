@@ -202,7 +202,7 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 
 		// Read ZIP
 		boolean isAndroid = zipInfo.getName().toLowerCase().endsWith(".apk");
-		ZipArchive archive = config.mapping().apply(source.readAll().raw());
+		ZipArchive archive = config.mapping().apply(source.readAll().rawToBeReplaced());
 		ZipDecompressionLimiter decompressionLimiter = new ZipDecompressionLimiter(
 				config.getMaxZipEntrySize().getValue(),
 				config.getMaxZipTotalSize().getValue(),

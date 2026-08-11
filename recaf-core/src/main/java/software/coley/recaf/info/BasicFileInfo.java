@@ -20,7 +20,7 @@ public class BasicFileInfo implements FileInfo {
 
 	public BasicFileInfo(@Nonnull FileInfoBuilder<?> builder) {
 		this(builder.getName(),
-				builder.getRawContent(),
+				builder.getRawContent().rawToBeReplaced(),
 				builder.getProperties());
 	}
 

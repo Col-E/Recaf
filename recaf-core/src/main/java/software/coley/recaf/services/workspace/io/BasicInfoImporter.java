@@ -30,6 +30,7 @@ import software.coley.recaf.util.ByteHeaderUtil;
 import software.coley.recaf.util.IOUtil;
 import software.coley.recaf.util.android.AndroidXmlUtil;
 import software.coley.recaf.util.io.ByteSource;
+import software.coley.recaf.util.io.LargeByteArray;
 
 import java.io.IOException;
 
@@ -55,12 +56,12 @@ public class BasicInfoImporter implements InfoImporter {
 	@Nonnull
 	@Override
 	public Info readInfo(@Nonnull String name, @Nonnull ByteSource source) throws IOException {
-		byte[] data = source.readAll().raw();
+		var data = source.readAll();
 
 		// Check for Java classes
-		if (matchesClass(data)) {
+		if (matchesClass(data.header())) {
 			try {
-				return readClass(name, data);
+				return readClass(name, data.raw());
 			} catch (Throwable t) {
 				// Invalid class. There are a few possibilities here:
 				// - The user has disabled patching in their settings and opened an obfuscated file that kills ASM.
@@ -75,7 +76,7 @@ public class BasicInfoImporter implements InfoImporter {
 		}
 
 		// Comparing against known file types.
-		boolean hasZipMarker = ByteHeaderUtil.matchAtAnyOffset(data, ByteHeaderUtil.ZIP);
+		boolean hasZipMarker = data.matchAtAnyOffset(ByteHeaderUtil.ZIP);
 		FileInfo info = readAsSpecializedFile(name, data);
 		if (info != null) {
 			if (hasZipMarker)
@@ -124,46 +125,47 @@ public class BasicInfoImporter implements InfoImporter {
 	 * or {@code null} if no special case is matched.
 	 */
 	@Nullable
-	private static FileInfo readAsSpecializedFile(@Nonnull String name, byte[] data) {
-		if (ByteHeaderUtil.match(data, ByteHeaderUtil.DEX)) {
+	private static FileInfo readAsSpecializedFile(@Nonnull String name, LargeByteArray data) {
+		var header = data.header();
+		if (ByteHeaderUtil.match(header, ByteHeaderUtil.DEX)) {
 			CodeCodec.readDebug = false; // TODO: Remove this flag when debug parsing is fixed upstream.
 			return new DexFileInfoBuilder()
 					.withRawContent(data)
 					.withName(name)
 					.build();
-		} else if (ByteHeaderUtil.match(data, ByteHeaderUtil.MODULES)) {
+		} else if (ByteHeaderUtil.match(header, ByteHeaderUtil.MODULES)) {
 			return new ModulesFileInfoBuilder()
 					.withRawContent(data)
 					.withName(name)
 					.build();
 		} else if (name.toUpperCase().endsWith(".ARSC") &&
-				ByteHeaderUtil.match(data, ByteHeaderUtil.ARSC)) {
+				ByteHeaderUtil.match(header, ByteHeaderUtil.ARSC)) {
 			return new ArscFileInfoBuilder()
 					.withRawContent(data)
 					.withName(name)
 					.build();
 		} else if (name.toUpperCase().endsWith(".XML") &&
-				(ByteHeaderUtil.match(data, ByteHeaderUtil.BINARY_XML) || AndroidXmlUtil.hasXmlIndicators(data))) {
+				(ByteHeaderUtil.match(header, ByteHeaderUtil.BINARY_XML) || AndroidXmlUtil.hasXmlIndicators(header))) {
 			return new BinaryXmlFileInfoBuilder()
 					.withRawContent(data)
 					.withName(name)
 					.build();
-		} else if (ByteHeaderUtil.matchAny(data, ByteHeaderUtil.IMAGE_HEADERS)) {
+		} else if (ByteHeaderUtil.matchAny(header, ByteHeaderUtil.IMAGE_HEADERS)) {
 			return new ImageFileInfoBuilder()
 					.withRawContent(data)
 					.withName(name)
 					.build();
-		} else if (ByteHeaderUtil.matchAny(data, ByteHeaderUtil.AUDIO_HEADERS)) {
+		} else if (ByteHeaderUtil.matchAny(header, ByteHeaderUtil.AUDIO_HEADERS)) {
 			return new AudioFileInfoBuilder()
 					.withRawContent(data)
 					.withName(name)
 					.build();
-		} else if (ByteHeaderUtil.matchAny(data, ByteHeaderUtil.VIDEO_HEADERS)) {
+		} else if (ByteHeaderUtil.matchAny(header, ByteHeaderUtil.VIDEO_HEADERS)) {
 			return new VideoFileInfoBuilder()
 					.withRawContent(data)
 					.withName(name)
 					.build();
-		} else if (ByteHeaderUtil.matchAny(data, ByteHeaderUtil.PROGRAM_HEADERS)) {
+		} else if (ByteHeaderUtil.matchAny(header, ByteHeaderUtil.PROGRAM_HEADERS)) {
 			return new NativeLibraryFileInfoBuilder()
 					.withRawContent(data)
 					.withName(name)
