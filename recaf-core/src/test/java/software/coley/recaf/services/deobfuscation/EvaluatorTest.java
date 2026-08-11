@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import me.darknet.assembler.printer.JvmPrinterUtil;
 import org.junit.jupiter.api.Test;
+import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -1297,6 +1298,30 @@ public class EvaluatorTest extends TransformerTestBase {
 	}
 
 	@Test
+	void testStackTraceWithCallerSeed() {
+		compile("""
+				static String prior() {
+				     StackTraceElement ste = new RuntimeException().getStackTrace()[1];
+				     return ste.getClassName() + ":" + ste.getMethodName();
+				}
+				""");
+
+		// Read the example class from the workspace.
+		ClassNode classNode = new ClassNode();
+		get(CLASS_NAME).getClassReader().accept(classNode, ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG);
+
+		// Create an evaluator with a synthetic method that calls prior() to seed the stack trace.
+		MethodNode foo = new MethodNode(Opcodes.ACC_STATIC, "injectedMethod", "()Ljava/lang/String;", null, null);
+		Evaluator evaluator = createEvaluator(List.of(new ClassMethodPair(classNode, foo)));
+
+		// When we evaluate prior() in the context of the synthetic method, it should report the synthetic method as the caller.
+		EvaluationResult result = evaluator.evaluate(CLASS_NAME, "prior", "()Ljava/lang/String;", null, List.of());
+		EvaluationYieldResult yielded = assertInstanceOf(EvaluationYieldResult.class, result);
+		StringValue value = assertInstanceOf(StringValue.class, yielded.value());
+		assertEquals(CLASS_NAME + ":injectedMethod", value.getText().orElse(null));
+	}
+
+	@Test
 	void testExplicitThrowCaughtBySubtype() {
 		String compiled = compile("""
 				static String caught() {
@@ -1727,11 +1752,18 @@ public class EvaluatorTest extends TransformerTestBase {
 
 	@Nonnull
 	private Evaluator createEvaluator() {
+		return createEvaluator(List.of());
+	}
+
+	@Nonnull
+	private Evaluator createEvaluator(@Nonnull List<ClassMethodPair> callStackSeed) {
 		JvmClassInfo assembled = get(CLASS_NAME);
 		Workspace workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(assembled));
 		JvmTransformerContext ctx = new JvmTransformerContext(workspace, workspace.getPrimaryResource(), Collections.emptyList());
 		ReInterpreter interpreter = ctx.newInterpreter(new InheritanceGraph(workspace));
-		return new Evaluator(workspace, interpreter, new FieldCacheManager(), 1000, false, false);
+		Evaluator evaluator = new Evaluator(workspace, interpreter, new FieldCacheManager(), 1000, false, false);
+		evaluator.setCallStackSeed(callStackSeed);
+		return evaluator;
 	}
 
 	@Nonnull

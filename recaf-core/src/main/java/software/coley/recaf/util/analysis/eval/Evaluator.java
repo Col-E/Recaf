@@ -77,6 +77,7 @@ public class Evaluator {
 	private final boolean evaluateInternals;
 	private final boolean evaluateClassInitializers;
 	private final int maxSteps;
+	private List<ClassMethodPair> callStackSeed;
 
 	/**
 	 * @param workspace
@@ -102,6 +103,14 @@ public class Evaluator {
 		this.maxSteps = maxSteps;
 		this.evaluateInternals = evaluateInternals;
 		this.evaluateClassInitializers = evaluateClassInitializers;
+	}
+
+	/**
+	 * @param callStackSeed
+	 * 		Caller frames to place before the method being evaluated.
+	 */
+	public void setCallStackSeed(@Nullable List<ClassMethodPair> callStackSeed) {
+		this.callStackSeed = callStackSeed;
 	}
 
 	/**
@@ -211,7 +220,7 @@ public class Evaluator {
 		if (Type.getReturnType(methodDescriptor) == Type.VOID_TYPE)
 			return EvaluationResult.cannotEvaluate("Method must yield a value");
 		try {
-			return evaluate(className, methodName, methodDescriptor, classInstance, parameters, new EvaluationContext(maxSteps));
+			return evaluate(className, methodName, methodDescriptor, classInstance, parameters, new EvaluationContext(maxSteps, callStackSeed));
 		} catch (UnknownValueException e) {
 			return EvaluationResult.cannotEvaluate(UNKNOWN_VALUE_REASON, e);
 		}
@@ -264,7 +273,7 @@ public class Evaluator {
 		if (Type.getReturnType(methodNode.desc) == Type.VOID_TYPE)
 			return EvaluationResult.cannotEvaluate("Method must yield a value");
 		try {
-			return evaluate(classNode, methodNode, classInstance, parameters, new EvaluationContext(maxSteps));
+			return evaluate(classNode, methodNode, classInstance, parameters, new EvaluationContext(maxSteps, callStackSeed));
 		} catch (UnknownValueException e) {
 			return EvaluationResult.cannotEvaluate(UNKNOWN_VALUE_REASON, e);
 		}
@@ -556,7 +565,7 @@ public class Evaluator {
 			return EvaluationResult.cannotEvaluate("Target block does not support evaluation");
 
 		// Create initial frame
-		EvaluationContext context = new EvaluationContext(maxSteps);
+		EvaluationContext context = new EvaluationContext(maxSteps, callStackSeed);
 		ExecutingFrame frame = new ExecutingFrame(null, originFrame.getLocals(), originFrame.getMaxStackSize(), methodAccess, context);
 		for (int i = 0; i < originFrame.getLocals(); i++)
 			frame.setLocal(i, originFrame.getLocal(i));
@@ -1716,15 +1725,20 @@ public class Evaluator {
 
 	/** Context for evaluation, including the call stack, step allocation, and class initialization state. */
 	private static final class EvaluationContext {
-		private final List<ClassMethodPair> callStack = new ArrayList<>();
+		private final List<ClassMethodPair> callStack;
 		private final Set<String> initializedClasses;
 		private final Set<String> initializingClasses;
 		private final Map<String, EvaluationResult> failedClassInitializers;
 		private int stepAllocation;
 
 		private EvaluationContext(int stepAllocation) {
+			this(stepAllocation, null);
+		}
+
+		private EvaluationContext(int stepAllocation, @Nullable List<ClassMethodPair> callStackSeed) {
 			this.stepAllocation = stepAllocation;
 
+			callStack = callStackSeed == null ? new ArrayList<>() : new ArrayList<>(callStackSeed);
 			initializedClasses = new HashSet<>();
 			initializingClasses = new HashSet<>();
 			failedClassInitializers = new HashMap<>();
