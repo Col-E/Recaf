@@ -247,6 +247,16 @@ public class EvaluatorTest extends TransformerTestBase {
 	}
 
 	@Test
+	void testThreadSleepIgnored() {
+		// This works for now, but later we'll want a more intelligent thread system simulation.
+		String compiled = compile("""
+				static String helloWorld() throws Exception { Thread.sleep(1); return "Hello World"; }
+				""");
+		assertEquals("Hello World", ((StringValue) evaluate(compiled, "helloWorld",
+				"()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+	}
+
+	@Test
 	void testStringConcatWithoutConstants() {
 		// Cannot figure out a java source form for 'makeConcat' so we have to assemble it manually.
 		String assembly = """

@@ -1074,9 +1074,9 @@ public class Evaluator {
 						// Check if the method can be instanced.
 						if (instanceFactory.getMethodHandler(min) != null || instanceFactory.getMapper(min) != null)
 							yield true;
-						// Lambda calls are eligible only when this scope creates the matching functional value.
-						if (min.getOpcode() != INVOKESPECIAL
-								&& InvokeDynamicExecutor.canEvaluateLambdaInvocation(min, instructionScope))
+
+						// Check for eligible lambda calls.
+						if (min.getOpcode() != INVOKESPECIAL && InvokeDynamicExecutor.canEvaluateLambdaInvocation(min, instructionScope))
 							yield true;
 
 						// Check if the symbolic owner exists for runtime receiver dispatch.
@@ -1094,12 +1094,12 @@ public class Evaluator {
 						insn instanceof InvokeDynamicInsnNode indy && InvokeDynamicExecutor.canEvaluate(indy);
 				case INVOKESTATIC -> {
 					if (insn instanceof MethodInsnNode min) {
-						// Frame-aware handlers run before host mappers and nested workspace evaluation.
+						// Check if we have a static method handler for the method.
 						if (instanceFactory.getStaticMethodHandler(min) != null)
 							yield true;
 
-						// Check if the method can be instanced.
-						if (instanceFactory.getMapper(min) != null || instanceFactory.getMethodHandler(min) != null)
+						// Check if we have a static instance mapper for the method.
+						if (instanceFactory.getMapper(min) != null)
 							yield true;
 
 						// Check if the method is declared in the workspace, meaning we can evaluate it.
