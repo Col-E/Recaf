@@ -7,14 +7,7 @@ import jakarta.annotation.Nonnull;
  *
  * @author Matt Coley
  */
-public interface BiNumberMatcher {
-	/**
-	 * @param key
-	 * 		Target value to match against.
-	 * @param target
-	 * 		Value to check.
-	 *
-	 * @return {@code true} when the target value matches the key value.
-	 */
-	boolean test(@Nonnull Number key, @Nonnull Number target);
+public interface BiNumberMatcher extends BiMatcher<Number, Number> {
+	@Override
+	boolean matches(@Nonnull Number key, @Nonnull Number target);
 }

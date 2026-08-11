@@ -9,14 +9,7 @@ import java.util.Collection;
  *
  * @author Matt Coley
  */
-public interface MultiStringMatcher {
-	/**
-	 * @param keys
-	 * 		Target values to match against.
-	 * @param target
-	 * 		Value to check.
-	 *
-	 * @return {@code true} when the target value matches the key value(s).
-	 */
-	boolean test(@Nonnull Collection<String> keys, @Nonnull String target);
+public interface MultiStringMatcher extends BiMatcher<Collection<String>, String> {
+	@Override
+	boolean matches(@Nonnull Collection<String> keys, @Nonnull String target);
 }

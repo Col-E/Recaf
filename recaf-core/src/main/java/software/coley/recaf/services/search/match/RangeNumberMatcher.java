@@ -6,6 +6,7 @@ import jakarta.annotation.Nonnull;
  * Matcher outline for comparing one number to a range of numbers.
  *
  * @author Matt Coley
+ * @see BiMatcher
  */
 public interface RangeNumberMatcher {
 	/**
@@ -18,5 +19,5 @@ public interface RangeNumberMatcher {
 	 *
 	 * @return {@code true} when the target value matches the given range.
 	 */
-	boolean test(@Nonnull Number lower, @Nonnull Number upper, @Nonnull Number target);
+	boolean matches(@Nonnull Number lower, @Nonnull Number upper, @Nonnull Number target);
 }
