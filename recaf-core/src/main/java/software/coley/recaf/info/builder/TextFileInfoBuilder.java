@@ -20,7 +20,7 @@ public class TextFileInfoBuilder extends FileInfoBuilder<TextFileInfoBuilder> {
 
 	public TextFileInfoBuilder(@Nonnull TextFileInfo textInfo) {
 		super(textInfo);
-		this.decodingResult = new StringDecodingResult(textInfo.getRawContent(), textInfo.getCharset(), textInfo.getText());
+		this.decodingResult = new StringDecodingResult(textInfo.getRawContent().rawToBeReplaced(), textInfo.getCharset(), textInfo.getText());
 	}
 
 	public TextFileInfoBuilder(@Nonnull FileInfoBuilder<?> other, @Nonnull StringDecodingResult decodingResult) {

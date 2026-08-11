@@ -55,7 +55,7 @@ public final class ZipDecompressionLimiter implements Decompressor {
 	public MemorySegment acceptStored(@Nonnull LocalFileHeader header) throws IOException {
 		MemorySegment data = header.getFileData();
 		long size = data.byteSize();
-		if (size < 0 || size > maxEntrySize)
+		if (size < 0 || (maxEntrySize > 0 && size > maxEntrySize))
 			throw new ZipDecompressionLimitException("Refusing to decompress '" + header.getFileNameAsString() +
 					"': entry expands beyond " + maxEntrySize + " bytes");
 		reserveTotal(header, size);
@@ -76,7 +76,7 @@ public final class ZipDecompressionLimiter implements Decompressor {
 		long entryLimit = Math.min(maxEntrySize, ratioLimit);
 		// Reject honest oversized entries from their metadata before allocating any output buffer.
 		long declaredSize = header.getUncompressedSize();
-		if (declaredSize < 0 || declaredSize > entryLimit)
+		if (declaredSize < 0 || (entryLimit > 0 && declaredSize > entryLimit))
 			throw new ZipDecompressionLimitException("Refusing to decompress '" + header.getFileNameAsString() +
 					"': entry expands beyond " + entryLimit + " bytes");
 
@@ -106,7 +106,7 @@ public final class ZipDecompressionLimiter implements Decompressor {
 				int count = inflater.inflate(outputBuffer);
 				if (count > 0) {
 					long nextEntrySize = entrySize + count;
-					if (nextEntrySize < 0 || nextEntrySize > entryLimit)
+					if (nextEntrySize < 0 || (entryLimit > 0 && nextEntrySize > entryLimit))
 						throw new ZipDecompressionLimitException("Refusing to decompress '" + header.getFileNameAsString() +
 								"': entry expands beyond " + entryLimit + " bytes");
 					reserveTotal(header, count);
@@ -134,7 +134,7 @@ public final class ZipDecompressionLimiter implements Decompressor {
 		while (true) {
 			long current = totalSize.get();
 			long next = current + amount;
-			if (next < current || next > maxTotalSize)
+			if (next < current || (maxTotalSize > 0 && next > maxTotalSize))
 				throw new ZipDecompressionLimitException("Refusing to decompress '" + header.getFileNameAsString() +
 						"': archive expands beyond " + maxTotalSize + " bytes");
 			if (totalSize.compareAndSet(current, next))

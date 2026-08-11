@@ -165,7 +165,7 @@ public class ResourceImporterConfig extends BasicConfigContainer implements Serv
 	 * @return Mapping of input bytes to a ZIP archive model.
 	 */
 	@Nonnull
-	public UncheckedFunction<byte[], ZipArchive> mapping() {
+	public UncheckedFunction<MemorySegment, ZipArchive> mapping() {
 		ZipStrategy strategy = zipStrategy.getValue();
 		if (strategy == ZipStrategy.JVM)
 			return newJvmMapping();
@@ -175,12 +175,12 @@ public class ResourceImporterConfig extends BasicConfigContainer implements Serv
 	}
 
 	@Nonnull
-	private UncheckedFunction<byte[], ZipArchive> newNaiveMapping() {
+	private UncheckedFunction<MemorySegment, ZipArchive> newNaiveMapping() {
 		return input -> ZipIO.read(input, new NaiveLocalFileZipReader(newPartAllocator()));
 	}
 
 	@Nonnull
-	private UncheckedFunction<byte[], ZipArchive> newStandardMapping() {
+	private UncheckedFunction<MemorySegment, ZipArchive> newStandardMapping() {
 		return input -> ZipIO.read(input, new ForwardScanZipReader(newPartAllocator()) {
 			@Override
 			public void postProcessLocalFileHeader(@Nonnull LocalFileHeader file) {
@@ -194,7 +194,7 @@ public class ResourceImporterConfig extends BasicConfigContainer implements Serv
 	}
 
 	@Nonnull
-	private UncheckedFunction<byte[], ZipArchive> newJvmMapping() {
+	private UncheckedFunction<MemorySegment, ZipArchive> newJvmMapping() {
 		return input -> ZipIO.read(input, new JvmZipReader(skipRevisitedCenToLocalLinks.getValue(), allowBasicJvmBaseOffsetZeroCheck.getValue()));
 	}
 

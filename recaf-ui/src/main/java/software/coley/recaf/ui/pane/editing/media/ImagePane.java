@@ -93,7 +93,7 @@ public class ImagePane extends StackPane implements FileNavigable, UpdatableNavi
 			this.path = filePath;
 			FileInfo info = filePath.getValue();
 			if (info.isImageFile()) {
-				byte[] content = info.getRawContent();
+				byte[] content = info.getRawContent().rawToBeReplaced();
 
 				Image image = null;
 				if ("ico".equals(info.getFileExtension()) && ByteHeaderUtil.match(content, ByteHeaderUtil.ICO)) {

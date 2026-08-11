@@ -39,7 +39,7 @@ public class LabelByteAnimationTransition extends Transition {
 	 * 		File to show raw bytes of.
 	 */
 	public void update(@Nonnull FileInfo info) {
-		this.bytes = info.getRawContent();
+		this.bytes = info.getRawContent().rawToBeReplaced();
 		setCycleDuration(Duration.millis(bytes.length));
 	}
 

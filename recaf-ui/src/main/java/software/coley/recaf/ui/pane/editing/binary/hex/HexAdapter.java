@@ -77,7 +77,7 @@ public class HexAdapter extends BorderPane implements UpdatableNavigable {
 	public void onUpdatePath(@Nonnull PathNode<?> path) {
 		if (path instanceof FilePathNode filePath) {
 			FileInfo fileInfo = filePath.getValue();
-			byte[] raw = fileInfo.getRawContent();
+			byte[] raw = fileInfo.getRawContent().rawToBeReplaced();
 			if (editor.hasData()) {
 				editor.updateData(raw);
 			} else {

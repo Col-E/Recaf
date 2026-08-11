@@ -71,7 +71,7 @@ class AnalysisTestUtils {
 		// Base mock,
 		BinaryXmlFileInfo manifest = mock(BinaryXmlFileInfo.class);
 		when(manifest.getName()).thenReturn("AndroidManifest.xml");
-		when(manifest.getRawContent()).thenReturn(new byte[0]);
+		when(manifest.getRawContent().raw()).thenReturn(new byte[0]);
 
 		// Configure the string pool and binary resource file to return the given elements.
 		StringPoolChunk strings = mock(StringPoolChunk.class);

@@ -50,7 +50,7 @@ class AndroidAnalysisServiceTest extends TestBase {
 		// If the input is malformed such that we have a manifest but there is no string pool, we should also safely return.
 		BinaryXmlFileInfo manifest = mock(BinaryXmlFileInfo.class);
 		when(manifest.getName()).thenReturn("AndroidManifest.xml");
-		when(manifest.getRawContent()).thenReturn(new byte[0]);
+		when(manifest.getRawContent().raw()).thenReturn(new byte[0]);
 		FileBundle files = fromFiles(manifest);
 		WorkspaceResource primary = new WorkspaceResourceBuilder().withFileBundle(files).build();
 		Workspace workspace = new BasicWorkspace(primary);

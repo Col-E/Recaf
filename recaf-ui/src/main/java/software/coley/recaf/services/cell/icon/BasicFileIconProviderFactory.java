@@ -57,7 +57,7 @@ public class BasicFileIconProviderFactory implements FileIconProviderFactory {
 		}
 
 		// Content match
-		byte[] content = info.getRawContent();
+		byte[] content = info.getRawContent().header();
 		if (ByteHeaderUtil.matchAny(content, ByteHeaderUtil.IMAGE_HEADERS))
 			return IMAGE;
 		if (ByteHeaderUtil.match(content, ByteHeaderUtil.CLASS))

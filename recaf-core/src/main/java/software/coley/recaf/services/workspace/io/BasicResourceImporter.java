@@ -170,7 +170,7 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 		// Check for DEX file format.
 		if (readInfoAsFile instanceof DexFileInfo) {
 			String dexName = readInfoAsFile.getName();
-			AndroidClassBundle dexBundle = DexIOUtil.read(readInfoAsFile.getRawContent());
+			AndroidClassBundle dexBundle = DexIOUtil.read(readInfoAsFile.getRawContent().raw());
 			return builder.withAndroidClassBundles(Map.of(dexName, dexBundle))
 					.build();
 		}
@@ -202,7 +202,7 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 
 		// Read ZIP
 		boolean isAndroid = zipInfo.getName().toLowerCase().endsWith(".apk");
-		ZipArchive archive = config.mapping().apply(source.readAll().rawToBeReplaced());
+		ZipArchive archive = config.mapping().apply(source.readAll().toMemorySegment());
 		ZipDecompressionLimiter decompressionLimiter = new ZipDecompressionLimiter(
 				config.getMaxZipEntrySize().getValue(),
 				config.getMaxZipTotalSize().getValue(),
@@ -274,7 +274,7 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 					// Skipping ZIP bombs
 					if (info.isFile() && info.asFile().isZipFile()) {
 						ZipFileInfo zipFile = info.asFile().asZipFile();
-						if (Arrays.equals(zipFile.getRawContent(), zipInfo.getRawContent())) {
+						if (zipFile.getRawContent().equals(zipInfo.getRawContent())) {
 							logger.warn("Skip self-extracting ZIP bomb: {}", entryName);
 							return null;
 						} else if (Arrays.stream(Thread.currentThread().getStackTrace())

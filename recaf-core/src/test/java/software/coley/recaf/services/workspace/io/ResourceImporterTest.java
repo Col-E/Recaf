@@ -95,7 +95,7 @@ class ResourceImporterTest {
 
 		// Validate file bundle content
 		FileInfo fileInfo = resource.getFileBundle().iterator().next();
-		assertArrayEquals(helloBytes, fileInfo.getRawContent(), "Missing data compared to baseline input bytes");
+		assertArrayEquals(helloBytes, fileInfo.getRawContent().raw(), "Missing data compared to baseline input bytes");
 	}
 
 	@Test
@@ -203,7 +203,7 @@ class ResourceImporterTest {
 
 		// Validate the version chosen is the last one
 		assertArrayEquals(helloWorldBytes, resource.getJvmClassBundle().iterator().next().getBytecode());
-		assertArrayEquals(emptyBytes, resource.getFileBundle().iterator().next().getRawContent());
+		assertArrayEquals(emptyBytes, resource.getFileBundle().iterator().next().getRawContent().raw());
 	}
 
 	@Test
@@ -229,7 +229,7 @@ class ResourceImporterTest {
 
 		// Validate the version chosen is the last one
 		assertArrayEquals(helloWorldBytes, resource.getVersionedJvmClassBundles().get(9).iterator().next().getBytecode());
-		assertArrayEquals(emptyBytes, resource.getFileBundle().iterator().next().getRawContent());
+		assertArrayEquals(emptyBytes, resource.getFileBundle().iterator().next().getRawContent().raw());
 	}
 
 	/**
@@ -258,7 +258,7 @@ class ResourceImporterTest {
 		assertEquals(0, resource.getEmbeddedResources().size());
 
 		// Validate the version chosen is the last one
-		assertArrayEquals(bytes, resource.getFileBundle().iterator().next().getRawContent());
+		assertArrayEquals(bytes, resource.getFileBundle().iterator().next().getRawContent().raw());
 	}
 
 	@RepeatedTest(100)
@@ -364,7 +364,7 @@ class ResourceImporterTest {
 		FileInfo innerDotZip = insideZipResource.getFileBundle().get(innerDataName);
 		assertNotNull(innerDotZip);
 		assertEquals(innerDataName, innerDotZip.getName());
-		assertArrayEquals(innerData, innerDotZip.getRawContent());
+		assertArrayEquals(innerData, innerDotZip.getRawContent().raw());
 	}
 
 	@Test
@@ -422,7 +422,7 @@ class ResourceImporterTest {
 
 		// Validate file bundle content
 		FileInfo fileInfo = resource.getFileBundle().iterator().next();
-		assertArrayEquals(fileBytes, fileInfo.getRawContent(), "Missing data compared to baseline input bytes");
+		assertArrayEquals(fileBytes, fileInfo.getRawContent().raw(), "Missing data compared to baseline input bytes");
 	}
 
 	@Test
@@ -453,7 +453,7 @@ class ResourceImporterTest {
 
 		// Validate file bundle content
 		FileInfo fileInfo = resource.getFileBundle().iterator().next();
-		assertArrayEquals(data, fileInfo.getRawContent(), "Missing data compared to baseline input bytes");
+		assertArrayEquals(data, fileInfo.getRawContent().raw(), "Missing data compared to baseline input bytes");
 		assertEquals(comment, ZipCommentProperty.get(fileInfo), "Missing comment");
 		assertEquals(timeCreate, ZipCreationTimeProperty.get(fileInfo), "Missing creation time");
 		assertEquals(timeModify, ZipModificationTimeProperty.get(fileInfo), "Missing modification time");

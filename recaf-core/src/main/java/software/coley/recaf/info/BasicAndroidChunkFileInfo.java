@@ -24,7 +24,7 @@ public class BasicAndroidChunkFileInfo extends BasicFileInfo implements AndroidC
 	@Override
 	public BinaryResourceFile getChunkModel() {
 		if (resourceFile == null)
-			resourceFile = new BinaryResourceFile(getRawContent());
+			resourceFile = new BinaryResourceFile(getRawContent().rawToBeReplaced());
 		return resourceFile;
 	}
 }

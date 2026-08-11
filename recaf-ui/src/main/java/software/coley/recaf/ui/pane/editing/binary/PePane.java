@@ -70,7 +70,7 @@ public class PePane extends BorderPane implements FileNavigable, UpdatableNaviga
 	}
 
 	private void refresh() {
-		ParseResult<PeImage> result = PeImage.read(new CadesBufferStream(path.getValue().getRawContent()));
+		ParseResult<PeImage> result = PeImage.read(new CadesBufferStream(path.getValue().getRawContent().rawToBeReplaced()));
 		if (result.isOk()) {
 			PeImage pe = result.getOk();
 

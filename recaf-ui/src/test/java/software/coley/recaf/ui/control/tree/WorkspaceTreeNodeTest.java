@@ -40,6 +40,7 @@ import software.coley.recaf.ui.config.WorkspaceExplorerConfig;
 import software.coley.recaf.util.ZipCreationUtils;
 import software.coley.recaf.util.io.ByteSource;
 import software.coley.recaf.util.io.ByteSources;
+import software.coley.recaf.util.io.LargeByteArray;
 import software.coley.recaf.workspace.model.BasicWorkspace;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.BasicFileBundle;
@@ -141,12 +142,12 @@ class WorkspaceTreeNodeTest {
 
 		// Content available in the default package/root directory.
 		default2 = p3f.child((String) null);
-		default1 = default2.child(new BasicFileInfo("root.txt", new byte[0], new BasicPropertyContainer()));
+		default1 = default2.child(new BasicFileInfo("root.txt", LargeByteArray.from(new byte[0]), new BasicPropertyContainer()));
 
 		// The path will visually look like (root)//zero.txt in the workspace tree.
 		// This is not ideal, but there's not really any great alternatives either.
 		z2 = p3f.child("//");
-		z1 = z2.child(new BasicFileInfo("///zero.txt", new byte[0], new BasicPropertyContainer()));
+		z1 = z2.child(new BasicFileInfo("///zero.txt", LargeByteArray.from(new byte[0]), new BasicPropertyContainer()));
 
 		// Embedded resource containing just 'root.txt'
 		embeddedResource = new WorkspaceFileResourceBuilder(new BasicJvmClassBundle(), fromFiles(default1.getValue()))

@@ -96,7 +96,7 @@ class InfoImporterTest {
 		assertTrue(read.asFile().isZipFile());
 		assertEquals(BasicZipFileInfo.class, read.getClass());
 		ZipFileInfo readZip = read.asFile().asZipFile();
-		assertArrayEquals(zipFileBytes, readZip.getRawContent());
+		assertArrayEquals(zipFileBytes, readZip.getRawContent().raw());
 
 		// However, if we provide various extensions then we can use the file name to infer what kind of ZIP it is.
 		read = importer.readInfo("data.jar", zipSource);

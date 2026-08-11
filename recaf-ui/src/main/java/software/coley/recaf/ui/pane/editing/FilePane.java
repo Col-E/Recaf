@@ -89,6 +89,7 @@ public class FilePane extends AbstractContentPane<FilePathNode> implements FileN
 	}
 
 	public void setupForFileType(@Nonnull FileInfo info) {
+		var header = info.getRawContent().header();
 		switch (info) {
 			case TextFileInfo textFileInfo -> setFileDisplayModes(List.of(TEXT, HEX));
 			case BinaryXmlFileInfo binaryXmlFileInfo -> setFileDisplayModes(List.of(TEXT_BINARY_XML, HEX));
@@ -98,9 +99,9 @@ public class FilePane extends AbstractContentPane<FilePathNode> implements FileN
 			case NativeLibraryFileInfo nativeLibraryFileInfo -> {
 				// TODO: Do we want to further specify the type hierarchy for different kinds of native libs?
 				//  - If we don't this kind of pattern may be repeated elsewhere
-				if (ByteHeaderUtil.match(info.getRawContent(), ByteHeaderUtil.PE)) {
+				if (ByteHeaderUtil.match(header, ByteHeaderUtil.PE)) {
 					setFileDisplayModes(List.of(EXECUTABLE_PE, HEX));
-				} else if (ByteHeaderUtil.match(info.getRawContent(), ByteHeaderUtil.ELF)) {
+				} else if (ByteHeaderUtil.match(header, ByteHeaderUtil.ELF)) {
 					setFileDisplayModes(List.of(EXECUTABLE_ELF, HEX));
 				} else {
 					setFileDisplayModes(List.of(HEX));

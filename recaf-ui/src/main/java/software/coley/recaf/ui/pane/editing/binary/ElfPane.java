@@ -65,7 +65,7 @@ public class ElfPane extends BorderPane implements FileNavigable, UpdatableNavig
 
 	private void refresh() {
 		try {
-			ElfFile elf = ElfFile.from(path.getValue().getRawContent());
+			ElfFile elf = ElfFile.from(path.getValue().getRawContent().rawToBeReplaced());
 
 			TreeView<Object> tree = new TreeView<>();
 			tree.setShowRoot(false);

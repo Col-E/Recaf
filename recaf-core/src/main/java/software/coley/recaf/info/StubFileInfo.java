@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.properties.Property;
 import software.coley.recaf.util.ExcludeFromJacocoGeneratedReport;
 import software.coley.recaf.util.StringUtil;
+import software.coley.recaf.util.io.LargeByteArray;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -53,8 +54,8 @@ public class StubFileInfo implements FileInfo {
 
 	@Nonnull
 	@Override
-	public byte[] getRawContent() {
-		return new byte[0];
+	public LargeByteArray getRawContent() {
+		return LargeByteArray.from(new byte[0]);
 	}
 
 	@Nonnull

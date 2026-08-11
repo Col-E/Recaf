@@ -266,7 +266,7 @@ public class WorkspaceExportOptions {
 
 			// Place files into map
 			for (FileInfo fileInfo : resource.getFileBundle()) {
-				map.put(fileInfo.getName(), fileInfo.getRawContent());
+				map.put(fileInfo.getName(), fileInfo.getRawContent().rawToBeReplaced());
 				updateProperties(fileInfo.getName(), fileInfo);
 			}
 
@@ -325,7 +325,7 @@ public class WorkspaceExportOptions {
 					// Get content from info
 					byte[] content = null;
 					if (info.isFile())
-						content = info.asFile().getRawContent();
+						content = info.asFile().getRawContent().rawToBeReplaced();
 					else if (info.isClass()) {
 						ClassInfo classInfo = info.asClass();
 						if (classInfo.isJvmClass())

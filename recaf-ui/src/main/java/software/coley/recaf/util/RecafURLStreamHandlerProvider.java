@@ -160,7 +160,7 @@ public class RecafURLStreamHandlerProvider extends URLStreamHandlerProvider {
 					if (filePath == null)
 						throw new IOException("No file in current workspace: " + path);
 					FileInfo fileInfo = filePath.getValue();
-					content = fileInfo.getRawContent();
+					content = fileInfo.getRawContent().rawToBeReplaced();
 					break;
 				default:
 					throw new IOException("Unknown protocol: " + protocol);
