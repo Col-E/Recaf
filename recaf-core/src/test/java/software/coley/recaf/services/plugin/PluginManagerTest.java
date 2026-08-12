@@ -22,6 +22,8 @@ import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.BasicJvmClassBundle;
 
 import java.io.IOException;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -463,7 +465,11 @@ public class PluginManagerTest extends TestBase {
 		compilations.forEach((name, bytes) -> entries.put(name + ".class", bytes));
 		entries.put(ZipPluginLoader.SERVICE_PATH, pluginInternalName.replace('/', '.').getBytes(StandardCharsets.UTF_8));
 		entries.putAll(additionalEntries);
-		return ZipCreationUtils.createZip(entries).raw();
+
+		Map<String, MemorySegment> mapped = entries.entrySet().stream()
+				.collect(Collectors.toMap(Map.Entry::getKey, v -> MemorySegment.ofArray(v.getValue())));
+
+		return ZipCreationUtils.createZip(mapped).toArray(ValueLayout.JAVA_BYTE);
 	}
 
 	private static CompilerResult compilePluginSources(String pluginInternalName, Map<String, String> classSources,

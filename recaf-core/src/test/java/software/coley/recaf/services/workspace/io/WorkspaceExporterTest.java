@@ -10,12 +10,13 @@ import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.test.dummy.HelloWorld;
 import software.coley.recaf.util.ZipCreationUtils;
 import software.coley.recaf.util.io.ByteSources;
-import software.coley.recaf.util.io.LargeByteArray;
 import software.coley.recaf.workspace.model.BasicWorkspace;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.io.IOException;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -53,16 +54,16 @@ class WorkspaceExporterTest {
 
 	private static void testExportDoesNotTamperResourceModel(WorkspaceOutputType outputType) throws IOException {
 		// Create test ZIP in memory
-		byte[] embeddedZipBytes = ZipCreationUtils.createSingleEntryZip("inside.txt", new byte[0]).raw();
+		var embeddedZipBytes = ZipCreationUtils.createSingleEntryZip("inside.txt", new byte[0]);
 		String helloWorldPath = HelloWorld.class.getName().replace(".", "/");
-		byte[] helloWorldBytes = TestClassUtils.fromRuntimeClass(HelloWorld.class).getBytecode();
+		var helloWorldBytes = MemorySegment.ofArray(TestClassUtils.fromRuntimeClass(HelloWorld.class).getBytecode());
 		byte[] targetZipBytes = ZipCreationUtils.builder()
 				.add(helloWorldPath + ".class", helloWorldBytes)
 				.add(JarFileInfo.MULTI_RELEASE_PREFIX + "9/" + helloWorldPath + ".class", helloWorldBytes)
-				.add("hello.txt", "hello world".getBytes(StandardCharsets.UTF_8))
+				.add("hello.txt", MemorySegment.ofArray("hello world".getBytes(StandardCharsets.UTF_8)))
 				.add("test.zip", embeddedZipBytes)
 				.bytes()
-				.raw();
+				.toArray(ValueLayout.JAVA_BYTE);
 
 		// Workspace sourced from ZIP
 		WorkspaceResource targetResource = importer.importResource(ByteSources.wrap(targetZipBytes));
@@ -130,12 +131,17 @@ class WorkspaceExporterTest {
 			}
 
 			@Override
-			public void write(@Nonnull LargeByteArray bytes) {
+			public void write(@Nonnull MemorySegment data) {
 				throw new RuntimeException("Should not be invoked in directory output type");
 			}
 
 			@Override
 			public void writeRelative(@Nonnull String relative, @Nonnull byte[] bytes) {
+				paths.add(relative);
+			}
+
+			@Override
+			public void writeRelative(@Nonnull String relative, @Nonnull MemorySegment bytes) {
 				paths.add(relative);
 			}
 
@@ -166,12 +172,17 @@ class WorkspaceExporterTest {
 			}
 
 			@Override
-			public void write(@Nonnull LargeByteArray bytes) {
+			public void write(@Nonnull MemorySegment data) {
 				throw new RuntimeException("Should not be invoked in directory output type");
 			}
 
 			@Override
 			public void writeRelative(@Nonnull String relative, @Nonnull byte[] bytes) {
+				paths.add(relative);
+			}
+
+			@Override
+			public void writeRelative(@Nonnull String relative, @Nonnull MemorySegment bytes) {
 				paths.add(relative);
 			}
 
@@ -201,7 +212,7 @@ class WorkspaceExporterTest {
 		// Export it, and the junk should still be in the front, and the zip should still be in the back
 		ByteArrayWorkspaceExportConsumer bytesExport = new ByteArrayWorkspaceExportConsumer();
 		new WorkspaceExportOptions(WorkspaceOutputType.FILE, bytesExport).create().export(workspace);
-		byte[] output = bytesExport.getOutput().toByteArray().raw();
+		var output = bytesExport.getOutput().toMemorySegment().toArray(ValueLayout.JAVA_BYTE);
 
 		// Verify the junk is still in the front of the output.
 		assertNotNull(output, "Failed to export workspace to archive");
@@ -233,7 +244,7 @@ class WorkspaceExporterTest {
 		// Export it as a file.
 		ByteArrayWorkspaceExportConsumer bytesExport = new ByteArrayWorkspaceExportConsumer();
 		new WorkspaceExportOptions(WorkspaceOutputType.FILE, bytesExport).create().export(workspace);
-		byte[] output = bytesExport.getOutput().toByteArray().raw();
+		byte[] output = bytesExport.getOutput().toMemorySegment().toArray(ValueLayout.JAVA_BYTE);
 
 		// Verify the contents are the exact same. Because it's not an archive we should not be
 		// exporting it back bundled inside an archive.

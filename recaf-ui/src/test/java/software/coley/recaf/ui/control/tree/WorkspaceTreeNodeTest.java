@@ -54,6 +54,8 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResourceBuilder;
 
 import java.io.IOException;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -510,7 +512,7 @@ class WorkspaceTreeNodeTest {
 	void multipleVersionedPaths() throws Exception {
 		String classPath = HelloWorld.class.getName().replace(".", "/");
 		String classPackage = classPath.substring(0, classPath.lastIndexOf('/'));
-		byte[] classBytes = TestClassUtils.fromRuntimeClass(HelloWorld.class).getBytecode();
+		var classBytes = MemorySegment.ofArray(TestClassUtils.fromRuntimeClass(HelloWorld.class).getBytecode());
 
 		// Create JAR with 'META-INF/versions/<dummyversion>/<dummypackage>/HelloWorld.class' for multiple versions.
 		byte[] zipBytes = ZipCreationUtils.builder()
@@ -521,7 +523,7 @@ class WorkspaceTreeNodeTest {
 				.add(JarFileInfo.MULTI_RELEASE_PREFIX + "21/" + classPath + ".class", classBytes)
 				.add(JarFileInfo.MULTI_RELEASE_PREFIX + "25/" + classPath + ".class", classBytes)
 				.bytes()
-				.raw();
+				.toArray(ValueLayout.JAVA_BYTE);
 		ByteSource zipSource = ByteSources.wrap(zipBytes);
 
 		// Build the workspace and validate the versioned bundles exist.

@@ -1,38 +1,32 @@
 package software.coley.recaf.util.io;
 
-import java.io.IOException;
 import java.io.OutputStream;
-import java.util.ArrayList;
+import java.lang.foreign.MemorySegment;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 
+import software.coley.recaf.util.MemorySegmentUtil;
+
 public class LargeOutputStream extends OutputStream {
-    private final List<byte[]> data = new ArrayList<>();
+    private final List<byte[]> data = new LinkedList<>();
 
     @Override
-    public void write(int b) throws IOException {
-        var x = new byte[1];
-        x[0] = (byte) b;
-        this.data.add(x);
+    public void write(int b) {
+        this.data.add(new byte[] { (byte) b });
     }
 
     @Override
-    public void write(byte[] b) throws IOException {
+    public void write(byte[] b) {
         this.data.add(b);
     }
 
     @Override
-    public void write(byte[] b, int off, int len) throws IOException {
+    public void write(byte[] b, int off, int len) {
         this.data.add(Arrays.copyOfRange(b, off, off + len));
     }
 
-    public LargeByteArray toByteArray() {
-        return LargeByteArray.from(this.data);
-    }
-
-    public void write(LargeByteArray b) throws IOException {
-        for (var chunk : b.data()) {
-            this.data.add(chunk);
-        }
+    public MemorySegment toMemorySegment() {
+        return MemorySegmentUtil.from(this.data);
     }
 }

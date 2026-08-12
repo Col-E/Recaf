@@ -1,10 +1,11 @@
 package software.coley.recaf.services.workspace.io;
 
 import jakarta.annotation.Nonnull;
-import software.coley.recaf.util.io.LargeByteArray;
+import software.coley.recaf.util.MemorySegmentUtil;
 import software.coley.recaf.util.io.LargeOutputStream;
 
 import java.io.IOException;
+import java.lang.foreign.MemorySegment;
 
 /**
  * Export consumer to write to a {@code LargeOutputStream}. Only supports {@link WorkspaceOutputType#FILE}.
@@ -20,12 +21,19 @@ public class ByteArrayWorkspaceExportConsumer implements WorkspaceExportConsumer
 	}
 
 	@Override
-	public void write(@Nonnull LargeByteArray data) throws IOException {
-		output.write(data);
+	public void write(@Nonnull MemorySegment data) throws IOException {
+		for (var chunk : MemorySegmentUtil.toChunks(data)) {
+			output.write(chunk);
+		}
 	}
 
 	@Override
 	public void writeRelative(@Nonnull String relative, @Nonnull byte[] bytes) {
+		throw new IllegalStateException("Directory export not supported in byte-array export consumer");
+	}
+
+	@Override
+	public void writeRelative(@Nonnull String relative, @Nonnull MemorySegment bytes) {
 		throw new IllegalStateException("Directory export not supported in byte-array export consumer");
 	}
 

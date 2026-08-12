@@ -1,9 +1,9 @@
 package software.coley.recaf.services.workspace.io;
 
 import jakarta.annotation.Nonnull;
-import software.coley.recaf.util.io.LargeByteArray;
 
 import java.io.IOException;
+import java.lang.foreign.MemorySegment;
 
 /**
  * Outline of IO writing for {@link WorkspaceExporter} output.
@@ -22,8 +22,7 @@ public interface WorkspaceExportConsumer {
 	 * 		When the content cannot be written to.
 	 */
 	void write(@Nonnull byte[] bytes) throws IOException;
-
-	void write(@Nonnull LargeByteArray data) throws IOException;
+	void write(@Nonnull MemorySegment data) throws IOException;
 
 	/**
 	 * Called when writing content to a relative location based on the implementation.
@@ -38,6 +37,7 @@ public interface WorkspaceExportConsumer {
 	 * 		When the content cannot be written to.
 	 */
 	void writeRelative(@Nonnull String relative, @Nonnull byte[] bytes) throws IOException;
+	void writeRelative(@Nonnull String relative, @Nonnull MemorySegment data) throws IOException;
 
 	/**
 	 * Called when the export process is completed.

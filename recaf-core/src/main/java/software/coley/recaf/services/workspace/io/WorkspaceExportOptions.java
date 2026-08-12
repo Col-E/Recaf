@@ -34,6 +34,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.foreign.MemorySegment;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -110,7 +111,7 @@ public class WorkspaceExportOptions {
 	 * Basic implementation of {@link WorkspaceExporter} that pulls from the options defined here.
 	 */
 	private class WorkspaceExporterImpl implements WorkspaceExporter {
-		private final Map<String, byte[]> contents = new TreeMap<>();
+		private final Map<String, MemorySegment> contents = new TreeMap<>();
 		private final Map<String, Integer> compression = new HashMap<>();
 		private final Map<String, String> comments = new HashMap<>();
 		private final Map<String, Long> modifyTimes = new HashMap<>();
@@ -129,7 +130,7 @@ public class WorkspaceExportOptions {
 					if (contents.size() == 1 &&
 							workspace.getPrimaryResource() instanceof WorkspaceFileResource primaryFileResource &&
 							!(primaryFileResource.getFileInfo() instanceof ZipFileInfo)) {
-						byte[] data = contents.values().iterator().next();
+						var data = contents.values().iterator().next();
 						if (prefix != null)
 							consumer.write(prefix);
 						consumer.write(data);
@@ -167,10 +168,10 @@ public class WorkspaceExportOptions {
 					consumer.commit();
 					break;
 				case DIRECTORY:
-					for (Map.Entry<String, byte[]> entry : contents.entrySet()) {
+					for (var entry : contents.entrySet()) {
 						// Write everything relative to the path
-						String relativePath = entry.getKey();
-						byte[] content = entry.getValue();
+						var relativePath = entry.getKey();
+						var content = entry.getValue();
 						consumer.writeRelative(relativePath, content);
 					}
 					consumer.commit();
@@ -206,7 +207,7 @@ public class WorkspaceExportOptions {
 		 * @param resource
 		 * 		Resource to pull values from.
 		 */
-		private void mapInto(@Nonnull Map<String, byte[]> map, @Nonnull WorkspaceResource resource) {
+		private void mapInto(@Nonnull Map<String, MemorySegment> map, @Nonnull WorkspaceResource resource) {
 			// Place classes into map
 			resource.jvmClassBundleStream().forEach(bundle -> {
 				for (JvmClassInfo classInfo : bundle) {
@@ -221,7 +222,7 @@ public class WorkspaceExportOptions {
 					} else {
 						key = originalName;
 					}
-					map.put(key, classInfo.getBytecode());
+					map.put(key, MemorySegment.ofArray(classInfo.getBytecode()));
 					updateProperties(key, classInfo);
 				}
 			});
@@ -232,7 +233,7 @@ public class WorkspaceExportOptions {
 				for (Map.Entry<String, JvmClassInfo> classEntry : entry.getValue().entrySet()) {
 					String key = versionPath + classEntry.getKey() + ".class";
 					JvmClassInfo value = classEntry.getValue();
-					map.put(key, value.getBytecode());
+					map.put(key, MemorySegment.ofArray(value.getBytecode()));
 					updateProperties(key, value);
 				}
 			}
@@ -250,7 +251,7 @@ public class WorkspaceExportOptions {
 				try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
 					DexHeader.CODEC.write(header, output);
 					output.pipe(baos);
-					map.put(dexName, baos.toByteArray());
+					map.put(dexName, MemorySegment.ofArray(baos.toByteArray()));
 
 					// TODO: Also want to pull file properties from the original dex too
 					//  - updateProperties(dexName, bundle.getOriginalDexInfoOrSomething);
@@ -263,7 +264,7 @@ public class WorkspaceExportOptions {
 
 			// Place files into map
 			for (FileInfo fileInfo : resource.getFileBundle()) {
-				map.put(fileInfo.getName(), fileInfo.getRawContent().rawToBeReplaced());
+				map.put(fileInfo.getName(), fileInfo.getRawContent().toMemorySegment());
 				updateProperties(fileInfo.getName(), fileInfo);
 			}
 
@@ -271,9 +272,9 @@ public class WorkspaceExportOptions {
 			for (Map.Entry<String, WorkspaceFileResource> entry : resource.getEmbeddedResources().entrySet()) {
 				String embeddedFilePath = entry.getKey();
 				WorkspaceFileResource embeddedResource = entry.getValue();
-				Map<String, byte[]> embeddedMap = new TreeMap<>();
+				Map<String, MemorySegment> embeddedMap = new TreeMap<>();
 				mapInto(embeddedMap, embeddedResource);
-				byte[] embeddedBytes = Unchecked.get(() -> ZipCreationUtils.createZip(embeddedMap).rawToBeReplaced());
+				var embeddedBytes = Unchecked.get(() -> ZipCreationUtils.createZip(embeddedMap));
 				map.put(embeddedFilePath, embeddedBytes);
 				FileInfo embeddedFile = embeddedResource.getFileInfo();
 				updateProperties(embeddedFilePath, embeddedFile);
