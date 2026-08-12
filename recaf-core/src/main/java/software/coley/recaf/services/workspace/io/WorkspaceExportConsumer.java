@@ -1,6 +1,7 @@
 package software.coley.recaf.services.workspace.io;
 
 import jakarta.annotation.Nonnull;
+import software.coley.recaf.util.io.LargeByteArray;
 
 import java.io.IOException;
 
@@ -21,6 +22,8 @@ public interface WorkspaceExportConsumer {
 	 * 		When the content cannot be written to.
 	 */
 	void write(@Nonnull byte[] bytes) throws IOException;
+
+	void write(@Nonnull LargeByteArray data) throws IOException;
 
 	/**
 	 * Called when writing content to a relative location based on the implementation.

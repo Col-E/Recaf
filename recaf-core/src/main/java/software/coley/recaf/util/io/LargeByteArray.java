@@ -94,7 +94,7 @@ public class LargeByteArray {
 			System.arraycopy(a, 0, combined, 0, a.length);
 			System.arraycopy(b, 0, combined, a.length, b.length);
 
-			if (ByteHeaderUtil.match(combined, pattern)) {
+			if (ByteHeaderUtil.matchAtAnyOffset(combined, pattern)) {
 				return true;
 			}
 			a = Arrays.copyOfRange(b, b.length - pattern.length, b.length);
@@ -155,9 +155,9 @@ public class LargeByteArray {
 		return hasher.hash();
 	}
 
-	public Path write(Path path) throws IOException {
-		try (FileChannel channel = FileChannel.open(path, StandardOpenOption.CREATE, StandardOpenOption.WRITE,
-				StandardOpenOption.TRUNCATE_EXISTING)) {
+	public Path write(Path path, boolean append) throws IOException {
+		var option = append ? StandardOpenOption.APPEND : StandardOpenOption.TRUNCATE_EXISTING;
+		try (FileChannel channel = FileChannel.open(path, StandardOpenOption.CREATE, StandardOpenOption.WRITE, option)) {
 			for (var chunk : this.data) {
 				channel.write(ByteBuffer.wrap(chunk));
 			}
@@ -181,5 +181,9 @@ public class LargeByteArray {
 
 		this.data.clear();
 		this.data.add(next);
+	}
+
+	protected List<byte[]> data() {
+		return this.data;
 	}
 }

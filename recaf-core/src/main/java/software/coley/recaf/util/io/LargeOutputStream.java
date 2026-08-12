@@ -29,4 +29,10 @@ public class LargeOutputStream extends OutputStream {
     public LargeByteArray toByteArray() {
         return LargeByteArray.from(this.data);
     }
+
+    public void write(LargeByteArray b) throws IOException {
+        for (var chunk : b.data()) {
+            this.data.add(chunk);
+        }
+    }
 }

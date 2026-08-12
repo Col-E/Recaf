@@ -1,6 +1,7 @@
 package software.coley.recaf.services.workspace.io;
 
 import jakarta.annotation.Nonnull;
+import software.coley.recaf.util.io.LargeByteArray;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -31,6 +32,16 @@ public class PathWorkspaceExportConsumer implements WorkspaceExportConsumer {
 			firstSingleWrite = false;
 		} else {
 			Files.write(path, bytes, StandardOpenOption.APPEND);
+		}
+	}
+
+	@Override
+	public void write(@Nonnull LargeByteArray data) throws IOException {
+		if (firstSingleWrite) {
+			data.write(path, false);
+			firstSingleWrite = false;
+		} else {
+			data.write(path, true);
 		}
 	}
 

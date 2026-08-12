@@ -239,7 +239,7 @@ public class PathExportingManager {
 		// Write to path.
 		try {
 			Path exportPath = selectedPath.toPath();
-			fileInfo.getRawContent().write(exportPath);
+			fileInfo.getRawContent().write(exportPath, false);
 		} catch (IOException ex) {
 			logger.error("Failed to export file to path '{}'", selectedPath, ex);
 			ErrorDialogs.show(

@@ -10,6 +10,7 @@ import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.test.dummy.HelloWorld;
 import software.coley.recaf.util.ZipCreationUtils;
 import software.coley.recaf.util.io.ByteSources;
+import software.coley.recaf.util.io.LargeByteArray;
 import software.coley.recaf.workspace.model.BasicWorkspace;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -129,6 +130,11 @@ class WorkspaceExporterTest {
 			}
 
 			@Override
+			public void write(@Nonnull LargeByteArray bytes) {
+				throw new RuntimeException("Should not be invoked in directory output type");
+			}
+
+			@Override
 			public void writeRelative(@Nonnull String relative, @Nonnull byte[] bytes) {
 				paths.add(relative);
 			}
@@ -156,6 +162,11 @@ class WorkspaceExporterTest {
 		new WorkspaceExportOptions(WorkspaceOutputType.DIRECTORY, new WorkspaceExportConsumer() {
 			@Override
 			public void write(@Nonnull byte[] bytes) {
+				throw new RuntimeException("Should not be invoked in directory output type");
+			}
+
+			@Override
+			public void write(@Nonnull LargeByteArray bytes) {
 				throw new RuntimeException("Should not be invoked in directory output type");
 			}
 
@@ -190,7 +201,7 @@ class WorkspaceExporterTest {
 		// Export it, and the junk should still be in the front, and the zip should still be in the back
 		ByteArrayWorkspaceExportConsumer bytesExport = new ByteArrayWorkspaceExportConsumer();
 		new WorkspaceExportOptions(WorkspaceOutputType.FILE, bytesExport).create().export(workspace);
-		byte[] output = bytesExport.getOutput();
+		byte[] output = bytesExport.getOutput().toByteArray().raw();
 
 		// Verify the junk is still in the front of the output.
 		assertNotNull(output, "Failed to export workspace to archive");
@@ -222,7 +233,7 @@ class WorkspaceExporterTest {
 		// Export it as a file.
 		ByteArrayWorkspaceExportConsumer bytesExport = new ByteArrayWorkspaceExportConsumer();
 		new WorkspaceExportOptions(WorkspaceOutputType.FILE, bytesExport).create().export(workspace);
-		byte[] output = bytesExport.getOutput();
+		byte[] output = bytesExport.getOutput().toByteArray().raw();
 
 		// Verify the contents are the exact same. Because it's not an archive we should not be
 		// exporting it back bundled inside an archive.

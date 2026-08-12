@@ -1,9 +1,7 @@
 package software.coley.recaf.services.workspace.io;
 
 import jakarta.annotation.Nonnull;
-import me.darknet.dex.codecs.DexMapCodec;
 import me.darknet.dex.file.DexHeader;
-import me.darknet.dex.file.DexMap;
 import me.darknet.dex.file.DexMapBuilder;
 import me.darknet.dex.io.Output;
 import me.darknet.dex.tree.DexFile;
@@ -36,7 +34,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -163,9 +160,9 @@ public class WorkspaceExportOptions {
 					// Write buffer to path
 					if (prefix != null) {
 						consumer.write(prefix);
-						consumer.write(zipBuilder.bytes().rawToBeReplaced());
+						consumer.write(zipBuilder.bytes());
 					} else {
-						consumer.write(zipBuilder.bytes().rawToBeReplaced());
+						consumer.write(zipBuilder.bytes());
 					}
 					consumer.commit();
 					break;
