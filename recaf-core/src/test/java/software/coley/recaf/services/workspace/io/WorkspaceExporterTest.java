@@ -52,7 +52,7 @@ class WorkspaceExporterTest {
 
 	private static void testExportDoesNotTamperResourceModel(WorkspaceOutputType outputType) throws IOException {
 		// Create test ZIP in memory
-		byte[] embeddedZipBytes = ZipCreationUtils.createSingleEntryZip("inside.txt", new byte[0]);
+		byte[] embeddedZipBytes = ZipCreationUtils.createSingleEntryZip("inside.txt", new byte[0]).raw();
 		String helloWorldPath = HelloWorld.class.getName().replace(".", "/");
 		byte[] helloWorldBytes = TestClassUtils.fromRuntimeClass(HelloWorld.class).getBytecode();
 		byte[] targetZipBytes = ZipCreationUtils.builder()
@@ -60,7 +60,8 @@ class WorkspaceExporterTest {
 				.add(JarFileInfo.MULTI_RELEASE_PREFIX + "9/" + helloWorldPath + ".class", helloWorldBytes)
 				.add("hello.txt", "hello world".getBytes(StandardCharsets.UTF_8))
 				.add("test.zip", embeddedZipBytes)
-				.bytes();
+				.bytes()
+				.raw();
 
 		// Workspace sourced from ZIP
 		WorkspaceResource targetResource = importer.importResource(ByteSources.wrap(targetZipBytes));

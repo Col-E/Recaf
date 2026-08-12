@@ -1,9 +1,6 @@
 package software.coley.recaf.util.io;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
@@ -52,6 +49,16 @@ public class LargeByteArray {
 		var tmp = new ArrayList<byte[]>();
 		tmp.add(data);
 		return new LargeByteArray(tmp);
+	}
+
+	public static LargeByteArray from(List<byte[]> data) {
+		if (data.isEmpty()) {
+			data.add(new byte[0]);
+		}
+
+		var tmp = new LargeByteArray(data);
+		tmp.optimize();
+		return tmp;
 	}
 
 	/**
@@ -157,5 +164,22 @@ public class LargeByteArray {
 		}
 
 		return path;
+	}
+
+	private void optimize() {
+		if (this.data.size() == 1) return;
+
+		var size = this.size();
+		if (size > ChunkSize) return;
+
+		var next = new byte[(int) size];
+		var offset = 0;
+		for (var chunk : this.data) {
+			System.arraycopy(chunk, 0, next, offset, chunk.length);
+			offset += chunk.length;
+		}
+
+		this.data.clear();
+		this.data.add(next);
 	}
 }

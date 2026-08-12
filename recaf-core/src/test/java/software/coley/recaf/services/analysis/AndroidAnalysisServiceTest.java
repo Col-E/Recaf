@@ -7,6 +7,7 @@ import software.coley.recaf.services.analysis.android.AndroidAnalysisService;
 import software.coley.recaf.services.analysis.android.AndroidPermissionDetails;
 import software.coley.recaf.services.analysis.android.AndroidPermissionEntry;
 import software.coley.recaf.test.TestBase;
+import software.coley.recaf.util.io.LargeByteArray;
 import software.coley.recaf.workspace.model.BasicWorkspace;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.FileBundle;
@@ -50,7 +51,7 @@ class AndroidAnalysisServiceTest extends TestBase {
 		// If the input is malformed such that we have a manifest but there is no string pool, we should also safely return.
 		BinaryXmlFileInfo manifest = mock(BinaryXmlFileInfo.class);
 		when(manifest.getName()).thenReturn("AndroidManifest.xml");
-		when(manifest.getRawContent().raw()).thenReturn(new byte[0]);
+		when(manifest.getRawContent()).thenReturn(LargeByteArray.from(new byte[0]));
 		FileBundle files = fromFiles(manifest);
 		WorkspaceResource primary = new WorkspaceResourceBuilder().withFileBundle(files).build();
 		Workspace workspace = new BasicWorkspace(primary);

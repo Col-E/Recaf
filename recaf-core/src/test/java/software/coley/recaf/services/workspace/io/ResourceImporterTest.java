@@ -110,7 +110,7 @@ class ResourceImporterTest {
 		map.put(JarFileInfo.MULTI_RELEASE_PREFIX + "9/" + helloWorldPath + ".class", helloWorldBytes);
 		map.put(JarFileInfo.MULTI_RELEASE_PREFIX + "10/" + helloWorldPath + ".class", helloWorldBytes);
 		map.put(JarFileInfo.MULTI_RELEASE_PREFIX + "11/" + helloWorldPath + ".class", helloWorldBytes);
-		byte[] zipBytes = ZipCreationUtils.createZip(map);
+		byte[] zipBytes = ZipCreationUtils.createZip(map).raw();
 		ByteSource zipSource = ByteSources.wrap(zipBytes);
 		WorkspaceResource resource = importer.importResource(zipSource);
 
@@ -141,7 +141,7 @@ class ResourceImporterTest {
 		Map<String, byte[]> map = new LinkedHashMap<>();
 		map.put(validName, helloWorldBytes);
 		map.put(invalidName, helloWorldBytes);
-		byte[] zipBytes = ZipCreationUtils.createZip(map);
+		byte[] zipBytes = ZipCreationUtils.createZip(map).raw();
 		ByteSource zipSource = ByteSources.wrap(zipBytes);
 		WorkspaceResource resource = importer.importResource(zipSource);
 
@@ -164,7 +164,7 @@ class ResourceImporterTest {
 		// Create JAR with 'HelloWorld' declared but the class file has a trailing '/' in the entry name.
 		Map<String, byte[]> map = new LinkedHashMap<>();
 		map.put(helloWorldPath + ".class/", helloWorldBytes);
-		byte[] zipBytes = ZipCreationUtils.createZip(map);
+		byte[] zipBytes = ZipCreationUtils.createZip(map).raw();
 		ByteSource zipSource = ByteSources.wrap(zipBytes);
 		WorkspaceResource resource = importer.importResource(zipSource);
 
@@ -190,7 +190,8 @@ class ResourceImporterTest {
 		byte[] zipBytes = ZipCreationUtils.builder()
 				.add(helloWorldPath + ".class", emptyBytes)
 				.add(helloWorldPath + ".class", helloWorldBytes)
-				.bytes();
+				.bytes()
+				.raw();
 		ByteSource zipSource = ByteSources.wrap(zipBytes);
 		WorkspaceResource resource = importer.importResource(zipSource);
 
@@ -216,7 +217,8 @@ class ResourceImporterTest {
 		byte[] zipBytes = ZipCreationUtils.builder()
 				.add(JarFileInfo.MULTI_RELEASE_PREFIX + "9/" + helloWorldPath + ".class", emptyBytes)
 				.add(JarFileInfo.MULTI_RELEASE_PREFIX + "9/" + helloWorldPath + ".class", helloWorldBytes)
-				.bytes();
+				.bytes()
+				.raw();
 		ByteSource zipSource = ByteSources.wrap(zipBytes);
 		WorkspaceResource resource = importer.importResource(zipSource);
 
@@ -246,7 +248,8 @@ class ResourceImporterTest {
 		byte[] zipBytes = ZipCreationUtils.builder()
 				.add(path + ".class", new byte[0])
 				.add(path + ".class", bytes)
-				.bytes();
+				.bytes()
+				.raw();
 		ByteSource zipSource = ByteSources.wrap(zipBytes);
 		WorkspaceResource resource = importer.importResource(zipSource);
 
@@ -273,12 +276,14 @@ class ResourceImporterTest {
 				.add(helloWorldPath + ".class", helloWorldBytes)
 				.add("software/coley/B.class", helloWorldBytes)
 				.add("B.class", helloWorldBytes)
-				.bytes();
+				.bytes()
+				.raw();
 		byte[] zipClassLast = ZipCreationUtils.builder()
 				.add("software/coley/B.class", helloWorldBytes)
 				.add("B.class", helloWorldBytes)
 				.add(helloWorldPath + ".class", helloWorldBytes)
-				.bytes();
+				.bytes()
+				.raw();
 
 		// Both cases should have the same outcome
 		for (byte[] zipBytes : Arrays.asList(zipClassFirst, zipClassLast)) {
@@ -312,12 +317,14 @@ class ResourceImporterTest {
 				.add(JarFileInfo.MULTI_RELEASE_PREFIX + "9/" + helloWorldPath + ".class", helloWorldBytes)
 				.add(JarFileInfo.MULTI_RELEASE_PREFIX + "9/B.class", helloWorldBytes)
 				.add(JarFileInfo.MULTI_RELEASE_PREFIX + "9/software/coley/B.class", helloWorldBytes)
-				.bytes();
+				.bytes()
+				.raw();
 		byte[] zipClassLast = ZipCreationUtils.builder()
 				.add(JarFileInfo.MULTI_RELEASE_PREFIX + "9/software/coley/B.class", helloWorldBytes)
 				.add(JarFileInfo.MULTI_RELEASE_PREFIX + "9/B.class", helloWorldBytes)
 				.add(JarFileInfo.MULTI_RELEASE_PREFIX + "9/" + helloWorldPath + ".class", helloWorldBytes)
-				.bytes();
+				.bytes()
+				.raw();
 
 		// Both cases should have the same outcome
 		for (byte[] zipBytes : Arrays.asList(zipClassFirst, zipClassLast)) {
@@ -345,8 +352,8 @@ class ResourceImporterTest {
 		String insideZipName = "inner.zip";
 		String innerDataName = "data";
 		byte[] innerData = {1, 2, 3};
-		byte[] insideZipBytes = ZipCreationUtils.createSingleEntryZip(innerDataName, innerData);
-		byte[] outsideZipBytes = ZipCreationUtils.createSingleEntryZip(insideZipName, insideZipBytes);
+		byte[] insideZipBytes = ZipCreationUtils.createSingleEntryZip(innerDataName, innerData).raw();
+		byte[] outsideZipBytes = ZipCreationUtils.createSingleEntryZip(insideZipName, insideZipBytes).raw();
 		ByteSource classSource = ByteSources.wrap(outsideZipBytes);
 		WorkspaceResource resource = importer.importResource(classSource);
 
@@ -377,8 +384,8 @@ class ResourceImporterTest {
 		map.put("hello.txt", "Hello world".getBytes(StandardCharsets.UTF_8));
 		map.put(HelloWorld.class.getName().replace(".", "/") + ".class",
 				TestClassUtils.fromRuntimeClass(HelloWorld.class).getBytecode());
-		map.put("data.zip", ZipCreationUtils.createSingleEntryZip("foo", new byte[]{1, 2, 3}));
-		byte[] zipBytes = ZipCreationUtils.createZip(map);
+		map.put("data.zip", ZipCreationUtils.createSingleEntryZip("foo", new byte[]{1, 2, 3}).raw());
+		byte[] zipBytes = ZipCreationUtils.createZip(map).raw();
 
 		// Write to disk temporarily for test duration
 		File tempFile = File.createTempFile("recaf", "test.zip");
@@ -407,7 +414,8 @@ class ResourceImporterTest {
 				.add("com/example/", empty)
 				.add("com/example/application/", empty)
 				.add("com/example/application/Config.txt", fileBytes)
-				.bytes();
+				.bytes()
+				.raw();
 		WorkspaceResource resource = importer.importResource(ByteSources.wrap(zipBytes));
 
 		// Should have just ONE file in the file bundle
@@ -438,7 +446,8 @@ class ResourceImporterTest {
 		byte[] data = new byte[]{1, 2, 3, 4, 5};
 		byte[] zipBytes = ZipCreationUtils.builder()
 				.add(name, data, false, comment, timeCreate, timeModify, timeAccess)
-				.bytes();
+				.bytes()
+				.raw();
 		WorkspaceResource resource = importer.importResource(ByteSources.wrap(zipBytes));
 
 		// Should have just ONE file in the file bundle
@@ -464,7 +473,7 @@ class ResourceImporterTest {
 	@Test
 	void testImportFileWithExeHeaderAsZipIfZipContentsAreValid() throws IOException {
 		// Create virtual ZIP with single 'Hello.txt' and suffix the file with a PE header.
-		byte[] zipFileBytes = ZipCreationUtils.createSingleEntryZip("Hello.txt", "Hello world".getBytes(StandardCharsets.UTF_8));
+		byte[] zipFileBytes = ZipCreationUtils.createSingleEntryZip("Hello.txt", "Hello world".getBytes(StandardCharsets.UTF_8)).raw();
 		byte[] inputBytes = new byte[4096];
 		inputBytes[0] = 0x4D;
 		inputBytes[1] = 0x5A;
@@ -499,7 +508,7 @@ class ResourceImporterTest {
 			for (int i = 0; i < 2048; i++)
 				output.write(zeros);
 			output.closeEntry();
-		});
+		}).raw();
 
 		WorkspaceResource resource = limitedImporter.importResource(ByteSources.wrap(zipBytes));
 		assertEquals(1, resource.getJvmClassBundle().size(), "Verifier-valid class should still be imported");
@@ -525,7 +534,7 @@ class ResourceImporterTest {
 			for (int i = 0; i < 2048; i++)
 				output.write(zeros);
 			output.closeEntry();
-		});
+		}).raw();
 
 		// Lie about the uncompressed size in both places where ZIP records it. The LFH stores the four-byte size
 		// at offset 22, while the CEN header stores it at offset 24. Declaring one byte makes the metadata precheck

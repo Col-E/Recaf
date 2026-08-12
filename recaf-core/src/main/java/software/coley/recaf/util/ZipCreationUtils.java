@@ -5,8 +5,9 @@ import jakarta.annotation.Nullable;
 import org.slf4j.Logger;
 import software.coley.collections.func.UncheckedConsumer;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.util.io.LargeByteArray;
+import software.coley.recaf.util.io.LargeOutputStream;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.file.attribute.FileTime;
@@ -36,7 +37,7 @@ public class ZipCreationUtils {
 	 * @throws IOException
 	 * 		When the content cannot be written.
 	 */
-	public static byte[] createSingleEntryZip(String name, byte[] content) throws IOException {
+	public static LargeByteArray createSingleEntryZip(String name, byte[] content) throws IOException {
 		return createZip(zos -> {
 			zos.putNextEntry(new ZipEntry(name));
 			zos.write(content);
@@ -53,7 +54,7 @@ public class ZipCreationUtils {
 	 * @throws IOException
 	 * 		When the content cannot be written.
 	 */
-	public static byte[] createZip(Map<String, byte[]> entryMap) throws IOException {
+	public static LargeByteArray createZip(Map<String, byte[]> entryMap) throws IOException {
 		return createZip(zos -> {
 			for (Map.Entry<String, byte[]> entry : entryMap.entrySet()) {
 				zos.putNextEntry(new ZipEntry(entry.getKey()));
@@ -72,8 +73,8 @@ public class ZipCreationUtils {
 	 * @throws IOException
 	 * 		When the action fails.
 	 */
-	public static byte[] createZip(UncheckedConsumer<ZipOutputStream> consumer) throws IOException {
-		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+	public static LargeByteArray createZip(UncheckedConsumer<ZipOutputStream> consumer) throws IOException {
+		var baos = new LargeOutputStream();
 		try (ZipOutputStream zos = new ZipOutputStream(baos)) {
 			consumer.accept(zos);
 		}
@@ -203,7 +204,7 @@ public class ZipCreationUtils {
 		 * 		When the content cannot be written.
 		 */
 		@Nonnull
-		public byte[] bytes() throws IOException {
+		public LargeByteArray bytes() throws IOException {
 			return createZip(zos -> {
 				Set<String> dirsVisited = new HashSet<>();
 				CRC32 crc = new CRC32();

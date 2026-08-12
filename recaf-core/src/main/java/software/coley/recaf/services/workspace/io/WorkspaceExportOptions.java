@@ -163,9 +163,9 @@ public class WorkspaceExportOptions {
 					// Write buffer to path
 					if (prefix != null) {
 						consumer.write(prefix);
-						consumer.write(zipBuilder.bytes());
+						consumer.write(zipBuilder.bytes().rawToBeReplaced());
 					} else {
-						consumer.write(zipBuilder.bytes());
+						consumer.write(zipBuilder.bytes().rawToBeReplaced());
 					}
 					consumer.commit();
 					break;
@@ -276,7 +276,7 @@ public class WorkspaceExportOptions {
 				WorkspaceFileResource embeddedResource = entry.getValue();
 				Map<String, byte[]> embeddedMap = new TreeMap<>();
 				mapInto(embeddedMap, embeddedResource);
-				byte[] embeddedBytes = Unchecked.get(() -> ZipCreationUtils.createZip(embeddedMap));
+				byte[] embeddedBytes = Unchecked.get(() -> ZipCreationUtils.createZip(embeddedMap).rawToBeReplaced());
 				map.put(embeddedFilePath, embeddedBytes);
 				FileInfo embeddedFile = embeddedResource.getFileInfo();
 				updateProperties(embeddedFilePath, embeddedFile);

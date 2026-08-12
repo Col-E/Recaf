@@ -520,7 +520,8 @@ class WorkspaceTreeNodeTest {
 				.add(JarFileInfo.MULTI_RELEASE_PREFIX + "16/" + classPath + ".class", classBytes)
 				.add(JarFileInfo.MULTI_RELEASE_PREFIX + "21/" + classPath + ".class", classBytes)
 				.add(JarFileInfo.MULTI_RELEASE_PREFIX + "25/" + classPath + ".class", classBytes)
-				.bytes();
+				.bytes()
+				.raw();
 		ByteSource zipSource = ByteSources.wrap(zipBytes);
 
 		// Build the workspace and validate the versioned bundles exist.

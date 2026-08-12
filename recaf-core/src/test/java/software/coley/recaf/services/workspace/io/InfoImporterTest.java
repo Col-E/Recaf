@@ -87,7 +87,7 @@ class InfoImporterTest {
 	@Test
 	void testImportZip() throws IOException {
 		// Create virtual ZIP with single 'Hello.txt'
-		byte[] zipFileBytes = ZipCreationUtils.createSingleEntryZip("Hello.txt", "Hello world".getBytes(StandardCharsets.UTF_8));
+		byte[] zipFileBytes = ZipCreationUtils.createSingleEntryZip("Hello.txt", "Hello world".getBytes(StandardCharsets.UTF_8)).raw();
 		ByteSource zipSource = ByteSources.wrap(zipFileBytes);
 
 		// We don't know the file name, so we can only assume it is a ZIP
@@ -113,7 +113,7 @@ class InfoImporterTest {
 	@Test
 	void testImportFileWithoutZipPrefixHasZipMarkerAssigned() throws IOException {
 		// Create virtual ZIP with single 'Hello.txt' and suffix the file with a PE header.
-		byte[] zipFileBytes = ZipCreationUtils.createSingleEntryZip("Hello.txt", "Hello world".getBytes(StandardCharsets.UTF_8));
+		byte[] zipFileBytes = ZipCreationUtils.createSingleEntryZip("Hello.txt", "Hello world".getBytes(StandardCharsets.UTF_8)).raw();
 		byte[] inputBytes = new byte[4096];
 		inputBytes[0] = 0x4D;
 		inputBytes[1] = 0x5A;

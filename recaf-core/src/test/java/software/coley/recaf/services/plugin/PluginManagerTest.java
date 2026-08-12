@@ -463,7 +463,7 @@ public class PluginManagerTest extends TestBase {
 		compilations.forEach((name, bytes) -> entries.put(name + ".class", bytes));
 		entries.put(ZipPluginLoader.SERVICE_PATH, pluginInternalName.replace('/', '.').getBytes(StandardCharsets.UTF_8));
 		entries.putAll(additionalEntries);
-		return ZipCreationUtils.createZip(entries);
+		return ZipCreationUtils.createZip(entries).raw();
 	}
 
 	private static CompilerResult compilePluginSources(String pluginInternalName, Map<String, String> classSources,
@@ -513,14 +513,14 @@ public class PluginManagerTest extends TestBase {
 		return javaSource(internalName, """
 				import software.coley.recaf.plugin.Plugin;
 				import software.coley.recaf.plugin.PluginInformation;
-				
+
 				%s
 				public class %s implements Plugin {
 					@Override
 					public void onEnable() {
 				%s
 					}
-				
+
 					@Override
 					public void onDisable() {
 				%s

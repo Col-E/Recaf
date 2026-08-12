@@ -167,7 +167,7 @@ public class DecompileAllPopup extends RecafStage {
 									inProgressProperty.setValue(false);
 									Path path = pathProperty.get();
 									try {
-										Files.write(path, builder.bytes());
+										builder.bytes().write(path);
 									} catch (IOException ex) {
 										logger.error("Failed to write archive of decompiled classes to '{}'", path, ex);
 									}
