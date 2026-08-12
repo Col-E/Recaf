@@ -29,6 +29,7 @@ import software.coley.recaf.util.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.lang.foreign.ValueLayout;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -93,7 +94,7 @@ public class ImagePane extends StackPane implements FileNavigable, UpdatableNavi
 			this.path = filePath;
 			FileInfo info = filePath.getValue();
 			if (info.isImageFile()) {
-				byte[] content = info.getRawContent().rawToBeReplaced();
+				byte[] content = info.getRawContent().toArray(ValueLayout.JAVA_BYTE);
 
 				Image image = null;
 				if ("ico".equals(info.getFileExtension()) && ByteHeaderUtil.match(content, ByteHeaderUtil.ICO)) {

@@ -30,12 +30,8 @@ public final class MemorySegmentDataSource implements ByteSource, AutoCloseable 
 
 	@Nonnull
 	@Override
-	public LargeByteArray readAll() throws IOException {
-		MemorySegment data = this.data;
-		if (data.byteSize() > Integer.MAX_VALUE - 8) {
-			throw new IOException("Too large content");
-		}
-		return LargeByteArray.from(data.toArray(ValueLayout.JAVA_BYTE));
+	public MemorySegment readAll() throws IOException {
+		return this.data;
 	}
 
 	@Nonnull

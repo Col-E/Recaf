@@ -20,7 +20,7 @@ public interface ByteSource {
 	 * 		If any I/O error occurs.
 	 */
 	@Nonnull
-	LargeByteArray readAll() throws IOException;
+	MemorySegment readAll() throws IOException;
 
 	/**
 	 * Peeks some amount of bytes

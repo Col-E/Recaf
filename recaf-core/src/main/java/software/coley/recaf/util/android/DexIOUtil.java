@@ -13,6 +13,7 @@ import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.BasicAndroidClassBundle;
 
 import java.io.IOException;
+import java.lang.foreign.ValueLayout;
 
 /**
  * Dex file reading and writing.
@@ -31,7 +32,7 @@ public class DexIOUtil {
 	 */
 	@Nonnull
 	public static AndroidClassBundle read(@Nonnull ByteSource source) throws IOException {
-		return read(source.readAll().raw());
+		return read(source.readAll().toArray(ValueLayout.JAVA_BYTE));
 	}
 
 	/**

@@ -60,6 +60,7 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResourceBuilder;
 import java.io.File;
 import java.io.IOException;
 import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
 import java.net.URI;
 import java.net.URL;
 import java.nio.file.FileVisitOption;
@@ -170,7 +171,7 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 		// Check for DEX file format.
 		if (readInfoAsFile instanceof DexFileInfo) {
 			String dexName = readInfoAsFile.getName();
-			AndroidClassBundle dexBundle = DexIOUtil.read(readInfoAsFile.getRawContent().raw());
+			AndroidClassBundle dexBundle = DexIOUtil.read(readInfoAsFile.getRawContent().toArray(ValueLayout.JAVA_BYTE));
 			return builder.withAndroidClassBundles(Map.of(dexName, dexBundle))
 					.build();
 		}
@@ -202,7 +203,7 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 
 		// Read ZIP
 		boolean isAndroid = zipInfo.getName().toLowerCase().endsWith(".apk");
-		ZipArchive archive = config.mapping().apply(source.readAll().toMemorySegment());
+		ZipArchive archive = config.mapping().apply(source.readAll());
 		ZipDecompressionLimiter decompressionLimiter = new ZipDecompressionLimiter(
 				config.getMaxZipEntrySize().getValue(),
 				config.getMaxZipTotalSize().getValue(),

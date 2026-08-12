@@ -94,7 +94,7 @@ class ResourceImporterTest {
 
 		// Validate file bundle content
 		FileInfo fileInfo = resource.getFileBundle().iterator().next();
-		assertArrayEquals(helloBytes, fileInfo.getRawContent().raw(), "Missing data compared to baseline input bytes");
+		assertArrayEquals(helloBytes, fileInfo.getRawContent().toArray(ValueLayout.JAVA_BYTE), "Missing data compared to baseline input bytes");
 	}
 
 	@Test
@@ -203,7 +203,7 @@ class ResourceImporterTest {
 
 		// Validate the version chosen is the last one
 		assertArrayEquals(helloWorldBytes.toArray(ValueLayout.JAVA_BYTE), resource.getJvmClassBundle().iterator().next().getBytecode());
-		assertArrayEquals(emptyBytes.toArray(ValueLayout.JAVA_BYTE), resource.getFileBundle().iterator().next().getRawContent().raw());
+		assertArrayEquals(emptyBytes.toArray(ValueLayout.JAVA_BYTE), resource.getFileBundle().iterator().next().getRawContent().toArray(ValueLayout.JAVA_BYTE));
 	}
 
 	@Test
@@ -230,7 +230,7 @@ class ResourceImporterTest {
 
 		// Validate the version chosen is the last one
 		assertArrayEquals(helloWorldBytes.toArray(ValueLayout.JAVA_BYTE), resource.getVersionedJvmClassBundles().get(9).iterator().next().getBytecode());
-		assertArrayEquals(emptyBytes.toArray(ValueLayout.JAVA_BYTE), resource.getFileBundle().iterator().next().getRawContent().raw());
+		assertArrayEquals(emptyBytes.toArray(ValueLayout.JAVA_BYTE), resource.getFileBundle().iterator().next().getRawContent().toArray(ValueLayout.JAVA_BYTE));
 	}
 
 	/**
@@ -261,7 +261,7 @@ class ResourceImporterTest {
 		assertEquals(0, resource.getEmbeddedResources().size());
 
 		// Validate the version chosen is the last one
-		assertArrayEquals(bytes.toArray(ValueLayout.JAVA_BYTE), resource.getFileBundle().iterator().next().getRawContent().raw());
+		assertArrayEquals(bytes.toArray(ValueLayout.JAVA_BYTE), resource.getFileBundle().iterator().next().getRawContent().toArray(ValueLayout.JAVA_BYTE));
 	}
 
 	@RepeatedTest(100)
@@ -371,7 +371,7 @@ class ResourceImporterTest {
 		FileInfo innerDotZip = insideZipResource.getFileBundle().get(innerDataName);
 		assertNotNull(innerDotZip);
 		assertEquals(innerDataName, innerDotZip.getName());
-		assertArrayEquals(innerData, innerDotZip.getRawContent().raw());
+		assertArrayEquals(innerData, innerDotZip.getRawContent().toArray(ValueLayout.JAVA_BYTE));
 	}
 
 	@Test
@@ -430,7 +430,7 @@ class ResourceImporterTest {
 
 		// Validate file bundle content
 		FileInfo fileInfo = resource.getFileBundle().iterator().next();
-		assertArrayEquals(fileBytes.toArray(ValueLayout.JAVA_BYTE), fileInfo.getRawContent().raw(), "Missing data compared to baseline input bytes");
+		assertArrayEquals(fileBytes.toArray(ValueLayout.JAVA_BYTE), fileInfo.getRawContent().toArray(ValueLayout.JAVA_BYTE), "Missing data compared to baseline input bytes");
 	}
 
 	@Test
@@ -462,7 +462,7 @@ class ResourceImporterTest {
 
 		// Validate file bundle content
 		FileInfo fileInfo = resource.getFileBundle().iterator().next();
-		assertArrayEquals(data.toArray(ValueLayout.JAVA_BYTE), fileInfo.getRawContent().raw(), "Missing data compared to baseline input bytes");
+		assertArrayEquals(data.toArray(ValueLayout.JAVA_BYTE), fileInfo.getRawContent().toArray(ValueLayout.JAVA_BYTE), "Missing data compared to baseline input bytes");
 		assertEquals(comment, ZipCommentProperty.get(fileInfo), "Missing comment");
 		assertEquals(timeCreate, ZipCreationTimeProperty.get(fileInfo), "Missing creation time");
 		assertEquals(timeModify, ZipModificationTimeProperty.get(fileInfo), "Missing modification time");

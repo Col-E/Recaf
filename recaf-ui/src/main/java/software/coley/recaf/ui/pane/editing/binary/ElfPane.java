@@ -24,6 +24,7 @@ import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.util.StringUtil;
+import software.coley.recaf.util.io.LargeInputStream;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -65,7 +66,7 @@ public class ElfPane extends BorderPane implements FileNavigable, UpdatableNavig
 
 	private void refresh() {
 		try {
-			ElfFile elf = ElfFile.from(path.getValue().getRawContent().rawToBeReplaced());
+			ElfFile elf = ElfFile.from(new LargeInputStream(path.getValue().getRawContent()));
 
 			TreeView<Object> tree = new TreeView<>();
 			tree.setShowRoot(false);

@@ -29,4 +29,12 @@ public class LargeOutputStream extends OutputStream {
 	public MemorySegment toMemorySegment() {
 		return MemorySegmentUtil.from(this.data);
 	}
+
+	public long size() {
+		long size = 0;
+		for (var chunk : this.data) {
+			size += chunk.length;
+		}
+		return size;
+	}
 }

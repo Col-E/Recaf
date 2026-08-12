@@ -8,8 +8,12 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+
+import com.google.common.hash.HashCode;
+import com.google.common.hash.HashFunction;
 
 public class MemorySegmentUtil {
 	private static int ChunkSize = 1024 * 1024 * 1024;
@@ -68,5 +72,54 @@ public class MemorySegmentUtil {
 			channel.add(chunk);
 		}
 		return channel;
+	}
+
+	public static HashCode hash(MemorySegment data, HashFunction fn) {
+		var hasher = fn.newHasher();
+		for (var chunk : toChunks(data)) {
+			hasher.putBytes(chunk);
+		}
+		return hasher.hash();
+	}
+
+	public static byte[] header(MemorySegment data) {
+		return data.asSlice(0, Math.min(data.byteSize(), 64)).toArray(ValueLayout.JAVA_BYTE);
+	}
+
+	public static boolean matchAtAnyOffset(MemorySegment data, int[] pattern) {
+		if (data.byteSize() < pattern.length) {
+			return false;
+		}
+
+		var a = new byte[0];
+		for (var b : toChunks(data)) {
+			var combined = new byte[a.length + b.length];
+			System.arraycopy(a, 0, combined, 0, a.length);
+			System.arraycopy(b, 0, combined, a.length, b.length);
+
+			if (ByteHeaderUtil.matchAtAnyOffset(combined, pattern)) {
+				return true;
+			}
+			a = Arrays.copyOfRange(b, b.length - pattern.length, b.length);
+		}
+
+		return false;
+	}
+
+	public static boolean equals(MemorySegment a, MemorySegment b) {
+		if (a.byteSize() != b.byteSize()) {
+			return false;
+		}
+
+		var chunkA = toChunks(a);
+		var chunkB = toChunks(b);
+
+		for (int i = 0; i < chunkA.size(); i++) {
+			if (!Arrays.equals(chunkA.get(i), chunkB.get(i))) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 }

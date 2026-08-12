@@ -1,9 +1,10 @@
 package software.coley.recaf.info;
 
+import java.lang.foreign.MemorySegment;
+
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import software.coley.recaf.info.builder.FileInfoBuilder;
-import software.coley.recaf.util.io.LargeByteArray;
 
 /**
  * Outline of a file.
@@ -23,7 +24,7 @@ public interface FileInfo extends Info {
 	 * @return Raw bytes of file content.
 	 */
 	@Nonnull
-	LargeByteArray getRawContent();
+	MemorySegment getRawContent();
 
 	/**
 	 * @return File extension of {@link #getName() the file name}, if any exists.

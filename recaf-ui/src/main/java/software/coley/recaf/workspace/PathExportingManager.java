@@ -28,6 +28,7 @@ import software.coley.recaf.util.FileChooserBuilder;
 import software.coley.recaf.util.IOUtil;
 import software.coley.recaf.util.Icons;
 import software.coley.recaf.util.Lang;
+import software.coley.recaf.util.MemorySegmentUtil;
 import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceDirectoryResource;
@@ -239,7 +240,7 @@ public class PathExportingManager {
 		// Write to path.
 		try {
 			Path exportPath = selectedPath.toPath();
-			fileInfo.getRawContent().write(exportPath, false);
+			MemorySegmentUtil.write(exportPath, fileInfo.getRawContent(), false);
 		} catch (IOException ex) {
 			logger.error("Failed to export file to path '{}'", selectedPath, ex);
 			ErrorDialogs.show(

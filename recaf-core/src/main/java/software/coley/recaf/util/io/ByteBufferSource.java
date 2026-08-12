@@ -25,7 +25,7 @@ public final class ByteBufferSource implements ByteSource {
 
 	@Nonnull
 	@Override
-	public LargeByteArray readAll() throws IOException {
+	public MemorySegment readAll() throws IOException {
 		return source.readAll();
 	}
 

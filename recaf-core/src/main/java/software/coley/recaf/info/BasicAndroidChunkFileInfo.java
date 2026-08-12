@@ -1,5 +1,7 @@
 package software.coley.recaf.info;
 
+import java.lang.foreign.ValueLayout;
+
 import com.google.devrel.gmscore.tools.apk.arsc.BinaryResourceFile;
 import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.builder.ChunkFileInfoBuilder;
@@ -24,7 +26,7 @@ public class BasicAndroidChunkFileInfo extends BasicFileInfo implements AndroidC
 	@Override
 	public BinaryResourceFile getChunkModel() {
 		if (resourceFile == null)
-			resourceFile = new BinaryResourceFile(getRawContent().rawToBeReplaced());
+			resourceFile = new BinaryResourceFile(getRawContent().toArray(ValueLayout.JAVA_BYTE));
 		return resourceFile;
 	}
 }

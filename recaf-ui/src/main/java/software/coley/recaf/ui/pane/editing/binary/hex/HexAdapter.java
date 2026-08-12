@@ -18,6 +18,7 @@ import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.workspace.model.bundle.FileBundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 
+import java.lang.foreign.ValueLayout;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -77,7 +78,7 @@ public class HexAdapter extends BorderPane implements UpdatableNavigable {
 	public void onUpdatePath(@Nonnull PathNode<?> path) {
 		if (path instanceof FilePathNode filePath) {
 			FileInfo fileInfo = filePath.getValue();
-			byte[] raw = fileInfo.getRawContent().rawToBeReplaced();
+			byte[] raw = fileInfo.getRawContent().toArray(ValueLayout.JAVA_BYTE);
 			if (editor.hasData()) {
 				editor.updateData(raw);
 			} else {

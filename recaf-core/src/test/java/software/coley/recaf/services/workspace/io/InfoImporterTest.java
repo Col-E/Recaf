@@ -19,6 +19,8 @@ import java.util.Collection;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 /**
@@ -97,7 +99,7 @@ class InfoImporterTest {
 		assertTrue(read.asFile().isZipFile());
 		assertEquals(BasicZipFileInfo.class, read.getClass());
 		ZipFileInfo readZip = read.asFile().asZipFile();
-		assertArrayEquals(zipFileBytes, readZip.getRawContent().raw());
+		assertArrayEquals(zipFileBytes, readZip.getRawContent().toArray(ValueLayout.JAVA_BYTE));
 
 		// However, if we provide various extensions then we can use the file name to infer what kind of ZIP it is.
 		read = importer.readInfo("data.jar", zipSource);

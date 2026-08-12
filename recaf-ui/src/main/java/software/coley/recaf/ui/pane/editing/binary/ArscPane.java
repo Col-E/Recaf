@@ -45,10 +45,10 @@ import software.coley.recaf.util.Animations;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.android.AndroidRes;
 import software.coley.recaf.util.android.AndroidRes.ResourceEntry;
+import software.coley.recaf.util.io.LargeInputStream;
 import software.coley.recaf.util.threading.ThreadUtil;
 import software.coley.recaf.workspace.model.Workspace;
 
-import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -307,7 +307,7 @@ public class ArscPane extends BorderPane implements FileNavigable, UpdatableNavi
 	private static Node createImageTile(@Nonnull ResolvedEntry resolved) {
 		ResourceEntry entry = resolved.entry();
 		FileInfo fileInfo = resolved.path().getValue();
-		Image image = new Image(new ByteArrayInputStream(fileInfo.getRawContent().rawToBeReplaced()), 96, 96, true, true);
+		Image image = new Image(new LargeInputStream(fileInfo.getRawContent()), 96, 96, true, true);
 		ImageView imageView = new ImageView(image);
 		imageView.setFitWidth(96);
 		imageView.setFitHeight(96);

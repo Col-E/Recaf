@@ -7,6 +7,7 @@ import jakarta.inject.Inject;
 import javafx.event.EventHandler;
 import javafx.scene.input.KeyEvent;
 import org.slf4j.Logger;
+
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.ArscFileInfo;
 import software.coley.recaf.info.AudioFileInfo;
@@ -32,6 +33,7 @@ import software.coley.recaf.ui.pane.editing.media.ImagePane;
 import software.coley.recaf.ui.pane.editing.media.VideoPane;
 import software.coley.recaf.ui.pane.editing.text.TextPane;
 import software.coley.recaf.util.ByteHeaderUtil;
+import software.coley.recaf.util.MemorySegmentUtil;
 import software.coley.recaf.util.threading.ThreadUtil;
 import software.coley.recaf.workspace.model.bundle.Bundle;
 
@@ -89,7 +91,7 @@ public class FilePane extends AbstractContentPane<FilePathNode> implements FileN
 	}
 
 	public void setupForFileType(@Nonnull FileInfo info) {
-		var header = info.getRawContent().header();
+		var header = MemorySegmentUtil.header(info.getRawContent());
 		switch (info) {
 			case TextFileInfo textFileInfo -> setFileDisplayModes(List.of(TEXT, HEX));
 			case BinaryXmlFileInfo binaryXmlFileInfo -> setFileDisplayModes(List.of(TEXT_BINARY_XML, HEX));

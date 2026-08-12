@@ -28,11 +28,13 @@ import software.coley.recaf.info.properties.builtin.ZipMarkerProperty;
 import software.coley.recaf.services.text.TextFormatConfig;
 import software.coley.recaf.util.ByteHeaderUtil;
 import software.coley.recaf.util.IOUtil;
+import software.coley.recaf.util.MemorySegmentUtil;
 import software.coley.recaf.util.android.AndroidXmlUtil;
 import software.coley.recaf.util.io.ByteSource;
-import software.coley.recaf.util.io.LargeByteArray;
 
 import java.io.IOException;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
 
 /**
  * Basic implementation of the info importer.
@@ -59,9 +61,9 @@ public class BasicInfoImporter implements InfoImporter {
 		var data = source.readAll();
 
 		// Check for Java classes
-		if (matchesClass(data.header())) {
+		if (matchesClass(MemorySegmentUtil.header(data))) {
 			try {
-				return readClass(name, data.raw());
+				return readClass(name, data.toArray(ValueLayout.JAVA_BYTE));
 			} catch (Throwable t) {
 				// Invalid class. There are a few possibilities here:
 				// - The user has disabled patching in their settings and opened an obfuscated file that kills ASM.
@@ -76,7 +78,7 @@ public class BasicInfoImporter implements InfoImporter {
 		}
 
 		// Comparing against known file types.
-		boolean hasZipMarker = data.matchAtAnyOffset(ByteHeaderUtil.ZIP);
+		boolean hasZipMarker = MemorySegmentUtil.matchAtAnyOffset(data, ByteHeaderUtil.ZIP);
 		FileInfo info = readAsSpecializedFile(name, data);
 		if (info != null) {
 			if (hasZipMarker)
@@ -125,8 +127,8 @@ public class BasicInfoImporter implements InfoImporter {
 	 * or {@code null} if no special case is matched.
 	 */
 	@Nullable
-	private static FileInfo readAsSpecializedFile(@Nonnull String name, LargeByteArray data) {
-		var header = data.header();
+	private static FileInfo readAsSpecializedFile(@Nonnull String name, MemorySegment data) {
+		var header = MemorySegmentUtil.header(data);
 		if (ByteHeaderUtil.match(header, ByteHeaderUtil.DEX)) {
 			CodeCodec.readDebug = false; // TODO: Remove this flag when debug parsing is fixed upstream.
 			return new DexFileInfoBuilder()

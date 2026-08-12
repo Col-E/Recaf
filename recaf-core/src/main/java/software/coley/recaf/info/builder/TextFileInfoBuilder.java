@@ -5,6 +5,7 @@ import software.coley.recaf.info.BasicTextFileInfo;
 import software.coley.recaf.info.TextFileInfo;
 import software.coley.recaf.util.StringDecodingResult;
 
+import java.lang.foreign.ValueLayout;
 import java.nio.charset.Charset;
 import java.util.Objects;
 
@@ -20,7 +21,7 @@ public class TextFileInfoBuilder extends FileInfoBuilder<TextFileInfoBuilder> {
 
 	public TextFileInfoBuilder(@Nonnull TextFileInfo textInfo) {
 		super(textInfo);
-		this.decodingResult = new StringDecodingResult(textInfo.getRawContent().rawToBeReplaced(), textInfo.getCharset(), textInfo.getText());
+		this.decodingResult = new StringDecodingResult(textInfo.getRawContent().toArray(ValueLayout.JAVA_BYTE), textInfo.getCharset(), textInfo.getText());
 	}
 
 	public TextFileInfoBuilder(@Nonnull FileInfoBuilder<?> other, @Nonnull StringDecodingResult decodingResult) {

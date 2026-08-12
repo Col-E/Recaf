@@ -24,13 +24,14 @@ import software.coley.recaf.info.properties.builtin.ZipCreationTimeProperty;
 import software.coley.recaf.info.properties.builtin.ZipModificationTimeProperty;
 import software.coley.recaf.info.properties.builtin.ZipPrefixDataProperty;
 import software.coley.recaf.util.ZipCreationUtils;
+import software.coley.recaf.util.io.LargeInputStream;
+import software.coley.recaf.util.io.LargeOutputStream;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.VersionedJvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceFileResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -264,7 +265,7 @@ public class WorkspaceExportOptions {
 
 			// Place files into map
 			for (FileInfo fileInfo : resource.getFileBundle()) {
-				map.put(fileInfo.getName(), fileInfo.getRawContent().toMemorySegment());
+				map.put(fileInfo.getName(), fileInfo.getRawContent());
 				updateProperties(fileInfo.getName(), fileInfo);
 			}
 
@@ -321,13 +322,13 @@ public class WorkspaceExportOptions {
 					return STORED;
 				case SMART:
 					// Get content from info
-					byte[] content = null;
+					MemorySegment content = null;
 					if (info.isFile())
-						content = info.asFile().getRawContent().rawToBeReplaced();
+						content = info.asFile().getRawContent();
 					else if (info.isClass()) {
 						ClassInfo classInfo = info.asClass();
 						if (classInfo.isJvmClass())
-							content = classInfo.asJvmClass().getBytecode();
+							content = MemorySegment.ofArray(classInfo.asJvmClass().getBytecode());
 					}
 
 					// Validate
@@ -335,8 +336,8 @@ public class WorkspaceExportOptions {
 						throw new IllegalStateException("Unhandled info type, cannot get byte[]: " + info.getClass().getName());
 
 					// Check if deflate would be more optimal.
-					InputStream in = new ByteArrayInputStream(content);
-					ByteArrayOutputStream out = new ByteArrayOutputStream();
+					InputStream in = new LargeInputStream(content);
+					LargeOutputStream out = new LargeOutputStream();
 					try (DeflaterOutputStream deflate = new DeflaterOutputStream(out)) {
 						byte[] buffer = new byte[2048];
 						int len;
@@ -344,8 +345,8 @@ public class WorkspaceExportOptions {
 							deflate.write(buffer, 0, len);
 						}
 						deflate.finish();
-						int inputSize = content.length;
-						int compressedSize = out.size();
+						long inputSize = content.byteSize();
+						long compressedSize = out.size();
 						if (compressedSize < inputSize)
 							return DEFLATED;
 					} catch (IOException ignored) {

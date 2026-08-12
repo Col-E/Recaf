@@ -6,6 +6,7 @@ import software.coley.recaf.info.*;
 import software.coley.recaf.services.phantom.GeneratedPhantomWorkspaceResource;
 import software.coley.recaf.util.ByteHeaderUtil;
 import software.coley.recaf.util.Icons;
+import software.coley.recaf.util.MemorySegmentUtil;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceDirectoryResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceFileResource;
@@ -37,13 +38,14 @@ public class BasicResourceIconProviderFactory implements ResourceIconProviderFac
 			return PROVIDER_DIR;
 		if (resource instanceof WorkspaceFileResource fileResource) {
 			FileInfo file = fileResource.getFileInfo();
-			var header = file.getRawContent().header();
 			if (file instanceof ApkFileInfo || file instanceof DexFileInfo || file instanceof ArscFileInfo)
 				return PROVIDER_ANDROID;
 			if (file instanceof JarFileInfo || file instanceof WarFileInfo || file instanceof JModFileInfo)
 				return PROVIDER_JAR;
 			if (file instanceof TextFileInfo)
 				return PROVIDER_TEXT;
+
+			var header = MemorySegmentUtil.header(file.getRawContent());
 			if (ByteHeaderUtil.match(header, ByteHeaderUtil.CLASS))
 				return PROVIDER_CLASS;
 			if (ByteHeaderUtil.matchAny(header, ByteHeaderUtil.PROGRAM_HEADERS))
