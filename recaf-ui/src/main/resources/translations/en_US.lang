@@ -218,6 +218,7 @@ bind.inputprompt.initial=<waiting>
 bind.inputprompt.finish=<ENTER to finish>
 bind.editor.find=Find
 bind.editor.goto=Goto
+bind.editor.assembler=Open in assembler
 bind.editor.rename=Rename
 bind.editor.replace=Replace
 bind.editor.save=Save
