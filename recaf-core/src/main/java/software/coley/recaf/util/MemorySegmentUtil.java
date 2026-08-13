@@ -4,8 +4,8 @@ import java.io.IOException;
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
-import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
@@ -19,27 +19,24 @@ public class MemorySegmentUtil {
 	private static int ChunkSize = 1024 * 1024 * 1024;
 
 	public static MemorySegment read(Path path) throws IOException {
-		var data = new LinkedList<byte[]>();
 		try (var channel = FileChannel.open(path, StandardOpenOption.READ)) {
-			var total = channel.size();
-			for (long offset = 0; offset < total; offset += ChunkSize) {
-				var size = (int) Math.min(ChunkSize, total - offset);
-				var chunk = new byte[size];
-				channel.map(FileChannel.MapMode.READ_ONLY, offset, size).get(chunk);
-				data.add(chunk);
-			}
+			return channel.map(FileChannel.MapMode.READ_ONLY, 0, channel.size(), Arena.ofAuto());
 		}
-
-		return from(data);
 	}
 
 	public static Path write(Path path, MemorySegment data, boolean append) throws IOException {
-		var option = append ? StandardOpenOption.APPEND : StandardOpenOption.TRUNCATE_EXISTING;
-		try (FileChannel channel = FileChannel.open(path, StandardOpenOption.CREATE, StandardOpenOption.WRITE,
-				option)) {
-			for (var chunk : toChunks(data)) {
-				channel.write(ByteBuffer.wrap(chunk));
+		var options = new OpenOption[] {
+			StandardOpenOption.READ,
+			StandardOpenOption.WRITE,
+			StandardOpenOption.CREATE,
+		};
+		try (FileChannel channel = FileChannel.open(path, options)) {
+			if (!append) {
+				channel.truncate(0);
 			}
+
+			var target = channel.map(FileChannel.MapMode.READ_WRITE, channel.size(), data.byteSize(), Arena.ofAuto());
+			MemorySegment.copy(data, 0, target, 0, data.byteSize());
 		}
 
 		return path;
