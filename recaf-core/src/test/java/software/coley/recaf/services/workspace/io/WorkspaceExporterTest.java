@@ -210,9 +210,9 @@ class WorkspaceExporterTest {
 		BasicWorkspace workspace = new BasicWorkspace(resource);
 
 		// Export it, and the junk should still be in the front, and the zip should still be in the back
-		ByteArrayWorkspaceExportConsumer bytesExport = new ByteArrayWorkspaceExportConsumer();
+		MemorySegmentWorkspaceExportConsumer bytesExport = new MemorySegmentWorkspaceExportConsumer();
 		new WorkspaceExportOptions(WorkspaceOutputType.FILE, bytesExport).create().export(workspace);
-		var output = bytesExport.getOutput().toMemorySegment().toArray(ValueLayout.JAVA_BYTE);
+		var output = bytesExport.getOutput().toArray(ValueLayout.JAVA_BYTE);
 
 		// Verify the junk is still in the front of the output.
 		assertNotNull(output, "Failed to export workspace to archive");
@@ -242,9 +242,9 @@ class WorkspaceExporterTest {
 		BasicWorkspace workspace = new BasicWorkspace(resource);
 
 		// Export it as a file.
-		ByteArrayWorkspaceExportConsumer bytesExport = new ByteArrayWorkspaceExportConsumer();
+		MemorySegmentWorkspaceExportConsumer bytesExport = new MemorySegmentWorkspaceExportConsumer();
 		new WorkspaceExportOptions(WorkspaceOutputType.FILE, bytesExport).create().export(workspace);
-		byte[] output = bytesExport.getOutput().toMemorySegment().toArray(ValueLayout.JAVA_BYTE);
+		byte[] output = bytesExport.getOutput().toArray(ValueLayout.JAVA_BYTE);
 
 		// Verify the contents are the exact same. Because it's not an archive we should not be
 		// exporting it back bundled inside an archive.

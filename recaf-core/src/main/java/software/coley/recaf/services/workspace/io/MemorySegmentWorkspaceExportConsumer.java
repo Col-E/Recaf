@@ -8,11 +8,11 @@ import java.io.IOException;
 import java.lang.foreign.MemorySegment;
 
 /**
- * Export consumer to write to a {@code LargeOutputStream}. Only supports {@link WorkspaceOutputType#FILE}.
+ * Export consumer to write to a {@code MemorySegment}. Only supports {@link WorkspaceOutputType#FILE}.
  *
  * @author Matt Coley
  */
-public class ByteArrayWorkspaceExportConsumer implements WorkspaceExportConsumer {
+public class MemorySegmentWorkspaceExportConsumer implements WorkspaceExportConsumer {
 	private LargeOutputStream output = new LargeOutputStream();
 
 	@Override
@@ -43,7 +43,7 @@ public class ByteArrayWorkspaceExportConsumer implements WorkspaceExportConsumer
 	}
 
 	@Nonnull
-	public LargeOutputStream getOutput() {
-		return output;
+	public MemorySegment getOutput() {
+		return output.toMemorySegment();
 	}
 }
