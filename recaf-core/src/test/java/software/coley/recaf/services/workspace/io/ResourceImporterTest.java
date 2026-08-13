@@ -488,8 +488,8 @@ class ResourceImporterTest {
 	@Test
 	void testZipBombEntryIsSkipped() throws IOException {
 		ResourceImporterConfig config = new ResourceImporterConfig();
-		config.getMaxZipEntrySize().setValue(1_000_000);
-		config.getMaxZipTotalSize().setValue(2_000_000);
+		config.getMaxZipEntrySize().setValue(1_000_000l);
+		config.getMaxZipTotalSize().setValue(2_000_000l);
 		config.getMaxZipCompressionRatio().setValue(100);
 		ResourceImporter limitedImporter = new BasicResourceImporter(
 				new BasicInfoImporter(new InfoImporterConfig(), new TextFormatConfig(), new BasicClassPatcher()),
@@ -518,8 +518,8 @@ class ResourceImporterTest {
 	@Test
 	void testZipBombCannotUnderreportInflatedSize() throws IOException {
 		ResourceImporterConfig config = new ResourceImporterConfig();
-		config.getMaxZipEntrySize().setValue(1_000_000);
-		config.getMaxZipTotalSize().setValue(2_000_000);
+		config.getMaxZipEntrySize().setValue(1_000_000l);
+		config.getMaxZipTotalSize().setValue(2_000_000l);
 		config.getMaxZipCompressionRatio().setValue(10_000);
 		ResourceImporter limitedImporter = new BasicResourceImporter(
 				new BasicInfoImporter(new InfoImporterConfig(), new TextFormatConfig(), new BasicClassPatcher()),
