@@ -9,7 +9,6 @@ import software.coley.recaf.util.io.LargeOutputStream;
 
 import java.io.IOException;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ValueLayout;
 import java.lang.reflect.Field;
 import java.nio.file.attribute.FileTime;
 import java.util.*;
@@ -59,7 +58,9 @@ public class ZipCreationUtils {
 		return createZip(zos -> {
 			for (var entry : entryMap.entrySet()) {
 				zos.putNextEntry(new ZipEntry(entry.getKey()));
-				zos.write(entry.getValue().toArray(ValueLayout.JAVA_BYTE));
+				for (var chunk : MemorySegmentUtil.toChunks(entry.getValue())) {
+					zos.write(chunk);
+				}
 				zos.closeEntry();
 			}
 		});
