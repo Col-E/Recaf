@@ -396,17 +396,23 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 
 				// Record variable side effects.
 				// Because j steps backwards the first encountered write will be the only thing we need to ensure
-				// is kept after folding the sequence.
+				// is kept after folding the sequence. The side effects need to be in the context of the frame at
+				// position j, since that is the frame that will be used to evaluate the sequence since the
+				// operation frame reflects the state after the whole sequence.
 				Frame<ReValue> jframe = frames[j];
 				if (isVarStore(insnOp) && insn instanceof VarInsnNode vin) {
 					int index = vin.var;
-					ReValue stack = frame.getStack(frame.getStackSize() - 1);
+					if (jframe == null || jframe.getStackSize() == 0)
+						break;
+					ReValue stack = jframe.getStack(jframe.getStackSize() - 1);
 					if (!stack.hasKnownValue())
 						break;
 					sequenceVarWrites.putIfAbsent(index, stack);
 				} else if (insn instanceof IincInsnNode iinc) {
 					int index = iinc.var;
-					ReValue local = frame.getLocal(index);
+					if (jframe == null)
+						break;
+					ReValue local = jframe.getLocal(index);
 					if (!local.hasKnownValue() || !(local instanceof IntValue intLocal))
 						break;
 					sequenceVarWrites.putIfAbsent(index, intLocal.add(iinc.incr));

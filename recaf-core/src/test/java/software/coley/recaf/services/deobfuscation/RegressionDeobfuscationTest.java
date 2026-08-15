@@ -10,6 +10,8 @@ import software.coley.recaf.services.deobfuscation.transform.generic.OpaqueConst
 import software.coley.recaf.services.deobfuscation.transform.generic.OpaquePredicateFoldingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.RedundantTryCatchRemovingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.VariableFoldingTransformer;
+import software.coley.recaf.services.transform.JvmTransformResult;
+import software.coley.recaf.services.transform.TransformationException;
 import software.coley.recaf.util.AsmInsnUtil;
 import software.coley.recaf.util.RegexUtil;
 import software.coley.recaf.util.StringUtil;
@@ -1472,5 +1474,61 @@ public class RegressionDeobfuscationTest extends TransformerTestBase {
 				}
 				""".replace("\0", "        iconst_1\n        iadd\n".repeat(20_000));
 		validateNoTransformation(asm, List.of(OpaqueConstantFoldingTransformer.class));
+	}
+
+	/**
+	 * Folding a sequence that contains a variable store should retain side effects.
+	 * Previously we incorrectly read the operation's top stack operand instead,
+	 * which rewrote {@code tmp} from {@code 7} to {@code 3}.
+	 */
+	@Test
+	void foldSequenceWithVarStorePreservesStoredValue() {
+		String asm = """
+				.method public static example ()I {
+				    code: {
+				    A:
+				        iconst_1
+				        bipush 7
+				        istore tmp // tmp = 7
+				        iconst_3
+				        iadd // 1 + 3
+				        iload tmp
+				        iadd // 7 + 4
+				        ireturn
+				    B:
+				    }
+				}
+				""";
+
+		// tmp must remain 7, keeping the method's return value at 1 + 3 + 7 = 11.
+		validateBeforeAfterDecompile(asm, List.of(OpaqueConstantFoldingTransformer.class), "tmp = 7", "tmp = 7");
+	}
+
+	/**
+	 * We previously read the local from the operation frame and double-applied the increment, turning {@code x += 5} into 10.
+	 */
+	@Test
+	void foldSequenceWithIincPreservesIncrementedValue() {
+		String asm = """
+				.method public static example ()I {
+				    code: {
+				    A:
+				        iconst_0
+				        istore x // x = 0
+				        iconst_1
+				        iconst_2
+				        iadd // 1 + 2
+				        iinc x 5 // x += 5
+				        iload x
+				        iadd // 5 + 3
+				        iload x
+				        iadd // 5 + 8
+				        ireturn
+				    B:
+				    }
+				}
+				""";
+		// x must be 5 after folding, keeping the method's return value at 1 + 2 + 5 + 5 = 13.
+		validateBeforeAfterDecompile(asm, List.of(OpaqueConstantFoldingTransformer.class), "x += 5", "x = 5");
 	}
 }
