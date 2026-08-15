@@ -104,6 +104,9 @@ public class CallResultInliningTransformer implements JvmClassTransformer {
 					// Reset instance support before each evaluation to prevent state pollution.
 					fieldCacheManager.reset();
 
+					// Seed the call stack so trace-dependent operations can be evaluated at depth [1].
+					evaluator.setCallStackSeed(List.of(new ClassMethodPair(node, method)));
+
 					// Attempt evaluation. If it yields a value, replace the call with the result.
 					EvaluationResult result = evaluator.evaluate(target.classNode(), target.methodNode(), null, arguments);
 					if (result instanceof EvaluationYieldResult(ReValue retVal)) {
