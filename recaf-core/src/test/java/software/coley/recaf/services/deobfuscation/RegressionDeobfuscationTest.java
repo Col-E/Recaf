@@ -1750,4 +1750,43 @@ public class RegressionDeobfuscationTest extends TransformerTestBase {
 			assertEquals(4, StringUtil.count("pop", dis), "Expected the surviving copy to be popped");
 		});
 	}
+
+	/**
+	 * A two-argument predicate whose lower value comes from a {@code dup2} keeps the {@code dup2}
+	 * and pops the consumed copy, removing only the top producer.
+	 */
+	@Test
+	void foldOpaqueDup2BelowProducerPredicate() {
+		String asm = """
+				.method public static example ()V {
+				    code: {
+				    A:
+				        iconst_0
+				        iconst_1
+				        dup2
+				        iconst_2
+				        if_icmpne C
+				    B:
+				        pop
+				        pop
+				        pop
+				        return
+				    C:
+				        pop
+				        pop
+				        pop
+				        return
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(OpaquePredicateFoldingTransformer.class), dis -> {
+			assertEquals(0, StringUtil.count("if_icmpne", dis), "Expected to remove if_icmpne");
+			assertEquals(1, StringUtil.count("goto B", dis), "Expected to replace if_icmpne <target> with goto <target>");
+			assertEquals(1, StringUtil.count("dup2", dis), "Expected to keep the dup2");
+			assertEquals(1, StringUtil.count("iconst_0", dis), "Expected to keep the first original value");
+			assertEquals(1, StringUtil.count("iconst_1", dis), "Expected to keep the second original value");
+			assertEquals(0, StringUtil.count("iconst_2", dis), "Expected to remove the top producer");
+			assertEquals(4, StringUtil.count("pop", dis), "Expected the surviving copy to be popped");
+		});
+	}
 }

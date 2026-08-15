@@ -300,12 +300,20 @@ public class OpaquePredicateFoldingTransformer implements JvmClassTransformer {
 					new InsnNode(NOP);
 			instructions.set(jump, replacement);
 
-			// A dup2 supplies both compared values as copies of the originals below it, so only the
-			// dup2 itself is disposable. The originals must remain for the branch bodies to consume.
-			if (stackValueProducerInsnB.getOpcode() != DUP2)
+			// Remove the two consumed values from the stack.
+			// A dup2 in the top position supplies both compared values as copies, so only it is removed.
+			// A dup2 in the lower position supplies the lower value plus a surviving copy, so it is kept
+			// and a pop discards the copy the jump no longer consumes.
+			if (stackValueProducerInsnB.getOpcode() == DUP2) {
+				instructions.set(stackValueProducerInsnB, new InsnNode(NOP));
+			} else if (stackValueProducerInsnA.getOpcode() == DUP2) {
+				instructions.insertBefore(stackValueProducerInsnB, new InsnNode(POP));
+				instructions.set(stackValueProducerInsnB, new InsnNode(NOP));
+			} else {
 				instructions.set(stackValueProducerInsnA, new InsnNode(NOP));
+				instructions.set(stackValueProducerInsnB, new InsnNode(NOP));
+			}
 
-			instructions.set(stackValueProducerInsnB, new InsnNode(NOP));
 			return true;
 		}
 		return false;
@@ -347,12 +355,20 @@ public class OpaquePredicateFoldingTransformer implements JvmClassTransformer {
 			if (replacement == null) return false;
 			instructions.set(jump, replacement);
 
-			// A dup2 supplies both compared values as copies of the originals below it, so only the
-			// dup2 itself is disposable. The originals must remain for the branch bodies to consume.
-			if (stackValueProducerInsnB.getOpcode() != DUP2)
+			// Remove the two consumed values from the stack.
+			// A dup2 in the top position supplies both compared values as copies, so only it is removed.
+			// A dup2 in the lower position supplies the lower value plus a surviving copy, so it is kept
+			// and a pop discards the copy the jump no longer consumes.
+			if (stackValueProducerInsnB.getOpcode() == DUP2) {
+				instructions.set(stackValueProducerInsnB, new InsnNode(NOP));
+			} else if (stackValueProducerInsnA.getOpcode() == DUP2) {
+				instructions.insertBefore(stackValueProducerInsnB, new InsnNode(POP));
+				instructions.set(stackValueProducerInsnB, new InsnNode(NOP));
+			} else {
 				instructions.set(stackValueProducerInsnA, new InsnNode(NOP));
+				instructions.set(stackValueProducerInsnB, new InsnNode(NOP));
+			}
 
-			instructions.set(stackValueProducerInsnB, new InsnNode(NOP));
 			return true;
 		}
 		return false;
