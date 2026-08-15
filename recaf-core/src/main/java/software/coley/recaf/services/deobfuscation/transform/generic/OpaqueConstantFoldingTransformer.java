@@ -483,13 +483,19 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 					instructions.set(instructions.get(i), replacement);
 
 					// Insert variable writes to ensure their states are not affected by our inlining.
-					sequenceVarWrites.forEach((index, value) -> {
-						AbstractInsnNode varReplacement = toInsn(value);
-						VarInsnNode varStore = createVarStore(index, Objects.requireNonNull(value.type(), "Missing var type"));
-						instructions.insertBefore(replacement, varReplacement);
-						instructions.insertBefore(replacement, varStore);
-					});
-					i += sequenceVarWrites.size() * 2;
+					if (!sequenceVarWrites.isEmpty()) {
+						sequenceVarWrites.forEach((index, value) -> {
+							AbstractInsnNode varReplacement = toInsn(value);
+							VarInsnNode varStore = createVarStore(index, Objects.requireNonNull(value.type(), "Missing var type"));
+							instructions.insertBefore(replacement, varReplacement);
+							instructions.insertBefore(replacement, varStore);
+						});
+
+						// Inserting shifts subsequent instruction indices while 'frames' was computed against the
+						// pre-mutation list. Stop this pass so the next one re-analyzes instead of using stale frames.
+						dirty = true;
+						break;
+					}
 				}
 				dirty = true;
 			} else {
