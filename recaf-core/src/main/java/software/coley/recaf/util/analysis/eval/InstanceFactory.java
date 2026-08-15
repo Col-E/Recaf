@@ -323,6 +323,172 @@ public class InstanceFactory extends BasicLookupUtils {
 			return null;
 		});
 
+		// java.lang.StringBuffer
+		registerMethodHandler("java/lang/StringBuffer", "length", "()I", (ReFrame frame, ReValue host, StringBuffer receiver, List<ReValue> args) -> i(receiver.length()));
+		registerMethodHandler("java/lang/StringBuffer", "toString", "()Ljava/lang/String;", (ReFrame frame, ReValue host, StringBuffer receiver, List<ReValue> args) -> str(receiver.toString()));
+		registerMethodHandler("java/lang/StringBuffer", "append", "(I)Ljava/lang/StringBuffer;", (ReFrame frame, ReValue host, StringBuffer receiver, List<ReValue> args) -> {
+			receiver.append(i((IntValue) args.get(0)));
+			return host;
+		});
+		registerMethodHandler("java/lang/StringBuffer", "append", "(J)Ljava/lang/StringBuffer;", (ReFrame frame, ReValue host, StringBuffer receiver, List<ReValue> args) -> {
+			receiver.append(j((LongValue) args.get(0)));
+			return host;
+		});
+		registerMethodHandler("java/lang/StringBuffer", "append", "(F)Ljava/lang/StringBuffer;", (ReFrame frame, ReValue host, StringBuffer receiver, List<ReValue> args) -> {
+			receiver.append(f((FloatValue) args.get(0)));
+			return host;
+		});
+		registerMethodHandler("java/lang/StringBuffer", "append", "([C)Ljava/lang/StringBuffer;", (ReFrame frame, ReValue host, StringBuffer receiver, List<ReValue> args) -> {
+			receiver.append(arrc((ArrayValue) args.get(0)));
+			return host;
+		});
+		registerMethodHandler("java/lang/StringBuffer", "append", "([CII)Ljava/lang/StringBuffer;", (ReFrame frame, ReValue host, StringBuffer receiver, List<ReValue> args) -> {
+			receiver.append(arrc((ArrayValue) args.get(0)), i((IntValue) args.get(1)), i((IntValue) args.get(2)));
+			return host;
+		});
+		registerMethodHandler("java/lang/StringBuffer", "append", "(Z)Ljava/lang/StringBuffer;", (ReFrame frame, ReValue host, StringBuffer receiver, List<ReValue> args) -> {
+			receiver.append(z((IntValue) args.get(0)));
+			return host;
+		});
+		registerMethodHandler("java/lang/StringBuffer", "append", "(C)Ljava/lang/StringBuffer;", (ReFrame frame, ReValue host, StringBuffer receiver, List<ReValue> args) -> {
+			receiver.append(c((IntValue) args.get(0)));
+			return host;
+		});
+		registerMethodHandler("java/lang/StringBuffer", "append", "(D)Ljava/lang/StringBuffer;", (ReFrame frame, ReValue host, StringBuffer receiver, List<ReValue> args) -> {
+			receiver.append(d((DoubleValue) args.get(0)));
+			return host;
+		});
+		registerMethodHandler("java/lang/StringBuffer", "append", "(Ljava/lang/String;)Ljava/lang/StringBuffer;", (ReFrame frame, ReValue host, StringBuffer receiver, List<ReValue> args) -> {
+			receiver.append(str((StringValue) args.get(0)));
+			return host;
+		});
+		registerMethodHandler("java/lang/StringBuffer", "append", "(Ljava/lang/StringBuffer;)Ljava/lang/StringBuffer;", (ReFrame frame, ReValue host, StringBuffer receiver, List<ReValue> args) -> {
+			receiver.append(BasicLookupUtils.<StringBuffer>obj((ObjectValue) args.get(0)));
+			return host;
+		});
+		registerMethodHandler("java/lang/StringBuffer", "append", "(Ljava/lang/CharSequence;)Ljava/lang/StringBuffer;", (ReFrame frame, ReValue host, StringBuffer receiver, List<ReValue> args) -> {
+			receiver.append(str((StringValue) args.get(0)));
+			return host;
+		});
+		registerMethodHandler("java/lang/StringBuffer", "append", "(Ljava/lang/CharSequence;II)Ljava/lang/StringBuffer;", (ReFrame frame, ReValue host, StringBuffer receiver, List<ReValue> args) -> {
+			receiver.append(str((StringValue) args.get(0)), i((IntValue) args.get(1)), i((IntValue) args.get(2)));
+			return host;
+		});
+		registerMethodHandler("java/lang/StringBuffer", "append", "(Ljava/lang/Object;)Ljava/lang/StringBuffer;", (ReFrame frame, ReValue host, StringBuffer receiver, List<ReValue> args) -> {
+			receiver.append(objl((ObjectValue) args.get(0)));
+			return host;
+		});
+		registerMethodHandler("java/lang/StringBuffer", "reverse", "()Ljava/lang/StringBuffer;", (ReFrame frame, ReValue host, StringBuffer receiver, List<ReValue> args) -> {
+			receiver.reverse();
+			return host;
+		});
+		registerMethodHandler("java/lang/StringBuffer", "getChars", "(II[CI)V", (ReFrame frame, ReValue host, StringBuffer receiver, List<ReValue> args) -> {
+			receiver.getChars(i((IntValue) args.get(0)), i((IntValue) args.get(1)), arrc((ArrayValue) args.get(2)), i((IntValue) args.get(3)));
+			return null;
+		});
+		registerMethodHandler("java/lang/StringBuffer", "compareTo", "(Ljava/lang/StringBuffer;)I", (ReFrame frame, ReValue host, StringBuffer receiver, List<ReValue> args) -> i(receiver.compareTo(BasicLookupUtils.<StringBuffer>obj((ObjectValue) args.get(0)))));
+		registerMethodHandler("java/lang/StringBuffer", "indexOf", "(Ljava/lang/String;I)I", (ReFrame frame, ReValue host, StringBuffer receiver, List<ReValue> args) -> i(receiver.indexOf(str((StringValue) args.get(0)), i((IntValue) args.get(1)))));
+		registerMethodHandler("java/lang/StringBuffer", "indexOf", "(Ljava/lang/String;)I", (ReFrame frame, ReValue host, StringBuffer receiver, List<ReValue> args) -> i(receiver.indexOf(str((StringValue) args.get(0)))));
+		registerMethodHandler("java/lang/StringBuffer", "insert", "(ILjava/lang/Object;)Ljava/lang/StringBuffer;", (ReFrame frame, ReValue host, StringBuffer receiver, List<ReValue> args) -> {
+			receiver.insert(i((IntValue) args.get(0)), objl((ObjectValue) args.get(1)));
+			return host;
+		});
+		registerMethodHandler("java/lang/StringBuffer", "insert", "(I[CII)Ljava/lang/StringBuffer;", (ReFrame frame, ReValue host, StringBuffer receiver, List<ReValue> args) -> {
+			receiver.insert(i((IntValue) args.get(0)), arrc((ArrayValue) args.get(1)), i((IntValue) args.get(2)), i((IntValue) args.get(3)));
+			return host;
+		});
+		registerMethodHandler("java/lang/StringBuffer", "insert", "(I[C)Ljava/lang/StringBuffer;", (ReFrame frame, ReValue host, StringBuffer receiver, List<ReValue> args) -> {
+			receiver.insert(i((IntValue) args.get(0)), arrc((ArrayValue) args.get(1)));
+			return host;
+		});
+		registerMethodHandler("java/lang/StringBuffer", "insert", "(IF)Ljava/lang/StringBuffer;", (ReFrame frame, ReValue host, StringBuffer receiver, List<ReValue> args) -> {
+			receiver.insert(i((IntValue) args.get(0)), f((FloatValue) args.get(1)));
+			return host;
+		});
+		registerMethodHandler("java/lang/StringBuffer", "insert", "(IJ)Ljava/lang/StringBuffer;", (ReFrame frame, ReValue host, StringBuffer receiver, List<ReValue> args) -> {
+			receiver.insert(i((IntValue) args.get(0)), j((LongValue) args.get(1)));
+			return host;
+		});
+		registerMethodHandler("java/lang/StringBuffer", "insert", "(ILjava/lang/String;)Ljava/lang/StringBuffer;", (ReFrame frame, ReValue host, StringBuffer receiver, List<ReValue> args) -> {
+			receiver.insert(i((IntValue) args.get(0)), str((StringValue) args.get(1)));
+			return host;
+		});
+		registerMethodHandler("java/lang/StringBuffer", "insert", "(ILjava/lang/CharSequence;)Ljava/lang/StringBuffer;", (ReFrame frame, ReValue host, StringBuffer receiver, List<ReValue> args) -> {
+			receiver.insert(i((IntValue) args.get(0)), str((StringValue) args.get(1)));
+			return host;
+		});
+		registerMethodHandler("java/lang/StringBuffer", "insert", "(ID)Ljava/lang/StringBuffer;", (ReFrame frame, ReValue host, StringBuffer receiver, List<ReValue> args) -> {
+			receiver.insert(i((IntValue) args.get(0)), d((DoubleValue) args.get(1)));
+			return host;
+		});
+		registerMethodHandler("java/lang/StringBuffer", "insert", "(ILjava/lang/CharSequence;II)Ljava/lang/StringBuffer;", (ReFrame frame, ReValue host, StringBuffer receiver, List<ReValue> args) -> {
+			receiver.insert(i((IntValue) args.get(0)), str((StringValue) args.get(1)), i((IntValue) args.get(2)), i((IntValue) args.get(3)));
+			return host;
+		});
+		registerMethodHandler("java/lang/StringBuffer", "insert", "(IZ)Ljava/lang/StringBuffer;", (ReFrame frame, ReValue host, StringBuffer receiver, List<ReValue> args) -> {
+			receiver.insert(i((IntValue) args.get(0)), z((IntValue) args.get(1)));
+			return host;
+		});
+		registerMethodHandler("java/lang/StringBuffer", "insert", "(II)Ljava/lang/StringBuffer;", (ReFrame frame, ReValue host, StringBuffer receiver, List<ReValue> args) -> {
+			receiver.insert(i((IntValue) args.get(0)), i((IntValue) args.get(1)));
+			return host;
+		});
+		registerMethodHandler("java/lang/StringBuffer", "insert", "(IC)Ljava/lang/StringBuffer;", (ReFrame frame, ReValue host, StringBuffer receiver, List<ReValue> args) -> {
+			receiver.insert(i((IntValue) args.get(0)), c((IntValue) args.get(1)));
+			return host;
+		});
+		registerMethodHandler("java/lang/StringBuffer", "charAt", "(I)C", (ReFrame frame, ReValue host, StringBuffer receiver, List<ReValue> args) -> c(receiver.charAt(i((IntValue) args.get(0)))));
+		registerMethodHandler("java/lang/StringBuffer", "codePointAt", "(I)I", (ReFrame frame, ReValue host, StringBuffer receiver, List<ReValue> args) -> i(receiver.codePointAt(i((IntValue) args.get(0)))));
+		registerMethodHandler("java/lang/StringBuffer", "codePointBefore", "(I)I", (ReFrame frame, ReValue host, StringBuffer receiver, List<ReValue> args) -> i(receiver.codePointBefore(i((IntValue) args.get(0)))));
+		registerMethodHandler("java/lang/StringBuffer", "codePointCount", "(II)I", (ReFrame frame, ReValue host, StringBuffer receiver, List<ReValue> args) -> i(receiver.codePointCount(i((IntValue) args.get(0)), i((IntValue) args.get(1)))));
+		registerMethodHandler("java/lang/StringBuffer", "offsetByCodePoints", "(II)I", (ReFrame frame, ReValue host, StringBuffer receiver, List<ReValue> args) -> i(receiver.offsetByCodePoints(i((IntValue) args.get(0)), i((IntValue) args.get(1)))));
+		registerMethodHandler("java/lang/StringBuffer", "lastIndexOf", "(Ljava/lang/String;I)I", (ReFrame frame, ReValue host, StringBuffer receiver, List<ReValue> args) -> i(receiver.lastIndexOf(str((StringValue) args.get(0)), i((IntValue) args.get(1)))));
+		registerMethodHandler("java/lang/StringBuffer", "lastIndexOf", "(Ljava/lang/String;)I", (ReFrame frame, ReValue host, StringBuffer receiver, List<ReValue> args) -> i(receiver.lastIndexOf(str((StringValue) args.get(0)))));
+		registerMethodHandler("java/lang/StringBuffer", "substring", "(I)Ljava/lang/String;", (ReFrame frame, ReValue host, StringBuffer receiver, List<ReValue> args) -> str(receiver.substring(i((IntValue) args.get(0)))));
+		registerMethodHandler("java/lang/StringBuffer", "substring", "(II)Ljava/lang/String;", (ReFrame frame, ReValue host, StringBuffer receiver, List<ReValue> args) -> str(receiver.substring(i((IntValue) args.get(0)), i((IntValue) args.get(1)))));
+		registerMethodHandler("java/lang/StringBuffer", "replace", "(IILjava/lang/String;)Ljava/lang/StringBuffer;", (ReFrame frame, ReValue host, StringBuffer receiver, List<ReValue> args) -> {
+			receiver.replace(i((IntValue) args.get(0)), i((IntValue) args.get(1)), str((StringValue) args.get(2)));
+			return host;
+		});
+		registerMethodHandler("java/lang/StringBuffer", "repeat", "(Ljava/lang/CharSequence;I)Ljava/lang/StringBuffer;", (ReFrame frame, ReValue host, StringBuffer receiver, List<ReValue> args) -> {
+			receiver.repeat(str((StringValue) args.get(0)), i((IntValue) args.get(1)));
+			return host;
+		});
+		registerMethodHandler("java/lang/StringBuffer", "repeat", "(II)Ljava/lang/StringBuffer;", (ReFrame frame, ReValue host, StringBuffer receiver, List<ReValue> args) -> {
+			receiver.repeat(i((IntValue) args.get(0)), i((IntValue) args.get(1)));
+			return host;
+		});
+		registerMethodHandler("java/lang/StringBuffer", "subSequence", "(II)Ljava/lang/CharSequence;", (ReFrame frame, ReValue host, StringBuffer receiver, List<ReValue> args) -> str(receiver.subSequence(i((IntValue) args.get(0)), i((IntValue) args.get(1)))));
+		registerMethodHandler("java/lang/StringBuffer", "delete", "(II)Ljava/lang/StringBuffer;", (ReFrame frame, ReValue host, StringBuffer receiver, List<ReValue> args) -> {
+			receiver.delete(i((IntValue) args.get(0)), i((IntValue) args.get(1)));
+			return host;
+		});
+		registerMethodHandler("java/lang/StringBuffer", "setLength", "(I)V", (ReFrame frame, ReValue host, StringBuffer receiver, List<ReValue> args) -> {
+			receiver.setLength(i((IntValue) args.get(0)));
+			return null;
+		});
+		registerMethodHandler("java/lang/StringBuffer", "capacity", "()I", (ReFrame frame, ReValue host, StringBuffer receiver, List<ReValue> args) -> i(receiver.capacity()));
+		registerMethodHandler("java/lang/StringBuffer", "ensureCapacity", "(I)V", (ReFrame frame, ReValue host, StringBuffer receiver, List<ReValue> args) -> {
+			receiver.ensureCapacity(i((IntValue) args.get(0)));
+			return null;
+		});
+		registerMethodHandler("java/lang/StringBuffer", "trimToSize", "()V", (ReFrame frame, ReValue host, StringBuffer receiver, List<ReValue> args) -> {
+			receiver.trimToSize();
+			return null;
+		});
+		registerMethodHandler("java/lang/StringBuffer", "setCharAt", "(IC)V", (ReFrame frame, ReValue host, StringBuffer receiver, List<ReValue> args) -> {
+			receiver.setCharAt(i((IntValue) args.get(0)), c((IntValue) args.get(1)));
+			return null;
+		});
+		registerMethodHandler("java/lang/StringBuffer", "appendCodePoint", "(I)Ljava/lang/StringBuffer;", (ReFrame frame, ReValue host, StringBuffer receiver, List<ReValue> args) -> {
+			receiver.appendCodePoint(i((IntValue) args.get(0)));
+			return host;
+		});
+		registerMethodHandler("java/lang/StringBuffer", "deleteCharAt", "(I)Ljava/lang/StringBuffer;", (ReFrame frame, ReValue host, StringBuffer receiver, List<ReValue> args) -> {
+			receiver.deleteCharAt(i((IntValue) args.get(0)));
+			return host;
+		});
+
 		// java.lang.Boolean
 		registerMethodHandler("java/lang/Boolean", "equals", "(Ljava/lang/Object;)Z", (ReFrame frame, ReValue host, Boolean receiver, List<ReValue> args) -> z(receiver.equals(objl((ObjectValue) args.get(0)))));
 		registerMethodHandler("java/lang/Boolean", "toString", "()Ljava/lang/String;", (ReFrame frame, ReValue host, Boolean receiver, List<ReValue> args) -> str(receiver.toString()));
@@ -1115,6 +1281,12 @@ public class InstanceFactory extends BasicLookupUtils {
 		registerMapper(StringBuilder.class, "(Ljava/lang/String;)V", (host, parameters) -> new StringBuilder(str((StringValue) parameters.get(0))));
 		registerMapper(StringBuilder.class, "(I)V", (host, parameters) -> new StringBuilder(i((IntValue) parameters.get(0))));
 		registerMapper(StringBuilder.class, "()V", (host, parameters) -> new StringBuilder());
+
+		// java.lang.StringBuffer
+		registerMapper(StringBuffer.class, "(Ljava/lang/CharSequence;)V", (host, parameters) -> new StringBuffer(str((StringValue) parameters.get(0))));
+		registerMapper(StringBuffer.class, "(Ljava/lang/String;)V", (host, parameters) -> new StringBuffer(str((StringValue) parameters.get(0))));
+		registerMapper(StringBuffer.class, "(I)V", (host, parameters) -> new StringBuffer(i((IntValue) parameters.get(0))));
+		registerMapper(StringBuffer.class, "()V", (host, parameters) -> new StringBuffer());
 
 		// java.lang.Boolean
 		registerMapper(Boolean.class, "(Z)V", (host, parameters) -> new Boolean(z((IntValue) parameters.get(0))));

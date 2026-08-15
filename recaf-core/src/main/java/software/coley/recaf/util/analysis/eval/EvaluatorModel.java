@@ -16,6 +16,7 @@ import java.util.List;
  * <ul>
  *     <li>{@link InvokeStaticLookup}</li>
  *     <li>{@link InvokeVirtualLookup}</li>
+ *     <li>{@link InstanceFactory}</li>
  * </ul>
  * Models are consulted in registration order by {@link EvaluationModelRegistry}. The first model
  * that reports support for an operation handles it, and a model may still refuse an operation it

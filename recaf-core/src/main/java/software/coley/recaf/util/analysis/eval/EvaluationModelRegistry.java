@@ -16,7 +16,7 @@ import java.util.List;
 /**
  * Generic dispatch boundary for evaluator models of specific types of operations.
  * <p>
- * Models are used when {@link InvokeStaticLookup} / {@link InvokeVirtualLookup} are
+ * Models are used when {@link InvokeStaticLookup} / {@link InvokeVirtualLookup} / {@link InstanceFactory} are
  * insufficient to handle a type of operation. For example, {@link ThreadModel} and {@link CompletableFutureModel}
  * which require more complex state management than a single method invocation.
  *

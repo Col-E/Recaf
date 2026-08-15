@@ -23,6 +23,7 @@ public class InstanceMapperGenerator extends GenUtils {
 	static List<Class<?>> emitTargets = List.of(
 			String.class,
 			StringBuilder.class,
+			StringBuffer.class,
 			Boolean.class,
 			Byte.class,
 			Character.class,
