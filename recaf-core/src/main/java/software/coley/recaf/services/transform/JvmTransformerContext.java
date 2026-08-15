@@ -84,7 +84,25 @@ public class JvmTransformerContext extends AbstractTransformerContext<JvmClassTr
 	 * 		Transformers to associate with this context.
 	 */
 	public JvmTransformerContext(@Nonnull Workspace workspace, @Nonnull WorkspaceResource resource, @Nonnull Collection<? extends JvmClassTransformer> transformers) {
-		super(workspace, resource, transformers);
+		this(workspace, resource, transformers, TransformationParameters.empty());
+	}
+
+	/**
+	 * Constructs a new context from a collection of transformers.
+	 *
+	 * @param workspace
+	 * 		Workspace containing the classes to transform.
+	 * @param resource
+	 * 		Resource in the workspace containing classes to transform. Should always be the {@link Workspace#getPrimaryResource()}.
+	 * @param transformers
+	 * 		Transformers to associate with this context.
+	 * @param parameters
+	 * 		Per-run parameters transformers can pull values from.
+	 */
+	public JvmTransformerContext(@Nonnull Workspace workspace, @Nonnull WorkspaceResource resource,
+	                             @Nonnull Collection<? extends JvmClassTransformer> transformers,
+	                             @Nonnull TransformationParameters parameters) {
+		super(workspace, resource, transformers, parameters);
 
 		// We will use aggregated mappings for the reverse-mapping utility it offers.
 		// Some transformers that aim to provide mappings will find this very handy.

@@ -44,7 +44,10 @@ import java.util.Set;
  */
 @Dependent
 public class CallResultInliningTransformer implements JvmClassTransformer {
-	private final static int MAX_STEPS = 20_000; // TODO: Make configurable
+	/** Key for the maximum number of steps to allow when evaluating a method. */
+	public static final String KEY_MAX_STEPS = "call-result-inlining.max-steps";
+	private static final int DEFAULT_MAX_STEPS = 20_000;
+
 	private final InheritanceGraphService graphService;
 	private final Object2IntMap<String> canBeEvaluatedMap = new Object2IntMap<>();
 	private final FieldCacheManager fieldCacheManager = new FieldCacheManager();
@@ -59,8 +62,9 @@ public class CallResultInliningTransformer implements JvmClassTransformer {
 
 	@Override
 	public void setup(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace) {
+		int maxSteps = context.getParameters().getInt(KEY_MAX_STEPS, DEFAULT_MAX_STEPS);
 		inheritanceGraph = graphService.getOrCreateInheritanceGraph(workspace);
-		evaluator = new Evaluator(workspace, context.newInterpreter(inheritanceGraph), fieldCacheManager, MAX_STEPS, false, false);
+		evaluator = new Evaluator(workspace, context.newInterpreter(inheritanceGraph), fieldCacheManager, maxSteps, false, false);
 	}
 
 	@Override

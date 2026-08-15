@@ -23,6 +23,7 @@ public abstract class AbstractTransformerContext<T extends ClassTransformer> {
 	private final Set<String> classesToRemove = ConcurrentHashMap.newKeySet();
 	private final ThreadLocal<Boolean> transformerDidWork = ThreadLocal.withInitial(() -> false);
 	private final Map<Class<? extends T>, T> transformerMap;
+	private final TransformationParameters parameters;
 	protected final Workspace workspace;
 	protected final WorkspaceResource resource;
 
@@ -52,9 +53,36 @@ public abstract class AbstractTransformerContext<T extends ClassTransformer> {
 	 * 		Transformers to associate with this context.
 	 */
 	public AbstractTransformerContext(@Nonnull Workspace workspace, @Nonnull WorkspaceResource resource, @Nonnull Collection<? extends T> transformers) {
+		this(workspace, resource, transformers, TransformationParameters.empty());
+	}
+
+	/**
+	 * Constructs a new context from a collection of transformers.
+	 *
+	 * @param workspace
+	 * 		Workspace containing the classes to transform.
+	 * @param resource
+	 * 		Resource in the workspace containing classes to transform. Should always be the {@link Workspace#getPrimaryResource()}.
+	 * @param transformers
+	 * 		Transformers to associate with this context.
+	 * @param parameters
+	 * 		Per-run parameters transformers can pull values from.
+	 */
+	public AbstractTransformerContext(@Nonnull Workspace workspace, @Nonnull WorkspaceResource resource,
+	                                  @Nonnull Collection<? extends T> transformers,
+	                                  @Nonnull TransformationParameters parameters) {
 		this.transformerMap = buildMap(transformers);
 		this.workspace = workspace;
 		this.resource = resource;
+		this.parameters = parameters;
+	}
+
+	/**
+	 * @return Per-run parameters passed to the transformation.
+	 */
+	@Nonnull
+	public TransformationParameters getParameters() {
+		return parameters;
 	}
 
 	/**

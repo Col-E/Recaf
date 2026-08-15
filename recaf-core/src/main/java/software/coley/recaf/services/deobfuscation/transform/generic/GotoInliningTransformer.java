@@ -40,8 +40,16 @@ import static software.coley.recaf.util.AsmInsnUtil.*;
  */
 @Dependent
 public class GotoInliningTransformer implements JvmClassTransformer {
-	private static final int CATCH_VISIT_COUNT = 100;
-	private static final boolean DO_WE_CARE_ABOUT_BACKWARDS_SWITCH_FLOW = false;
+	/** Key for whether to abort inlining when a block begins with a backwards switch jump. */
+	public static final String KEY_BACKWARDS_SWITCH_FLOW = "goto-inlining.backwards-switch-flow";
+	private static final boolean DEFAULT_BACKWARDS_SWITCH_FLOW = false;
+
+	private boolean backwardsSwitchFlow;
+
+	@Override
+	public void setup(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace) {
+		backwardsSwitchFlow = context.getParameters().getBoolean(KEY_BACKWARDS_SWITCH_FLOW, DEFAULT_BACKWARDS_SWITCH_FLOW);
+	}
 
 	@Override
 	public void transform(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace,
@@ -218,8 +226,9 @@ public class GotoInliningTransformer implements JvmClassTransformer {
 
 						int targetOp = target.getOpcode();
 
-						// TODO: Maybe remove this? Need to do more research into when it complains.
-						if (DO_WE_CARE_ABOUT_BACKWARDS_SWITCH_FLOW) {
+						// TODO: Look into cases where this is used more.
+						//  - Currently busts some decompilers, but should be valid to inline. Need to test more.
+						if (backwardsSwitchFlow) {
 							// There are some weird cases where you're not allowed to jump backwards in switch instructions,
 							// so it's better to abort if we see them so that we do not move them around in an illegal way.
 							if (targetOp == TABLESWITCH || targetOp == LOOKUPSWITCH)

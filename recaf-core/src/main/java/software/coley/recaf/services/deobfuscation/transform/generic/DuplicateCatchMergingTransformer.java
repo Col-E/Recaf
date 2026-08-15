@@ -35,6 +35,10 @@ import static software.coley.recaf.util.AsmInsnUtil.*;
  */
 @Dependent
 public class DuplicateCatchMergingTransformer implements JvmClassTransformer {
+	/** Key for the minimum catch block size to consider merging. */
+	public static final String KEY_MIN_BLOCK_THRESHOLD = "duplicate-catch-merging.min-block-threshold";
+	private static final int DEFAULT_MIN_BLOCK_THRESHOLD = 4;
+
 	/**
 	 * Allows us to skip blocks that are too simple to bother merging.
 	 * For instance:
@@ -44,7 +48,12 @@ public class DuplicateCatchMergingTransformer implements JvmClassTransformer {
 	 *     <li>{@code { no-op }}</li>
 	 * </ul>
 	 */
-	private static final int MIN_BLOCK_THRESHOLD = 4;
+	private int minBlockThreshold;
+
+	@Override
+	public void setup(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace) {
+		minBlockThreshold = context.getParameters().getInt(KEY_MIN_BLOCK_THRESHOLD, DEFAULT_MIN_BLOCK_THRESHOLD);
+	}
 
 	@Override
 	public void transform(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace,
@@ -82,7 +91,7 @@ public class DuplicateCatchMergingTransformer implements JvmClassTransformer {
 				}
 
 				// Skip if the block is too small.
-				if (catchBlockInsns.size() < MIN_BLOCK_THRESHOLD)
+				if (catchBlockInsns.size() < minBlockThreshold)
 					continue;
 
 				// Skip if there is control flow pointing to a contained label.
