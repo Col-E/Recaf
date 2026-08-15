@@ -1531,4 +1531,223 @@ public class RegressionDeobfuscationTest extends TransformerTestBase {
 		// x must be 5 after folding, keeping the method's return value at 1 + 2 + 5 + 5 = 13.
 		validateBeforeAfterDecompile(asm, List.of(OpaqueConstantFoldingTransformer.class), "x += 5", "x = 5");
 	}
+
+	/**
+	 * When a two-argument predicate compares values created by {@code dup2}, only the {@code dup2}
+	 * itself is removed. The two originals it duplicated remain on the stack for the branch body.
+	 */
+	@Test
+	void foldOpaqueDup2Predicate() {
+		String asm = """
+				.method public static example ()V {
+				    code: {
+				    A:
+				        iconst_0
+				        iconst_1
+				        dup2
+				        if_icmpne C
+				    B:
+				        pop2
+				        return
+				    C:
+				        pop2
+				        return
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(OpaquePredicateFoldingTransformer.class), dis -> {
+			// The "0 != 1" predicate folds into an unconditional goto.
+			assertEquals(0, StringUtil.count("if_icmpne", dis), "Expected to remove if_icmpne");
+			assertEquals(1, StringUtil.count("goto B", dis), "Expected to replace if_icmpne <target> with goto <target>");
+
+			// Only the dup2 is removed; the two originals it duplicated remain for the branch body.
+			assertEquals(0, StringUtil.count("dup2", dis), "Expected to remove dup2");
+			assertEquals(1, StringUtil.count("iconst_0", dis), "Expected to keep the first original value");
+			assertEquals(1, StringUtil.count("iconst_1", dis), "Expected to keep the second original value");
+
+			// The unreachable fall-through branch is pruned, leaving a single pop2.
+			assertEquals(1, StringUtil.count("pop2", dis), "Expected to prune the dead fall-through branch");
+		});
+	}
+
+	/**
+	 * Object comparisons backed by {@code dup2} keep the two duplicated originals as well.
+	 */
+	@Test
+	void foldOpaqueDup2AcmpPredicate() {
+		String asm = """
+				.method public static example ()V {
+				    code: {
+				    A:
+				        aconst_null
+				        aconst_null
+				        dup2
+				        if_acmpeq C
+				    B:
+				        pop2
+				        return
+				    C:
+				        pop2
+				        return
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(OpaquePredicateFoldingTransformer.class), dis -> {
+			assertEquals(0, StringUtil.count("if_acmpeq", dis), "Expected to remove if_acmpeq");
+			assertEquals(1, StringUtil.count("goto B", dis), "Expected to replace if_acmpeq <target> with goto <target>");
+			assertEquals(0, StringUtil.count("dup2", dis), "Expected to remove dup2");
+			assertEquals(2, StringUtil.count("aconst_null", dis), "Expected to keep the two duplicated originals");
+			assertEquals(1, StringUtil.count("pop2", dis), "Expected to prune the dead fall-through branch");
+		});
+	}
+
+	/**
+	 * A single-value predicate above {@code dup2} keeps the {@code dup2} and pops the copy the jump
+	 * no longer consumes, so the two originals plus the surviving copy remain for the branch body.
+	 */
+	@Test
+	void foldOpaqueDup2SingleValuePredicate() {
+		String asm = """
+				.method public static example ()V {
+				    code: {
+				    A:
+				        iconst_0
+				        iconst_1
+				        dup2
+				        ifne C
+				    B:
+				        pop
+				        pop
+				        pop
+				        return
+				    C:
+				        pop
+				        pop
+				        pop
+				        return
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(OpaquePredicateFoldingTransformer.class), dis -> {
+			assertEquals(0, StringUtil.count("ifne", dis), "Expected to remove ifne");
+			assertEquals(1, StringUtil.count("goto B", dis), "Expected to replace ifne <target> with goto <target>");
+			assertEquals(1, StringUtil.count("dup2", dis), "Expected to keep the dup2");
+			assertEquals(1, StringUtil.count("iconst_0", dis), "Expected to keep the first original value");
+			assertEquals(1, StringUtil.count("iconst_1", dis), "Expected to keep the second original value");
+			assertEquals(4, StringUtil.count("pop", dis), "Expected the surviving copy to be popped");
+		});
+	}
+
+	/**
+	 * Object single-value predicates backed by {@code dup2} keep the two duplicated originals and
+	 * pop the surviving copy, mirroring the primitive case.
+	 */
+	@Test
+	void foldOpaqueDup2NullSingleValuePredicate() {
+		String asm = """
+				.method public static example ()V {
+				    code: {
+				    A:
+				        aconst_null
+				        aconst_null
+				        dup2
+				        ifnull C
+				    B:
+				        pop
+				        pop
+				        pop
+				        return
+				    C:
+				        pop
+				        pop
+				        pop
+				        return
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(OpaquePredicateFoldingTransformer.class), dis -> {
+			assertEquals(0, StringUtil.count("ifnull", dis), "Expected to remove ifnull");
+			assertEquals(1, StringUtil.count("goto B", dis), "Expected to replace ifnull <target> with goto <target>");
+			assertEquals(1, StringUtil.count("dup2", dis), "Expected to keep the dup2");
+			assertEquals(2, StringUtil.count("aconst_null", dis), "Expected to keep the two duplicated originals");
+			assertEquals(4, StringUtil.count("pop", dis), "Expected the surviving copy to be popped");
+		});
+	}
+
+	/**
+	 * A switch selector produced by {@code dup2} keeps the {@code dup2} and pops the selector copy
+	 * the switch no longer consumes.
+	 */
+	@Test
+	void foldOpaqueDup2SwitchPredicate() {
+		String asm = """
+				.method public static example ()V {
+				    code: {
+				    A:
+				        iconst_0
+				        iconst_1
+				        dup2
+				        lookupswitch {
+				            0: B,
+				            1: C,
+				            default: B
+				        }
+				    B:
+				        pop
+				        pop
+				        pop
+				        return
+				    C:
+				        pop
+				        pop
+				        pop
+				        return
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(OpaquePredicateFoldingTransformer.class), dis -> {
+			assertEquals(0, StringUtil.count("lookupswitch", dis), "Expected to remove lookupswitch");
+			assertEquals(1, StringUtil.count("goto B", dis), "Expected to replace lookupswitch <target> with goto <target>");
+			assertEquals(1, StringUtil.count("dup2", dis), "Expected to keep the dup2");
+			assertEquals(1, StringUtil.count("iconst_0", dis), "Expected to keep the first original value");
+			assertEquals(1, StringUtil.count("iconst_1", dis), "Expected to keep the second original value");
+			assertEquals(4, StringUtil.count("pop", dis), "Expected the surviving copy to be popped");
+		});
+	}
+
+	/**
+	 * An effective-goto switch with a {@code dup2} selector keeps the {@code dup2} and pops the
+	 * selector copy the goto no longer consumes.
+	 */
+	@Test
+	void foldOpaqueDup2EffectiveGotoSwitchPredicate() {
+		String asm = """
+				.method public static example ()V {
+				    code: {
+				    A:
+				        iconst_0
+				        iconst_1
+				        dup2
+				        lookupswitch {
+				            0: B,
+				            1: B,
+				            default: B
+				        }
+				    B:
+				        pop
+				        pop
+				        pop
+				        return
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(OpaquePredicateFoldingTransformer.class), dis -> {
+			assertEquals(0, StringUtil.count("lookupswitch", dis), "Expected to remove lookupswitch");
+			assertEquals(1, StringUtil.count("goto B", dis), "Expected to replace lookupswitch <target> with goto <target>");
+			assertEquals(1, StringUtil.count("dup2", dis), "Expected to keep the dup2");
+			assertEquals(1, StringUtil.count("iconst_0", dis), "Expected to keep the first original value");
+			assertEquals(1, StringUtil.count("iconst_1", dis), "Expected to keep the second original value");
+			assertEquals(4, StringUtil.count("pop", dis), "Expected the surviving copy to be popped");
+		});
+	}
 }
