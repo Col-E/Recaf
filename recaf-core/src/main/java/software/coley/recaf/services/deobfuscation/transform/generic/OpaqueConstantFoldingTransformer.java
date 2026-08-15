@@ -52,7 +52,6 @@ import java.util.stream.Collectors;
 import static org.objectweb.asm.Opcodes.*;
 import static software.coley.recaf.util.AsmInsnUtil.*;
 
-
 /**
  * A transformer that folds sequences of computed values into constants.
  *
@@ -297,9 +296,15 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 						continue;
 					BinaryOperationArguments arguments = getBinaryOperationArguments(instruction.getPrevious(), POP2);
 					if (arguments != null && arguments.combinedIntermediates().isEmpty()) {
-						instructions.remove(arguments.argument1().insn());
-						instructions.insert(arguments.argument2().insn(), arguments.argument1().insn());
-						instructions.set(instruction, new InsnNode(NOP));
+						if (arguments.argument1().sameAs(arguments.argument2())) {
+							// If the two arguments are the same, then we can just NOP the swap instruction.
+							instructions.set(instruction, new InsnNode(NOP));
+						} else {
+							// Otherwise, rewrite the order of the two arguments to achieve the same effect as a swap.
+							instructions.remove(arguments.argument1().insn());
+							instructions.insert(arguments.argument2().insn(), arguments.argument1().insn());
+							instructions.set(instruction, new InsnNode(NOP));
+						}
 						dirty = true;
 					}
 				}
