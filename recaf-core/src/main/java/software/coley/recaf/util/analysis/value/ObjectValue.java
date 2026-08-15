@@ -90,6 +90,14 @@ public non-sealed interface ObjectValue extends ReValue {
 		};
 	}
 
+	/**
+	 * @param type
+	 * 		Value type.
+	 * @param nullness
+	 * 		Null state of the value.
+	 *
+	 * @return Object value of the given nullness with a type of {@code type}.
+	 */
 	@Nonnull
 	static ObjectValue object(@Nonnull Type type, @Nonnull Nullness nullness) {
 		if (Types.OBJECT_TYPE.equals(type))

@@ -45,19 +45,19 @@ import software.coley.recaf.util.analysis.value.ReValue;
 import software.coley.recaf.util.analysis.value.ThrowableValue;
 import software.coley.recaf.util.analysis.value.UninitializedValue;
 import software.coley.recaf.util.analysis.value.impl.ArrayValueImpl;
+import software.coley.recaf.util.analysis.value.impl.ArrayValueMutableImpl;
 import software.coley.recaf.util.visitors.MemberFilteringVisitor;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.RuntimeWorkspaceResource;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.OptionalInt;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.BiPredicate;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 /**
@@ -166,7 +166,7 @@ public class Evaluator {
 			return false;
 
 		// Must not have any unsupported instructions
-		ExecutingFrame frame = new ExecutingFrame(method, new EvaluationContext(maxSteps), null);
+		ExecutingFrame frame = new ExecutingFrame(method, new EvaluationContext(this, maxSteps), null);
 		for (AbstractInsnNode instruction : method.instructions)
 			if (!frame.canEvaluateInsn(instruction, interpreter, method.instructions))
 				return false;
@@ -189,11 +189,49 @@ public class Evaluator {
 	                                @Nonnull ReFrame originFrame,
 	                                int methodAccess) {
 		// Must not have any unsupported instructions
-		ExecutingFrame frame = new ExecutingFrame(null, 0xFF, 0xFF, methodAccess, new EvaluationContext(maxSteps));
+		ExecutingFrame frame = new ExecutingFrame(null, 0xFF, 0xFF, methodAccess, new EvaluationContext(this, maxSteps));
 		for (AbstractInsnNode instruction : instructionBlock)
 			if (!frame.canEvaluateInsn(instruction, interpreter, instructionBlock))
 				return false;
 		return true;
+	}
+
+	/**
+	 * @param lambda
+	 * 		Invokedynamic lambda to evaluate.
+	 * @param arguments
+	 * 		SAM arguments.
+	 * @param context
+	 * 		Shared evaluation context.
+	 *
+	 * @return Lambda evaluation result.
+	 *
+	 * @throws UnknownValueException
+	 * 		When argument values cannot be evaluated.
+	 */
+	@Nonnull
+	protected EvaluationResult evaluateLambda(@Nonnull InvokeDynamicExecutor.EvaluatedLambdaValue lambda,
+	                                          @Nonnull List<ReValue> arguments,
+	                                          @Nonnull EvaluationContext context) throws UnknownValueException {
+		// Currently we only support static lambda implementations, since instance lambdas require a receiver to be passed in.
+		Handle handle = lambda.implementationHandle();
+		if (handle.getTag() != Opcodes.H_INVOKESTATIC)
+			return EvaluationResult.cannotEvaluate("Lambda implementation handle is not static");
+
+		// Validate argument count matches the SAM descriptor.
+		// Captured values are already included in the lambda's implementation handle, so we only need to check the SAM arguments.
+		if (arguments.size() != lambda.instantiatedMethodType().getArgumentCount())
+			return EvaluationResult.cannotEvaluate("Mismatched lambda invocation argument count");
+
+		// Combine captured values and SAM arguments to form the full argument list for the lambda implementation.
+		List<ReValue> targetArguments = new ArrayList<>(lambda.capturedValues().size() + arguments.size());
+		targetArguments.addAll(lambda.capturedValues());
+		targetArguments.addAll(arguments);
+		if (Type.getMethodType(handle.getDesc()).getArgumentCount() != targetArguments.size())
+			return EvaluationResult.cannotEvaluate("Mismatched lambda implementation argument count");
+
+		// Now evaluate it like any other static method.
+		return evaluate(handle.getOwner(), handle.getName(), handle.getDesc(), null, targetArguments, context);
 	}
 
 	/**
@@ -220,7 +258,7 @@ public class Evaluator {
 		if (Type.getReturnType(methodDescriptor) == Type.VOID_TYPE)
 			return EvaluationResult.cannotEvaluate("Method must yield a value");
 		try {
-			return evaluate(className, methodName, methodDescriptor, classInstance, parameters, new EvaluationContext(maxSteps, callStackSeed));
+			return evaluate(className, methodName, methodDescriptor, classInstance, parameters, new EvaluationContext(this, maxSteps, callStackSeed));
 		} catch (UnknownValueException e) {
 			return EvaluationResult.cannotEvaluate(UNKNOWN_VALUE_REASON, e);
 		}
@@ -273,18 +311,33 @@ public class Evaluator {
 		if (Type.getReturnType(methodNode.desc) == Type.VOID_TYPE)
 			return EvaluationResult.cannotEvaluate("Method must yield a value");
 		try {
-			return evaluate(classNode, methodNode, classInstance, parameters, new EvaluationContext(maxSteps, callStackSeed));
+			return evaluate(classNode, methodNode, classInstance, parameters, new EvaluationContext(this, maxSteps, callStackSeed));
 		} catch (UnknownValueException e) {
 			return EvaluationResult.cannotEvaluate(UNKNOWN_VALUE_REASON, e);
 		}
 	}
 
+	/**
+	 * @param classNode
+	 * 		Class defining the target method.
+	 * @param methodNode
+	 * 		Target method.
+	 * @param classInstance
+	 * 		Instance of {@code this} for instance methods.
+	 * 		Can be {@code null} for {@code static} methods.
+	 * @param parameters
+	 * 		Parameters to pass to the target method.
+	 * @param context
+	 * 		Shared evaluation context.
+	 *
+	 * @return Result of evaluating the target method with the given parameters.
+	 */
 	@Nonnull
-	private EvaluationResult evaluate(@Nonnull ClassNode classNode,
-	                                  @Nonnull MethodNode methodNode,
-	                                  @Nullable ObjectValue classInstance,
-	                                  @Nonnull List<ReValue> parameters,
-	                                  @Nonnull EvaluationContext context) throws UnknownValueException {
+	protected EvaluationResult evaluate(@Nonnull ClassNode classNode,
+	                                    @Nonnull MethodNode methodNode,
+	                                    @Nullable ObjectValue classInstance,
+	                                    @Nonnull List<ReValue> parameters,
+	                                    @Nonnull EvaluationContext context) throws UnknownValueException {
 		// Active method entry is a JVM class-initialization boundary.
 		if (!methodNode.name.equals("<clinit>")) {
 			EvaluationResult initializationResult = initializeClassIfNeeded(classNode.name, context);
@@ -332,7 +385,7 @@ public class Evaluator {
 
 		// Advance by slot width so arguments after long and double land correctly.
 		for (int i = 0; i < argumentTypes.length; i++) {
-			frame.setLocal(local, parameters.get(i));
+			frame.setLocal(local, adaptValue(parameters.get(i)));
 			local += argumentTypes[i].getSize();
 		}
 
@@ -565,12 +618,12 @@ public class Evaluator {
 			return EvaluationResult.cannotEvaluate("Target block does not support evaluation");
 
 		// Create initial frame
-		EvaluationContext context = new EvaluationContext(maxSteps, callStackSeed);
+		EvaluationContext context = new EvaluationContext(this, maxSteps, callStackSeed);
 		ExecutingFrame frame = new ExecutingFrame(null, originFrame.getLocals(), originFrame.getMaxStackSize(), methodAccess, context);
 		for (int i = 0; i < originFrame.getLocals(); i++)
-			frame.setLocal(i, originFrame.getLocal(i));
+			frame.setLocal(i, adaptValue(originFrame.getLocal(i)));
 		for (int i = 0; i < originFrame.getStackSize(); i++)
-			frame.push(originFrame.getStack(i));
+			frame.push(adaptValue(originFrame.getStack(i)));
 
 		// Handle execution
 		AbstractInsnNode pc = instructionBlock.getFirst();
@@ -683,6 +736,38 @@ public class Evaluator {
 	}
 
 	/**
+	 * @param value
+	 * 		Original value to adapt for evaluation.
+	 *
+	 * @return Adapted mutable value for evaluation.
+	 */
+	@Nonnull
+	private ReValue adaptValue(@Nonnull ReValue value) {
+		return adaptValue(value, null);
+	}
+
+	/**
+	 * @param value
+	 * 		Original value to adapt for evaluation.
+	 * @param onMutate
+	 * 		Callback to invoke when a value is adapted. Skipped if the value is not adapted.
+	 *
+	 * @return Adapted mutable value for evaluation.
+	 */
+	@Nonnull
+	private ReValue adaptValue(@Nonnull ReValue value, @Nullable Consumer<ReValue> onMutate) {
+		// In the base frame-gen context array-values are used in, they are immutable.
+		// But in the evaluation context, we need to be able to mutate them for array stores.
+		if (value instanceof ArrayValue array && !(array instanceof ArrayValueMutableImpl)) {
+			ArrayValue wrapped = ArrayValueMutableImpl.wrap(array);
+			if (onMutate != null)
+				onMutate.accept(wrapped);
+			return wrapped;
+		}
+		return value;
+	}
+
+	/**
 	 * Handles {@code IF_ACMPEQ} and {@code IF_ACMPNE} instructions.
 	 *
 	 * @param left
@@ -744,6 +829,21 @@ public class Evaluator {
 			return false;
 		int access = classPath.getValue().asJvmClass().getAccess();
 		return !AccessFlag.isAbstract(access) && !AccessFlag.isInterface(access);
+	}
+
+	/**
+	 * Checks assignability using the inheritance graph backing this interpreter.
+	 *
+	 * @param parent
+	 * 		Expected parent type, in internal-name form.
+	 * @param child
+	 * 		Actual child type, in internal-name form.
+	 *
+	 * @return {@code true} when {@code parent} can be assigned from {@code child}.
+	 */
+	boolean isAssignableFrom(@Nonnull String parent, @Nonnull String child) {
+		// Delegate since the interpreter isn't exposed directly.
+		return interpreter.isAssignableFrom(parent, child);
 	}
 
 	/**
@@ -877,6 +977,36 @@ public class Evaluator {
 	}
 
 	/**
+	 * Resolves a concrete implementation of the given method in the given class or its superclasses.
+	 *
+	 * @param className
+	 * 		Internal name of the class to start searching from.
+	 * @param methodName
+	 * 		Method name.
+	 * @param descriptor
+	 * 		Method descriptor.
+	 *
+	 * @return The concrete method if found, or {@code null} if no concrete implementation exists in the class hierarchy.
+	 */
+	@Nullable
+	protected ClassMethodPair resolveConcreteMethod(@Nonnull String className,
+	                                                @Nonnull String methodName,
+	                                                @Nonnull String descriptor) {
+		Set<String> visited = new HashSet<>();
+		String current = className;
+		while (current != null && visited.add(current)) {
+			ClassNode node = getNode(current);
+			if (node == null)
+				return null;
+			ClassMethodPair method = resolveConcreteMethod(node, methodName, descriptor);
+			if (method != null)
+				return method;
+			current = node.superName;
+		}
+		return null;
+	}
+
+	/**
 	 * Resolves a concrete implementation of the given method in the given class.
 	 *
 	 * @param classNode
@@ -889,9 +1019,9 @@ public class Evaluator {
 	 * @return The concrete method if found, or {@code null} if no concrete implementation exists in the given class.
 	 */
 	@Nullable
-	private ClassMethodPair resolveConcreteMethod(@Nullable ClassNode classNode,
-	                                              @Nonnull String methodName,
-	                                              @Nonnull String descriptor) {
+	protected ClassMethodPair resolveConcreteMethod(@Nullable ClassNode classNode,
+	                                                @Nonnull String methodName,
+	                                                @Nonnull String descriptor) {
 		if (classNode == null)
 			return null;
 
@@ -1056,9 +1186,11 @@ public class Evaluator {
 					yield !(cst instanceof ConstantDynamic || cst instanceof Handle);
 				}
 				case ATHROW -> true;
-				case NEW -> insn instanceof TypeInsnNode tin && (instanceFactory.isSupportedType(tin.desc)
-						|| exceptionHandler.isThrowableType(tin.desc)
-						|| isConcreteClass(tin.desc));
+				case NEW -> insn instanceof TypeInsnNode tin &&
+						(context.models.supportsAllocation(tin.desc)
+								|| instanceFactory.isSupportedType(tin.desc)
+								|| exceptionHandler.isThrowableType(tin.desc)
+								|| isConcreteClass(tin.desc));
 				case INVOKESPECIAL, INVOKEINTERFACE, INVOKEVIRTUAL -> {
 					if (insn instanceof MethodInsnNode min) {
 						// Object initializer is no-op and inherently safe to evaluate.
@@ -1071,12 +1203,20 @@ public class Evaluator {
 						if (exceptionHandler.isThrowableConstructor(min) || exceptionHandler.isThrowableGetStackTrace(min))
 							yield true;
 
+						// Check if the method is a known constructor supported by one of the model types.
+						if (min.getOpcode() == INVOKESPECIAL && context.models.supportsConstructor(min))
+							yield true;
+
 						// Check if the method can be instanced.
 						if (instanceFactory.getMethodHandler(min) != null || instanceFactory.getMapper(min) != null)
 							yield true;
 
 						// Check for eligible lambda calls.
 						if (min.getOpcode() != INVOKESPECIAL && InvokeDynamicExecutor.canEvaluateLambdaInvocation(min, instructionScope))
+							yield true;
+
+						// Check if the method is supported by the model types for instance dispatch.
+						if (min.getOpcode() != INVOKESPECIAL && context.models.supportsInstance(min))
 							yield true;
 
 						// Check if the symbolic owner exists for runtime receiver dispatch.
@@ -1094,6 +1234,10 @@ public class Evaluator {
 						insn instanceof InvokeDynamicInsnNode indy && InvokeDynamicExecutor.canEvaluate(indy);
 				case INVOKESTATIC -> {
 					if (insn instanceof MethodInsnNode min) {
+						// Check if the method is supported by the model types for static dispatch.
+						if (context.models.supportsStatic(min))
+							yield true;
+
 						// Check if we have a static method handler for the method.
 						if (instanceFactory.getStaticMethodHandler(min) != null)
 							yield true;
@@ -1233,6 +1377,14 @@ public class Evaluator {
 						if (initializationResult instanceof EvaluationThrowsResult(ReValue exception))
 							yield exceptionHandler.routeException(this, exception, insn);
 
+						// Try to get a modeled instance for the type.
+						// If we don't have a model implementation for the type we'll fall back to normal allocation.
+						ObjectValue modeledInstance = context.models.allocate(tin.desc, context);
+						if (modeledInstance != null) {
+							push(modeledInstance);
+							yield insn.getNext();
+						}
+
 						// Now allocate the instance.
 						// If the type is a known throwable, we will use the exception handler to create it.
 						Type type = Type.getObjectType(tin.desc);
@@ -1254,6 +1406,12 @@ public class Evaluator {
 						ReValue value = fieldCacheManager.getInstanceFieldCache(receiver)
 								.getField(fieldInsn.owner, fieldInsn.name, fieldInsn.desc);
 						if (value != null) {
+							value = adaptValue(value, v -> {
+								// If the value is adapted, we need to update the cache with the adapted value.
+								fieldCacheManager.getInstanceFieldCache(receiver)
+										.setField(fieldInsn.owner, fieldInsn.name, fieldInsn.desc, v);
+							});
+
 							pop(); // Pop receiver
 							push(value); // Push field value
 							yield insn.getNext();
@@ -1278,6 +1436,11 @@ public class Evaluator {
 						ReValue value = fieldCacheManager.getStaticFieldCache(fieldInsn.owner)
 								.getField(fieldInsn.owner, fieldInsn.name, fieldInsn.desc);
 						if (value != null) {
+							value = adaptValue(value, v -> {
+								// If the value is adapted, we need to update the cache with the adapted value.
+								fieldCacheManager.getStaticFieldCache(fieldInsn.owner)
+										.setField(fieldInsn.owner, fieldInsn.name, fieldInsn.desc, v);
+							});
 							push(value);
 							yield insn.getNext();
 						}
@@ -1333,6 +1496,16 @@ public class Evaluator {
 						for (int i = Type.getArgumentCount(methodDescriptor); i > 0; --i)
 							valueList.addFirst(pop());
 						ObjectValue receiver = requireObject(pop());
+
+						// First try to dispatch the constructor through the model types, which can handle some special cases.
+						// If the model handles the constructor, we can skip normal evaluation.
+						ModelResult modeledConstructor = context.models.invokeConstructor(min, receiver, valueList, context);
+						if (modeledConstructor.handled()) yield switch (modeledConstructor.result()) {
+							case EvaluationYieldResult ignored -> insn.getNext();
+							case EvaluationThrowsResult thrown ->
+									exceptionHandler.routeException(this, thrown.exception(), insn);
+							case EvaluationFailureResult failure -> throw new NestedEvaluationFailure(failure);
+						};
 
 						// Registered host mappers remain the only allocation path for supported host-backed types.
 						InstanceMapper mapper = instanceFactory.getMapper(min);
@@ -1414,7 +1587,8 @@ public class Evaluator {
 							EvaluationResult result = evaluateLambda(lambda, valueList, context);
 							switch (result) {
 								case EvaluationYieldResult yielded -> {
-									push(yielded.value());
+									if (Type.getReturnType(min.desc) != Type.VOID_TYPE)
+										push(yielded.value());
 									yield insn.getNext();
 								}
 								case EvaluationThrowsResult thrown -> {
@@ -1424,8 +1598,21 @@ public class Evaluator {
 							}
 						}
 
-						// Check if we can handle the invoke with instance support or a value lookup.
+						// Check if the method is supported by the model types for instance dispatch.
 						boolean isVoid = Type.getReturnType(min.desc) == Type.VOID_TYPE;
+						ModelResult modeledInstance = context.models.invokeInstance(min, receiver, valueList, context);
+						if (modeledInstance.handled()) yield switch (modeledInstance.result()) {
+							case EvaluationYieldResult yielded -> {
+								if (!isVoid)
+									push(yielded.value());
+								yield insn.getNext();
+							}
+							case EvaluationThrowsResult thrown ->
+									exceptionHandler.routeException(this, thrown.exception(), insn);
+							case EvaluationFailureResult failure -> throw new NestedEvaluationFailure(failure);
+						};
+
+						// Check if we can handle the invoke with instance support or a value lookup.
 						if (receiver instanceof InstancedObjectValue<?> instancedReceiver && instancedReceiver.getRealInstance() != null) {
 							MethodInvokeHandler<?> handler = instanceFactory.getMethodHandler(min);
 							if (handler != null) {
@@ -1499,6 +1686,19 @@ public class Evaluator {
 						List<ReValue> valueList = new ArrayList<>();
 						for (int i = Type.getArgumentCount(min.desc); i > 0; --i)
 							valueList.addFirst(pop());
+
+						// Check if the method is supported by the model types for static dispatch.
+						ModelResult modeledStatic = context.models.invokeStatic(min, valueList, context);
+						if (modeledStatic.handled()) yield switch (modeledStatic.result()) {
+							case EvaluationYieldResult yielded -> {
+								if (Type.getReturnType(min.desc) != Type.VOID_TYPE)
+									push(yielded.value());
+								yield insn.getNext();
+							}
+							case EvaluationThrowsResult thrown ->
+									exceptionHandler.routeException(this, thrown.exception(), insn);
+							case EvaluationFailureResult failure -> throw new NestedEvaluationFailure(failure);
+						};
 
 						// Invoke the registered frame-aware handler before any static fallback.
 						Type returnType = Type.getReturnType(min.desc);
@@ -1583,7 +1783,12 @@ public class Evaluator {
 				case JSR, RET -> {
 					throw new UnsupportedOperationException();
 				}
-
+				case NEWARRAY, ANEWARRAY, MULTIANEWARRAY -> {
+					execute(insn, interpreter);
+					ReValue array = pop();
+					push(adaptValue(array)); // Ensure the array is adapted to our mutable implementation.
+					yield insn.getNext();
+				}
 				case AASTORE -> {
 					execute(insn, interpreter);
 					yield insn.getNext();
@@ -1723,40 +1928,6 @@ public class Evaluator {
 		}
 	}
 
-	/** Context for evaluation, including the call stack, step allocation, and class initialization state. */
-	private static final class EvaluationContext {
-		private final List<ClassMethodPair> callStack;
-		private final Set<String> initializedClasses;
-		private final Set<String> initializingClasses;
-		private final Map<String, EvaluationResult> failedClassInitializers;
-		private int stepAllocation;
-
-		private EvaluationContext(int stepAllocation) {
-			this(stepAllocation, null);
-		}
-
-		private EvaluationContext(int stepAllocation, @Nullable List<ClassMethodPair> callStackSeed) {
-			this.stepAllocation = stepAllocation;
-
-			callStack = callStackSeed == null ? new ArrayList<>() : new ArrayList<>(callStackSeed);
-			initializedClasses = new HashSet<>();
-			initializingClasses = new HashSet<>();
-			failedClassInitializers = new HashMap<>();
-		}
-
-		@Nonnull
-		private List<StackTraceElement> stackTrace() {
-			List<StackTraceElement> trace = new ArrayList<>(callStack.size());
-			for (int i = callStack.size() - 1; i >= 0; i--) {
-				ClassMethodPair pair = callStack.get(i);
-				ClassNode classNode = pair.classNode();
-				MethodNode methodNode = pair.methodNode();
-				trace.add(new StackTraceElement(classNode.name.replace('/', '.'), methodNode.name, null, -1));
-			}
-			return trace;
-		}
-	}
-
 	/** Dummy exception to signal a nested evaluation failure. */
 	private static final class NestedEvaluationFailure extends Exception {
 		private final EvaluationFailureResult result;
@@ -1780,7 +1951,7 @@ public class Evaluator {
 	}
 
 	/** Dummy exception to signal an unknown branch decision. */
-	private static final class UnknownValueException extends Exception {
+	public static final class UnknownValueException extends Exception {
 		private static final UnknownValueException INSTANCE = new UnknownValueException();
 
 		private UnknownValueException() {}

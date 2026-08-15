@@ -221,7 +221,6 @@ public class ArrayValueImpl implements ArrayValue {
 		return type().getInternalName();
 	}
 
-
 	@Nonnull
 	private static ReValue getSubTypedValue(@Nonnull Type arrayType, @Nonnull UncheckedFunction<Type, ReValue> function) {
 		try {

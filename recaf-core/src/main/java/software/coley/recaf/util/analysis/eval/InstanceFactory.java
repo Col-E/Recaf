@@ -1308,10 +1308,6 @@ public class InstanceFactory extends BasicLookupUtils {
 			}
 		});
 
-		// No-op sleep. Later we'll probably want some kind of simple thread emulation system that tracks these.
-		registerStaticMethodHandler("java/lang/Thread", "sleep", "(J)V", (ReFrame frame, ReInterpreter interpreter, MethodInsnNode instruction, List<ReValue> args) -> null);
-		registerStaticMethodHandler("java/lang/Thread", "sleep", "(JI)V", (ReFrame frame, ReInterpreter interpreter, MethodInsnNode instruction, List<ReValue> args) -> null);
-		registerStaticMethodHandler("java/lang/Thread", "sleep", "(Ljava/time/Duration;)V", (ReFrame frame, ReInterpreter interpreter, MethodInsnNode instruction, List<ReValue> args) -> null);
 	}
 
 	/**

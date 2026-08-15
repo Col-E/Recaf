@@ -121,21 +121,25 @@ public class InvokeDynamicExecutor {
 				|| instantiatedMethodType.getSort() != Type.METHOD)
 			return false;
 
-		// We have a matching lambda creation, but we need to check that the implementation method
-		// is a static method with a non-void return type and the correct number of arguments.
+		// We have a matching lambda creation, but we need to check that the implementation
+		// method matches the shape of the functional interface method.
+		//  - Must be static
+		//  - Must have same number of args, plus the number of captured values
+		//  - Must have same return type
 		try {
 			Type[] samArguments = samMethodType.getArgumentTypes();
 			Type[] instantiatedArguments = instantiatedMethodType.getArgumentTypes();
-			if (samArguments.length != instantiatedArguments.length
-					|| samMethodType.getReturnType() == Type.VOID_TYPE
-					|| instantiatedMethodType.getReturnType() == Type.VOID_TYPE
-					|| implementationHandle.getTag() != Opcodes.H_INVOKESTATIC)
-				return false;
-
 			Type implementationMethodType = Type.getMethodType(implementationHandle.getDesc());
-			return implementationMethodType.getReturnType() != Type.VOID_TYPE
+			boolean samVoid = samMethodType.getReturnType() == Type.VOID_TYPE;
+			boolean instantiatedVoid = instantiatedMethodType.getReturnType() == Type.VOID_TYPE;
+			boolean implementationVoid = implementationMethodType.getReturnType() == Type.VOID_TYPE;
+			return samArguments.length == instantiatedArguments.length
+					&& samVoid == instantiatedVoid
+					&& instantiatedVoid == implementationVoid
+					&& implementationHandle.getTag() == Opcodes.H_INVOKESTATIC
 					&& implementationMethodType.getArgumentCount() == Type.getArgumentCount(indy.desc) + instantiatedArguments.length;
 		} catch (IllegalArgumentException ex) {
+			// Malformed method descriptor, so we cannot evaluate this lambda creation.
 			return false;
 		}
 	}

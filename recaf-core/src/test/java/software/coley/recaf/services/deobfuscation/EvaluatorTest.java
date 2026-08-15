@@ -55,6 +55,9 @@ import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -104,10 +107,7 @@ public class EvaluatorTest extends TransformerTestBase {
 				""";
 		ReValue retVal = evaluate(src, "decrypt", "(I)Ljava/lang/String;", null,
 				List.of(IntValue.of(26)));
-		if (retVal instanceof StringValue str)
-			assertEquals("abcdefghijklmnopqrstuvwxyz", str.getText().orElse(null));
-		else
-			fail("Evaluation failure");
+		assertStringValue("abcdefghijklmnopqrstuvwxyz", retVal);
 	}
 
 	@Test
@@ -154,10 +154,7 @@ public class EvaluatorTest extends TransformerTestBase {
 				""";
 		ReValue retVal = evaluate(src, "decrypt", "(Ljava/lang/String;I)Ljava/lang/String;", null,
 				List.of(ObjectValue.string("㘯㘂㘋㘋㘈㙇㘐㘈㘕㘋㘃"), IntValue.of(0b11011001100111)));
-		if (retVal instanceof StringValue str)
-			assertEquals("Hello world", str.getText().orElse(null));
-		else
-			fail("Evaluation failure, unexpected return value: " + retVal);
+		assertStringValue("Hello world", retVal);
 	}
 
 	@Test
@@ -211,15 +208,15 @@ public class EvaluatorTest extends TransformerTestBase {
 				""");
 
 		// Validate ordinary and overlapping copies through the evaluator only.
-		assertEquals("2:3:4:9", ((StringValue) evaluate(compiled, "copy", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
-		assertEquals("1:1:2:3:4", ((StringValue) evaluate(compiled, "overlap", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+		assertStringValue("2:3:4:9", evaluate(compiled, "copy", "()Ljava/lang/String;", null, List.of()));
+		assertStringValue("1:1:2:3:4", evaluate(compiled, "overlap", "()Ljava/lang/String;", null, List.of()));
 
 		// Validate deterministic JVM faults are routed through the evaluator's exception model.
 		assertEvaluationThrows(compiled, "nullSource", "()I", "java/lang/NullPointerException");
 		assertEvaluationThrows(compiled, "outOfBounds", "()I", "java/lang/ArrayIndexOutOfBoundsException");
 		assertEvaluationThrows(compiled, "primitiveMismatch", "()I", "java/lang/ArrayStoreException");
 		assertEvaluationThrows(compiled, "referenceMismatch", "()I", "java/lang/ArrayStoreException");
-		assertEquals(7, ((IntValue) evaluate(compiled, "caught", "()I", null, List.of())).value().orElseThrow());
+		assertIntValue(7, evaluate(compiled, "caught", "()I", null, List.of()));
 	}
 
 	@Test
@@ -229,10 +226,7 @@ public class EvaluatorTest extends TransformerTestBase {
 				static String makeTwo() { return make().repeat(2); }
 				""");
 		ReValue retVal = evaluate(compiled, "makeTwo", "()Ljava/lang/String;", null, List.of());
-		if (retVal instanceof StringValue str)
-			assertEquals("TestTest", str.getText().orElse(null));
-		else
-			fail("Evaluation failure, unexpected return value: " + retVal);
+		assertStringValue("TestTest", retVal);
 	}
 
 	@Test
@@ -241,19 +235,9 @@ public class EvaluatorTest extends TransformerTestBase {
 		String compiled = compile("""
 				static String concat(String left, String right) { return left + " " + right; }
 				""");
-		assertEquals("Hello World", ((StringValue) evaluate(compiled, "concat",
+		assertStringValue("Hello World", evaluate(compiled, "concat",
 				"(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;", null,
-				List.of(ObjectValue.string("Hello"), ObjectValue.string("World")))).getText().orElseThrow());
-	}
-
-	@Test
-	void testThreadSleepIgnored() {
-		// This works for now, but later we'll want a more intelligent thread system simulation.
-		String compiled = compile("""
-				static String helloWorld() throws Exception { Thread.sleep(1); return "Hello World"; }
-				""");
-		assertEquals("Hello World", ((StringValue) evaluate(compiled, "helloWorld",
-				"()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+				List.of(ObjectValue.string("Hello"), ObjectValue.string("World"))));
 	}
 
 	@Test
@@ -275,9 +259,9 @@ public class EvaluatorTest extends TransformerTestBase {
 					}
 				}
 				""";
-		assertEquals("HelloWorld", ((StringValue) evaluate(assembly, "concat",
+		assertStringValue("HelloWorld", evaluate(assembly, "concat",
 				"(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;", null,
-				List.of(ObjectValue.string("Hello"), ObjectValue.string("World")))).getText().orElseThrow());
+				List.of(ObjectValue.string("Hello"), ObjectValue.string("World"))));
 	}
 
 	@Test
@@ -313,7 +297,7 @@ public class EvaluatorTest extends TransformerTestBase {
 		// Eval the method and validate the result, observed classes/methods, and the post-IMUL values.
 		EvaluationResult result = evaluator.evaluate(CLASS_NAME, "run", "()I", null, List.of());
 		EvaluationYieldResult yielded = assertInstanceOf(EvaluationYieldResult.class, result);
-		assertEquals(24, ((IntValue) yielded.value()).value().orElseThrow());
+		assertIntValue(24, yielded.value());
 		assertEquals(Set.of(CLASS_NAME), observedClasses);
 		assertEquals(Set.of("helper", "run"), observedMethods);
 		assertEquals(6, postImulValues.get("helper"));
@@ -359,7 +343,7 @@ public class EvaluatorTest extends TransformerTestBase {
 		// Evaluate enough recursive calls to prove repeated method invocations can be observed through the listener.
 		EvaluationResult result = evaluator.evaluate(CLASS_NAME, "countdown", "(I)I", null, List.of(IntValue.of(3)));
 		EvaluationYieldResult yielded = assertInstanceOf(EvaluationYieldResult.class, result);
-		assertEquals(4, ((IntValue) yielded.value()).value().orElseThrow());
+		assertIntValue(4, yielded.value());
 		assertEquals(List.of(
 				List.of("countdown"),
 				List.of("countdown", "countdown"),
@@ -445,10 +429,7 @@ public class EvaluatorTest extends TransformerTestBase {
 
 		// Validate that the instance method can be called and returns the expected value.
 		ReValue runResult = evaluate(compiled, "run", "()Ljava/lang/String;", instance, List.of());
-		if (runResult instanceof StringValue str)
-			assertEquals("instance", str.getText().orElse(null));
-		else
-			fail("Evaluation failure, unexpected return value: " + runResult);
+		assertStringValue("instance", runResult);
 	}
 
 	@Test
@@ -461,8 +442,8 @@ public class EvaluatorTest extends TransformerTestBase {
 		List<ReValue> arguments = List.of(IntValue.of(4), LongValue.of(5), IntValue.of(6));
 
 		// Validate that the wide arguments are properly handled and the correct result is returned.
-		assertEquals(10, ((IntValue) evaluate(compiled, "staticWide", "(IJI)I", null, arguments)).value().orElseThrow());
-		assertEquals(10, ((IntValue) evaluate(compiled, "instanceWide", "(IJI)I", instance, arguments)).value().orElseThrow());
+		assertIntValue(10, evaluate(compiled, "staticWide", "(IJI)I", null, arguments));
+		assertIntValue(10, evaluate(compiled, "instanceWide", "(IJI)I", instance, arguments));
 	}
 
 	@Test
@@ -471,10 +452,7 @@ public class EvaluatorTest extends TransformerTestBase {
 				static int notSoRandom() { return new Random(1234).nextInt(1000); }
 				""", Random.class);
 		ReValue retVal = evaluate(compiled, "notSoRandom", "()I", null, List.of());
-		if (retVal instanceof IntValue str)
-			assertEquals(new Random(1234).nextInt(1000), str.value().orElseThrow());
-		else
-			fail("Evaluation failure, unexpected return value: " + retVal);
+		assertIntValue(new Random(1234).nextInt(1000), retVal);
 	}
 
 	@Test
@@ -483,10 +461,7 @@ public class EvaluatorTest extends TransformerTestBase {
 				static String supply() { return ((Supplier<String>) () -> "Hello").get(); }
 				""", Supplier.class);
 		ReValue retVal = evaluate(compiled, "supply", "()Ljava/lang/String;", null, List.of());
-		if (retVal instanceof StringValue str)
-			assertEquals("Hello", str.getText().orElseThrow());
-		else
-			fail("Evaluation failure, unexpected return value: " + retVal);
+		assertStringValue("Hello", retVal);
 	}
 
 	@Test
@@ -495,10 +470,7 @@ public class EvaluatorTest extends TransformerTestBase {
 				static String apply() { return ((Function<String, String>) (s -> s + " World")).apply("Hello"); }
 				""", Function.class);
 		ReValue retVal = evaluate(compiled, "apply", "()Ljava/lang/String;", null, List.of());
-		if (retVal instanceof StringValue str)
-			assertEquals("Hello World", str.getText().orElseThrow());
-		else
-			fail("Evaluation failure, unexpected return value: " + retVal);
+		assertStringValue("Hello World", retVal);
 	}
 
 	@Test
@@ -507,10 +479,224 @@ public class EvaluatorTest extends TransformerTestBase {
 				static boolean test() { return ((Predicate<String>) (s -> s.length() > 5)).test("Hello World"); }
 				""", Predicate.class);
 		ReValue retVal = evaluate(compiled, "test", "()Z", null, List.of());
-		if (retVal instanceof IntValue intVal)
-			assertEquals(1, intVal.value().orElseThrow());
-		else
-			fail("Evaluation failure, unexpected return value: " + retVal);
+		assertIntValue(1, retVal);
+	}
+
+	@Test
+	void testSimulatedThreadJoinWithoutStart() {
+		String compiled = compile("""
+				static int childState() throws Exception {
+				    int[] state = {0};
+				    Thread child = new Thread(() -> state[0] = 1);
+				    child.join(); // Join without start should not run the thread.
+				    return state[0];
+				}
+				""");
+		assertIntValue(0, evaluate(compiled, "childState", "()I", null, List.of()));
+	}
+
+	@Test
+	void testSimulatedThreadSleep() {
+		String compiled = compile("""
+				static long sleptMillis() throws Exception {
+				    long before = System.currentTimeMillis();
+				    Thread.sleep(100);
+				    return System.currentTimeMillis() - before;
+				}
+				""");
+		assertLongValue(100, evaluate(compiled, "sleptMillis", "()J", null, List.of()));
+	}
+
+	@Test
+	void testSimulatedThreadRefEquality() {
+		String compiled = compile("""
+				static int sameThread() { return Thread.currentThread() == Thread.currentThread() ? 1 : 0; }
+				""");
+		assertIntValue(1, evaluate(compiled, "sameThread", "()I", null, List.of()));
+	}
+
+	@Test
+	void testSimulatedThreadIdentityAndMetadata() {
+		String compiled = compile("""
+				static int identity() {
+				    Thread parent = Thread.currentThread();
+				    int[] state = {0};
+				    Thread child = new Thread(() -> {
+				        state[0] = Thread.currentThread() != parent ? 1 : 0;
+				        state[0] += Thread.currentThread().isAlive() ? 10 : 0;
+				        state[0] += Thread.currentThread().getId() == 2 ? 100 : 0;
+				        state[0] += Thread.currentThread().getName().equals("worker") ? 1000 : 0;
+				    });
+				    child.setName("worker");
+				    child.start();
+				    return state[0];
+				}
+				""");
+		assertIntValue(1111, evaluate(compiled, "identity", "()I", null, List.of()));
+	}
+
+	@Test
+	void testSimulatedThreadLifecycleOperations() {
+		String compiled = compile("""
+				static int lifecycle() {
+				    Thread child = new Thread(() -> {});
+				    int before = child.isAlive() ? 1 : 0;
+				    child.interrupt();
+				    int interrupted = child.isInterrupted() ? 1 : 0;
+				    child.start();
+				    int after = child.isAlive() ? 1 : 0;
+				    return before + interrupted * 10 + after * 100;
+				}
+				""");
+		assertIntValue(10, evaluate(compiled, "lifecycle", "()I", null, List.of()));
+	}
+
+	@Test
+	void testSimulatedThreadDirectRun() {
+		String compiled = compile("""
+				static int directRun() {
+				    int[] state = {0};
+				    Thread child = new Thread(() -> state[0] = 1);
+				    child.run();
+				    return state[0] + (child.isAlive() ? 10 : 0);
+				}
+				""");
+		assertIntValue(1, evaluate(compiled, "directRun", "()I", null, List.of()));
+	}
+
+	@Test
+	void testSimulatedThreadSubclassRun() {
+		compileFull("ChildThread", """
+				class ChildThread extends Thread {
+				    static int STATE;
+				    @Override public void run() { STATE = 3; }
+				}
+				""");
+		String compiled = compile("""
+				static int run() {
+				    ChildThread child = new ChildThread();
+				    child.run();
+				    return ChildThread.STATE;
+				}
+				""");
+		assertIntValue(3, evaluate(compiled, "run", "()I", null, List.of(), get("ChildThread")));
+	}
+
+	@Test
+	void testSimulatedNestedExecutionNotifiesListeners() {
+		compile("""
+				static int run() {
+				    int[] state = {0};
+				    new Thread(() -> state[0] = 1).start();
+				    return state[0];
+				}
+				""");
+		Evaluator evaluator = createEvaluator();
+		Set<String> entered = new HashSet<>();
+		evaluator.addListener(new EvaluationListener() {
+			@Override
+			public void onInstruction(@Nullable ClassNode classNode, @Nullable MethodNode methodNode,
+			                          @Nonnull AbstractInsnNode instruction, @Nonnull ReFrame frame) {
+				// Method-entry observations below are sufficient for this nested execution contract.
+			}
+
+			@Override
+			public void onMethodEnter(@Nonnull ClassNode classNode, @Nonnull MethodNode methodNode,
+			                          @Nonnull ReFrame frame, @Nonnull List<ClassMethodPair> stack) {
+				entered.add(methodNode.name);
+			}
+		});
+		EvaluationResult result = evaluator.evaluate(CLASS_NAME, "run", "()I", null, List.of());
+		assertIntValue(1, assertInstanceOf(EvaluationYieldResult.class, result).value());
+		assertTrue(entered.contains("run"));
+		assertTrue(entered.stream().anyMatch(name -> name.startsWith("lambda$")));
+	}
+
+	@Test
+	void testSimulatedThreadLifecycleAndCatchableRestart() {
+		String compiled = compile("""
+				static int lifecycle() {
+				    Thread child = new Thread(() -> {});
+				    child.start();
+				    try {
+				        child.start();
+				        return 0;
+				    } catch (IllegalThreadStateException ex) {
+				        return 1;
+				    }
+				}
+				""");
+		assertIntValue(1, evaluate(compiled, "lifecycle", "()I", null, List.of()));
+	}
+
+	@Test
+	void testSimulatedCompletableFutureCallbacks() {
+		String compiled = compile("""
+				static int apply() {
+				    return CompletableFuture.completedFuture(1).thenApply(x -> x + 1).join();
+				}
+				static int asyncRun() {
+				    int[] state = {0};
+				    CompletableFuture.runAsync(() -> state[0] = 7).join();
+				    return state[0];
+				}
+				static int acceptAndRun() {
+				    int[] state = {0};
+				    CompletableFuture.completedFuture(1).thenAccept(x -> state[0] = x).thenRun(() -> state[0]++);
+				    return state[0];
+				}
+				static int exceptional() {
+				    return CompletableFuture.<Integer>failedFuture(new IllegalStateException())
+				            .exceptionally(ex -> 7).join();
+				}
+				static int handled() {
+				    return CompletableFuture.<Integer>failedFuture(new IllegalStateException())
+				            .handle((value, error) -> error == null ? 0 : 1).join();
+				}
+				static int deferred() {
+				    CompletableFuture<Integer> source = new CompletableFuture<>();
+				    CompletableFuture<Integer> next = source.thenApply(x -> x + 1);
+				    source.complete(1);
+				    return next.join();
+				}
+				static int composed() {
+				    return CompletableFuture.<Integer>completedFuture(1)
+				            .thenCompose((Integer x) -> CompletableFuture.<Integer>completedFuture(x + 1)).join();
+				}
+				""", CompletableFuture.class, Consumer.class, BiFunction.class, Function.class);
+		assertIntValue(2, evaluate(compiled, "apply", "()I", null, List.of()));
+		assertIntValue(7, evaluate(compiled, "asyncRun", "()I", null, List.of()));
+		assertIntValue(2, evaluate(compiled, "acceptAndRun", "()I", null, List.of()));
+		assertIntValue(7, evaluate(compiled, "exceptional", "()I", null, List.of()));
+		assertIntValue(1, evaluate(compiled, "handled", "()I", null, List.of()));
+		assertIntValue(2, evaluate(compiled, "deferred", "()I", null, List.of()));
+		assertIntValue(2, evaluate(compiled, "composed", "()I", null, List.of()));
+	}
+
+	@Test
+	void testSimulatedCompletableFutureCompletionAndIncompleteJoin() {
+		String compiled = compile("""
+				static int complete() {
+				    CompletableFuture<Integer> future = new CompletableFuture<>();
+				    return future.complete(4) ? future.join() : 0;
+				}
+				static int firstCompletion() {
+				    CompletableFuture<Integer> future = new CompletableFuture<>();
+				    return (future.complete(1) ? 1 : 0) + (future.complete(2) ? 10 : 0) + future.join();
+				}
+				static int exceptionalCompletion() {
+				    CompletableFuture<Integer> future = new CompletableFuture<>();
+				    return future.completeExceptionally(new IllegalArgumentException())
+				            && future.isCompletedExceptionally() ? 1 : 0;
+				}
+				static int incomplete() { return new CompletableFuture<Integer>().join(); }
+				""", CompletableFuture.class);
+		assertIntValue(4, evaluate(compiled, "complete", "()I", null, List.of()));
+		assertIntValue(2, evaluate(compiled, "firstCompletion", "()I", null, List.of()));
+		assertIntValue(1, evaluate(compiled, "exceptionalCompletion", "()I", null, List.of()));
+		EvaluationResult result = evaluateResult(compiled, "incomplete", "()I", null, List.of());
+		EvaluationFailureResult failure = assertInstanceOf(EvaluationFailureResult.class, result);
+		assertEquals("Simulated future cannot complete", failure.reason());
 	}
 
 	@Test
@@ -542,16 +728,16 @@ public class EvaluatorTest extends TransformerTestBase {
 				""", Base64.class);
 
 		// Verify we can round-trip 'Hello'
-		assertEquals("Hello", ((StringValue) evaluate(compiled, "basic", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
-		assertEquals("Hello", ((StringValue) evaluate(compiled, "scalar", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+		assertStringValue("Hello", evaluate(compiled, "basic", "()Ljava/lang/String;", null, List.of()));
+		assertStringValue("Hello", evaluate(compiled, "scalar", "()Ljava/lang/String;", null, List.of()));
 
 		// Verify URL-safe encoding and decoding of '>>>>' with no padding.
-		assertEquals("Pj4-Pg:>>>>", ((StringValue) evaluate(compiled, "url", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+		assertStringValue("Pj4-Pg:>>>>", evaluate(compiled, "url", "()Ljava/lang/String;", null, List.of()));
 
 		// Verify default MIME output, custom separators, and MIME decoding.
-		assertEquals("SGVsbG9Xb3JsZA==", ((StringValue) evaluate(compiled, "mimeDefault", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
-		assertEquals("SGVs!bG9X!b3Js!ZA==", ((StringValue) evaluate(compiled, "mimeCustom", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
-		assertEquals("HelloWorld", ((StringValue) evaluate(compiled, "mimeDecode", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+		assertStringValue("SGVsbG9Xb3JsZA==", evaluate(compiled, "mimeDefault", "()Ljava/lang/String;", null, List.of()));
+		assertStringValue("SGVs!bG9X!b3Js!ZA==", evaluate(compiled, "mimeCustom", "()Ljava/lang/String;", null, List.of()));
+		assertStringValue("HelloWorld", evaluate(compiled, "mimeDecode", "()Ljava/lang/String;", null, List.of()));
 	}
 
 	@Test
@@ -569,7 +755,7 @@ public class EvaluatorTest extends TransformerTestBase {
 				""", Base64.class);
 
 		// Confirm both destination arrays are visible after host-side writes.
-		assertEquals("8:5:Hello", ((StringValue) evaluate(compiled, "destination", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+		assertStringValue("8:5:Hello", evaluate(compiled, "destination", "()Ljava/lang/String;", null, List.of()));
 	}
 
 	@Test
@@ -587,11 +773,11 @@ public class EvaluatorTest extends TransformerTestBase {
 
 		// Construct byte-buffers with known content and verify the Base64 encoder/decoder round-trip through the evaluator.
 		InstancedObjectValue<ByteBuffer> input = new InstancedObjectValue<>(ByteBuffer.wrap("Hello".getBytes()));
-		assertEquals("SGVsbG8=", ((StringValue) evaluate(compiled, "bufferEncode",
-				"(Ljava/nio/ByteBuffer;)Ljava/lang/String;", null, List.of(input))).getText().orElseThrow());
+		assertStringValue("SGVsbG8=", evaluate(compiled, "bufferEncode",
+				"(Ljava/nio/ByteBuffer;)Ljava/lang/String;", null, List.of(input)));
 		input = new InstancedObjectValue<>(ByteBuffer.wrap("SGVsbG8=".getBytes()));
-		assertEquals("Hello", ((StringValue) evaluate(compiled, "bufferDecode",
-				"(Ljava/nio/ByteBuffer;)Ljava/lang/String;", null, List.of(input))).getText().orElseThrow());
+		assertStringValue("Hello", evaluate(compiled, "bufferDecode",
+				"(Ljava/nio/ByteBuffer;)Ljava/lang/String;", null, List.of(input)));
 	}
 
 	@Test
@@ -632,22 +818,22 @@ public class EvaluatorTest extends TransformerTestBase {
 
 		// Verify writes through an externally supplied output stream and a stream created in the evaluator.
 		ByteArrayOutputStream output = new ByteArrayOutputStream();
-		assertEquals("SGVsbG8=", ((StringValue) evaluate(compiled, "streamEncode",
+		assertStringValue("SGVsbG8=", evaluate(compiled, "streamEncode",
 				"(Ljava/io/ByteArrayOutputStream;)Ljava/lang/String;", null,
-				List.of(new InstancedObjectValue<>(output)))).getText().orElseThrow());
-		assertEquals("SGVsbG8=", ((StringValue) evaluate(compiled, "streamEncodeCreated",
-				"()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+				List.of(new InstancedObjectValue<>(output))));
+		assertStringValue("SGVsbG8=", evaluate(compiled, "streamEncodeCreated",
+				"()Ljava/lang/String;", null, List.of()));
 
 		// Verify complete reads and split reads through a wrapped input stream.
 		ByteArrayInputStream input = new ByteArrayInputStream("SGVsbG8=".getBytes());
-		assertEquals("Hello", ((StringValue) evaluate(compiled, "streamDecode",
+		assertStringValue("Hello", evaluate(compiled, "streamDecode",
 				"(Ljava/io/ByteArrayInputStream;)Ljava/lang/String;", null,
-				List.of(new InstancedObjectValue<>(input)))).getText().orElseThrow());
-		assertEquals("2:3:Hello", ((StringValue) evaluate(compiled, "streamDecodeRead",
+				List.of(new InstancedObjectValue<>(input))));
+		assertStringValue("2:3:Hello", evaluate(compiled, "streamDecodeRead",
 				"(Ljava/io/ByteArrayInputStream;)Ljava/lang/String;", null,
-				List.of(new InstancedObjectValue<>(new ByteArrayInputStream("SGVsbG8=".getBytes()))))).getText().orElseThrow());
-		assertEquals("Hello", ((StringValue) evaluate(compiled, "streamDecodeCreated",
-				"()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+				List.of(new InstancedObjectValue<>(new ByteArrayInputStream("SGVsbG8=".getBytes())))));
+		assertStringValue("Hello", evaluate(compiled, "streamDecodeCreated",
+				"()Ljava/lang/String;", null, List.of()));
 	}
 
 	@Test
@@ -734,14 +920,14 @@ public class EvaluatorTest extends TransformerTestBase {
 				""", ByteBuffer.class);
 
 		// Mark/reset, clear, flip, rewind, and compact must all update the host receiver in order.
-		assertEquals("8:2:8:0:3:0:2:8:6:true", ((StringValue) evaluate(compiled, "state",
+		assertStringValue("8:2:8:0:3:0:2:8:6:true", evaluate(compiled, "state",
 				"(Ljava/nio/ByteBuffer;)Ljava/lang/String;", null,
-				List.of(new InstancedObjectValue<>(ByteBuffer.allocate(8))))).getText().orElseThrow());
+				List.of(new InstancedObjectValue<>(ByteBuffer.allocate(8)))));
 
 		// Heap buffers expose their backing array while remaining non-direct and writable.
-		assertEquals("false:false:true:0:4", ((StringValue) evaluate(compiled, "backing",
+		assertStringValue("false:false:true:0:4", evaluate(compiled, "backing",
 				"(Ljava/nio/ByteBuffer;)Ljava/lang/String;", null,
-				List.of(new InstancedObjectValue<>(ByteBuffer.wrap(new byte[4]))))).getText().orElseThrow());
+				List.of(new InstancedObjectValue<>(ByteBuffer.wrap(new byte[4])))));
 	}
 
 	@Test
@@ -778,11 +964,11 @@ public class EvaluatorTest extends TransformerTestBase {
 				""", ByteBuffer.class, ByteOrder.class);
 
 		// Exact values prove both relative and absolute primitive access use the selected byte order.
-		assertEquals("1:A:4660:16909060:72623859790382856:1.5:2.5:A:4660:16909060:72623859790382856:1.5:2.5",
-				((StringValue) evaluate(compiled, "primitives",
+		assertStringValue("1:A:4660:16909060:72623859790382856:1.5:2.5:A:4660:16909060:72623859790382856:1.5:2.5",
+				evaluate(compiled, "primitives",
 						"(Ljava/nio/ByteBuffer;Ljava/nio/ByteOrder;)Ljava/lang/String;", null,
 						List.of(new InstancedObjectValue<>(ByteBuffer.allocate(32)),
-								new InstancedObjectValue<>(ByteOrder.BIG_ENDIAN)))).getText().orElseThrow());
+								new InstancedObjectValue<>(ByteOrder.BIG_ENDIAN))));
 	}
 
 	@Test
@@ -800,15 +986,15 @@ public class EvaluatorTest extends TransformerTestBase {
 				""", ByteBuffer.class, ByteOrder.class);
 
 		// Fluent mutations must return the original evaluator-backed receiver and advance relative position.
-		assertEquals("true:1", ((StringValue) evaluate(compiled, "fluent",
+		assertStringValue("true:1", evaluate(compiled, "fluent",
 				"(Ljava/nio/ByteBuffer;)Ljava/lang/String;", null,
-				List.of(new InstancedObjectValue<>(ByteBuffer.allocate(4))))).getText().orElseThrow());
+				List.of(new InstancedObjectValue<>(ByteBuffer.allocate(4)))));
 
 		// order(ByteOrder) is also fluent, while order() exposes a host-backed ByteOrder result.
-		assertEquals("LITTLE_ENDIAN:true", ((StringValue) evaluate(compiled, "order",
+		assertStringValue("LITTLE_ENDIAN:true", evaluate(compiled, "order",
 				"(Ljava/nio/ByteBuffer;Ljava/nio/ByteOrder;)Ljava/lang/String;", null,
 				List.of(new InstancedObjectValue<>(ByteBuffer.allocate(4)),
-						new InstancedObjectValue<>(ByteOrder.LITTLE_ENDIAN)))).getText().orElseThrow());
+						new InstancedObjectValue<>(ByteOrder.LITTLE_ENDIAN))));
 	}
 
 	@Test
@@ -837,10 +1023,10 @@ public class EvaluatorTest extends TransformerTestBase {
 
 		// Bulk get operations use ReFrame.replaceValue()
 		// So we should see the host-backed array values updated and the relative position advanced as expected.
-		assertEquals("10,11,12:99,10,11,99:11,12,13:99,12,13,99:3",
-				((StringValue) evaluate(compiled, "bulkGets",
+		assertStringValue("10,11,12:99,10,11,99:11,12,13:99,12,13,99:3",
+				evaluate(compiled, "bulkGets",
 						"(Ljava/nio/ByteBuffer;)Ljava/lang/String;", null,
-						List.of(new InstancedObjectValue<>(ByteBuffer.wrap(new byte[]{10, 11, 12, 13}))))).getText().orElseThrow());
+						List.of(new InstancedObjectValue<>(ByteBuffer.wrap(new byte[]{10, 11, 12, 13})))));
 	}
 
 	@Test
@@ -879,13 +1065,13 @@ public class EvaluatorTest extends TransformerTestBase {
 				""", ByteBuffer.class);
 
 		// Array puts must preserve relative positions and write only the requested absolute ranges.
-		assertEquals("4:1,2,4,5:0:0,6,9,10,0",
-				((StringValue) evaluate(compiled, "putArrays", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+		assertStringValue("4:1,2,4,5:0:0,6,9,10,0",
+				evaluate(compiled, "putArrays", "()Ljava/lang/String;", null, List.of()));
 
 		// Relative buffer puts advance the source and target.
 		// Absolute buffer puts leave both positions unchanged.
-		assertEquals("3:3:11,12,13:0:0:0,22,23,0",
-				((StringValue) evaluate(compiled, "putBuffers", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+		assertStringValue("3:3:11,12,13:0:0:0,22,23,0",
+				evaluate(compiled, "putBuffers", "()Ljava/lang/String;", null, List.of()));
 	}
 
 	@Test
@@ -907,8 +1093,8 @@ public class EvaluatorTest extends TransformerTestBase {
 		assertEquals(0, duplicate.getRealInstance().position());
 		duplicate.getRealInstance().put(0, (byte) 9);
 		assertEquals(9, input.getRealInstance().get(0));
-		assertEquals(0, ((IntValue) evaluate(compiled, "readPosition",
-				"(Ljava/nio/ByteBuffer;)I", null, List.of(duplicate))).value().orElseThrow());
+		assertIntValue(0, evaluate(compiled, "readPosition",
+				"(Ljava/nio/ByteBuffer;)I", null, List.of(duplicate)));
 
 		// slice() is a distinct host-backed view with the requested content window.
 		InstancedObjectValue<ByteBuffer> slice = assertInstanceOf(InstancedObjectValue.class,
@@ -968,10 +1154,7 @@ public class EvaluatorTest extends TransformerTestBase {
 				}
 				""", List.class, ArrayList.class);
 		ReValue retVal = evaluate(compiled, "helloWorld", "()Ljava/lang/String;", null, List.of());
-		if (retVal instanceof StringValue str)
-			assertEquals("Hello World", str.getText().orElseThrow());
-		else
-			fail("Evaluation failure, unexpected return value: " + retVal);
+		assertStringValue("Hello World", retVal);
 	}
 
 	@Test
@@ -982,7 +1165,7 @@ public class EvaluatorTest extends TransformerTestBase {
 				    return values.get(1);
 				}
 				""", List.class);
-		assertEquals("b", ((StringValue) evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+		assertStringValue("b", evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of()));
 	}
 
 	@Test
@@ -995,7 +1178,7 @@ public class EvaluatorTest extends TransformerTestBase {
 				    return values.get(1);
 				}
 				""", ArrayList.class, List.class);
-		assertEquals("b", ((StringValue) evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+		assertStringValue("b", evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of()));
 	}
 
 	@Test
@@ -1007,7 +1190,7 @@ public class EvaluatorTest extends TransformerTestBase {
 				    return values.size() + ":" + values.contains("b") + ":" + copy.size();
 				}
 				""", Set.class, List.class, ArrayList.class);
-		assertEquals("2:true:2", ((StringValue) evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+		assertStringValue("2:true:2", evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of()));
 	}
 
 	@Test
@@ -1031,7 +1214,7 @@ public class EvaluatorTest extends TransformerTestBase {
 				    return values.get("b") + ":" + entries.get("c") + ":" + copy.get("a");
 				}
 				""", Map.class);
-		assertEquals("two:three:one", ((StringValue) evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+		assertStringValue("two:three:one", evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of()));
 	}
 
 	@Test
@@ -1045,7 +1228,7 @@ public class EvaluatorTest extends TransformerTestBase {
 				            + Collections.nCopies(2, "e").get(1);
 				}
 				""", Collections.class);
-		assertEquals("0:true:b:d:e", ((StringValue) evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+		assertStringValue("0:true:b:d:e", evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of()));
 	}
 
 	@Test
@@ -1056,7 +1239,7 @@ public class EvaluatorTest extends TransformerTestBase {
 				    return values.size() + ":" + values.get(1);
 				}
 				""", Collections.class, ArrayList.class, List.class);
-		assertEquals("2:b", ((StringValue) evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+		assertStringValue("2:b", evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of()));
 	}
 
 	@Test
@@ -1079,7 +1262,7 @@ public class EvaluatorTest extends TransformerTestBase {
 				    return set.contains("a") + ":" + map.get("b");
 				}
 				""", Collections.class, Set.class, Map.class);
-		assertEquals("true:c", ((StringValue) evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+		assertStringValue("true:c", evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of()));
 	}
 
 	@Test
@@ -1108,7 +1291,7 @@ public class EvaluatorTest extends TransformerTestBase {
 				    return values.get(1) + ":" + values.size();
 				}
 				""", Collections.class, ArrayList.class, List.class);
-		assertEquals("a:2", ((StringValue) evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+		assertStringValue("a:2", evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of()));
 	}
 
 	@Test
@@ -1120,7 +1303,7 @@ public class EvaluatorTest extends TransformerTestBase {
 				    return values.contains("a");
 				}
 				""", Collections.class, HashSet.class, Set.class);
-		assertEquals(1, ((IntValue) evaluate(compiled, "run", "()Z", null, List.of())).value().orElseThrow());
+		assertIntValue(1, evaluate(compiled, "run", "()Z", null, List.of()));
 	}
 
 	@Test
@@ -1132,7 +1315,7 @@ public class EvaluatorTest extends TransformerTestBase {
 				    return values.get("a");
 				}
 				""", Collections.class, HashMap.class, Map.class);
-		assertEquals("b", ((StringValue) evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+		assertStringValue("b", evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of()));
 	}
 
 	@Test
@@ -1151,7 +1334,7 @@ public class EvaluatorTest extends TransformerTestBase {
 				            + ":" + all.length + ":" + typed.length;
 				}
 				""", ArrayList.class, List.class);
-		assertEquals("c:2:true:2:2", ((StringValue) evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+		assertStringValue("c:2:true:2:2", evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of()));
 	}
 
 	@Test
@@ -1165,7 +1348,7 @@ public class EvaluatorTest extends TransformerTestBase {
 				    return values.get(0) + ":" + values.get(2) + ":" + values.size();
 				}
 				""", LinkedList.class, List.class);
-		assertEquals("z:c:3", ((StringValue) evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+		assertStringValue("z:c:3", evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of()));
 	}
 
 	@Test
@@ -1178,7 +1361,7 @@ public class EvaluatorTest extends TransformerTestBase {
 				    return copy.size() + ":" + copy.contains("b");
 				}
 				""", HashSet.class, ArrayList.class, List.class);
-		assertEquals("2:true", ((StringValue) evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+		assertStringValue("2:true", evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of()));
 	}
 
 	@Test
@@ -1192,7 +1375,7 @@ public class EvaluatorTest extends TransformerTestBase {
 				    return copy.iterator().next();
 				}
 				""", LinkedHashSet.class);
-		assertEquals("a", ((StringValue) evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+		assertStringValue("a", evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of()));
 	}
 
 	@Test
@@ -1203,7 +1386,7 @@ public class EvaluatorTest extends TransformerTestBase {
 				    return values.first() + ":" + values.last() + ":" + values.ceiling("a");
 				}
 				""", TreeSet.class, List.class);
-		assertEquals("a:b:a", ((StringValue) evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+		assertStringValue("a:b:a", evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of()));
 	}
 
 	@Test
@@ -1217,7 +1400,7 @@ public class EvaluatorTest extends TransformerTestBase {
 				    return copy.getOrDefault("a", "missing") + ":" + copy.size();
 				}
 				""", HashMap.class);
-		assertEquals("one:2", ((StringValue) evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+		assertStringValue("one:2", evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of()));
 	}
 
 	@Test
@@ -1232,7 +1415,7 @@ public class EvaluatorTest extends TransformerTestBase {
 				    return copy.keySet().iterator().next();
 				}
 				""", LinkedHashMap.class);
-		assertEquals("b", ((StringValue) evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+		assertStringValue("b", evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of()));
 	}
 
 	@Test
@@ -1243,7 +1426,7 @@ public class EvaluatorTest extends TransformerTestBase {
 				    return values.firstKey() + ":" + values.lastKey() + ":" + values.ceilingKey("a");
 				}
 				""", TreeMap.class, Map.class);
-		assertEquals("a:b:a", ((StringValue) evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+		assertStringValue("a:b:a", evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of()));
 	}
 
 	@Test
@@ -1272,7 +1455,7 @@ public class EvaluatorTest extends TransformerTestBase {
 				    return iterator.hasNext() ? iterator.next() : "missing";
 				}
 				""", Iterator.class, List.class);
-		assertEquals("a", ((StringValue) evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+		assertStringValue("a", evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of()));
 	}
 
 	@Test
@@ -1286,7 +1469,7 @@ public class EvaluatorTest extends TransformerTestBase {
 				    return entry.getKey() + ":" + old + ":" + entry.getValue() + ":" + values.get("a");
 				}
 				""", HashMap.class, Map.class, Set.class, Iterator.class);
-		assertEquals("a:one:two:two", ((StringValue) evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of())).getText().orElseThrow());
+		assertStringValue("a:one:two:two", evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of()));
 	}
 
 	@Test
@@ -1301,10 +1484,7 @@ public class EvaluatorTest extends TransformerTestBase {
 				}
 				""");
 		ReValue retVal = evaluate(compiled, "foo", "()Ljava/lang/String;", null, List.of());
-		if (retVal instanceof StringValue str)
-			assertEquals(CLASS_NAME + ":" + "foo", str.getText().orElse(null));
-		else
-			fail("Evaluation failure, unexpected return value: " + retVal);
+		assertStringValue(CLASS_NAME + ":" + "foo", retVal);
 	}
 
 	@Test
@@ -1327,8 +1507,7 @@ public class EvaluatorTest extends TransformerTestBase {
 		// When we evaluate prior() in the context of the synthetic method, it should report the synthetic method as the caller.
 		EvaluationResult result = evaluator.evaluate(CLASS_NAME, "prior", "()Ljava/lang/String;", null, List.of());
 		EvaluationYieldResult yielded = assertInstanceOf(EvaluationYieldResult.class, result);
-		StringValue value = assertInstanceOf(StringValue.class, yielded.value());
-		assertEquals(CLASS_NAME + ":injectedMethod", value.getText().orElse(null));
+		assertStringValue(CLASS_NAME + ":injectedMethod", yielded.value());
 	}
 
 	@Test
@@ -1340,10 +1519,7 @@ public class EvaluatorTest extends TransformerTestBase {
 				}
 				""");
 		ReValue retVal = evaluate(compiled, "caught", "()Ljava/lang/String;", null, List.of());
-		if (retVal instanceof StringValue str)
-			assertEquals("caught", str.getText().orElse(null));
-		else
-			fail("Evaluation failure, unexpected return value: " + retVal);
+		assertStringValue("caught", retVal);
 	}
 
 	@Test
@@ -1355,10 +1531,7 @@ public class EvaluatorTest extends TransformerTestBase {
 				    catch (Exception ex) { return "caught"; }
 				}
 				""");
-		if (evaluate(compiled, "outer", "()Ljava/lang/String;", null, List.of()) instanceof StringValue str)
-			assertEquals("caught", str.getText().orElse(null));
-		else
-			fail("Evaluation failure, unexpected return value");
+		assertStringValue("caught", evaluate(compiled, "outer", "()Ljava/lang/String;", null, List.of()));
 	}
 
 	@Test
@@ -1395,10 +1568,7 @@ public class EvaluatorTest extends TransformerTestBase {
 				}
 				""");
 		EvaluationResult result = evaluateResult(compiled, "caught", "()Ljava/lang/String;", null, List.of(), get("CustomException"));
-		if (result instanceof EvaluationYieldResult(ReValue value) && value instanceof StringValue str)
-			assertEquals("custom", str.getText().orElse(null));
-		else
-			fail("Evaluation failed: " + result);
+		assertStringValue("custom", assertInstanceOf(EvaluationYieldResult.class, result).value());
 	}
 
 	@Test
@@ -1423,10 +1593,10 @@ public class EvaluatorTest extends TransformerTestBase {
 				    catch (NegativeArraySizeException ex) { return "negative"; }
 				}
 				""");
-		assertEquals("arith", ((StringValue) evaluate(compiled, "arithmetic", "()Ljava/lang/String;", null, List.of())).getText().orElse(null));
-		assertEquals("null", ((StringValue) evaluate(compiled, "nullReceiver", "()Ljava/lang/String;", null, List.of())).getText().orElse(null));
-		assertEquals("array", ((StringValue) evaluate(compiled, "array", "()Ljava/lang/String;", null, List.of())).getText().orElse(null));
-		assertEquals("negative", ((StringValue) evaluate(compiled, "negativeArray", "()Ljava/lang/String;", null, List.of())).getText().orElse(null));
+		assertStringValue("arith", evaluate(compiled, "arithmetic", "()Ljava/lang/String;", null, List.of()));
+		assertStringValue("null", evaluate(compiled, "nullReceiver", "()Ljava/lang/String;", null, List.of()));
+		assertStringValue("array", evaluate(compiled, "array", "()Ljava/lang/String;", null, List.of()));
+		assertStringValue("negative", evaluate(compiled, "negativeArray", "()Ljava/lang/String;", null, List.of()));
 	}
 
 	@Test
@@ -1496,8 +1666,8 @@ public class EvaluatorTest extends TransformerTestBase {
 				static int run() { return new Holder(7).addThenRead(5); }
 				static int zero() { return new Holder().read(); }
 				""");
-		assertEquals(12, ((IntValue) evaluate(compiled, "run", "()I", null, List.of(), get("Holder"))).value().orElseThrow());
-		assertEquals(0, ((IntValue) evaluate(compiled, "zero", "()I", null, List.of(), get("Holder"))).value().orElseThrow());
+		assertIntValue(12, evaluate(compiled, "run", "()I", null, List.of(), get("Holder")));
+		assertIntValue(0, evaluate(compiled, "zero", "()I", null, List.of(), get("Holder")));
 	}
 
 	@Test
@@ -1512,7 +1682,7 @@ public class EvaluatorTest extends TransformerTestBase {
 				""");
 		EvaluationResult result = evaluateResult(compiled, "run", "()I", null, List.of(), true, get("StaticState"));
 		EvaluationYieldResult yielded = assertInstanceOf(EvaluationYieldResult.class, result);
-		assertEquals(1, ((IntValue) yielded.value()).value().orElseThrow());
+		assertIntValue(1, yielded.value());
 	}
 
 	@Test
@@ -1544,7 +1714,7 @@ public class EvaluatorTest extends TransformerTestBase {
 
 		EvaluationResult result = evaluateResult(compiled, "run", "()I", null, List.of(), true, get("StaticState"));
 		EvaluationYieldResult yielded = assertInstanceOf(EvaluationYieldResult.class, result);
-		assertEquals(11, ((IntValue) yielded.value()).value().orElseThrow());
+		assertIntValue(11, yielded.value());
 	}
 
 	@Test
@@ -1598,7 +1768,7 @@ public class EvaluatorTest extends TransformerTestBase {
 				}
 				""");
 
-		assertEquals(53, ((IntValue) evaluate(compiled, "run", "()I", null, List.of(), get("Holder"))).value().orElseThrow());
+		assertIntValue(53, evaluate(compiled, "run", "()I", null, List.of(), get("Holder")));
 	}
 
 	@Test
@@ -1627,8 +1797,8 @@ public class EvaluatorTest extends TransformerTestBase {
 				static int superValue() { return new Child().parentValue(); }
 				""");
 
-		assertEquals(22, ((IntValue) evaluate(compiled, "run", "()I", null, List.of(), get("Base"), get("Child"), get("Op"))).value().orElseThrow());
-		assertEquals(1, ((IntValue) evaluate(compiled, "superValue", "()I", null, List.of(), get("Base"), get("Child"), get("Op"))).value().orElseThrow());
+		assertIntValue(22, evaluate(compiled, "run", "()I", null, List.of(), get("Base"), get("Child"), get("Op")));
+		assertIntValue(1, evaluate(compiled, "superValue", "()I", null, List.of(), get("Base"), get("Child"), get("Op")));
 	}
 
 	@Test
@@ -1645,8 +1815,8 @@ public class EvaluatorTest extends TransformerTestBase {
 				}
 				""");
 
-		assertEquals(1, ((IntValue) evaluate(compiled, "run", "()I", null, List.of(),
-				get("Base"), get("Child"))).value().orElseThrow());
+		assertIntValue(1, evaluate(compiled, "run", "()I", null, List.of(),
+				get("Base"), get("Child")));
 	}
 
 	@Test
@@ -1663,8 +1833,8 @@ public class EvaluatorTest extends TransformerTestBase {
 				}
 				""");
 
-		assertEquals(1, ((IntValue) evaluate(compiled, "run", "()I", null, List.of(),
-				get("Base"), get("Child"))).value().orElseThrow());
+		assertIntValue(1, evaluate(compiled, "run", "()I", null, List.of(),
+				get("Base"), get("Child")));
 	}
 
 	@Test
@@ -1683,8 +1853,8 @@ public class EvaluatorTest extends TransformerTestBase {
 				}
 				""");
 
-		assertEquals(1, ((IntValue) evaluate(compiled, "run", "()I", null, List.of(),
-				get("Base"), get("Child"))).value().orElseThrow());
+		assertIntValue(1, evaluate(compiled, "run", "()I", null, List.of(),
+				get("Base"), get("Child")));
 	}
 
 	@Test
@@ -1697,8 +1867,8 @@ public class EvaluatorTest extends TransformerTestBase {
 				static int run() { return new Child() == new Child() ? 1 : 0; }
 				""");
 
-		assertEquals(0, ((IntValue) evaluate(compiled, "run", "()I", null, List.of(),
-				get("Base"), get("Child"))).value().orElseThrow());
+		assertIntValue(0, evaluate(compiled, "run", "()I", null, List.of(),
+				get("Base"), get("Child")));
 	}
 
 	private void compileStaticState() {
@@ -1745,7 +1915,28 @@ public class EvaluatorTest extends TransformerTestBase {
 		assertEquals(expectedType, exception.type().getInternalName());
 	}
 
-	private void assertUnknownBranchFailure(@Nonnull EvaluationResult result) {
+	private static void assertIntValue(int value, @Nullable ReValue result) {
+		if (result instanceof IntValue intVal)
+			assertEquals(value, intVal.value().orElseThrow());
+		else
+			fail("Evaluation failure, unexpected return value: " + result);
+	}
+
+	private static void assertLongValue(long value, @Nullable ReValue result) {
+		if (result instanceof LongValue longVal)
+			assertEquals(value, longVal.value().orElseThrow());
+		else
+			fail("Evaluation failure, unexpected return value: " + result);
+	}
+
+	private static void assertStringValue(@Nullable String value, @Nullable ReValue result) {
+		if (result instanceof StringValue strVal)
+			assertEquals(value, strVal.getText().orElseThrow());
+		else
+			fail("Evaluation failure, unexpected return value: " + result);
+	}
+
+	private static void assertUnknownBranchFailure(@Nonnull EvaluationResult result) {
 		if (result instanceof EvaluationFailureResult failure)
 			assertEquals("Encountered unknown value while evaluating branch", failure.reason());
 		else

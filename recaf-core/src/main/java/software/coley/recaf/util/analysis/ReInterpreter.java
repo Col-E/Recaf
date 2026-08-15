@@ -67,7 +67,7 @@ public class ReInterpreter extends Interpreter<ReValue> implements Opcodes {
 	 * @param parent
 	 * 		Expected parent type, in internal-name form.
 	 * @param child
-			Actual child type, in internal-name form.
+	 * 		Actual child type, in internal-name form.
 	 *
 	 * @return {@code true} when {@code parent} can be assigned from {@code child}.
 	 */
