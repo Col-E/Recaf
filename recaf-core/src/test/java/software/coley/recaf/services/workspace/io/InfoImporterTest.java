@@ -6,7 +6,7 @@ import software.coley.recaf.info.*;
 import software.coley.recaf.info.properties.builtin.ZipMarkerProperty;
 import software.coley.recaf.services.text.TextFormatConfig;
 import software.coley.recaf.test.TestClassUtils;
-import software.coley.recaf.util.ZipCreationUtils;
+import software.coley.recaf.util.io.ZipCreationUtils;
 import software.coley.recaf.util.io.ByteSource;
 import software.coley.recaf.util.io.ByteSources;
 

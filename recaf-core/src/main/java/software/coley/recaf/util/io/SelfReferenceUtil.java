@@ -1,7 +1,8 @@
-package software.coley.recaf.util;
+package software.coley.recaf.util.io;
 
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.util.ClassLoaderInternals;
 
 import java.io.File;
 import java.io.IOException;

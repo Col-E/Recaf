@@ -10,6 +10,8 @@ import javafx.scene.image.PixelFormat;
 import javafx.scene.image.WritableImage;
 import software.coley.recaf.services.cell.icon.IconProvider;
 import software.coley.recaf.ui.control.IconView;
+import software.coley.recaf.util.io.IOUtil;
+import software.coley.recaf.util.io.ResourceUtil;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;

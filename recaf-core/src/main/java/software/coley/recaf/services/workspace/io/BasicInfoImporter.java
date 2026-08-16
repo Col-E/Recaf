@@ -26,8 +26,8 @@ import software.coley.recaf.info.builder.ZipFileInfoBuilder;
 import software.coley.recaf.info.properties.builtin.IllegalClassSuspectProperty;
 import software.coley.recaf.info.properties.builtin.ZipMarkerProperty;
 import software.coley.recaf.services.text.TextFormatConfig;
-import software.coley.recaf.util.ByteHeaderUtil;
-import software.coley.recaf.util.IOUtil;
+import software.coley.recaf.util.io.ByteHeaderUtil;
+import software.coley.recaf.util.io.IOUtil;
 import software.coley.recaf.util.android.AndroidXmlUtil;
 import software.coley.recaf.util.io.ByteSource;
 

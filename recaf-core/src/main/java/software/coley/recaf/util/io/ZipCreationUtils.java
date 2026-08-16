@@ -1,10 +1,11 @@
-package software.coley.recaf.util;
+package software.coley.recaf.util.io;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import org.slf4j.Logger;
 import software.coley.collections.func.UncheckedConsumer;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.util.ReflectUtil;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

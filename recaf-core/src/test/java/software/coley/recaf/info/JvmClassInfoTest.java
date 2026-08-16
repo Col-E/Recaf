@@ -2,11 +2,10 @@ package software.coley.recaf.info;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.objectweb.asm.Opcodes;
 import software.coley.cafedude.classfile.VersionConstants;
 import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.test.dummy.AccessibleFields;
-import software.coley.recaf.util.ByteHeaderUtil;
+import software.coley.recaf.util.io.ByteHeaderUtil;
 
 import java.io.IOException;
 import java.util.Arrays;

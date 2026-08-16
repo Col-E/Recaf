@@ -1,8 +1,7 @@
-package software.coley.recaf.util;
+package software.coley.recaf.util.io;
 
 import software.coley.collections.Unchecked;
-import software.coley.recaf.util.io.ByteSourceElement;
-import software.coley.recaf.util.io.ByteSources;
+import software.coley.recaf.util.ReflectUtil;
 
 import java.io.IOException;
 import java.lang.invoke.MethodHandle;

@@ -8,7 +8,7 @@ import software.coley.recaf.info.JarFileInfo;
 import software.coley.recaf.services.text.TextFormatConfig;
 import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.test.dummy.HelloWorld;
-import software.coley.recaf.util.ZipCreationUtils;
+import software.coley.recaf.util.io.ZipCreationUtils;
 import software.coley.recaf.util.io.ByteSources;
 import software.coley.recaf.workspace.model.BasicWorkspace;
 import software.coley.recaf.workspace.model.Workspace;

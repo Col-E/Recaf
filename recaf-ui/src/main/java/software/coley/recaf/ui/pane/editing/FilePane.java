@@ -31,7 +31,7 @@ import software.coley.recaf.ui.pane.editing.media.AudioPane;
 import software.coley.recaf.ui.pane.editing.media.ImagePane;
 import software.coley.recaf.ui.pane.editing.media.VideoPane;
 import software.coley.recaf.ui.pane.editing.text.TextPane;
-import software.coley.recaf.util.ByteHeaderUtil;
+import software.coley.recaf.util.io.ByteHeaderUtil;
 import software.coley.recaf.util.threading.ThreadUtil;
 import software.coley.recaf.workspace.model.bundle.Bundle;
 

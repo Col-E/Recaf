@@ -10,6 +10,9 @@ import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.config.ConfigGroups;
 import software.coley.recaf.services.plugin.PluginClassLoader;
 import software.coley.recaf.util.io.ByteSource;
+import software.coley.recaf.util.io.IOUtil;
+import software.coley.recaf.util.io.InternalPath;
+import software.coley.recaf.util.io.SelfReferenceUtil;
 
 import java.io.InputStream;
 import java.util.ArrayList;

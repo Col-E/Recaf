@@ -1,9 +1,7 @@
 package software.coley.recaf.services.workspace.io;
 
 import jakarta.annotation.Nonnull;
-import me.darknet.dex.codecs.DexMapCodec;
 import me.darknet.dex.file.DexHeader;
-import me.darknet.dex.file.DexMap;
 import me.darknet.dex.file.DexMapBuilder;
 import me.darknet.dex.io.Output;
 import me.darknet.dex.tree.DexFile;
@@ -25,7 +23,7 @@ import software.coley.recaf.info.properties.builtin.ZipCompressionProperty;
 import software.coley.recaf.info.properties.builtin.ZipCreationTimeProperty;
 import software.coley.recaf.info.properties.builtin.ZipModificationTimeProperty;
 import software.coley.recaf.info.properties.builtin.ZipPrefixDataProperty;
-import software.coley.recaf.util.ZipCreationUtils;
+import software.coley.recaf.util.io.ZipCreationUtils;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.VersionedJvmClassBundle;
@@ -36,7 +34,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
