@@ -183,6 +183,7 @@ menu.tab.close=Close
 menu.tab.closeothers=Close others
 menu.tab.closeall=Close all
 menu.tab.copypath=Copy path
+menu.tab.showintree=Show in tree
 menu.image.resetscale=Reset zoom
 menu.image.center=Center image
 menu.hex.copyas=Copy as...

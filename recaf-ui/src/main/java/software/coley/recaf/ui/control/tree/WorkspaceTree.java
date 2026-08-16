@@ -106,6 +106,37 @@ public class WorkspaceTree extends PathNodeTree implements WorkspaceCloseListene
 		}
 	}
 
+	/**
+	 * Selects and reveals the node matching the given path in the tree.
+	 *
+	 * @param path
+	 * 		Path to select in the tree.
+	 *
+	 * @return {@code true} when the node was found and selected.
+	 * {@code false} when the tree is empty or the path has no matching node.
+	 */
+	public boolean selectPath(@Nonnull PathNode<?> path) {
+		TreeItem<PathNode<?>> rootItem = getRoot();
+		if (!(rootItem instanceof WorkspaceTreeNode rootNode))
+			return false;
+
+		// Find the node.
+		// getNodeByPath(path) walks unfiltered children, so a node can be
+		// located even when it is currently hidden by the active filter.
+		WorkspaceTreeNode target = rootNode.getNodeByPath(path);
+		if (target == null)
+			return false;
+
+		// Reveal ancestors and select the node, scrolling it into view when visible.
+		TreeItems.expandParents(target);
+		getSelectionModel().select(target);
+		int row = getRow(target);
+		if (row >= 0)
+			scrollTo(row);
+		requestFocus();
+		return true;
+	}
+
 	@Override
 	public void onWorkspaceClosed(@Nonnull Workspace workspace) {
 		// Workspace closed, disable tree.

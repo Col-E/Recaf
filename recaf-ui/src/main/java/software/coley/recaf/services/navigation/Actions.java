@@ -75,6 +75,7 @@ import software.coley.recaf.ui.control.popup.ItemTreeSelectionPopup;
 import software.coley.recaf.ui.control.popup.NamePopup;
 import software.coley.recaf.ui.control.popup.OverrideMethodPopup;
 import software.coley.recaf.ui.docking.DockingManager;
+import software.coley.recaf.ui.pane.WorkspaceExplorerPane;
 import software.coley.recaf.ui.pane.WorkspaceInformationPane;
 import software.coley.recaf.ui.pane.analysis.AreaAnalysisPane;
 import software.coley.recaf.ui.pane.analysis.CommentEditPane;
@@ -2719,11 +2720,35 @@ public class Actions implements Service {
 				items.add(mode);
 			}
 
+			addShowInTreeAction(menu, contentPane);
 			addCopyPathAction(menu, info);
 			addCloseActions(menu, d);
 
 			return menu;
 		});
+	}
+
+	/**
+	 * Adds an action to reveal the pane's current content in the workspace tree.
+	 *
+	 * @param menu
+	 * 		Menu to add the action to.
+	 * @param contentPane
+	 * 		Pane whose path should be selected in the tree.
+	 */
+	private void addShowInTreeAction(@Nonnull ContextMenu menu, @Nonnull AbstractContentPane<?> contentPane) {
+		menu.getItems().add(action("menu.tab.showintree", CarbonIcons.TREE_VIEW, () -> {
+			PathNode<?> path = contentPane.getPath();
+			if (path == null)
+				return;
+			for (DockablePath dockPath : dockingManager.getBento().search().allDockables()) {
+				Node node = dockPath.dockable().nodeProperty().get();
+				if (node instanceof WorkspaceExplorerPane explorer) {
+					explorer.getWorkspaceTree().selectPath(path);
+					break;
+				}
+			}
+		}));
 	}
 
 	/**
