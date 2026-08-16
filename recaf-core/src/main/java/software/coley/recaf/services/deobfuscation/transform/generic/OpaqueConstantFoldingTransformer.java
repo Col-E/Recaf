@@ -463,8 +463,10 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 			// In some cases where the next instruction is a label targeted by backwards jumps from dummy/dead code
 			// the analyzer can get fooled into merging an unknown state into something that should be known.
 			// When this happens we can evaluate our sequence and see what the result should be.
+			// The sequence walk leaves 'j' pointing at the instruction before the sequence's first instruction,
+			// so the entry frame for evaluation is the frame at 'j + 1'.
 			if (!isReturn && !topValue.hasKnownValue() && isLabel(sequence.getLast().getNext()))
-				topValue = evaluateTopFromSequence(context, method, sequence, topValue, frames, j);
+				topValue = evaluateTopFromSequence(context, method, sequence, topValue, frames, j + 1);
 
 			// Handle replacing the sequence.
 			AbstractInsnNode replacement = toInsn(topValue);
@@ -558,7 +560,15 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 
 		// Evaluate the sequence and return the result.
 		// If evaluation fails, return the original unknown top value.
-		EvaluationResult result = evaluator.evaluateBlock(block, initialBlockFrame, method.access);
+		EvaluationResult result;
+		try {
+			result = evaluator.evaluateBlock(block, initialBlockFrame, method.access);
+		} catch (Throwable t) {
+			// Evaluation is best-effort. Some sequences cannot be evaluated, which can surface as an
+			// unchecked exception (for example, the block pushing beyond the origin frame's max stack).
+			// Treat those the same as any other un-evaluatable sequence.
+			return topValue;
+		}
 		if (result instanceof EvaluationYieldResult(ReValue value)) {
 			if (Objects.equals(value.type(), topValue.type())) // Sanity check
 				return value;

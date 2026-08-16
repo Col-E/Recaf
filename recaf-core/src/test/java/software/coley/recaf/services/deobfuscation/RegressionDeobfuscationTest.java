@@ -1167,6 +1167,45 @@ public class RegressionDeobfuscationTest extends TransformerTestBase {
 	}
 
 	/**
+	 * A backwards jump can merge an unknown value into a foldable sequence's successor frame,
+	 * triggering the sequence fallback evaluation. When the instruction immediately before the
+	 * sequence consumes a stack value, the sequence entry frame must be taken from the sequence's
+	 * first instruction, not the instruction before it. Otherwise, the fallback evaluation starts
+	 * from an inflated stack and overflows the method's max stack.
+	 */
+	@Test
+	void constantFoldingSequencePrecededByPopDoesNotOverflowMaxStack() {
+		String asm = """
+				.method public static example ()V {
+				    code: {
+				    A:
+				        iconst_1
+				        goto C
+				    B:
+				        pop
+				        bipush 15
+				        bipush 15
+				        iadd
+				    C:
+				        dup
+				        lookupswitch {
+				            1: B,
+				            default: D
+				        }
+				    D:
+				        pop
+				        return
+				    E:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
+			assertFalse(dis.contains("bipush 15"), "Failed to fold edge sequence");
+			assertTrue(dis.contains("bipush 30"), "Failed to fold edge sequence into expected value");
+		});
+	}
+
+	/**
 	 * A snippet of DashO obfuscation. Includes a series of opaque jumps with some loop-backs in dead code.
 	 * There's also sequences that set up the stack before those jumps which also have variable state side effects.
 	 * These two issues have caused issues with opaque folding transformers in the past.
