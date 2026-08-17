@@ -45,7 +45,7 @@ public class ResourceImporterConfig extends BasicConfigContainer implements Serv
 	private final ObservableBoolean parallelize = new ObservableBoolean(true);
 	private final ObservableInteger maxZipEntrySize = new ObservableInteger(100_000_000);
 	private final ObservableInteger maxZipTotalSize = new ObservableInteger(1_000_000_000);
-	private final ObservableInteger maxZipCompressionRatio = new ObservableInteger(100);
+	private final ObservableInteger maxZipCompressionRatio = new ObservableInteger(200);
 
 	@Inject
 	public ResourceImporterConfig() {

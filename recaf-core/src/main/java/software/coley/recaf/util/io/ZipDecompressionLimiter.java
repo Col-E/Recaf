@@ -71,9 +71,9 @@ public final class ZipDecompressionLimiter implements Decompressor {
 
 		// Derive the effective entry limit from both its absolute size and compression ratio, saturating on overflow.
 		long compressedSize = data.byteSize();
-		long ratioLimit = compressedSize > Long.MAX_VALUE / maxCompressionRatio ?
-				Long.MAX_VALUE : compressedSize * maxCompressionRatio;
+		long ratioLimit = compressedSize > Long.MAX_VALUE / maxCompressionRatio ? Long.MAX_VALUE : compressedSize * maxCompressionRatio;
 		long entryLimit = Math.min(maxEntrySize, ratioLimit);
+
 		// Reject honest oversized entries from their metadata before allocating any output buffer.
 		long declaredSize = header.getUncompressedSize();
 		if (declaredSize < 0 || declaredSize > entryLimit)
@@ -88,6 +88,7 @@ public final class ZipDecompressionLimiter implements Decompressor {
 		MemorySegment inputSegment = MemorySegment.ofArray(inputBuffer);
 		long inputOffset = 0;
 		long entrySize = 0;
+
 		// Failed attempts return their reserved archive budget, and all paths release the inflater's native state.
 		try {
 			// Incrementally feed compressed input and account for every output chunk before retaining it.
@@ -152,7 +153,7 @@ public final class ZipDecompressionLimiter implements Decompressor {
 		}
 	}
 
-	final class ZipDecompressionLimitException extends IOException {
+	static final class ZipDecompressionLimitException extends IOException {
 		ZipDecompressionLimitException(String message) {
 			super(message);
 		}
