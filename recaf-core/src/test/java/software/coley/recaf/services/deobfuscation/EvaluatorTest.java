@@ -35,6 +35,9 @@ import software.coley.recaf.util.analysis.value.StringValue;
 import software.coley.recaf.util.analysis.value.ThrowableValue;
 import software.coley.recaf.workspace.model.Workspace;
 
+import javax.crypto.Cipher;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
@@ -738,6 +741,36 @@ public class EvaluatorTest extends TransformerTestBase {
 		assertStringValue("SGVsbG9Xb3JsZA==", evaluate(compiled, "mimeDefault", "()Ljava/lang/String;", null, List.of()));
 		assertStringValue("SGVs!bG9X!b3Js!ZA==", evaluate(compiled, "mimeCustom", "()Ljava/lang/String;", null, List.of()));
 		assertStringValue("HelloWorld", evaluate(compiled, "mimeDecode", "()Ljava/lang/String;", null, List.of()));
+	}
+
+	@Test
+	void testAesCtrStringEncryption() {
+		// Compile a deterministic AES/CTR round-trip with a fixed key and IV.
+		// It's a simple setup that some obfuscators will have variations of.
+		// Most of the underlying API's should be supported given this baseline works.
+		String compiled = compile("""
+				static String run() throws Exception {
+				    byte[] key = "0123456789abcdef".getBytes();
+				    byte[] nonce = "123456789012".getBytes();
+				    byte[] iv = new byte[16];
+				    System.arraycopy(nonce, 0, iv, 0, nonce.length);
+				
+				    SecretKeySpec keySpec = new SecretKeySpec(key, "AES");
+				    IvParameterSpec ivSpec = new IvParameterSpec(iv);
+				
+				    Cipher cipher = Cipher.getInstance("AES/CTR/NoPadding");
+				    cipher.init(1, keySpec, ivSpec);
+				
+				    byte[] ciphertext = cipher.doFinal("Hello World CTR".getBytes());
+				    cipher.init(2, keySpec, ivSpec);
+				
+				    byte[] plaintext = cipher.doFinal(ciphertext);
+				    return Base64.getEncoder().encodeToString(ciphertext) + ":" + new String(plaintext);
+				}
+				""", Cipher.class, IvParameterSpec.class, SecretKeySpec.class, Base64.class);
+
+		// Check the exact ciphertext as well as the decrypted plaintext.
+		assertStringValue("WXYAnhr5X0Gp7HA3HBz3:Hello World CTR", evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of()));
 	}
 
 	@Test

@@ -21,6 +21,9 @@ import software.coley.recaf.util.analysis.value.ReValue;
 import software.coley.recaf.util.analysis.value.StringValue;
 import software.coley.recaf.util.analysis.value.impl.ArrayValueImpl;
 
+import javax.crypto.Cipher;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
@@ -28,6 +31,8 @@ import java.io.OutputStream;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.security.Key;
+import java.security.spec.AlgorithmParameterSpec;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collection;
@@ -1082,6 +1087,12 @@ public class InstanceFactory extends BasicLookupUtils {
 			return null;
 		});
 
+		// javax.crypto.Cipher
+		registerMethodHandler("javax/crypto/Cipher", "init", "(ILjava/security/Key;Ljava/security/spec/AlgorithmParameterSpec;)V", (ReFrame frame, ReValue host, Cipher receiver, List<ReValue> args) -> {
+			receiver.init(i((IntValue) args.get(0)), requireRealInstance(args.get(1), Key.class), requireRealInstance(args.get(2), AlgorithmParameterSpec.class));
+			return null;
+		});
+		registerMethodHandler("javax/crypto/Cipher", "doFinal", "([B)[B", (ReFrame frame, ReValue host, Cipher receiver, List<ReValue> args) -> arrb(receiver.doFinal(arrb((ArrayValue) args.get(0)))));
 	}
 
 	/**
@@ -1339,6 +1350,10 @@ public class InstanceFactory extends BasicLookupUtils {
 		// java.util.ArrayList
 		registerMapper(ArrayList.class, "()V", (host, parameters) -> new ArrayList());
 		registerMapper(ArrayList.class, "(I)V", (host, parameters) -> new ArrayList(i((IntValue) parameters.get(0))));
+
+		// javax.crypto.spec
+		registerMapper(SecretKeySpec.class, "([BLjava/lang/String;)V", (host, parameters) -> new SecretKeySpec(arrb((ArrayValue) parameters.get(0)), str((StringValue) parameters.get(1))));
+		registerMapper(IvParameterSpec.class, "([B)V", (host, parameters) -> new IvParameterSpec(arrb((ArrayValue) parameters.get(0))));
 	}
 
 	/**
@@ -1359,6 +1374,9 @@ public class InstanceFactory extends BasicLookupUtils {
 		registerStaticMapper(ByteBuffer.class, "wrap([BII)Ljava/nio/ByteBuffer;", (host, parameters) -> ByteBuffer.wrap(arrb((ArrayValue) parameters.get(0)), i((IntValue) parameters.get(1)), i((IntValue) parameters.get(2))));
 		registerStaticMapper(ByteBuffer.class, "allocate(I)Ljava/nio/ByteBuffer;", (host, parameters) -> ByteBuffer.allocate(i((IntValue) parameters.get(0))));
 		registerStaticMapper(ByteBuffer.class, "allocateDirect(I)Ljava/nio/ByteBuffer;", (host, parameters) -> ByteBuffer.allocateDirect(i((IntValue) parameters.get(0))));
+
+		// javax.crypto.Cipher
+		registerStaticMapper(Cipher.class, "getInstance(Ljava/lang/String;)Ljavax/crypto/Cipher;", (host, parameters) -> Cipher.getInstance(str((StringValue) parameters.get(0))));
 	}
 
 	/**
