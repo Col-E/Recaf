@@ -16,7 +16,12 @@ import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.model.PlainTextChange;
 import org.fxmisc.richtext.model.TwoDimensional;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.Handle;
+import org.objectweb.asm.MethodVisitor;
 import software.coley.collections.Unchecked;
+import software.coley.recaf.RecafConstants;
 import software.coley.recaf.analytics.logging.DebuggingLogger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.behavior.Closing;
@@ -24,6 +29,7 @@ import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.member.ClassMember;
+import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.path.ClassMemberPathNode;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.PathNode;
@@ -57,6 +63,7 @@ import software.coley.recaf.ui.pane.editing.assembler.AssemblerContextActionSupp
 import software.coley.recaf.ui.pane.editing.tabs.FieldsAndMethodsPane;
 import software.coley.recaf.util.EscapeUtil;
 import software.coley.recaf.util.FxThreadUtil;
+import software.coley.recaf.util.Handles;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
 import software.coley.recaf.util.threading.ThreadUtil;
@@ -65,6 +72,7 @@ import software.coley.sourcesolver.Parser;
 import software.coley.sourcesolver.model.ClassModel;
 import software.coley.sourcesolver.model.CompilationUnitModel;
 import software.coley.sourcesolver.model.ImportModel;
+import software.coley.sourcesolver.model.LambdaExpressionModel;
 import software.coley.sourcesolver.model.MethodBodyModel;
 import software.coley.sourcesolver.model.MethodModel;
 import software.coley.sourcesolver.model.Model;
@@ -79,6 +87,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -313,11 +322,13 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 	/**
 	 * @param pos
 	 * 		Offset in the source.
+	 * @param resolveLambdas
+	 *        {@code true} to resolve lambdas, {@code false} to skip them.
 	 *
 	 * @return Path of the enclosing class/member declaration at the offset.
 	 */
 	@Nullable
-	public PathNode<?> getEnclosingDeclarationPath(int pos) {
+	public PathNode<?> getEnclosingDeclarationPath(int pos, boolean resolveLambdas) {
 		CompilationUnitModel localUnit = unit;
 		ResolverAdapter localResolver = resolver;
 		ClassPathNode localPath = path;
@@ -340,6 +351,13 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 		// No class? No enclosing declaration path to return.
 		if (classModel == null)
 			return null;
+
+		// Check if we're in a lambda expression, and if so return the synthetic method that represents it.
+		if (resolveLambdas) {
+			ClassMemberPathNode lambdaPath = getEnclosingLambdaPath(localResolver, classModel, astPos, localPath);
+			if (lambdaPath != null)
+				return lambdaPath;
+		}
 
 		// Check if we're in a member declaration, and if so return that path.
 		ClassMemberPathNode memberPath = getEnclosingMemberPath(localResolver, classModel, astPos);
@@ -795,6 +813,148 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 	}
 
 	@Nullable
+	protected static ClassMemberPathNode getEnclosingLambdaPath(@Nonnull ResolverAdapter resolver,
+	                                                            @Nonnull ClassModel classModel,
+	                                                            int astPos,
+	                                                            @Nonnull ClassPathNode fallbackPath) {
+		// Pick the innermost lambda at the given position. There can be nested lambdas too.
+		LambdaExpressionModel lambda = classModel.getRecursiveChildrenOfType(LambdaExpressionModel.class).stream()
+				.filter(candidate -> candidate.getRange().isWithin(astPos))
+				.filter(candidate -> candidate.getParentOfType(ClassModel.class) == classModel)
+				.min(Comparator.comparingInt(candidate -> candidate.getRange().length()))
+				.orElse(null);
+		if (lambda == null)
+			return null;
+
+		// The 'happy path' is clean javac based naming conventions.
+		// Lambdas are *generally* named 'lambda$<enclosingMethodName>$<lambdaIndex>'
+		// so first lets get the enclosing method.
+		MethodModel enclosingMethod = lambda.getParentOfType(MethodModel.class);
+		if (enclosingMethod == null)
+			return null;
+
+		// The 'lambdaIndex' portion is a per-class increment so we need to find the index of this lambda in the class.
+		// Keep only lambdas owned by this class so nested classes retain their own numbering.
+		List<LambdaExpressionModel> classLambdas = classModel.getRecursiveChildrenOfType(LambdaExpressionModel.class).stream()
+				.filter(candidate -> candidate.getParentOfType(ClassModel.class) == classModel)
+				.sorted(Comparator.comparingInt(candidate -> candidate.getRange().begin()))
+				.toList();
+		int lambdaIndex = -1;
+		for (int i = 0; i < classLambdas.size(); i++) {
+			if (classLambdas.get(i) == lambda) {
+				lambdaIndex = i;
+				break;
+			}
+		}
+		if (lambdaIndex < 0)
+			return null;
+
+		// Edge case name handling for static initializers and constructors.
+		String enclosingMethodName;
+		if (enclosingMethod.isStaticInitializer())
+			enclosingMethodName = "static";
+		else if (enclosingMethod.getName().equals(classModel.getName()))
+			enclosingMethodName = "new";
+		else
+			enclosingMethodName = enclosingMethod.getName();
+
+		// Resolve the class then the declared method by name.
+		// - Found some edge case classes where the enclosing method wasn't in the pattern, so try both.
+		ClassPathNode classPath = getClassPath(resolver, classModel, fallbackPath);
+		String namedLambdaName = "lambda$" + enclosingMethodName + "$" + lambdaIndex;
+		String unnamedLambdaName = "lambda$" + lambdaIndex;
+		for (MethodMember method : classPath.getValue().getMethods()) {
+			if (!method.hasSyntheticModifier())
+				continue;
+			String methodName = method.getName();
+			if (!methodName.equals(namedLambdaName) && !methodName.equals(unnamedLambdaName))
+				continue;
+			return classPath.child(methodName, method.getDescriptor());
+		}
+
+		// If there's some case where the clean javac pattern doesn't work, we'll parse the method bytecode
+		// and try and link the lambda to its implementation method that way.
+		return getEnclosingLambdaPathFromBytecode(resolver, classPath, enclosingMethod, lambda, classLambdas);
+	}
+
+	@Nullable
+	private static ClassMemberPathNode getEnclosingLambdaPathFromBytecode(@Nonnull ResolverAdapter resolver,
+	                                                                      @Nonnull ClassPathNode classPath,
+	                                                                      @Nonnull MethodModel enclosingMethod,
+	                                                                      @Nonnull LambdaExpressionModel lambda,
+	                                                                      @Nonnull List<LambdaExpressionModel> classLambdas) {
+		if (!classPath.getValue().isJvmClass())
+			return null;
+
+		// Get the enclosing method.
+		ClassMemberPathNode sourceMethodPath = getMemberPath(resolver, enclosingMethod);
+		if (sourceMethodPath == null)
+			return null;
+
+		// Count direct lambdas in this source method.
+		// - Nested lambdas are emitted into their parent lambda method too.
+		List<LambdaExpressionModel> methodLambdas = classLambdas.stream()
+				.filter(candidate -> candidate.getParentOfType(MethodModel.class) == enclosingMethod)
+				.filter(candidate -> candidate.getParentOfType(LambdaExpressionModel.class) == null)
+				.toList();
+		int methodLambdaIndex = -1;
+		for (int i = 0; i < methodLambdas.size(); i++) {
+			if (methodLambdas.get(i) == lambda) {
+				methodLambdaIndex = i;
+				break;
+			}
+		}
+		if (methodLambdaIndex < 0)
+			return null;
+
+		String className = classPath.getValue().getName();
+		List<Handle> lambdaTargets = new ArrayList<>();
+		try {
+			// The bootstrap arguments carry the implementation handle independently of its method name.
+			MethodMember sourceMethod = sourceMethodPath.getValueAsMethod();
+			JvmClassInfo classInfo = classPath.getValue().asJvmClass();
+			ClassReader reader = classInfo.getClassReader();
+			reader.accept(new ClassVisitor(RecafConstants.getAsmVersion()) {
+				@Override
+				public MethodVisitor visitMethod(int access, String name, String descriptor,
+				                                 String signature, String[] exceptions) {
+					// Skip any method that isn't the enclosing method.
+					if (!sourceMethod.getName().equals(name) || !sourceMethod.getDescriptor().equals(descriptor))
+						return null;
+
+					// Add possible lambda targets to the list.
+					return new MethodVisitor(RecafConstants.getAsmVersion()) {
+						@Override
+						public void visitInvokeDynamicInsn(String invokedName, String invokedDescriptor,
+						                                   Handle bootstrapMethodHandle, Object... bootstrapMethodArguments) {
+							if (Handles.META_FACTORY.equals(bootstrapMethodHandle)) {
+								for (Object argument : bootstrapMethodArguments) {
+									if (argument instanceof Handle implementationHandle
+											&& className.equals(implementationHandle.getOwner())) {
+										lambdaTargets.add(implementationHandle);
+										break;
+									}
+								}
+							}
+						}
+					};
+				}
+			}, classInfo.getClassReaderFlags());
+		} catch (Throwable t) {
+			logger.debugging(l -> l.warn("Failed to read bytecode for class '{}' to resolve lambda target", className, t));
+			return null;
+		}
+
+		// If the lambda index is out of bounds, we can't resolve it.
+		if (methodLambdaIndex >= lambdaTargets.size())
+			return null;
+
+		// Done, build the path to the implementation method.
+		Handle implementationHandle = lambdaTargets.get(methodLambdaIndex);
+		return classPath.child(implementationHandle.getName(), implementationHandle.getDesc());
+	}
+
+	@Nullable
 	private static ClassMemberPathNode getEnclosingMemberPath(@Nonnull ResolverAdapter resolver,
 	                                                          @Nonnull ClassModel classModel,
 	                                                          int astPos) {
@@ -847,7 +1007,7 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 	private static ClassPathNode getClassPath(@Nonnull ResolverAdapter resolver,
 	                                          @Nonnull ClassModel classModel,
 	                                          @Nonnull ClassPathNode fallbackPath) {
-		PathNode<?> path = getResolvedPath(resolver, classModel.getRange().begin());
+		PathNode<?> path = getResolvedPath(resolver, classModel);
 		if (path == null)
 			return fallbackPath;
 

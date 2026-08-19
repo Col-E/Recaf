@@ -132,7 +132,7 @@ public class AbstractDecompilePane extends BorderPane implements ClassNavigable,
 		editor.getRootLineGraphicFactory().addDefaultCodeGraphicFactories();
 		contextActionSupport.install(editor);
 		editor.getCaretPosEventStream().addObserver(change -> {
-			PathNode<?> enclosingPath = contextActionSupport.getEnclosingDeclarationPath(change.getNewValue());
+			PathNode<?> enclosingPath = contextActionSupport.getEnclosingDeclarationPath(change.getNewValue(), false);
 			if (enclosingPath != null)
 				navigationHistoryService.record(enclosingPath);
 		});
@@ -144,7 +144,7 @@ public class AbstractDecompilePane extends BorderPane implements ClassNavigable,
 		addEventFilter(KeyEvent.KEY_PRESSED, e -> {
 			if (keys.getAssembler().match(e)) {
 				// Resolve what the caret position has, then handle opening the assembler for the resulting path.
-				PathNode<?> enclosingPath = contextActionSupport.getEnclosingDeclarationPath(editor.getCodeArea().getCaretPosition());
+				PathNode<?> enclosingPath = contextActionSupport.getEnclosingDeclarationPath(editor.getCodeArea().getCaretPosition(), true);
 				if (enclosingPath != null) {
 					try {
 						actions.openAssembler(enclosingPath);
