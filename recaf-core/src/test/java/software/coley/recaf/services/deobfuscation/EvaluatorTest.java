@@ -36,12 +36,19 @@ import software.coley.recaf.util.analysis.value.ThrowableValue;
 import software.coley.recaf.workspace.model.Workspace;
 
 import javax.crypto.Cipher;
+import javax.crypto.CipherInputStream;
+import javax.crypto.CipherOutputStream;
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
@@ -771,6 +778,147 @@ public class EvaluatorTest extends TransformerTestBase {
 
 		// Check the exact ciphertext as well as the decrypted plaintext.
 		assertStringValue("WXYAnhr5X0Gp7HA3HBz3:Hello World CTR", evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of()));
+	}
+
+	@Test
+	void testKeyGeneratorAndSecureRandom() {
+		// Compile key generation with a host-backed SecureRandom supplying the provider randomness.
+		String compiled = compile("""
+				static String run() throws Exception {
+				    SecureRandom random = new SecureRandom();
+				    byte[] randomBytes = new byte[16];
+				    random.nextBytes(randomBytes);
+				    KeyGenerator generator = KeyGenerator.getInstance("AES");
+				    generator.init(128, random);
+				    SecretKey key = generator.generateKey();
+				    Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+				    cipher.init(1, key);
+				    byte[] ciphertext = cipher.doFinal("Hello Generated Key".getBytes());
+				    cipher.init(2, key);
+				    return randomBytes.length + ":" + new String(cipher.doFinal(ciphertext));
+				}
+				""", Cipher.class, KeyGenerator.class, SecureRandom.class, SecretKey.class);
+
+		// The random bytes only need to be produced, while the generated key must complete a real cipher round-trip.
+		assertStringValue("16:Hello Generated Key", evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of()));
+	}
+
+	@Test
+	void testSecureRandomStaticSupplier() {
+		String compiled = compile("""
+				static boolean run() throws Exception {
+				    return SecureRandom.getInstanceStrong() != null;
+				}
+				""", SecureRandom.class);
+
+		// The evaluator should materialize the JCA-provided strong random source instead of yielding an unknown value.
+		assertIntValue(1, evaluate(compiled, "run", "()Z", null, List.of()));
+	}
+
+	@Test
+	void testSecretKeyFactoryAndPbeKeySpec() {
+		// Compile password-derived AES key creation using the JCA PBKDF2 path.
+		String compiled = compile("""
+				static String run() throws Exception {
+				    PBEKeySpec spec = new PBEKeySpec("password".toCharArray(), "12345678".getBytes(), 1024, 128);
+				    SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+				    SecretKey derived = factory.generateSecret(spec);
+				    SecretKey key = new SecretKeySpec(derived.getEncoded(), "AES");
+				    Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+				    cipher.init(1, key);
+				    byte[] ciphertext = cipher.doFinal("Hello PBE".getBytes());
+				    cipher.init(2, key);
+				    return Base64.getEncoder().encodeToString(ciphertext) + ":" + new String(cipher.doFinal(ciphertext));
+				}
+				""", Cipher.class, SecretKey.class, SecretKeyFactory.class, PBEKeySpec.class,
+				SecretKeySpec.class, Base64.class);
+
+		// The fixed password, salt, iteration count, and key length make the derived-key ciphertext deterministic.
+		assertStringValue("2ip1taoP+HiqUPpFJAWViw==:Hello PBE",
+				evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of()));
+	}
+
+	@Test
+	void testCipherUpdate() {
+		// Compile both byte-array update overloads and finish each stream with the no-argument doFinal method.
+		String compiled = compile("""
+				static String ranged() throws Exception {
+				    byte[] key = "0123456789abcdef".getBytes();
+				    byte[] iv = new byte[16];
+				    System.arraycopy("123456789012".getBytes(), 0, iv, 0, 12);
+				    SecretKeySpec keySpec = new SecretKeySpec(key, "AES");
+				    IvParameterSpec ivSpec = new IvParameterSpec(iv);
+				    byte[] input = "Hello Cipher Update".getBytes();
+				    Cipher cipher = Cipher.getInstance("AES/CTR/NoPadding");
+				    cipher.init(1, keySpec, ivSpec);
+				    ByteArrayOutputStream output = new ByteArrayOutputStream();
+				    output.write(cipher.update(input, 0, 5));
+				    output.write(cipher.update(input, 5, input.length - 5));
+				    output.write(cipher.doFinal());
+				    byte[] ciphertext = output.toByteArray();
+				    cipher.init(2, keySpec, ivSpec);
+				    return Base64.getEncoder().encodeToString(ciphertext) + ":" + new String(cipher.doFinal(ciphertext));
+				}
+				static String whole() throws Exception {
+				    byte[] key = "0123456789abcdef".getBytes();
+				    byte[] iv = new byte[16];
+				    System.arraycopy("123456789012".getBytes(), 0, iv, 0, 12);
+				    SecretKeySpec keySpec = new SecretKeySpec(key, "AES");
+				    IvParameterSpec ivSpec = new IvParameterSpec(iv);
+				    byte[] input = "Hello Cipher Update".getBytes();
+				    Cipher cipher = Cipher.getInstance("AES/CTR/NoPadding");
+				    cipher.init(1, keySpec, ivSpec);
+				    ByteArrayOutputStream output = new ByteArrayOutputStream();
+				    output.write(cipher.update(input));
+				    output.write(cipher.doFinal());
+				    byte[] ciphertext = output.toByteArray();
+				    cipher.init(2, keySpec, ivSpec);
+				    return Base64.getEncoder().encodeToString(ciphertext) + ":" + new String(cipher.doFinal(ciphertext));
+				}
+				""", ByteArrayOutputStream.class, Cipher.class, IvParameterSpec.class,
+				SecretKeySpec.class, Base64.class);
+
+		// Both update signatures must produce the same deterministic ciphertext and plaintext.
+		assertStringValue("WXYAnhr5S0er6HFlfx3V2IINiQ==:Hello Cipher Update",
+				evaluate(compiled, "ranged", "()Ljava/lang/String;", null, List.of()));
+		assertStringValue("WXYAnhr5S0er6HFlfx3V2IINiQ==:Hello Cipher Update",
+				evaluate(compiled, "whole", "()Ljava/lang/String;", null, List.of()));
+	}
+
+	@Test
+	void testCipherByteStreams() {
+		// Compile byte-array stream encryption and decryption without touching the filesystem.
+		String compiled = compile("""
+				static String run() throws Exception {
+				    byte[] key = "0123456789abcdef".getBytes();
+				    byte[] iv = "1234567890123456".getBytes();
+				    SecretKeySpec keySpec = new SecretKeySpec(key, "AES");
+				    IvParameterSpec ivSpec = new IvParameterSpec(iv);
+				    Cipher encrypt = Cipher.getInstance("AES/CBC/PKCS5Padding");
+				    encrypt.init(1, keySpec, ivSpec);
+				    ByteArrayOutputStream encrypted = new ByteArrayOutputStream();
+				    CipherOutputStream output = new CipherOutputStream(encrypted, encrypt);
+				    byte[] first = "Hello ".getBytes();
+				    byte[] second = "Cipher Streams".getBytes();
+				    output.write(first);
+				    output.write(second, 0, second.length);
+				    output.flush();
+				    output.close();
+				    Cipher decrypt = Cipher.getInstance("AES/CBC/PKCS5Padding");
+				    decrypt.init(2, keySpec, ivSpec);
+				    ByteArrayInputStream source = new ByteArrayInputStream(encrypted.toByteArray());
+				    CipherInputStream input = new CipherInputStream(source, decrypt);
+				    byte[] plaintext = input.readAllBytes();
+				    input.close();
+				    return Base64.getEncoder().encodeToString(encrypted.toByteArray()) + ":" + new String(plaintext);
+				}
+				""", ByteArrayInputStream.class, ByteArrayOutputStream.class, Cipher.class,
+				CipherInputStream.class, CipherOutputStream.class, IvParameterSpec.class,
+				SecretKeySpec.class, Base64.class);
+
+		// The stream wrappers must preserve the exact ciphertext and recover the original text.
+		assertStringValue("i0KcjvhYv1+icl4ESawRfLgrZLOzWp0ShXKD0KHmBww=:Hello Cipher Streams",
+				evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of()));
 	}
 
 	@Test

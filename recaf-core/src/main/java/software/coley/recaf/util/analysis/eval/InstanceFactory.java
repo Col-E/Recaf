@@ -22,7 +22,12 @@ import software.coley.recaf.util.analysis.value.StringValue;
 import software.coley.recaf.util.analysis.value.impl.ArrayValueImpl;
 
 import javax.crypto.Cipher;
+import javax.crypto.CipherInputStream;
+import javax.crypto.CipherOutputStream;
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -32,7 +37,9 @@ import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.security.Key;
+import java.security.SecureRandom;
 import java.security.spec.AlgorithmParameterSpec;
+import java.security.spec.KeySpec;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collection;
@@ -589,7 +596,10 @@ public class InstanceFactory extends BasicLookupUtils {
 		registerMethodHandler("java/util/Random", "nextInt", "()I", (ReFrame frame, ReValue host, Random receiver, List<ReValue> args) -> i(receiver.nextInt()));
 		registerMethodHandler("java/util/Random", "nextInt", "(I)I", (ReFrame frame, ReValue host, Random receiver, List<ReValue> args) -> i(receiver.nextInt(i((IntValue) args.get(0)))));
 		registerMethodHandler("java/util/Random", "nextBytes", "([B)V", (ReFrame frame, ReValue host, Random receiver, List<ReValue> args) -> {
-			receiver.nextBytes(arrb((ArrayValue) args.get(0)));
+			ArrayValue destinationValue = (ArrayValue) args.get(0);
+			byte[] destination = arrb(destinationValue);
+			receiver.nextBytes(destination);
+			replaceByteArrayContents(frame, destinationValue, destination, 0, destination.length);
 			return null;
 		});
 		registerMethodHandler("java/util/Random", "setSeed", "(J)V", (ReFrame frame, ReValue host, Random receiver, List<ReValue> args) -> {
@@ -600,6 +610,10 @@ public class InstanceFactory extends BasicLookupUtils {
 		registerMethodHandler("java/util/Random", "nextBoolean", "()Z", (ReFrame frame, ReValue host, Random receiver, List<ReValue> args) -> z(receiver.nextBoolean()));
 		registerMethodHandler("java/util/Random", "nextFloat", "()F", (ReFrame frame, ReValue host, Random receiver, List<ReValue> args) -> f(receiver.nextFloat()));
 		registerMethodHandler("java/util/Random", "nextGaussian", "()D", (ReFrame frame, ReValue host, Random receiver, List<ReValue> args) -> d(receiver.nextGaussian()));
+
+		// java.security.SecureRandom
+		registerMapper(SecureRandom.class, "()V", (host, parameters) -> new SecureRandom());
+		registerMapper(SecureRandom.class, "([B)V", (host, parameters) -> new SecureRandom(arrb((ArrayValue) parameters.get(0))));
 
 		// java.util.List
 		registerMethodHandler("java/util/List", "remove", "(I)Ljava/lang/Object;", (ReFrame frame, ReValue host, List receiver, List<ReValue> args) -> new InstancedObjectValue<>(receiver.remove(i((IntValue) args.get(0)))));
@@ -1047,6 +1061,18 @@ public class InstanceFactory extends BasicLookupUtils {
 
 		// java.io.ByteArrayOutputStream
 		registerMethodHandler("java/io/ByteArrayOutputStream", "toByteArray", "()[B", (ReFrame frame, ReValue host, ByteArrayOutputStream receiver, List<ReValue> args) -> arrb(receiver.toByteArray()));
+		registerMethodHandler("java/io/ByteArrayOutputStream", "write", "(I)V", (ReFrame frame, ReValue host, ByteArrayOutputStream receiver, List<ReValue> args) -> {
+			receiver.write(i((IntValue) args.get(0)));
+			return null;
+		});
+		registerMethodHandler("java/io/ByteArrayOutputStream", "write", "([B)V", (ReFrame frame, ReValue host, ByteArrayOutputStream receiver, List<ReValue> args) -> {
+			receiver.write(arrb((ArrayValue) args.get(0)));
+			return null;
+		});
+		registerMethodHandler("java/io/ByteArrayOutputStream", "write", "([BII)V", (ReFrame frame, ReValue host, ByteArrayOutputStream receiver, List<ReValue> args) -> {
+			receiver.write(arrb((ArrayValue) args.get(0)), i((IntValue) args.get(1)), i((IntValue) args.get(2)));
+			return null;
+		});
 
 		// java.io.InputStream
 		//  - java.io.ByteArrayInputStream
@@ -1093,6 +1119,109 @@ public class InstanceFactory extends BasicLookupUtils {
 			return null;
 		});
 		registerMethodHandler("javax/crypto/Cipher", "doFinal", "([B)[B", (ReFrame frame, ReValue host, Cipher receiver, List<ReValue> args) -> arrb(receiver.doFinal(arrb((ArrayValue) args.get(0)))));
+		registerMethodHandler("javax/crypto/Cipher", "init", "(ILjava/security/Key;)V", (ReFrame frame, ReValue host, Cipher receiver, List<ReValue> args) -> {
+			receiver.init(i((IntValue) args.get(0)), requireRealInstance(args.get(1), Key.class));
+			return null;
+		});
+		registerMethodHandler("javax/crypto/Cipher", "update", "([B)[B", (ReFrame frame, ReValue host, Cipher receiver, List<ReValue> args) ->
+				arrb(receiver.update(arrb((ArrayValue) args.get(0)))));
+		registerMethodHandler("javax/crypto/Cipher", "update", "([BII)[B", (ReFrame frame, ReValue host, Cipher receiver, List<ReValue> args) ->
+				arrb(receiver.update(arrb((ArrayValue) args.get(0)), i((IntValue) args.get(1)), i((IntValue) args.get(2)))));
+		registerMethodHandler("javax/crypto/Cipher", "doFinal", "()[B", (ReFrame frame, ReValue host, Cipher receiver, List<ReValue> args) ->
+				arrb(receiver.doFinal()));
+
+		// java.security.SecureRandom
+		registerMethodHandler("java/security/SecureRandom", "nextBytes", "([B)V", (ReFrame frame, ReValue host, SecureRandom receiver, List<ReValue> args) -> {
+			ArrayValue destinationValue = (ArrayValue) args.get(0);
+			byte[] destination = arrb(destinationValue);
+			receiver.nextBytes(destination);
+			replaceByteArrayContents(frame, destinationValue, destination, 0, destination.length);
+			return null;
+		});
+		registerMethodHandler("java/security/SecureRandom", "setSeed", "([B)V", (ReFrame frame, ReValue host, SecureRandom receiver, List<ReValue> args) -> {
+			receiver.setSeed(arrb((ArrayValue) args.get(0)));
+			return null;
+		});
+		registerMethodHandler("java/security/SecureRandom", "setSeed", "(J)V", (ReFrame frame, ReValue host, SecureRandom receiver, List<ReValue> args) -> {
+			receiver.setSeed(j((LongValue) args.get(0)));
+			return null;
+		});
+		registerMethodHandler("java/security/SecureRandom", "nextDouble", "()D", (ReFrame frame, ReValue host, SecureRandom receiver, List<ReValue> args) -> d(receiver.nextDouble()));
+		registerMethodHandler("java/security/SecureRandom", "nextInt", "()I", (ReFrame frame, ReValue host, SecureRandom receiver, List<ReValue> args) -> i(receiver.nextInt()));
+		registerMethodHandler("java/security/SecureRandom", "nextInt", "(I)I", (ReFrame frame, ReValue host, SecureRandom receiver, List<ReValue> args) -> i(receiver.nextInt(i((IntValue) args.get(0)))));
+		registerMethodHandler("java/security/SecureRandom", "nextLong", "()J", (ReFrame frame, ReValue host, SecureRandom receiver, List<ReValue> args) -> j(receiver.nextLong()));
+		registerMethodHandler("java/security/SecureRandom", "nextBoolean", "()Z", (ReFrame frame, ReValue host, SecureRandom receiver, List<ReValue> args) -> z(receiver.nextBoolean()));
+		registerMethodHandler("java/security/SecureRandom", "nextFloat", "()F", (ReFrame frame, ReValue host, SecureRandom receiver, List<ReValue> args) -> f(receiver.nextFloat()));
+		registerMethodHandler("java/security/SecureRandom", "nextGaussian", "()D", (ReFrame frame, ReValue host, SecureRandom receiver, List<ReValue> args) -> d(receiver.nextGaussian()));
+		registerMethodHandler("java/security/SecureRandom", "generateSeed", "(I)[B", (ReFrame frame, ReValue host, SecureRandom receiver, List<ReValue> args) -> arrb(receiver.generateSeed(i((IntValue) args.get(0)))));
+
+		// javax.crypto.KeyGenerator
+		registerMethodHandler("javax/crypto/KeyGenerator", "init", "(I)V", (ReFrame frame, ReValue host, KeyGenerator receiver, List<ReValue> args) -> {
+			receiver.init(i((IntValue) args.get(0)));
+			return null;
+		});
+		registerMethodHandler("javax/crypto/KeyGenerator", "init", "(ILjava/security/SecureRandom;)V", (ReFrame frame, ReValue host, KeyGenerator receiver, List<ReValue> args) -> {
+			receiver.init(i((IntValue) args.get(0)), requireRealInstance(args.get(1), SecureRandom.class));
+			return null;
+		});
+		registerMethodHandler("javax/crypto/KeyGenerator", "generateKey", "()Ljavax/crypto/SecretKey;", (ReFrame frame, ReValue host, KeyGenerator receiver, List<ReValue> args) -> new InstancedObjectValue<>(receiver.generateKey()));
+
+		// javax.crypto.SecretKeyFactory
+		registerMethodHandler("javax/crypto/SecretKeyFactory", "generateSecret", "(Ljava/security/spec/KeySpec;)Ljavax/crypto/SecretKey;", (ReFrame frame, ReValue host, SecretKeyFactory receiver, List<ReValue> args) -> new InstancedObjectValue<>(receiver.generateSecret(requireRealInstance(args.get(0), KeySpec.class))));
+
+		// java.security.Key
+		registerMethodHandler("java/security/Key", "getAlgorithm", "()Ljava/lang/String;", (ReFrame frame, ReValue host, Key receiver, List<ReValue> args) -> str(receiver.getAlgorithm()));
+		registerMethodHandler("java/security/Key", "getFormat", "()Ljava/lang/String;", (ReFrame frame, ReValue host, Key receiver, List<ReValue> args) -> str(receiver.getFormat()));
+		registerMethodHandler("java/security/Key", "getEncoded", "()[B", (ReFrame frame, ReValue host, Key receiver, List<ReValue> args) -> arrb(receiver.getEncoded()));
+		registerMethodHandler("javax/crypto/SecretKey", "getAlgorithm", "()Ljava/lang/String;", (ReFrame frame, ReValue host, Key receiver, List<ReValue> args) -> str(receiver.getAlgorithm()));
+		registerMethodHandler("javax/crypto/SecretKey", "getFormat", "()Ljava/lang/String;", (ReFrame frame, ReValue host, Key receiver, List<ReValue> args) -> str(receiver.getFormat()));
+		registerMethodHandler("javax/crypto/SecretKey", "getEncoded", "()[B", (ReFrame frame, ReValue host, Key receiver, List<ReValue> args) -> arrb(receiver.getEncoded()));
+
+		// javax.crypto.CipherInputStream
+		registerMethodHandler("javax/crypto/CipherInputStream", "read", "()I", (ReFrame frame, ReValue host, InputStream receiver, List<ReValue> args) -> i(receiver.read()));
+		registerMethodHandler("javax/crypto/CipherInputStream", "read", "([B)I", (ReFrame frame, ReValue host, InputStream receiver, List<ReValue> args) -> {
+			ArrayValue destinationValue = (ArrayValue) args.get(0);
+			byte[] destination = arrb(destinationValue);
+			int read = receiver.read(destination);
+			replaceByteArrayContents(frame, destinationValue, destination, 0, read);
+			return i(read);
+		});
+		registerMethodHandler("javax/crypto/CipherInputStream", "read", "([BII)I", (ReFrame frame, ReValue host, InputStream receiver, List<ReValue> args) -> {
+			ArrayValue destinationValue = (ArrayValue) args.get(0);
+			byte[] destination = arrb(destinationValue);
+			int offset = i((IntValue) args.get(1));
+			int length = i((IntValue) args.get(2));
+			int read = receiver.read(destination, offset, length);
+			replaceByteArrayContents(frame, destinationValue, destination, offset, read);
+			return i(read);
+		});
+		registerMethodHandler("javax/crypto/CipherInputStream", "readAllBytes", "()[B", (ReFrame frame, ReValue host, InputStream receiver, List<ReValue> args) -> arrb(receiver.readAllBytes()));
+		registerMethodHandler("javax/crypto/CipherInputStream", "close", "()V", (ReFrame frame, ReValue host, InputStream receiver, List<ReValue> args) -> {
+			receiver.close();
+			return null;
+		});
+
+		// javax.crypto.CipherOutputStream
+		registerMethodHandler("javax/crypto/CipherOutputStream", "write", "(I)V", (ReFrame frame, ReValue host, OutputStream receiver, List<ReValue> args) -> {
+			receiver.write(i((IntValue) args.get(0)));
+			return null;
+		});
+		registerMethodHandler("javax/crypto/CipherOutputStream", "write", "([B)V", (ReFrame frame, ReValue host, OutputStream receiver, List<ReValue> args) -> {
+			receiver.write(arrb((ArrayValue) args.get(0)));
+			return null;
+		});
+		registerMethodHandler("javax/crypto/CipherOutputStream", "write", "([BII)V", (ReFrame frame, ReValue host, OutputStream receiver, List<ReValue> args) -> {
+			receiver.write(arrb((ArrayValue) args.get(0)), i((IntValue) args.get(1)), i((IntValue) args.get(2)));
+			return null;
+		});
+		registerMethodHandler("javax/crypto/CipherOutputStream", "flush", "()V", (ReFrame frame, ReValue host, OutputStream receiver, List<ReValue> args) -> {
+			receiver.flush();
+			return null;
+		});
+		registerMethodHandler("javax/crypto/CipherOutputStream", "close", "()V", (ReFrame frame, ReValue host, OutputStream receiver, List<ReValue> args) -> {
+			receiver.close();
+			return null;
+		});
 	}
 
 	/**
@@ -1354,6 +1483,15 @@ public class InstanceFactory extends BasicLookupUtils {
 		// javax.crypto.spec
 		registerMapper(SecretKeySpec.class, "([BLjava/lang/String;)V", (host, parameters) -> new SecretKeySpec(arrb((ArrayValue) parameters.get(0)), str((StringValue) parameters.get(1))));
 		registerMapper(IvParameterSpec.class, "([B)V", (host, parameters) -> new IvParameterSpec(arrb((ArrayValue) parameters.get(0))));
+
+		// javax.crypto.spec.PBEKeySpec
+		registerMapper(PBEKeySpec.class, "([C)V", (host, parameters) -> new PBEKeySpec(arrc((ArrayValue) parameters.get(0))));
+		registerMapper(PBEKeySpec.class, "([C[BII)V", (host, parameters) -> new PBEKeySpec(arrc((ArrayValue) parameters.get(0)), arrb((ArrayValue) parameters.get(1)), i((IntValue) parameters.get(2)), i((IntValue) parameters.get(3))));
+		registerMapper(PBEKeySpec.class, "([C[BI)V", (host, parameters) -> new PBEKeySpec(arrc((ArrayValue) parameters.get(0)), arrb((ArrayValue) parameters.get(1)), i((IntValue) parameters.get(2))));
+
+		// javax.crypto streams
+		registerMapper(CipherInputStream.class, "(Ljava/io/InputStream;Ljavax/crypto/Cipher;)V", (host, parameters) -> new CipherInputStream(requireRealInstance(parameters.get(0), InputStream.class), requireRealInstance(parameters.get(1), Cipher.class)));
+		registerMapper(CipherOutputStream.class, "(Ljava/io/OutputStream;Ljavax/crypto/Cipher;)V", (host, parameters) -> new CipherOutputStream(requireRealInstance(parameters.get(0), OutputStream.class), requireRealInstance(parameters.get(1), Cipher.class)));
 	}
 
 	/**
@@ -1377,6 +1515,16 @@ public class InstanceFactory extends BasicLookupUtils {
 
 		// javax.crypto.Cipher
 		registerStaticMapper(Cipher.class, "getInstance(Ljava/lang/String;)Ljavax/crypto/Cipher;", (host, parameters) -> Cipher.getInstance(str((StringValue) parameters.get(0))));
+
+		// javax.crypto.KeyGenerator
+		registerStaticMapper(KeyGenerator.class, "getInstance(Ljava/lang/String;)Ljavax/crypto/KeyGenerator;", (host, parameters) -> KeyGenerator.getInstance(str((StringValue) parameters.get(0))));
+
+		// javax.crypto.SecretKeyFactory
+		registerStaticMapper(SecretKeyFactory.class, "getInstance(Ljava/lang/String;)Ljavax/crypto/SecretKeyFactory;", (host, parameters) -> SecretKeyFactory.getInstance(str((StringValue) parameters.get(0))));
+
+		// java.security.SecureRandom
+		registerStaticMapper(SecureRandom.class, "getInstance(Ljava/lang/String;)Ljava/security/SecureRandom;", (host, parameters) -> SecureRandom.getInstance(str((StringValue) parameters.get(0))));
+		registerStaticMapper(SecureRandom.class, "getInstanceStrong()Ljava/security/SecureRandom;", (host, parameters) -> SecureRandom.getInstanceStrong());
 	}
 
 	/**
