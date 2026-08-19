@@ -78,18 +78,28 @@ public class OpaquePredicateFoldingTransformer implements JvmClassTransformer {
 				AbstractInsnNode instruction = instructions.get(i);
 				if (instruction instanceof TableSwitchInsnNode switchInsn && isSwitchEffectiveGoto(switchInsn)) {
 					AbstractInsnNode previous = switchInsn.getPrevious();
-					if (isValueProducerOrTopDup(previous))
+
+					// A dup2 supplies two copies while the switch consumes one, so it cannot be
+					// removed entirely. Fall back to popping the selector copy instead.
+					if (previous.getOpcode() != DUP2 && isValueProducerOrTopDup(previous))
 						instructions.remove(previous);
 					else
 						instructions.insertBefore(switchInsn, new InsnNode(POP));
+
+					// Replace the switch with a goto to the default label, which is the only label that is reachable.
 					instructions.set(switchInsn, new JumpInsnNode(GOTO, switchInsn.dflt));
 					dirty = true;
 				} else if (instruction instanceof LookupSwitchInsnNode switchInsn && isSwitchEffectiveGoto(switchInsn)) {
 					AbstractInsnNode previous = switchInsn.getPrevious();
-					if (isValueProducerOrTopDup(previous))
+
+					// A dup2 supplies two copies while the switch consumes one, so it cannot be
+					// removed entirely. Fall back to popping the selector copy instead.
+					if (previous.getOpcode() != DUP2 && isValueProducerOrTopDup(previous))
 						instructions.remove(previous);
 					else
 						instructions.insertBefore(switchInsn, new InsnNode(POP));
+
+					// Replace the switch with a goto to the default label, which is the only label that is reachable.
 					instructions.set(switchInsn, new JumpInsnNode(GOTO, switchInsn.dflt));
 					dirty = true;
 				}
@@ -217,8 +227,8 @@ public class OpaquePredicateFoldingTransformer implements JvmClassTransformer {
 						JumpInsnNode replacement = keyIndex == -1 ?
 								new JumpInsnNode(GOTO, lsin.dflt) :
 								new JumpInsnNode(GOTO, lsin.labels.get(keyIndex));
+						removeSingleValueProducer(instructions, prevInstruction, lsin);
 						instructions.set(lsin, replacement);
-						instructions.set(prevInstruction, new InsnNode(NOP));
 						localDirty = true;
 					} else if (insnType == AbstractInsnNode.TABLESWITCH_INSN) {
 						TableSwitchInsnNode tsin = (TableSwitchInsnNode) instruction;
@@ -236,8 +246,8 @@ public class OpaquePredicateFoldingTransformer implements JvmClassTransformer {
 						JumpInsnNode replacement = keyIndex == -1 ?
 								new JumpInsnNode(GOTO, tsin.dflt) :
 								new JumpInsnNode(GOTO, tsin.labels.get(keyIndex));
+						removeSingleValueProducer(instructions, prevInstruction, tsin);
 						instructions.set(tsin, replacement);
-						instructions.set(prevInstruction, new InsnNode(NOP));
 						localDirty = true;
 					}
 				}
@@ -264,11 +274,14 @@ public class OpaquePredicateFoldingTransformer implements JvmClassTransformer {
 	                                       @Nonnull JumpInsnNode jump,
 	                                       @Nonnull Predicate<IntValue> gotoCondition) {
 		if (stackTopValue instanceof IntValue intValue) {
+			// Remove the consumed value first so the jump stays a valid insertion point for the pop.
+			removeSingleValueProducer(instructions, stackValueProducerInsn, jump);
+
+			// Replace the jump with a goto if the condition is met, otherwise replace it with a NOP.
 			AbstractInsnNode replacement = gotoCondition.test(intValue) ?
 					new JumpInsnNode(GOTO, jump.label) :
 					new InsnNode(NOP);
 			instructions.set(jump, replacement);
-			instructions.set(stackValueProducerInsn, new InsnNode(NOP));
 			return true;
 		}
 		return false;
@@ -286,8 +299,21 @@ public class OpaquePredicateFoldingTransformer implements JvmClassTransformer {
 					new JumpInsnNode(GOTO, jump.label) :
 					new InsnNode(NOP);
 			instructions.set(jump, replacement);
-			instructions.set(stackValueProducerInsnA, new InsnNode(NOP));
-			instructions.set(stackValueProducerInsnB, new InsnNode(NOP));
+
+			// Remove the two consumed values from the stack.
+			// A dup2 in the top position supplies both compared values as copies, so only it is removed.
+			// A dup2 in the lower position supplies the lower value plus a surviving copy, so it is kept
+			// and a pop discards the copy the jump no longer consumes.
+			if (stackValueProducerInsnB.getOpcode() == DUP2) {
+				instructions.set(stackValueProducerInsnB, new InsnNode(NOP));
+			} else if (stackValueProducerInsnA.getOpcode() == DUP2) {
+				instructions.insertBefore(stackValueProducerInsnB, new InsnNode(POP));
+				instructions.set(stackValueProducerInsnB, new InsnNode(NOP));
+			} else {
+				instructions.set(stackValueProducerInsnA, new InsnNode(NOP));
+				instructions.set(stackValueProducerInsnB, new InsnNode(NOP));
+			}
+
 			return true;
 		}
 		return false;
@@ -299,11 +325,14 @@ public class OpaquePredicateFoldingTransformer implements JvmClassTransformer {
 	                                       @Nonnull JumpInsnNode jump,
 	                                       @Nonnull Predicate<ObjectValue> gotoCondition) {
 		if (stackTopValue instanceof ObjectValue objectValue) {
+			// Remove the consumed value first so the jump stays a valid insertion point for the pop.
+			removeSingleValueProducer(instructions, stackValueProducerInsn, jump);
+
+			// Replace the jump with a goto if the condition is met, otherwise replace it with a NOP.
 			AbstractInsnNode replacement = gotoCondition.test(objectValue) ?
 					new JumpInsnNode(GOTO, jump.label) :
 					new InsnNode(NOP);
 			instructions.set(jump, replacement);
-			instructions.set(stackValueProducerInsn, new InsnNode(NOP));
 			return true;
 		}
 		return false;
@@ -325,13 +354,56 @@ public class OpaquePredicateFoldingTransformer implements JvmClassTransformer {
 			if (replacement == null) replacement = fallCondition.test(objValueA, objValueB) ? new InsnNode(NOP) : null;
 			if (replacement == null) return false;
 			instructions.set(jump, replacement);
-			instructions.set(stackValueProducerInsnA, new InsnNode(NOP));
-			instructions.set(stackValueProducerInsnB, new InsnNode(NOP));
+
+			// Remove the two consumed values from the stack.
+			// A dup2 in the top position supplies both compared values as copies, so only it is removed.
+			// A dup2 in the lower position supplies the lower value plus a surviving copy, so it is kept
+			// and a pop discards the copy the jump no longer consumes.
+			if (stackValueProducerInsnB.getOpcode() == DUP2) {
+				instructions.set(stackValueProducerInsnB, new InsnNode(NOP));
+			} else if (stackValueProducerInsnA.getOpcode() == DUP2) {
+				instructions.insertBefore(stackValueProducerInsnB, new InsnNode(POP));
+				instructions.set(stackValueProducerInsnB, new InsnNode(NOP));
+			} else {
+				instructions.set(stackValueProducerInsnA, new InsnNode(NOP));
+				instructions.set(stackValueProducerInsnB, new InsnNode(NOP));
+			}
+
 			return true;
 		}
 		return false;
 	}
 
+	/**
+	 * Removes the single stack value that a folded control-flow instruction consumed.
+	 * <p>
+	 * A plain producer or a {@code dup} supplies exactly the one consumed value, so it is removed.
+	 * A {@code dup2} supplies two copies, so it is kept and a {@code pop} discards the copy the
+	 * folded instruction no longer consumes.
+	 *
+	 * @param instructions
+	 * 		Instructions to modify.
+	 * @param producer
+	 * 		Instruction supplying the consumed value.
+	 * @param consumer
+	 * 		Folded control-flow instruction, used as the insertion point for the {@code pop}.
+	 */
+	private static void removeSingleValueProducer(@Nonnull InsnList instructions,
+	                                              @Nonnull AbstractInsnNode producer,
+	                                              @Nonnull AbstractInsnNode consumer) {
+		if (producer.getOpcode() == DUP2)
+			instructions.insertBefore(consumer, new InsnNode(POP));
+		else
+			instructions.set(producer, new InsnNode(NOP));
+	}
+
+	/**
+	 * @param insnNode
+	 * 		Insn to check.
+	 *
+	 * @return {@code true} when the instruction is a value producing instruction
+	 * or a {@code dup} that produces a value on the stack.
+	 */
 	private static boolean isValueProducerOrTopDup(@Nonnull AbstractInsnNode insnNode) {
 		if (isSupportedValueProducer(insnNode))
 			return true;

@@ -52,7 +52,6 @@ import java.util.stream.Collectors;
 import static org.objectweb.asm.Opcodes.*;
 import static software.coley.recaf.util.AsmInsnUtil.*;
 
-
 /**
  * A transformer that folds sequences of computed values into constants.
  *
@@ -297,9 +296,15 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 						continue;
 					BinaryOperationArguments arguments = getBinaryOperationArguments(instruction.getPrevious(), POP2);
 					if (arguments != null && arguments.combinedIntermediates().isEmpty()) {
-						instructions.remove(arguments.argument1().insn());
-						instructions.insert(arguments.argument2().insn(), arguments.argument1().insn());
-						instructions.set(instruction, new InsnNode(NOP));
+						if (arguments.argument1().sameAs(arguments.argument2())) {
+							// If the two arguments are the same, then we can just NOP the swap instruction.
+							instructions.set(instruction, new InsnNode(NOP));
+						} else {
+							// Otherwise, rewrite the order of the two arguments to achieve the same effect as a swap.
+							instructions.remove(arguments.argument1().insn());
+							instructions.insert(arguments.argument2().insn(), arguments.argument1().insn());
+							instructions.set(instruction, new InsnNode(NOP));
+						}
 						dirty = true;
 					}
 				}
@@ -391,17 +396,23 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 
 				// Record variable side effects.
 				// Because j steps backwards the first encountered write will be the only thing we need to ensure
-				// is kept after folding the sequence.
+				// is kept after folding the sequence. The side effects need to be in the context of the frame at
+				// position j, since that is the frame that will be used to evaluate the sequence since the
+				// operation frame reflects the state after the whole sequence.
 				Frame<ReValue> jframe = frames[j];
 				if (isVarStore(insnOp) && insn instanceof VarInsnNode vin) {
 					int index = vin.var;
-					ReValue stack = frame.getStack(frame.getStackSize() - 1);
+					if (jframe == null || jframe.getStackSize() == 0)
+						break;
+					ReValue stack = jframe.getStack(jframe.getStackSize() - 1);
 					if (!stack.hasKnownValue())
 						break;
 					sequenceVarWrites.putIfAbsent(index, stack);
 				} else if (insn instanceof IincInsnNode iinc) {
 					int index = iinc.var;
-					ReValue local = frame.getLocal(index);
+					if (jframe == null)
+						break;
+					ReValue local = jframe.getLocal(index);
 					if (!local.hasKnownValue() || !(local instanceof IntValue intLocal))
 						break;
 					sequenceVarWrites.putIfAbsent(index, intLocal.add(iinc.incr));
@@ -452,8 +463,10 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 			// In some cases where the next instruction is a label targeted by backwards jumps from dummy/dead code
 			// the analyzer can get fooled into merging an unknown state into something that should be known.
 			// When this happens we can evaluate our sequence and see what the result should be.
+			// The sequence walk leaves 'j' pointing at the instruction before the sequence's first instruction,
+			// so the entry frame for evaluation is the frame at 'j + 1'.
 			if (!isReturn && !topValue.hasKnownValue() && isLabel(sequence.getLast().getNext()))
-				topValue = evaluateTopFromSequence(context, method, sequence, topValue, frames, j);
+				topValue = evaluateTopFromSequence(context, method, sequence, topValue, frames, j + 1);
 
 			// Handle replacing the sequence.
 			AbstractInsnNode replacement = toInsn(topValue);
@@ -472,13 +485,19 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 					instructions.set(instructions.get(i), replacement);
 
 					// Insert variable writes to ensure their states are not affected by our inlining.
-					sequenceVarWrites.forEach((index, value) -> {
-						AbstractInsnNode varReplacement = toInsn(value);
-						VarInsnNode varStore = createVarStore(index, Objects.requireNonNull(value.type(), "Missing var type"));
-						instructions.insertBefore(replacement, varReplacement);
-						instructions.insertBefore(replacement, varStore);
-					});
-					i += sequenceVarWrites.size() * 2;
+					if (!sequenceVarWrites.isEmpty()) {
+						sequenceVarWrites.forEach((index, value) -> {
+							AbstractInsnNode varReplacement = toInsn(value);
+							VarInsnNode varStore = createVarStore(index, Objects.requireNonNull(value.type(), "Missing var type"));
+							instructions.insertBefore(replacement, varReplacement);
+							instructions.insertBefore(replacement, varStore);
+						});
+
+						// Inserting shifts subsequent instruction indices while 'frames' was computed against the
+						// pre-mutation list. Stop this pass so the next one re-analyzes instead of using stale frames.
+						dirty = true;
+						break;
+					}
 				}
 				dirty = true;
 			} else {
@@ -537,11 +556,19 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 		// match the sequence length with a little leeway should be alright.
 		final int maxSteps = sequence.size() + 10;
 		ReFrame initialBlockFrame = (ReFrame) frames[Math.max(0, sequenceStartIndex)];
-		Evaluator evaluator = new Evaluator(context.getWorkspace(), context.newInterpreter(inheritanceGraph), new FieldCacheManager(), maxSteps, false);
+		Evaluator evaluator = new Evaluator(context.getWorkspace(), context.newInterpreter(inheritanceGraph), new FieldCacheManager(), maxSteps, false, false);
 
 		// Evaluate the sequence and return the result.
 		// If evaluation fails, return the original unknown top value.
-		EvaluationResult result = evaluator.evaluateBlock(block, initialBlockFrame, method.access);
+		EvaluationResult result;
+		try {
+			result = evaluator.evaluateBlock(block, initialBlockFrame, method.access);
+		} catch (Throwable t) {
+			// Evaluation is best-effort. Some sequences cannot be evaluated, which can surface as an
+			// unchecked exception (for example, the block pushing beyond the origin frame's max stack).
+			// Treat those the same as any other un-evaluatable sequence.
+			return topValue;
+		}
 		if (result instanceof EvaluationYieldResult(ReValue value)) {
 			if (Objects.equals(value.type(), topValue.type())) // Sanity check
 				return value;

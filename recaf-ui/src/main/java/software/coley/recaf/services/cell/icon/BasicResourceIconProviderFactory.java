@@ -4,7 +4,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import software.coley.recaf.info.*;
 import software.coley.recaf.services.phantom.GeneratedPhantomWorkspaceResource;
-import software.coley.recaf.util.ByteHeaderUtil;
+import software.coley.recaf.util.io.ByteHeaderUtil;
 import software.coley.recaf.util.Icons;
 import software.coley.recaf.util.MemorySegmentUtil;
 import software.coley.recaf.workspace.model.Workspace;

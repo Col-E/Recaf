@@ -26,6 +26,7 @@ import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.control.ImageCanvas;
 import software.coley.recaf.ui.control.PannableView;
 import software.coley.recaf.util.*;
+import software.coley.recaf.util.io.ByteHeaderUtil;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;

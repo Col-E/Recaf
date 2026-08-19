@@ -16,6 +16,7 @@ public sealed interface EvaluationResult permits EvaluationFailureResult, Evalua
 	 *
 	 * @return Evaluation failure result.
 	 */
+	@Nonnull
 	static EvaluationFailureResult cannotEvaluate(@Nonnull String reason) {
 		return new EvaluationFailureResult(reason, new EvaluationException(reason));
 	}
@@ -30,6 +31,7 @@ public sealed interface EvaluationResult permits EvaluationFailureResult, Evalua
 	 *
 	 * @return Evaluation failure result.
 	 */
+	@Nonnull
 	static EvaluationFailureResult cannotEvaluate(@Nonnull String reason, @Nonnull Throwable cause) {
 		return new EvaluationFailureResult(reason, new EvaluationException(cause, reason));
 	}

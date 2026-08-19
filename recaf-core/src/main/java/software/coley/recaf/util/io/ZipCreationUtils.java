@@ -1,21 +1,28 @@
-package software.coley.recaf.util;
-
-import jakarta.annotation.Nonnull;
-import jakarta.annotation.Nullable;
-import org.slf4j.Logger;
-import software.coley.collections.func.UncheckedConsumer;
-import software.coley.recaf.analytics.logging.Logging;
-import software.coley.recaf.util.io.LargeOutputStream;
+package software.coley.recaf.util.io;
 
 import java.io.IOException;
 import java.lang.foreign.MemorySegment;
 import java.lang.reflect.Field;
 import java.nio.file.attribute.FileTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+
+import org.slf4j.Logger;
+
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
+import software.coley.collections.func.UncheckedConsumer;
+import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.util.MemorySegmentUtil;
+import software.coley.recaf.util.ReflectUtil;
 
 /**
  * Utility for creating simple ZIP files.

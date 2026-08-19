@@ -11,7 +11,7 @@ import software.coley.recaf.config.ConfigContainer;
 import software.coley.recaf.config.ConfigGroups;
 import software.coley.recaf.launch.LaunchCommand;
 import software.coley.recaf.util.ExcludeFromJacocoGeneratedReport;
-import software.coley.recaf.util.IOUtil;
+import software.coley.recaf.util.io.IOUtil;
 import software.coley.recaf.util.PlatformType;
 
 import java.io.IOException;

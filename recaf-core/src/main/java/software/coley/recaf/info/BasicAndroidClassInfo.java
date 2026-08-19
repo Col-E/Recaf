@@ -3,6 +3,7 @@ package software.coley.recaf.info;
 import jakarta.annotation.Nonnull;
 import me.darknet.dex.convert.DexConversionIr;
 import me.darknet.dex.convert.DexConversionSimple;
+import me.darknet.dex.convert.ir.lowering.JvmLoweringPolicy;
 import me.darknet.dex.tree.definitions.ClassDefinition;
 import org.objectweb.asm.ClassReader;
 import software.coley.recaf.info.builder.AndroidClassInfoBuilder;
@@ -54,7 +55,9 @@ public class BasicAndroidClassInfo extends BasicClassInfo implements AndroidClas
 					return converted;
 				try {
 					String name = getName();
-					byte[] convertedBytecode = new DexConversionIr().toJavaClass(def);
+					DexConversionIr conversion = new DexConversionIr();
+					conversion.setJvmLoweringPolicy(JvmLoweringPolicy.AGGRESSIVE_OPTIMIZED);
+					byte[] convertedBytecode = conversion.toJavaClass(def);
 					if (convertedBytecode == null)
 						throw new IllegalStateException("Failed to convert Dalvik model of " + name + " to JVM bytecode, " +
 								"conversion results did not include type name.");

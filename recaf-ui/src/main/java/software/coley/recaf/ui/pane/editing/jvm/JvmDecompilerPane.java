@@ -9,7 +9,6 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Labeled;
 import javafx.scene.control.TitledPane;
-import javafx.scene.input.MouseButton;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.util.Duration;
@@ -23,7 +22,7 @@ import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.builder.JvmClassInfoBuilder;
 import software.coley.recaf.info.properties.builtin.CachedDecompileProperty;
 import software.coley.recaf.path.ClassPathNode;
-import software.coley.recaf.path.IncompletePathException;
+import software.coley.recaf.services.cell.CellConfigurationService;
 import software.coley.recaf.services.compile.CompileMap;
 import software.coley.recaf.services.compile.CompilerDiagnostic;
 import software.coley.recaf.services.compile.JavacArgumentsBuilder;
@@ -32,11 +31,9 @@ import software.coley.recaf.services.compile.JavacCompilerConfig;
 import software.coley.recaf.services.decompile.DecompileResult;
 import software.coley.recaf.services.decompile.DecompilerManager;
 import software.coley.recaf.services.decompile.JvmDecompiler;
-import software.coley.recaf.services.cell.CellConfigurationService;
 import software.coley.recaf.services.info.association.FileTypeSyntaxAssociationService;
 import software.coley.recaf.services.navigation.Actions;
 import software.coley.recaf.services.navigation.NavigationHistoryService;
-import software.coley.recaf.services.source.AstResolveResult;
 import software.coley.recaf.services.source.AstService;
 import software.coley.recaf.services.tutorial.TutorialConfig;
 import software.coley.recaf.services.tutorial.TutorialWorkspace;
@@ -49,9 +46,9 @@ import software.coley.recaf.ui.control.richtext.problem.Problem;
 import software.coley.recaf.ui.control.richtext.problem.ProblemLevel;
 import software.coley.recaf.ui.control.richtext.problem.ProblemPhase;
 import software.coley.recaf.ui.control.richtext.search.SearchBar;
+import software.coley.recaf.ui.control.richtext.source.JavaContextActionSupport;
 import software.coley.recaf.ui.control.richtext.suggest.TabCompletionConfig;
 import software.coley.recaf.ui.control.richtext.suggest.java.typeindex.JavaTypeIndexService;
-import software.coley.recaf.ui.control.richtext.source.JavaContextActionSupport;
 import software.coley.recaf.ui.pane.editing.AbstractDecompilePane;
 import software.coley.recaf.ui.pane.editing.ToolsContainerComponent;
 import software.coley.recaf.ui.pane.editing.text.TextConfig;
@@ -107,10 +104,10 @@ public class JvmDecompilerPane extends AbstractDecompilePane {
 	                         @Nonnull JavacCompiler javac,
 	                         @Nonnull JavacCompilerConfig javacConfig,
 	                         @Nonnull TabCompletionConfig tabCompletionConfig,
-							 @Nonnull TextConfig textConfig,
+	                         @Nonnull TextConfig textConfig,
 	                         @Nonnull Actions actions) {
-		super(decompileConfig, tutorialConfig, searchBar, astService, contextActionSupport, navigationHistoryService, cellConfigurationService,
-				languageAssociation, decompilerManager, javaTypeIndexService, tabCompletionConfig, textConfig);
+		super(decompileConfig, tutorialConfig, keys, searchBar, astService, contextActionSupport, navigationHistoryService, cellConfigurationService,
+				languageAssociation, decompilerManager, javaTypeIndexService, tabCompletionConfig, textConfig, actions);
 		this.javacDebug = new ObservableBoolean(javacConfig.getDefaultEmitDebug().getValue());
 		this.javacTarget = new ObservableInteger(javacConfig.getDefaultTargetVersion().getValue());
 		this.javacDownsampleTarget = new ObservableInteger(javacConfig.getDefaultDownsampleTargetVersion().getValue());
@@ -121,7 +118,7 @@ public class JvmDecompilerPane extends AbstractDecompilePane {
 		new JvmClassInfoProvider(toolsContainer, this);
 		installToolsContainer(toolsContainer);
 
-		// Setup keybindings
+		// Setup JVM-specific keybindings.
 		setOnKeyPressed(e -> {
 			if (keys.getSave().match(e)) {
 				save();
@@ -129,36 +126,6 @@ public class JvmDecompilerPane extends AbstractDecompilePane {
 				Bundle<?> bundle = path.getValueOfType(Bundle.class);
 				if (bundle != null)
 					bundle.decrementHistory(path.getValue().getName());
-			} else if (keys.getRename().match(e)) {
-				// Resolve what the caret position has, then handle renaming on the generic result.
-				AstResolveResult result = contextActionSupport.resolvePosition(editor.getCodeArea().getCaretPosition());
-				if (result != null)
-					actions.rename(result.path());
-			} else if (keys.getGoto().match(e)) {
-				// Resolve what the caret position has, then handle navigating to the resulting path.
-				AstResolveResult result = contextActionSupport.resolvePosition(editor.getCodeArea().getCaretPosition());
-				if (result != null) {
-					try {
-						actions.gotoDeclaration(result.path());
-					} catch (IncompletePathException ex) {
-						// Should realistically never happen
-						logger.warn("Cannot goto location, path incomplete", ex);
-					}
-				}
-			}
-		});
-		setOnMouseClicked(e -> {
-			if (e.getButton() == MouseButton.PRIMARY && e.isControlDown()) {
-				// Resolve what the caret position has, then handle navigating to the resulting path.
-				AstResolveResult result = contextActionSupport.resolvePosition(editor.getCodeArea().getCaretPosition());
-				if (result != null) {
-					try {
-						actions.gotoDeclaration(result.path());
-					} catch (IncompletePathException ex) {
-						// Should realistically never happen
-						logger.warn("Cannot goto location, path incomplete", ex);
-					}
-				}
 			}
 		});
 

@@ -1,12 +1,17 @@
 package software.coley.recaf.services.workspace.io;
 
+import java.io.IOException;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
+
+import org.objectweb.asm.ClassReader;
+import org.slf4j.Logger;
+
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import me.darknet.dex.tree.codec.definition.CodeCodec;
-import org.objectweb.asm.ClassReader;
-import org.slf4j.Logger;
 import software.coley.cafedude.classfile.VersionConstants;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.FileInfo;
@@ -26,15 +31,11 @@ import software.coley.recaf.info.builder.ZipFileInfoBuilder;
 import software.coley.recaf.info.properties.builtin.IllegalClassSuspectProperty;
 import software.coley.recaf.info.properties.builtin.ZipMarkerProperty;
 import software.coley.recaf.services.text.TextFormatConfig;
-import software.coley.recaf.util.ByteHeaderUtil;
-import software.coley.recaf.util.IOUtil;
 import software.coley.recaf.util.MemorySegmentUtil;
 import software.coley.recaf.util.android.AndroidXmlUtil;
+import software.coley.recaf.util.io.ByteHeaderUtil;
 import software.coley.recaf.util.io.ByteSource;
-
-import java.io.IOException;
-import java.lang.foreign.MemorySegment;
-import java.lang.foreign.ValueLayout;
+import software.coley.recaf.util.io.IOUtil;
 
 /**
  * Basic implementation of the info importer.

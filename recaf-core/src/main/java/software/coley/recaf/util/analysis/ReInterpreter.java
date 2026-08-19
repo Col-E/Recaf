@@ -61,6 +61,20 @@ public class ReInterpreter extends Interpreter<ReValue> implements Opcodes {
 		this.inheritanceGraph = inheritanceGraph;
 	}
 
+	/**
+	 * Checks assignability using the inheritance graph backing this interpreter.
+	 *
+	 * @param parent
+	 * 		Expected parent type, in internal-name form.
+	 * @param child
+	 * 		Actual child type, in internal-name form.
+	 *
+	 * @return {@code true} when {@code parent} can be assigned from {@code child}.
+	 */
+	public boolean isAssignableFrom(@Nonnull String parent, @Nonnull String child) {
+		return inheritanceGraph.isAssignableFrom(parent, child);
+	}
+
 	@Nullable
 	public GetStaticLookup getGetStaticLookup() {
 		return getStaticLookup;
@@ -355,10 +369,25 @@ public class ReInterpreter extends Interpreter<ReValue> implements Opcodes {
 				return IntValue.UNKNOWN;
 			case CHECKCAST:
 				Type targetType = Type.getObjectType(((TypeInsnNode) insn).desc);
+				if (value instanceof ObjectValue object && object.isNull())
+					return newValue(targetType, Nullness.NULL);
+				if (value instanceof ObjectValue object && object.hasKnownValue() && isAssignableFrom(targetType, object.type()))
+					return value;
 				if (value instanceof InstancedObjectValue<?> instancedValue && isAssignableFrom(targetType, instancedValue.type()))
 					return value;
 				return newValue(targetType);
 			case INSTANCEOF:
+				if (value instanceof ObjectValue object) {
+					if (object.isNull())
+						return IntValue.VAL_0;
+					if (value instanceof InstancedObjectValue<?> instanced && instanced.type().getSort() == Type.OBJECT) {
+						String descriptor = ((TypeInsnNode) insn).desc;
+						if (descriptor.startsWith("["))
+							return IntValue.UNKNOWN;
+						Type target = Type.getObjectType(descriptor);
+						return IntValue.of(isAssignableFrom(target, instanced.type()) ? 1 : 0);
+					}
+				}
 				return IntValue.UNKNOWN;
 			default:
 				throw new AnalyzerException(insn, "Unknown unary op: " + insn.getOpcode());

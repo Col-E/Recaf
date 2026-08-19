@@ -35,7 +35,7 @@ import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.MemorySegmentUtil;
 import software.coley.recaf.util.StringUtil;
-import software.coley.recaf.util.ZipCreationUtils;
+import software.coley.recaf.util.io.ZipCreationUtils;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.ClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceFileResource;

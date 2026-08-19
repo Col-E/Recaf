@@ -5,6 +5,7 @@ import jakarta.annotation.Nullable;
 import regexodus.Matcher;
 import software.coley.recaf.util.collect.primitive.Int2IntMap;
 import software.coley.recaf.util.collect.primitive.IntList;
+import software.coley.recaf.util.io.ByteHeaderUtil;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;

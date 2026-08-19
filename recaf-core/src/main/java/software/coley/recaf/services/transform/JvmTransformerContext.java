@@ -84,7 +84,25 @@ public class JvmTransformerContext extends AbstractTransformerContext<JvmClassTr
 	 * 		Transformers to associate with this context.
 	 */
 	public JvmTransformerContext(@Nonnull Workspace workspace, @Nonnull WorkspaceResource resource, @Nonnull Collection<? extends JvmClassTransformer> transformers) {
-		super(workspace, resource, transformers);
+		this(workspace, resource, transformers, TransformationParameters.empty());
+	}
+
+	/**
+	 * Constructs a new context from a collection of transformers.
+	 *
+	 * @param workspace
+	 * 		Workspace containing the classes to transform.
+	 * @param resource
+	 * 		Resource in the workspace containing classes to transform. Should always be the {@link Workspace#getPrimaryResource()}.
+	 * @param transformers
+	 * 		Transformers to associate with this context.
+	 * @param parameters
+	 * 		Per-run parameters transformers can pull values from.
+	 */
+	public JvmTransformerContext(@Nonnull Workspace workspace, @Nonnull WorkspaceResource resource,
+	                             @Nonnull Collection<? extends JvmClassTransformer> transformers,
+	                             @Nonnull TransformationParameters parameters) {
+		super(workspace, resource, transformers, parameters);
 
 		// We will use aggregated mappings for the reverse-mapping utility it offers.
 		// Some transformers that aim to provide mappings will find this very handy.
@@ -461,6 +479,9 @@ public class JvmTransformerContext extends AbstractTransformerContext<JvmClassTr
 
 	/**
 	 * Container of per-class transformation state.
+	 * <p>
+	 * All operations are synchronized to ensure that the node and bytecode states are
+	 * consistent with each other even when multiple transformers are running in parallel.
 	 */
 	private class JvmClassData {
 		private final JvmClassBundle bundle;
@@ -485,16 +506,12 @@ public class JvmTransformerContext extends AbstractTransformerContext<JvmClassTr
 		 * @return Node representation of the {@link #getBytecode() current bytecode}.
 		 */
 		@Nonnull
-		public ClassNode getOrCreateNode() {
+		public synchronized ClassNode getOrCreateNode() {
 			if (node == null) {
-				synchronized (this) {
-					if (node == null) {
-						node = new ClassNode();
-						int readerFlags = getOptionalTransformer(FrameRemovingTransformer.class) == null ?
-								0 : ClassReader.SKIP_FRAMES; // Can bypass reading frames if this transformer is active.
-						new ClassReader(bytecode).accept(node, readerFlags);
-					}
-				}
+				node = new ClassNode();
+				int readerFlags = getOptionalTransformer(FrameRemovingTransformer.class) == null ?
+						0 : ClassReader.SKIP_FRAMES; // Can bypass reading frames if this transformer is active.
+				new ClassReader(bytecode).accept(node, readerFlags);
 			}
 
 			// We always give back a copy so actions taken on this node are not affecting the cached instance
@@ -508,15 +525,11 @@ public class JvmTransformerContext extends AbstractTransformerContext<JvmClassTr
 		 * @return Current bytecode of the class.
 		 */
 		@Nonnull
-		public byte[] getBytecode() {
+		public synchronized byte[] getBytecode() {
 			if (bytecode == null) {
-				synchronized (this) {
-					if (bytecode == null) {
-						ClassWriter writer = new ClassWriter(0);
-						node.accept(writer);
-						bytecode = writer.toByteArray();
-					}
-				}
+				ClassWriter writer = new ClassWriter(0);
+				node.accept(writer);
+				bytecode = writer.toByteArray();
 			}
 			return bytecode;
 		}
@@ -525,30 +538,26 @@ public class JvmTransformerContext extends AbstractTransformerContext<JvmClassTr
 		 * @param node
 		 * 		Current node representation to set for this class.
 		 */
-		public void setNode(@Nonnull ClassNode node) {
-			synchronized (this) {
-				this.node = node;
-				bytecode = null; // Invalidate bytecode state
-				dirty = true;
-			}
+		public synchronized void setNode(@Nonnull ClassNode node) {
+			this.node = node;
+			bytecode = null; // Invalidate bytecode state
+			dirty = true;
 		}
 
 		/**
 		 * @param bytecode
 		 * 		Current bytecode to set for this class.
 		 */
-		public void setBytecode(@Nonnull byte[] bytecode) {
-			synchronized (this) {
-				this.bytecode = bytecode;
-				node = null; // Invalidate node state
-				dirty = true;
-			}
+		public synchronized void setBytecode(@Nonnull byte[] bytecode) {
+			this.bytecode = bytecode;
+			node = null; // Invalidate node state
+			dirty = true;
 		}
 
 		/**
 		 * @return {@code true} when changes have been applied to this class.
 		 */
-		public boolean isDirty() {
+		public synchronized boolean isDirty() {
 			return dirty;
 		}
 	}

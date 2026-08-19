@@ -101,7 +101,25 @@ public class TransformationApplier {
 	 */
 	@Nonnull
 	public JvmTransformResult transformJvm(@Nonnull List<Class<? extends JvmClassTransformer>> transformerClasses) throws TransformationException {
-		return transformJvm(transformerClasses, TransformationFeedback.DEFAULT);
+		return transformJvm(transformerClasses, TransformationParameters.empty());
+	}
+
+	/**
+	 * @param transformerClasses
+	 * 		JVM class transformers to run.
+	 * @param parameters
+	 * 		Per-run parameters transformers can pull values from.
+	 *
+	 * @return Result container with details about the transformation, including any failures, the transformed classes,
+	 * and the option to apply the transformations to the workspace.
+	 *
+	 * @throws TransformationException
+	 * 		When transformation cannot be run for any reason.
+	 */
+	@Nonnull
+	public JvmTransformResult transformJvm(@Nonnull List<Class<? extends JvmClassTransformer>> transformerClasses,
+	                                       @Nonnull TransformationParameters parameters) throws TransformationException {
+		return transformJvm(transformerClasses, parameters, TransformationFeedback.DEFAULT);
 	}
 
 	/**
@@ -119,6 +137,27 @@ public class TransformationApplier {
 	@Nonnull
 	public JvmTransformResult transformJvm(@Nonnull List<Class<? extends JvmClassTransformer>> transformerClasses,
 	                                       @Nonnull TransformationFeedback feedback) throws TransformationException {
+		return transformJvm(transformerClasses, TransformationParameters.empty(), feedback);
+	}
+
+	/**
+	 * @param transformerClasses
+	 * 		JVM class transformers to run.
+	 * @param parameters
+	 * 		Per-run parameters transformers can pull values from.
+	 * @param feedback
+	 * 		Feedback to report transformation progress to, and control which JVM classes are transformed.
+	 *
+	 * @return Result container with details about the transformation, including any failures, the transformed classes,
+	 * and the option to apply the transformations to the workspace.
+	 *
+	 * @throws TransformationException
+	 * 		When transformation cannot be run for any reason.
+	 */
+	@Nonnull
+	public JvmTransformResult transformJvm(@Nonnull List<Class<? extends JvmClassTransformer>> transformerClasses,
+	                                       @Nonnull TransformationParameters parameters,
+	                                       @Nonnull TransformationFeedback feedback) throws TransformationException {
 		// Build transformer visitation order.
 		TransformerQueue queue = buildQueue(cast(transformerClasses));
 
@@ -132,7 +171,7 @@ public class TransformationApplier {
 		List<JvmClassTransformer> transformers = queue.getTransformers();
 		WorkspaceResource resource = workspace.getPrimaryResource();
 		ResourcePathNode resourcePath = PathNodes.resourcePath(workspace, resource);
-		JvmTransformerContext context = new JvmTransformerContext(workspace, resource, transformers);
+		JvmTransformerContext context = new JvmTransformerContext(workspace, resource, transformers, parameters);
 		for (JvmClassTransformer transformer : transformers) {
 			try {
 				transformer.setup(context, workspace);

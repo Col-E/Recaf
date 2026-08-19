@@ -37,7 +37,7 @@ import software.coley.recaf.test.dummy.HelloWorld;
 import software.coley.recaf.test.dummy.StringConsumer;
 import software.coley.recaf.test.dummy.VariedModifierFields;
 import software.coley.recaf.ui.config.WorkspaceExplorerConfig;
-import software.coley.recaf.util.ZipCreationUtils;
+import software.coley.recaf.util.io.ZipCreationUtils;
 import software.coley.recaf.util.io.ByteSource;
 import software.coley.recaf.util.io.ByteSources;
 import software.coley.recaf.workspace.model.BasicWorkspace;

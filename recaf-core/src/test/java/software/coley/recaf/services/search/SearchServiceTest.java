@@ -20,6 +20,7 @@ import me.darknet.dex.tree.type.Types;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.objectweb.asm.Type;
 import software.coley.recaf.info.BasicTextFileInfo;
 import software.coley.recaf.info.annotation.AnnotationInfo;
 import software.coley.recaf.info.builder.TextFileInfoBuilder;
@@ -28,6 +29,7 @@ import software.coley.recaf.path.AndroidInstructionPathNode;
 import software.coley.recaf.path.AnnotationPathNode;
 import software.coley.recaf.path.CatchPathNode;
 import software.coley.recaf.path.ClassMemberPathNode;
+import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.JvmInstructionPathNode;
 import software.coley.recaf.path.LocalVariablePathNode;
 import software.coley.recaf.path.PathNode;
@@ -40,6 +42,19 @@ import software.coley.recaf.services.search.query.NumberQuery;
 import software.coley.recaf.services.search.query.Query;
 import software.coley.recaf.services.search.query.ReferenceQuery;
 import software.coley.recaf.services.search.query.StringQuery;
+import software.coley.recaf.services.search.query.structure.ClassQuery;
+import software.coley.recaf.services.search.query.structure.ClassQueryBuilder;
+import software.coley.recaf.services.search.query.structure.CountConstraint;
+import software.coley.recaf.services.search.query.structure.FieldMatcher;
+import software.coley.recaf.services.search.query.structure.FieldMatcherBuilder;
+import software.coley.recaf.services.search.query.structure.InsnMatcher;
+import software.coley.recaf.services.search.query.structure.ListMatcher;
+import software.coley.recaf.services.search.query.structure.MethodMatcher;
+import software.coley.recaf.services.search.query.structure.MethodMatcherBuilder;
+import software.coley.recaf.services.search.query.structure.jvm.JvmFieldInsnNodeMatcher;
+import software.coley.recaf.services.search.query.structure.jvm.JvmLdcInsnNodeMatcher;
+import software.coley.recaf.services.search.query.structure.jvm.JvmMethodInsnNodeMatcher;
+import software.coley.recaf.services.search.result.ClassReferenceResult;
 import software.coley.recaf.services.search.result.MemberDeclarationResult;
 import software.coley.recaf.services.search.result.Result;
 import software.coley.recaf.services.search.result.Results;
@@ -540,6 +555,92 @@ public class SearchServiceTest extends TestBase {
 			));
 			assertEquals(1, nestedAnnotationResults.size());
 			assertInstanceOf(AnnotationPathNode.class, nestedAnnotationResults.getFirst().getPath());
+		}
+	}
+
+	@Nested
+	class Structure {
+		@Test
+		void testStructureQueryAndListBoundaries() {
+			// We'll make a query for just one field + the equals method from AccessibleFields.
+			String owner = AccessibleFields.class.getName().replace('.', '/');
+			FieldMatcher field = new FieldMatcherBuilder()
+					.name("CONSTANT_FIELD")
+					.type(Type.INT_TYPE)
+					.initialValue(16)
+					.annotations(ListMatcher.empty())
+					.accessFlags(ACC_PUBLIC, ACC_STATIC, ACC_FINAL)
+					.build();
+			MethodMatcher equals = new MethodMatcherBuilder()
+					.name("equals")
+					.returnType(Type.BOOLEAN_TYPE)
+					.accessFlags(ACC_PUBLIC)
+					.exactParameters(Type.getType(Object.class))
+					.build();
+			ClassQuery query = new ClassQueryBuilder()
+					.name(owner)
+					.accessFlags(ACC_PUBLIC)
+					.fields(field)
+					.methods(equals)
+					.build();
+
+			// We should get just one match, and it should be the AccessibleFields class.
+			Results results = searchService.search(classesWorkspace, query);
+			assertEquals(1, results.size());
+			if (results.getFirst() instanceof ClassReferenceResult result) {
+				assertInstanceOf(ClassPathNode.class, result.getPath());
+				assertEquals(owner, result.getValue().name());
+			} else {
+				fail("Expected ClassReferenceResult");
+			}
+
+			// If we change the field query's initial value, we should get no matches.
+			ClassQuery nearMiss = new ClassQueryBuilder()
+					.name(owner)
+					.accessFlags(ACC_PUBLIC)
+					.fields(new FieldMatcherBuilder()
+							.name("CONSTANT_FIELD")
+							.type(Type.INT_TYPE)
+							.initialValue(17)
+							.annotations(ListMatcher.empty())
+							.accessFlags(ACC_PUBLIC, ACC_STATIC, ACC_FINAL)
+							.build())
+					.methods(equals)
+					.build();
+			assertTrue(searchService.search(classesWorkspace, nearMiss).isEmpty());
+		}
+
+		@Test
+		void testStructureInstructionSequence() {
+			// We'll make a query to look for for the 'hello world' print in the HelloWorld.main method.
+			String owner = HelloWorld.class.getName().replace('.', '/');
+			MethodMatcher main = new MethodMatcherBuilder()
+					.name("main")
+					.instructions(List.of(
+							InsnMatcher.ANY, // Match any prefix
+							JvmFieldInsnNodeMatcher.exact(GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;"),
+							InsnMatcher.ANY, // Intermediate matching
+							JvmLdcInsnNodeMatcher.exact("Hello world"),
+							InsnMatcher.ANY, // Intermediate matching
+							JvmMethodInsnNodeMatcher.exact(INVOKEVIRTUAL, "java/io/PrintStream", "println", "(Ljava/lang/String;)V"),
+							InsnMatcher.ANY // Match any suffix
+					), CountConstraint.atLeast(3))
+					.build();
+			ClassQuery query = new ClassQueryBuilder()
+					.name(owner)
+					.accessFlags(ACC_PUBLIC)
+					.methods(main)
+					.build();
+
+			// Should get just one match, and it should be the HelloWorld class which contains the pattern.
+			Results results = searchService.search(classesWorkspace, query);
+			assertEquals(1, results.size());
+			if (results.getFirst() instanceof ClassReferenceResult result) {
+				assertInstanceOf(ClassPathNode.class, result.getPath());
+				assertEquals(owner, result.getValue().name());
+			} else {
+				fail("Expected ClassReferenceResult");
+			}
 		}
 	}
 }

@@ -15,6 +15,7 @@ import software.coley.recaf.util.analysis.value.ObjectValue;
 import software.coley.recaf.util.analysis.value.ReValue;
 
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
@@ -63,6 +64,17 @@ public class ReFrame extends Frame<ReValue> {
 		this.analyzer = analyzer;
 		localsSnapshot = new ReValue[frame.getLocals()];
 		stackSnapshot = new ReValue[frame.getMaxStackSize()];
+	}
+
+	/**
+	 * @return Top value on the stack, or {@link Optional#empty()} if the stack is empty.
+	 */
+	@Nonnull
+	public Optional<ReValue> getStackTop() {
+		int stackSize = getStackSize();
+		if (stackSize == 0)
+			return Optional.empty();
+		return Optional.of(getStack(stackSize - 1));
 	}
 
 	@Override

@@ -1,4 +1,4 @@
-package software.coley.recaf.util;
+package software.coley.recaf.util.io;
 
 import java.io.File;
 import java.io.IOException;

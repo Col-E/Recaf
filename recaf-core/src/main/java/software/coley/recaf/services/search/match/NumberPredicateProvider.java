@@ -5,7 +5,12 @@ import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static software.coley.recaf.util.NumberUtil.cmp;
@@ -66,6 +71,9 @@ public class NumberPredicateProvider {
 	private final Map<String, RangeNumberMatcher> rangeNumberMatchers = new ConcurrentHashMap<>();
 	private final Map<String, MultiNumberMatcher> multiNumberMatchers = new ConcurrentHashMap<>();
 
+	/**
+	 * Registers the built-in numeric matchers.
+	 */
 	@Inject
 	public NumberPredicateProvider() {
 		registerBiMatcher(KEY_EQUAL, (key, value) -> cmp(key, value) == 0);
@@ -106,8 +114,8 @@ public class NumberPredicateProvider {
 	 *
 	 * @return {@code true} on success. {@code false} if the ID is already in-use.
 	 */
-	public boolean registerMultiMatcher(@Nonnull String id, @Nonnull MultiNumberMatcher matcher) {
-		return multiNumberMatchers.putIfAbsent(id, matcher) == null;
+	public boolean registerRangeMatcher(@Nonnull String id, @Nonnull RangeNumberMatcher matcher) {
+		return rangeNumberMatchers.putIfAbsent(id, matcher) == null;
 	}
 
 	/**
@@ -118,8 +126,8 @@ public class NumberPredicateProvider {
 	 *
 	 * @return {@code true} on success. {@code false} if the ID is already in-use.
 	 */
-	public boolean registerRangeMatcher(@Nonnull String id, @Nonnull RangeNumberMatcher matcher) {
-		return rangeNumberMatchers.putIfAbsent(id, matcher) == null;
+	public boolean registerMultiMatcher(@Nonnull String id, @Nonnull MultiNumberMatcher matcher) {
+		return multiNumberMatchers.putIfAbsent(id, matcher) == null;
 	}
 
 	/**
@@ -258,7 +266,7 @@ public class NumberPredicateProvider {
 	public NumberPredicate newBiNumberPredicate(@Nonnull String id, @Nonnull Number key) throws NoSuchElementException {
 		BiNumberMatcher matcher = biNumberMatchers.get(id);
 		if (matcher != null)
-			return new NumberPredicate(id, target -> matcher.test(key, target));
+			return new NumberPredicate(id, target -> matcher.matches(key, target));
 		throw new NoSuchElementException("No such single-parameter matcher: " + id);
 	}
 
@@ -279,7 +287,7 @@ public class NumberPredicateProvider {
 	public NumberPredicate newRangeNumberPredicate(@Nonnull String id, @Nonnull Number lower, @Nonnull Number upper) throws NoSuchElementException {
 		RangeNumberMatcher matcher = rangeNumberMatchers.get(id);
 		if (matcher != null)
-			return new NumberPredicate(id, target -> matcher.test(lower, upper, target));
+			return new NumberPredicate(id, target -> matcher.matches(lower, upper, target));
 		throw new NoSuchElementException("No such ranged-parameter matcher: " + id);
 	}
 
@@ -298,7 +306,7 @@ public class NumberPredicateProvider {
 	public NumberPredicate newMultiNumberPredicate(@Nonnull String id, @Nonnull Collection<Number> keys) throws NoSuchElementException {
 		MultiNumberMatcher matcher = multiNumberMatchers.get(id);
 		if (matcher != null)
-			return new NumberPredicate(id, target -> matcher.test(keys, target));
+			return new NumberPredicate(id, target -> matcher.matches(keys, target));
 		throw new NoSuchElementException("No such multi-parameter matcher: " + id);
 	}
 

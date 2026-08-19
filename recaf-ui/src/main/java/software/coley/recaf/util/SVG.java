@@ -8,6 +8,7 @@ import jakarta.annotation.Nullable;
 import javafx.scene.Node;
 import javafx.scene.image.ImageView;
 import software.coley.recaf.ui.control.IconView;
+import software.coley.recaf.util.io.ResourceUtil;
 
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;

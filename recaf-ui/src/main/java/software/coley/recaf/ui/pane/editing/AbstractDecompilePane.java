@@ -8,6 +8,9 @@ import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
+import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
@@ -22,23 +25,26 @@ import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.info.properties.builtin.RemapOriginTaskProperty;
 import software.coley.recaf.path.ClassPathNode;
+import software.coley.recaf.path.IncompletePathException;
 import software.coley.recaf.path.PathNode;
+import software.coley.recaf.services.cell.CellConfigurationService;
 import software.coley.recaf.services.decompile.DecompileResult;
 import software.coley.recaf.services.decompile.DecompilerManager;
 import software.coley.recaf.services.decompile.JvmDecompiler;
 import software.coley.recaf.services.decompile.NoopJvmDecompiler;
-import software.coley.recaf.services.cell.CellConfigurationService;
 import software.coley.recaf.services.info.association.FileTypeSyntaxAssociationService;
 import software.coley.recaf.services.mapping.MappingResults;
 import software.coley.recaf.services.mapping.Mappings;
+import software.coley.recaf.services.navigation.Actions;
 import software.coley.recaf.services.navigation.ClassNavigable;
 import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.services.navigation.NavigationHistoryService;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
-import software.coley.recaf.services.source.AstMapper;
+import software.coley.recaf.services.source.AstResolveResult;
 import software.coley.recaf.services.source.AstService;
 import software.coley.recaf.services.source.ResolverAdapter;
 import software.coley.recaf.services.tutorial.TutorialConfig;
+import software.coley.recaf.ui.config.KeybindingConfig;
 import software.coley.recaf.ui.control.BoundLabel;
 import software.coley.recaf.ui.control.animation.LabelByteAnimationTransition;
 import software.coley.recaf.ui.control.richtext.Editor;
@@ -46,10 +52,10 @@ import software.coley.recaf.ui.control.richtext.bracket.SelectedBracketTracking;
 import software.coley.recaf.ui.control.richtext.highlight.SelectedWordHighlighting;
 import software.coley.recaf.ui.control.richtext.problem.ProblemTracking;
 import software.coley.recaf.ui.control.richtext.search.SearchBar;
+import software.coley.recaf.ui.control.richtext.source.JavaContextActionSupport;
+import software.coley.recaf.ui.control.richtext.suggest.TabCompletionConfig;
 import software.coley.recaf.ui.control.richtext.suggest.java.JavaTabCompleter;
 import software.coley.recaf.ui.control.richtext.suggest.java.typeindex.JavaTypeIndexService;
-import software.coley.recaf.ui.control.richtext.suggest.TabCompletionConfig;
-import software.coley.recaf.ui.control.richtext.source.JavaContextActionSupport;
 import software.coley.recaf.ui.pane.editing.android.AndroidDecompilerPane;
 import software.coley.recaf.ui.pane.editing.jvm.DecompilerPaneConfig;
 import software.coley.recaf.ui.pane.editing.jvm.JvmDecompilerPane;
@@ -95,6 +101,7 @@ public class AbstractDecompilePane extends BorderPane implements ClassNavigable,
 
 	protected AbstractDecompilePane(@Nonnull DecompilerPaneConfig decompileConfig,
 	                                @Nonnull TutorialConfig tutorialConfig,
+	                                @Nonnull KeybindingConfig keys,
 	                                @Nonnull SearchBar searchBar,
 	                                @Nonnull AstService astService,
 	                                @Nonnull JavaContextActionSupport contextActionSupport,
@@ -104,7 +111,8 @@ public class AbstractDecompilePane extends BorderPane implements ClassNavigable,
 	                                @Nonnull DecompilerManager decompilerManager,
 	                                @Nonnull JavaTypeIndexService javaTypeIndexService,
 	                                @Nonnull TabCompletionConfig tabCompletionConfig,
-	                                @Nonnull TextConfig textConfig) {
+	                                @Nonnull TextConfig textConfig,
+	                                @Nonnull Actions actions) {
 		this.astService = astService;
 		this.contextActionSupport = contextActionSupport;
 		this.decompilerManager = decompilerManager;
@@ -117,7 +125,8 @@ public class AbstractDecompilePane extends BorderPane implements ClassNavigable,
 		// Configure the editor
 		editor = new Editor();
 		languageAssociation.configureEditorSyntax("java", editor);
-		if (textConfig.doHighlightWord()) editor.setSelectedWordHighlighting(new SelectedWordHighlighting(Keywords.getKeywords()));
+		if (textConfig.doHighlightWord())
+			editor.setSelectedWordHighlighting(new SelectedWordHighlighting(Keywords.getKeywords()));
 		if (textConfig.doTrackBrackets()) editor.setSelectedBracketTracking(new SelectedBracketTracking());
 		editor.setProblemTracking(problemTracking);
 		editor.getRootLineGraphicFactory().addDefaultCodeGraphicFactories();
@@ -130,6 +139,53 @@ public class AbstractDecompilePane extends BorderPane implements ClassNavigable,
 		if (tabCompletionConfig.isEnabledInJavaSource())
 			editor.setTabCompleter(new JavaTabCompleter(contextActionSupport, cellConfigurationService, javaTypeIndexService, tabCompletionConfig));
 		searchBar.install(editor);
+
+		// Setup common keybindings.
+		addEventFilter(KeyEvent.KEY_PRESSED, e -> {
+			if (keys.getAssembler().match(e)) {
+				// Resolve what the caret position has, then handle opening the assembler for the resulting path.
+				PathNode<?> enclosingPath = contextActionSupport.getEnclosingDeclarationPath(editor.getCodeArea().getCaretPosition());
+				if (enclosingPath != null) {
+					try {
+						actions.openAssembler(enclosingPath);
+					} catch (IncompletePathException ex) {
+						logger.warn("Cannot open assembler for the current location, path incomplete", ex);
+					}
+				}
+			} else if (keys.getRename().match(e)) {
+				// Resolve what the caret position has, then handle renaming on the generic result.
+				AstResolveResult result = contextActionSupport.resolvePosition(editor.getCodeArea().getCaretPosition());
+				if (result != null)
+					actions.rename(result.path());
+			} else if (keys.getGoto().match(e)) {
+				// Resolve what the caret position has, then handle navigating to the resulting path.
+				AstResolveResult result = contextActionSupport.resolvePosition(editor.getCodeArea().getCaretPosition());
+				if (result != null) {
+					try {
+						actions.gotoDeclaration(result.path());
+					} catch (IncompletePathException ex) {
+						// Should realistically never happen
+						logger.warn("Cannot goto location, path incomplete", ex);
+					}
+				}
+			}
+		});
+
+		// Keep control-click navigation consistent across JVM and Android decompiler panes.
+		addEventFilter(MouseEvent.MOUSE_CLICKED, e -> {
+			if (e.getButton() == MouseButton.PRIMARY && e.isControlDown()) {
+				// Resolve what the caret position has, then handle navigating to the resulting path.
+				AstResolveResult result = contextActionSupport.resolvePosition(editor.getCodeArea().getCaretPosition());
+				if (result != null) {
+					try {
+						actions.gotoDeclaration(result.path());
+					} catch (IncompletePathException ex) {
+						// Should realistically never happen
+						logger.warn("Cannot goto location, path incomplete", ex);
+					}
+				}
+			}
+		});
 
 		// Add overlay for when decompilation is in-progress
 		DecompileProgressOverlay overlay = new DecompileProgressOverlay();

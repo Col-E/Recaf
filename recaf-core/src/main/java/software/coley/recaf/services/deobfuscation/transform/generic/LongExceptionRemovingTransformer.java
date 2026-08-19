@@ -20,7 +20,16 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
  */
 @Dependent
 public class LongExceptionRemovingTransformer implements JvmClassTransformer {
-	private static final int LONG_EXCEPTION = 150;
+	/** Key for the exception length threshold. */
+	public static final String KEY_LONG_EXCEPTION = "long-exception-removing.long-exception";
+	private static final int DEFAULT_LONG_EXCEPTION = 150;
+
+	private int longException;
+
+	@Override
+	public void setup(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace) {
+		longException = context.getParameters().getInt(KEY_LONG_EXCEPTION, DEFAULT_LONG_EXCEPTION);
+	}
 
 	@Override
 	public void transform(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace,
@@ -31,7 +40,7 @@ public class LongExceptionRemovingTransformer implements JvmClassTransformer {
 		ClassReader reader = new ClassReader(context.getBytecode(bundle, initialClassState));
 		ClassWriter writer = new ClassWriter(0);
 
-		LongExceptionRemovingVisitor remover = new LongExceptionRemovingVisitor(writer, LONG_EXCEPTION);
+		LongExceptionRemovingVisitor remover = new LongExceptionRemovingVisitor(writer, longException);
 		reader.accept(remover, initialClassState.getClassReaderFlags());
 
 		// If the visitor did work, update the class.

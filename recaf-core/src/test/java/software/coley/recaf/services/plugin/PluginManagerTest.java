@@ -15,7 +15,7 @@ import software.coley.recaf.services.plugin.discovery.PluginDiscoverer;
 import software.coley.recaf.services.plugin.zip.ZipPluginLoader;
 import software.coley.recaf.test.TestBase;
 import software.coley.recaf.test.TestClassUtils;
-import software.coley.recaf.util.ZipCreationUtils;
+import software.coley.recaf.util.io.ZipCreationUtils;
 import software.coley.recaf.util.io.ByteSource;
 import software.coley.recaf.util.io.ByteSources;
 import software.coley.recaf.workspace.model.Workspace;

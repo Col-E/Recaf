@@ -2,12 +2,14 @@ package software.coley.recaf.util.analysis.gen;
 
 import jakarta.annotation.Nonnull;
 import org.objectweb.asm.Type;
-import software.coley.recaf.util.StringUtil;
-import software.coley.recaf.util.Types;
 import software.coley.recaf.util.analysis.eval.InstanceFactory;
 import software.coley.recaf.util.analysis.eval.InstanceMapper;
 
+import java.lang.reflect.AccessFlag;
 import java.lang.reflect.Constructor;
+import java.nio.Buffer;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -21,6 +23,7 @@ public class InstanceMapperGenerator extends GenUtils {
 	static List<Class<?>> emitTargets = List.of(
 			String.class,
 			StringBuilder.class,
+			StringBuffer.class,
 			Boolean.class,
 			Byte.class,
 			Character.class,
@@ -31,6 +34,10 @@ public class InstanceMapperGenerator extends GenUtils {
 			Double.class,
 			Random.class,
 			List.class,
+			StackTraceElement.class,
+			Buffer.class,
+			ByteBuffer.class,
+			ByteOrder.class,
 			// Support classes
 			CharSequence.class,
 			ArrayList.class
@@ -43,6 +50,10 @@ public class InstanceMapperGenerator extends GenUtils {
 		for (Class<?> type : emitTargets) {
 			System.out.println(" // " + type.getName());
 			for (Constructor<?> constructor : type.getDeclaredConstructors()) {
+				// Skip inaccessible methods
+				if (!constructor.accessFlags().contains(AccessFlag.PUBLIC))
+					continue;
+
 				// Skip if we don't support a parameter type
 				boolean supportedParameters = true;
 				Class<?>[] parameterTypes = constructor.getParameterTypes();
@@ -74,9 +85,7 @@ public class InstanceMapperGenerator extends GenUtils {
 		List<String> entries = new ArrayList<>(parameterTypes.length);
 		for (int i = 0; i < parameterTypes.length; i++) {
 			String parameter = "parameters.get(" + i + ")";
-			Class<?> parameterType = parameterTypes[i];
-			String entry = toMapper(parameterType) + "((" + toValue(parameterType) + ")" + parameter + ")";
-			entries.add(entry);
+			entries.add(toParameterMapper(parameterTypes[i], parameter));
 		}
 		return String.join(", ", entries);
 	}

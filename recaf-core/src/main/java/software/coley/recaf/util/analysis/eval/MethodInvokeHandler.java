@@ -2,6 +2,7 @@ package software.coley.recaf.util.analysis.eval;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import software.coley.recaf.util.analysis.ReFrame;
 import software.coley.recaf.util.analysis.gen.InstanceMethodInvokeHandlerGenerator;
 import software.coley.recaf.util.analysis.value.ReValue;
 
@@ -14,10 +15,13 @@ import java.util.List;
  * 		Type of the real instance.
  *
  * @author Matt Coley
+ * @see MethodInvokeStaticHandler
  * @see InstanceMethodInvokeHandlerGenerator
  */
 public interface MethodInvokeHandler<T> {
 	/**
+	 * @param frame
+	 * 		Current frame of the evaluator.
 	 * @param receiverValue
 	 * 		Value of the receiver on the stack.
 	 * 		This is used to {@link FieldCacheManager#getInstanceFieldCache(ReValue) track field values}
@@ -33,5 +37,5 @@ public interface MethodInvokeHandler<T> {
 	 * 		When any error occurs during method invocation.
 	 */
 	@Nullable
-	ReValue invoke(@Nonnull ReValue receiverValue, @Nonnull T receiver, @Nonnull List<ReValue> args) throws Throwable;
+	ReValue invoke(@Nonnull ReFrame frame, @Nonnull ReValue receiverValue, @Nonnull T receiver, @Nonnull List<ReValue> args) throws Throwable;
 }

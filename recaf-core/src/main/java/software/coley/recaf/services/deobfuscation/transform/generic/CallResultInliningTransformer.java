@@ -27,7 +27,6 @@ import software.coley.recaf.util.analysis.eval.FieldCacheManager;
 import software.coley.recaf.util.analysis.value.DoubleValue;
 import software.coley.recaf.util.analysis.value.LongValue;
 import software.coley.recaf.util.analysis.value.ReValue;
-import software.coley.recaf.util.collect.primitive.Object2IntMap;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -44,13 +43,13 @@ import java.util.Set;
  */
 @Dependent
 public class CallResultInliningTransformer implements JvmClassTransformer {
-	private final static int MAX_STEPS = 20_000; // TODO: Make configurable
+	/** Key for the maximum number of steps to allow when evaluating a method. */
+	public static final String KEY_MAX_STEPS = "call-result-inlining.max-steps";
+	private static final int DEFAULT_MAX_STEPS = 20_000;
+
 	private final InheritanceGraphService graphService;
-	private final Object2IntMap<String> canBeEvaluatedMap = new Object2IntMap<>();
-	private final FieldCacheManager fieldCacheManager = new FieldCacheManager();
 
 	private InheritanceGraph inheritanceGraph;
-	private Evaluator evaluator;
 
 	@Inject
 	public CallResultInliningTransformer(@Nonnull InheritanceGraphService graphService) {
@@ -60,7 +59,6 @@ public class CallResultInliningTransformer implements JvmClassTransformer {
 	@Override
 	public void setup(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace) {
 		inheritanceGraph = graphService.getOrCreateInheritanceGraph(workspace);
-		evaluator = new Evaluator(workspace, context.newInterpreter(inheritanceGraph), fieldCacheManager, MAX_STEPS, false);
 	}
 
 	@Override
@@ -70,6 +68,14 @@ public class CallResultInliningTransformer implements JvmClassTransformer {
 		boolean dirty = false;
 		String className = initialClassState.getName();
 		ClassNode node = context.getNode(bundle, initialClassState);
+
+		// The transformer instance is shared across classes transformed in parallel, so the evaluator
+		// and its field cache must be scoped to this invocation rather than stored as instance state.
+		// We used to have a shared evaluator + cache, but that caused issues with the parallel evaluation
+		// of multiple classes, where the field cache would be polluted by other threads.
+		int maxSteps = context.getParameters().getInt(KEY_MAX_STEPS, DEFAULT_MAX_STEPS);
+		FieldCacheManager fieldCacheManager = new FieldCacheManager();
+		Evaluator evaluator = new Evaluator(workspace, context.newInterpreter(inheritanceGraph), fieldCacheManager, maxSteps, false, false);
 		for (MethodNode method : node.methods) {
 			// Skip if abstract.
 			InsnList instructions = method.instructions;
@@ -103,6 +109,9 @@ public class CallResultInliningTransformer implements JvmClassTransformer {
 
 					// Reset instance support before each evaluation to prevent state pollution.
 					fieldCacheManager.reset();
+
+					// Seed the call stack so trace-dependent operations can be evaluated at depth [1].
+					evaluator.setCallStackSeed(List.of(new ClassMethodPair(node, method)));
 
 					// Attempt evaluation. If it yields a value, replace the call with the result.
 					EvaluationResult result = evaluator.evaluate(target.classNode(), target.methodNode(), null, arguments);

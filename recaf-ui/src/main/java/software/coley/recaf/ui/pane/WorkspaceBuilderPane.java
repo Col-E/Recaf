@@ -35,7 +35,7 @@ import software.coley.recaf.ui.dnd.DragAndDrop;
 import software.coley.recaf.util.DirectoryChooserBuilder;
 import software.coley.recaf.util.ErrorDialogs;
 import software.coley.recaf.util.FileChooserBuilder;
-import software.coley.recaf.util.IOUtil;
+import software.coley.recaf.util.io.IOUtil;
 import software.coley.recaf.util.Icons;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.workspace.PathLoadingManager;

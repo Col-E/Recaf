@@ -1,5 +1,19 @@
 package software.coley.recaf.services.workspace.io;
 
+import static software.coley.lljzip.format.compression.ZipCompressions.DEFLATED;
+import static software.coley.lljzip.format.compression.ZipCompressions.STORED;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.foreign.MemorySegment;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.TreeMap;
+import java.util.zip.DeflaterOutputStream;
+
 import jakarta.annotation.Nonnull;
 import me.darknet.dex.file.DexHeader;
 import me.darknet.dex.file.DexMapBuilder;
@@ -23,28 +37,14 @@ import software.coley.recaf.info.properties.builtin.ZipCompressionProperty;
 import software.coley.recaf.info.properties.builtin.ZipCreationTimeProperty;
 import software.coley.recaf.info.properties.builtin.ZipModificationTimeProperty;
 import software.coley.recaf.info.properties.builtin.ZipPrefixDataProperty;
-import software.coley.recaf.util.ZipCreationUtils;
 import software.coley.recaf.util.io.LargeInputStream;
 import software.coley.recaf.util.io.LargeOutputStream;
+import software.coley.recaf.util.io.ZipCreationUtils;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.VersionedJvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceFileResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.foreign.MemorySegment;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.TreeMap;
-import java.util.zip.DeflaterOutputStream;
-
-import static software.coley.lljzip.format.compression.ZipCompressions.DEFLATED;
-import static software.coley.lljzip.format.compression.ZipCompressions.STORED;
 
 /**
  * Options for configuring / preparing a {@link WorkspaceExporter}.
@@ -246,7 +246,7 @@ public class WorkspaceExportOptions {
 				List<ClassDefinition> classDefinitions = bundle.values().stream()
 						.map(AndroidClassInfo::getBackingDefinition)
 						.toList();
-				DexFile dexFile = new DexFile(bundle.getVersion(), classDefinitions, bundle.getLinkData());
+				DexFile dexFile = new DexFile(bundle.getVersion(), classDefinitions, bundle.getLinkData(), null);
 				DexHeader header = DexFile.CODEC.unmap(dexFile, new DexMapBuilder());
 				Output output = Output.wrap();
 				try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {

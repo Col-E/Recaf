@@ -15,6 +15,8 @@ import java.util.List;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.HashFunction;
 
+import software.coley.recaf.util.io.ByteHeaderUtil;
+
 public class MemorySegmentUtil {
 	private static int ChunkSize = 1024 * 1024 * 1024;
 

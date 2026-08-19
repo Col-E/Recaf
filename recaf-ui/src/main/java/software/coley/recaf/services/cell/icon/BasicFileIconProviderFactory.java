@@ -5,7 +5,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import software.coley.recaf.info.ArscFileInfo;
 import software.coley.recaf.info.BinaryXmlFileInfo;
 import software.coley.recaf.info.FileInfo;
-import software.coley.recaf.util.ByteHeaderUtil;
+import software.coley.recaf.util.io.ByteHeaderUtil;
 import software.coley.recaf.util.Icons;
 import software.coley.recaf.util.MemorySegmentUtil;
 import software.coley.recaf.workspace.model.Workspace;

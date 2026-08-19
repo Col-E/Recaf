@@ -91,10 +91,10 @@ public class InstructionSearchPane extends AbstractSearchPane {
 							ToStringConverter.from(s -> Lang.get(StringPredicate.TRANSLATION_PREFIX + s)));
 					modeCombo.setId("id-" + line.uuid());
 					modeCombo.getSelectionModel().select(StringPredicateProvider.KEY_CONTAINS);
-					EventStreams.changesOf(stringValue)
-							.or(EventStreams.changesOf(stringPredicateId))
-							.reduceSuccessions(Collections::singletonList, Lists::add, Duration.ofMillis(Editor.MEDIUM_DELAY_MS))
-							.addObserver(unused -> search());
+						EventStreams.changesOf(stringValue)
+								.or(EventStreams.changesOf(stringPredicateId))
+								.reduceSuccessions(Collections::singletonList, Lists::add, Duration.ofMillis(Editor.MEDIUM_DELAY_MS))
+								.addObserver(unused -> searchLive());
 					GridPane.setHgrow(textField, Priority.ALWAYS);
 					if (line.uuid() == TOP_UID) {
 						input.addRow(input.getRowCount(), textField, modeCombo);

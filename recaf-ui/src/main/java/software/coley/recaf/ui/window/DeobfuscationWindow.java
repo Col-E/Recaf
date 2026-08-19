@@ -158,11 +158,8 @@ public class DeobfuscationWindow extends RecafStage {
 		//  - The disassembler view in the preview pane isn't a full 'AssemblerPane' so it lacks features.
 		//    - ControlFlowLines cannot be installed because that requires an AssemblerPane.
 		//  - The preview pane's controls on the bottom are uniform sized which looks bad with text of different lengths.
-		//  - Later it would make sense to make config objects for some transformers.
-		//    - These would exist in the global config and would be editable there but should also be shown here.
-		//    - Currently there is nowhere to display this config in the UI as we already are tight on space.
-		//    - Examples:
-		//      - The CallInlineTransformer needs to have the simulation step max be configurable.
+		//  - We need to support the new transformer 'parameter' system so that transformers can have configurable options.
+		//    - See 'TransformationParameters' class + usage
 		BorderPane transformerTreePane = new BorderPane();
 		{
 			BoundLabel title = new BoundLabel(Lang.getBinding("deobf.selection.title"));

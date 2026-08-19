@@ -75,6 +75,7 @@ import software.coley.recaf.ui.control.popup.ItemTreeSelectionPopup;
 import software.coley.recaf.ui.control.popup.NamePopup;
 import software.coley.recaf.ui.control.popup.OverrideMethodPopup;
 import software.coley.recaf.ui.docking.DockingManager;
+import software.coley.recaf.ui.pane.WorkspaceExplorerPane;
 import software.coley.recaf.ui.pane.WorkspaceInformationPane;
 import software.coley.recaf.ui.pane.analysis.AreaAnalysisPane;
 import software.coley.recaf.ui.pane.analysis.CommentEditPane;
@@ -96,6 +97,7 @@ import software.coley.recaf.ui.pane.search.MemberReferenceSearchPane;
 import software.coley.recaf.ui.pane.search.NumberSearchPane;
 import software.coley.recaf.ui.pane.search.SimilarClassTablePane;
 import software.coley.recaf.ui.pane.search.SimilarMethodTablePane;
+import software.coley.recaf.ui.pane.search.SearchResultsPane;
 import software.coley.recaf.ui.pane.search.StringSearchPane;
 import software.coley.recaf.ui.pane.search.StringTablePane;
 import software.coley.recaf.util.Animations;
@@ -2554,6 +2556,68 @@ public class Actions implements Service {
 		return openPaneAdjacent(SEARCH_PANE_TYPES, "menu.search.class.instruction", CarbonIcons.CODE, instructionSearchPaneProvider);
 	}
 
+	/**
+	 * Opens a search result view beside its owning search pane.
+	 *
+	 * @param source
+	 * 		Search pane that produced the results.
+	 * @param content
+	 * 		Result view to display.
+	 * @param onClose
+	 * 		Callback invoked when the result view is closed.
+	 *
+	 * @return Dockable containing the result view.
+	 */
+	@Nonnull
+	public Dockable openSearchResults(@Nonnull AbstractSearchPane source,
+	                                  @Nonnull SearchResultsPane content,
+	                                  @Nonnull Consumer<Dockable> onClose) {
+		return openSearchResults(source, content, getBinding("search.results"), onClose);
+	}
+
+	/**
+	 * Opens a search result view beside its owning search pane.
+	 *
+	 * @param source
+	 * 		Search pane that produced the results.
+	 * @param content
+	 * 		Result view to display.
+	 * @param title
+	 * 		Dockable title binding.
+	 * @param onClose
+	 * 		Callback invoked with the dockable when the result view is closed.
+	 *
+	 * @return Dockable containing the result view.
+	 */
+	@Nonnull
+	public Dockable openSearchResults(@Nonnull AbstractSearchPane source,
+	                                  @Nonnull SearchResultsPane content,
+	                                  @Nonnull ObservableValue<String> title,
+	                                  @Nonnull Consumer<Dockable> onClose) {
+		DockablePath sourcePath = dockingManager.getBento().search().dockable(d -> d.getNode() == source);
+		DockContainerLeaf container = sourcePath == null ? null : sourcePath.leafContainer();
+		Dockable dockable;
+		if (container != null) {
+			dockable = createDockable(container, title,
+					d -> new FontIconView(CarbonIcons.LIST), content, false);
+		} else {
+			dockable = createDockable(null, title,
+					d -> new FontIconView(CarbonIcons.LIST), content);
+			Scene originScene = dockingManager.getPrimaryDockingContainer().asRegion().getScene();
+			Stage stage = dockingManager.getBento().stageBuilding().newStageForDockable(originScene, dockable, 800, 400);
+			stage.show();
+			stage.requestFocus();
+		}
+		dockable.setDragGroupMask(DockingManager.GROUP_ANYWHERE);
+		dockable.addCloseListener((_, _) -> onClose.accept(dockable));
+		dockable.setContextMenuFactory(d -> {
+			ContextMenu menu = new ContextMenu();
+			addCloseActions(menu, d);
+			return menu;
+		});
+		return dockable;
+	}
+
 	@Nonnull
 	private <T extends Parent> T openPaneAdjacent(@Nonnull List<Class<?>> adjacentTypes, @Nonnull String titleId,
 	                                              @Nonnull Ikon icon, @Nonnull Instance<T> paneProvider) {
@@ -2656,11 +2720,35 @@ public class Actions implements Service {
 				items.add(mode);
 			}
 
+			addShowInTreeAction(menu, contentPane);
 			addCopyPathAction(menu, info);
 			addCloseActions(menu, d);
 
 			return menu;
 		});
+	}
+
+	/**
+	 * Adds an action to reveal the pane's current content in the workspace tree.
+	 *
+	 * @param menu
+	 * 		Menu to add the action to.
+	 * @param contentPane
+	 * 		Pane whose path should be selected in the tree.
+	 */
+	private void addShowInTreeAction(@Nonnull ContextMenu menu, @Nonnull AbstractContentPane<?> contentPane) {
+		menu.getItems().add(action("menu.tab.showintree", CarbonIcons.TREE_VIEW, () -> {
+			PathNode<?> path = contentPane.getPath();
+			if (path == null)
+				return;
+			for (DockablePath dockPath : dockingManager.getBento().search().allDockables()) {
+				Node node = dockPath.dockable().nodeProperty().get();
+				if (node instanceof WorkspaceExplorerPane explorer) {
+					explorer.getWorkspaceTree().selectPath(path);
+					break;
+				}
+			}
+		}));
 	}
 
 	/**
@@ -2728,6 +2816,31 @@ public class Actions implements Service {
 	                                @Nonnull ObservableValue<String> title,
 	                                @Nonnull DockableIconFactory graphicFactory,
 	                                @Nonnull Node node) {
+		return createDockable(container, title, graphicFactory, node, true);
+	}
+
+	/**
+	 * Shorthand for dockable creation with optional selection of the new dockable.
+	 *
+	 * @param container
+	 * 		Parent container to spawn in.
+	 * @param title
+	 * 		Dockable title binding.
+	 * @param graphicFactory
+	 * 		Dockable graphic factory.
+	 * @param node
+	 * 		Dockable content.
+	 * @param select
+	 * 		Whether to select and focus the new dockable when it is added.
+	 *
+	 * @return Created dockable.
+	 */
+	@Nonnull
+	private Dockable createDockable(@Nullable DockContainerLeaf container,
+	                                @Nonnull ObservableValue<String> title,
+	                                @Nonnull DockableIconFactory graphicFactory,
+	                                @Nonnull Node node,
+	                                boolean select) {
 		Dockable dockable = dockingManager.newTranslatableDockable(title, graphicFactory, node);
 		node.addEventFilter(KeyEvent.KEY_PRESSED, e -> {
 			if (keybindingConfig.getCloseTab().match(e))
@@ -2735,8 +2848,10 @@ public class Actions implements Service {
 		});
 		if (container != null) {
 			container.addDockable(dockable);
-			container.selectDockable(dockable);
-			focusSelectedDockableContent(container);
+			if (select) {
+				container.selectDockable(dockable);
+				focusSelectedDockableContent(container);
+			}
 		}
 		return dockable;
 	}

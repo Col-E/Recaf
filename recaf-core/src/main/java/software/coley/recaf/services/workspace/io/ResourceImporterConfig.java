@@ -1,5 +1,9 @@
 package software.coley.recaf.services.workspace.io;
 
+import static software.coley.lljzip.util.MemorySegmentUtil.readLongSlice;
+
+import java.lang.foreign.MemorySegment;
+
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -26,10 +30,6 @@ import software.coley.recaf.config.BasicConfigValue;
 import software.coley.recaf.config.ConfigGroups;
 import software.coley.recaf.services.ServiceConfig;
 
-import java.lang.foreign.MemorySegment;
-
-import static software.coley.lljzip.util.MemorySegmentUtil.readLongSlice;
-
 /**
  * Config for {@link ResourceImporter}.
  *
@@ -46,7 +46,7 @@ public class ResourceImporterConfig extends BasicConfigContainer implements Serv
 	private final ObservableBoolean parallelize = new ObservableBoolean(true);
 	private final ObservableLong maxZipEntrySize = new ObservableLong(100_000_000);
 	private final ObservableLong maxZipTotalSize = new ObservableLong(1_000_000_000);
-	private final ObservableInteger maxZipCompressionRatio = new ObservableInteger(100);
+	private final ObservableInteger maxZipCompressionRatio = new ObservableInteger(200);
 
 	@Inject
 	public ResourceImporterConfig() {
