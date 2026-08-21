@@ -68,7 +68,7 @@ public interface InnerClassInfo extends Accessed, Named {
 	String getInnerName();
 
 	/**
-	 * There are some wierd cases where there can be inner-class entries of classes defined by other classes.
+	 * There are some weird cases where there can be inner-class entries of classes defined by other classes.
 	 * You can use this to filter those cases out.
 	 *
 	 * @return {@code true} when this inner-class entry denotes an inner-class
@@ -76,6 +76,17 @@ public interface InnerClassInfo extends Accessed, Named {
 	 */
 	default boolean isExternalReference() {
 		return !getInnerClassName().startsWith(getOuterDeclaringClassName());
+	}
+
+	/**
+	 * You can be looking at the {@link ClassInfo} of {@code Apple$Worm} and see the worm class has an inner-class
+	 * entry for {@code Apple$Worm} as the inner-class of {@code Apple}. Though, since we are inside the worm-class
+	 * this is a self-reference.
+	 *
+	 * @return {@code true} when this inner-class entry references itself as the inner-class of the outer class.
+	 */
+	default boolean isSelfReference() {
+		return getInnerClassName().equals(getOuterDeclaringClassName());
 	}
 
 	/**

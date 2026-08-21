@@ -188,7 +188,7 @@ public class JvmDecompilerPane extends AbstractDecompilePane {
 				//  - Removal/updating/insertion is OK, renaming is not.
 				//  - Because inners may have other inners we need to recursively collect inner classes
 				Map<String, InnerClassInfo> realInners = info.getInnerClasses().stream()
-						.filter(inner -> !inner.isExternalReference())
+						.filter(inner -> !inner.isExternalReference() && !inner.isSelfReference())
 						.collect(Collectors.toMap(InnerClassInfo::getInnerClassName, Function.identity()));
 				Set<String> names = new HashSet<>();
 				boolean recurseAddInners;
