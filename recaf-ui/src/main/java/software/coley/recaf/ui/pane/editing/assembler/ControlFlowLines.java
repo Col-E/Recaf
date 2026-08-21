@@ -31,6 +31,7 @@ import me.darknet.assembler.query.LabelUsage;
 import me.darknet.assembler.util.Location;
 import me.darknet.assembler.util.Range;
 import org.reactfx.Change;
+import org.reactfx.EventStream;
 import org.slf4j.Logger;
 import software.coley.bentofx.control.canvas.PixelCanvas;
 import software.coley.bentofx.control.canvas.PixelPainter;
@@ -77,6 +78,7 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 	private final ControlFlowLineFactory arrowFactory = new ControlFlowLineFactory();
 	private final ControlFlowLinesConfig config;
 	private final ListenerHost redrawListener = new ListenerHost();
+	private EventStream<Change<Integer>> lastCaretStream;
 	private List<LabelData> model = Collections.emptyList();
 
 	@Inject
@@ -90,7 +92,9 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 		super.install(editor);
 
 		editor.getRootLineGraphicFactory().addLineGraphicFactory(arrowFactory);
-		editor.getCaretPosEventStream().addObserver(onCaretMove);
+
+		lastCaretStream = editor.getCaretPosEventStream().successionEnds(java.time.Duration.ofMillis(Editor.SHORT_DELAY_MS));
+		lastCaretStream.addObserver(onCaretMove);
 
 		drawLines.addChangeListener(redrawListener);
 		currentInstructionSelection.addChangeListener(redrawListener);
@@ -105,7 +109,9 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 
 		arrowFactory.cleanup();
 		editor.getRootLineGraphicFactory().removeLineGraphicFactory(arrowFactory);
-		editor.getCaretPosEventStream().removeObserver(onCaretMove);
+
+		if (lastCaretStream != null)
+			lastCaretStream.removeObserver(onCaretMove);
 
 		drawLines.removeChangeListener(redrawListener);
 		currentInstructionSelection.removeChangeListener(redrawListener);

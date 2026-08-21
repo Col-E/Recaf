@@ -21,7 +21,7 @@ import me.darknet.assembler.ast.ASTElement;
 import me.darknet.assembler.ast.specific.ASTClass;
 import me.darknet.assembler.ast.specific.ASTMethod;
 import me.darknet.assembler.compile.analysis.AnalysisResults;
-import me.darknet.assembler.compile.analysis.frame.Frame;
+import me.darknet.assembler.compile.analysis.LocalVariableState;
 import me.darknet.assembler.query.AssemblyQueries;
 import me.darknet.assembler.query.VariableAccessKind;
 import me.darknet.assembler.query.VariableQueryResult;
@@ -32,6 +32,7 @@ import org.fxmisc.richtext.CodeArea;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import org.objectweb.asm.Type;
 import org.reactfx.Change;
+import org.reactfx.EventStream;
 import org.reactfx.EventStreams;
 import org.slf4j.Logger;
 import software.coley.collections.Lists;
@@ -53,9 +54,7 @@ import software.coley.recaf.workspace.model.Workspace;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Objects;
 import java.util.TreeMap;
@@ -75,6 +74,7 @@ public class JvmVariablesPane extends AstBuildConsumerComponent {
 	private final TableView<VariableData> table = new TableView<>();
 	private final Consumer<Change<Integer>> onCaretMove = this::onCaretMove;
 	private final VarHighlightLineFactory varHighlighter = new VarHighlightLineFactory();
+	private EventStream<Change<Integer>> lastCaretStream;
 
 	@Inject
 	@SuppressWarnings("unchecked")
@@ -165,7 +165,9 @@ public class JvmVariablesPane extends AstBuildConsumerComponent {
 		super.install(editor);
 
 		editor.getRootLineGraphicFactory().addLineGraphicFactory(varHighlighter);
-		editor.getCaretPosEventStream().addObserver(onCaretMove);
+
+		lastCaretStream = editor.getCaretPosEventStream().successionEnds(Duration.ofMillis(Editor.SHORT_DELAY_MS));
+		lastCaretStream.addObserver(onCaretMove);
 	}
 
 	@Override
@@ -173,7 +175,9 @@ public class JvmVariablesPane extends AstBuildConsumerComponent {
 		super.uninstall(editor);
 
 		editor.getRootLineGraphicFactory().removeLineGraphicFactory(varHighlighter);
-		editor.getCaretPosEventStream().removeObserver(onCaretMove);
+
+		if (lastCaretStream != null)
+			lastCaretStream.removeObserver(onCaretMove);
 	}
 
 	@Override
@@ -243,30 +247,18 @@ public class JvmVariablesPane extends AstBuildConsumerComponent {
 		if (astMethod == null)
 			return;
 
+		// Add variables to the table.
 		VariableQueryResult queryResult = AssemblyQueries.variables(astMethod);
 		AnalysisResults analysisResults = analysisLookup.results(currentMethod.getName(), currentMethod.getDescriptor());
-		if (analysisResults != null && !analysisResults.frames().isEmpty()) {
-			// Linked map for ordering
-			Map<String, VariableData> variables = new LinkedHashMap<>();
-
-			// Gather variables from frames.
-			analysisResults.frames().values().stream()
-					.flatMap(Frame::locals)
-					.distinct()
-					.forEach(local -> variables.put(local.name(), new VariableData(local.name(), local.safeType(), queryResult)));
-
-			// In some cases, the last frame may not have some entries.
-			// This generally means there is either a problem with the code or with JASM.
-			// Either way, reporting them here with a bogus type is good for diagnosing the issue.
-			queryResult.declarations().forEach(declaration ->
-					variables.putIfAbsent(declaration.identity().name(),
-							new VariableData(declaration.identity().name(), INVALID_VAR_TYPE_MARKER, queryResult)));
-			queryResult.usages().forEach(usage ->
-					variables.putIfAbsent(usage.name(),
-							new VariableData(usage.name(), INVALID_VAR_TYPE_MARKER, queryResult)));
-
-			// Add all found items to the table.
-			items.addAll(variables.values());
+		if (analysisResults != null && !analysisResults.localVariableStates().isEmpty()) {
+			List<LocalVariableState> localVariableStates = analysisResults.localVariableStates().stream()
+					.sorted(Comparator.comparingInt(LocalVariableState::index))
+					.toList();
+			for (LocalVariableState lvs : localVariableStates) {
+				String name = lvs.name();
+				Type type = lvs.type();
+				items.add(new VariableData(name, type, queryResult));
+			}
 		}
 	}
 
@@ -317,14 +309,13 @@ public class JvmVariablesPane extends AstBuildConsumerComponent {
 		 */
 		public void setSelectedVariable(@Nullable VariableData variable) {
 			VariableData existing = this.variable;
-			if (existing == null) {
-				if (variable == null)
-					return;
-			} else if (existing.matchesNameType(variable)) {
+			if (existing == variable)
 				return;
-			}
+			if (existing != null && !existing.matchesNameType(variable))
+				return;
 
 			this.variable = variable;
+
 			editor.redrawParagraphGraphics();
 		}
 
