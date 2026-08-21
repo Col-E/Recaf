@@ -13,19 +13,19 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import me.darknet.assembler.ast.ASTElement;
 import me.darknet.assembler.ast.primitive.ASTCode;
-import me.darknet.assembler.ast.primitive.ASTEmpty;
 import me.darknet.assembler.ast.primitive.ASTInstruction;
 import me.darknet.assembler.ast.specific.ASTClass;
 import me.darknet.assembler.ast.specific.ASTMethod;
-import me.darknet.assembler.compile.analysis.*;
+import me.darknet.assembler.compile.analysis.Local;
+import me.darknet.assembler.compile.analysis.MethodAnalysisResult;
+import me.darknet.assembler.compile.analysis.Value;
+import me.darknet.assembler.compile.analysis.ValuedLocal;
+import me.darknet.assembler.compile.analysis.Values;
 import me.darknet.assembler.compile.analysis.frame.Frame;
 import me.darknet.assembler.compile.analysis.frame.TypedFrame;
 import me.darknet.assembler.compile.analysis.frame.ValuedFrame;
-import me.darknet.assembler.parser.Token;
-import me.darknet.assembler.parser.TokenType;
-import me.darknet.assembler.util.Location;
-import me.darknet.assembler.util.Range;
 import org.objectweb.asm.Type;
+import org.objectweb.asm.tree.AbstractInsnNode;
 import org.reactfx.EventStreams;
 import org.slf4j.Logger;
 import software.coley.collections.Lists;
@@ -40,7 +40,12 @@ import software.coley.recaf.util.Types;
 import software.coley.recaf.workspace.model.Workspace;
 
 import java.time.Duration;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.Objects;
 
 /**
  * Component panel for the assembler which shows the data from stack analysis of the currently selected method.
@@ -53,7 +58,8 @@ public class JvmStackAnalysisPane extends AstBuildConsumerComponent {
 	private final SimpleObjectProperty<Object> notifyQueue = new SimpleObjectProperty<>(new Object());
 	private final TableView<JvmVariableState> varTable = new TableView<>();
 	private final TableView<JvmStackState> stackTable = new TableView<>();
-	private int lastInsnIndex;
+	private ASTInstruction lastSelectedInsn;
+	private MethodAnalysisResult lastAnalysisResults;
 
 	@Inject
 	@SuppressWarnings("unchecked")
@@ -104,14 +110,14 @@ public class JvmStackAnalysisPane extends AstBuildConsumerComponent {
 		varTable.setDisable(false);
 
 		// Compute what instruction index the caret is at.
-		int insnIndex = -1;
+		ASTInstruction selectedInsn = null;
 		findIndex:
 		{
 			for (ASTElement astElement : astElements) {
 				if (astElement instanceof ASTMethod astMethod) {
 					int index = getSelectedInsnIndexOfMethod(astMethod);
 					if (index >= 0) {
-						insnIndex = index;
+						selectedInsn = astMethod.code().instructions().get(index);
 						break;
 					}
 				} else if (astElement instanceof ASTClass astClass) {
@@ -119,7 +125,7 @@ public class JvmStackAnalysisPane extends AstBuildConsumerComponent {
 						if (child instanceof ASTMethod astMethod) {
 							int index = getSelectedInsnIndexOfMethod(astMethod);
 							if (index >= 0) {
-								insnIndex = index;
+								selectedInsn = astMethod.code().instructions().get(index);
 								break findIndex;
 							}
 						}
@@ -128,40 +134,50 @@ public class JvmStackAnalysisPane extends AstBuildConsumerComponent {
 			}
 		}
 
-		// If we've not moved, no need to update the table.
-		if (lastInsnIndex == insnIndex)
-			return;
-		lastInsnIndex = insnIndex;
+		// Resolve the analysis before deciding whether the table is already current.
+		MethodAnalysisResult analysisResults = null;
+		if (selectedInsn != null && currentMethod != null && analysisLookup != null)
+			analysisResults = (MethodAnalysisResult) analysisLookup.results(currentMethod.getName(), currentMethod.getDescriptor());
 
-		// Skip for invalid index.
-		if (insnIndex < 0)
+		// The AST and result are identity-bound, so an equal-looking instruction can still require a refresh.
+		if (lastSelectedInsn == selectedInsn && lastAnalysisResults == analysisResults)
 			return;
+		lastSelectedInsn = selectedInsn;
+		lastAnalysisResults = analysisResults;
 
-		// Skip of no method analysis for the current method.
-		AnalysisResults analysisResults = analysisLookup.results(currentMethod.getName(), currentMethod.getDescriptor());
-		if (analysisResults == null)
+		// Clear stale data when the caret is outside an instruction or the current AST has no matching analysis.
+		if (selectedInsn == null || analysisResults == null) {
+			clearData();
 			return;
+		}
 
-		// Skip if no frames.
+		// Clear stale data when analysis has not produced any frames yet.
 		NavigableMap<Integer, Frame> frames = analysisResults.frames();
-		if (frames.isEmpty())
+		if (frames.isEmpty()) {
+			clearData();
 			return;
+		}
 
-		// Compute variable/stack states.
+		// Resolve the frame after the selected instruction so the table shows its immediate effect.
 		List<JvmVariableState> varItems = new ArrayList<>();
 		List<JvmStackState> stackItems = new ArrayList<>();
-		var entry = frames.floorEntry(insnIndex);
-		var entryKey = entry.getKey();
-		Frame thisFrame = entry.getValue();
+		FrameSelection frameSelection = getFrameSelection(analysisResults, selectedInsn, frames);
+		Frame thisFrame = frameSelection.current();
+		if (thisFrame == null) {
+			// Partial or stale ASTs shouldn't show the previously selected instruction's state visible.
+			clearData();
+			return;
+		}
+
 		if (thisFrame instanceof TypedFrame typedFrame) {
-			// Type-only analysis is basic
+			// Type-only analysis is basic.
 			for (Type classType : typedFrame.getStack())
 				stackItems.add(new JvmStackState(classType, Values.valueOf(classType), null));
 			for (Local local : typedFrame.getLocals().values())
 				varItems.add(new JvmVariableState(local.name(), local.safeType(), Values.valueOf(local.safeType()), null));
 		} else if (thisFrame instanceof ValuedFrame valuedFrame) {
-			// Value analysis will not only track values in a frame, but also let us see if values change across frames
-			ValuedFrame lastFrame = entryKey == 0 ? null : (ValuedFrame) frames.floorEntry(entryKey - 1).getValue();
+			// Compare against the frame before the selected instruction to highlight its effect.
+			ValuedFrame lastFrame = frameSelection.prior() instanceof ValuedFrame valuedPriorFrame ? valuedPriorFrame : null;
 
 			// Fill out stack.
 			Value[] lastStack = lastFrame == null ? new Value[0] : lastFrame.getStack().toArray(Value[]::new);
@@ -185,6 +201,43 @@ public class JvmStackAnalysisPane extends AstBuildConsumerComponent {
 		stackTable.getItems().setAll(stackItems);
 	}
 
+	@Nonnull
+	private FrameSelection getFrameSelection(@Nonnull MethodAnalysisResult analysisResults,
+	                                         @Nonnull ASTInstruction selectedInsn,
+	                                         @Nonnull NavigableMap<Integer, Frame> frames) {
+		// Resolve the generated instruction index because analysis positions include labels and metadata nodes.
+		Map<ASTInstruction, AbstractInsnNode> executableInstructions = analysisResults.getAstToExecutableInstructionMap();
+		AbstractInsnNode mappedInsn = executableInstructions.get(selectedInsn);
+		boolean executable = mappedInsn != null;
+		if (mappedInsn == null)
+			mappedInsn = analysisResults.getAstToLabelMap().get(selectedInsn);
+		if (mappedInsn == null)
+			mappedInsn = analysisResults.getAstToLineNumberMap().get(selectedInsn);
+		if (mappedInsn == null)
+			return new FrameSelection(analysisResults.getFrame(selectedInsn), null);
+		Integer instructionIndex = analysisResults.getInstructionIndex(mappedInsn);
+		if (instructionIndex == null)
+			return new FrameSelection(analysisResults.getFrame(selectedInsn), null);
+
+		// Labels and metadata already point at the state they introduce, while executable instructions need
+		// the next frame to showcase their effect. If the next frame is not available, fall back to the current frame.
+		Map.Entry<Integer, Frame> currentEntry;
+		if (executable) {
+			currentEntry = frames.floorEntry(instructionIndex + 1);
+			if (currentEntry == null || currentEntry.getKey() != instructionIndex + 1)
+				currentEntry = frames.floorEntry(instructionIndex);
+		} else {
+			currentEntry = frames.floorEntry(instructionIndex);
+		}
+		if (currentEntry == null)
+			return new FrameSelection(null, null);
+
+		// The prior frame is the state immediately before the displayed effect.
+		int frameIndex = currentEntry.getKey();
+		Map.Entry<Integer, Frame> priorEntry = frames.lowerEntry(frameIndex);
+		return new FrameSelection(currentEntry.getValue(), priorEntry == null ? null : priorEntry.getValue());
+	}
+
 	private int getSelectedInsnIndexOfMethod(@Nonnull ASTMethod method) {
 		int pos = editor.getCodeArea().getCaretPosition();
 		if (!method.range().within(pos))
@@ -193,21 +246,32 @@ public class JvmStackAnalysisPane extends AstBuildConsumerComponent {
 		if (code == null)
 			return -1;
 		List<ASTInstruction> instructions = code.instructions();
-		int paragraph = editor.getCodeArea().getCurrentParagraph();
-		int result = Collections.binarySearch(instructions, new ASTEmpty(new Token(
-				new Range(pos, pos + 1),
-				new Location(paragraph, 0, 1, null),
-				TokenType.IDENTIFIER,
-				"."
-		)), (o1, o2) -> {
-			Location l1 = o1.location();
-			Location l2 = o2.location();
-			if (l1 == null) return 1;
-			else if (l2 == null) return -1;
-			return Objects.compare(l1, l2, Comparator.naturalOrder());
-		});
-		if (result < 0) result = -result;
-		return Math.min(instructions.size() - 1, result + 1);
+		if (instructions.isEmpty())
+			return -1;
+
+		// Find the first instruction that starts after the caret.
+		int low = 0;
+		int high = instructions.size();
+		while (low < high) {
+			int middle = (low + high) >>> 1;
+			if (instructions.get(middle).range().start() <= pos)
+				low = middle + 1;
+			else
+				high = middle;
+		}
+
+		// Prefer the instruction at or before the caret.
+		// This gives stable behavior at adjacent range boundaries.
+		int prior = low - 1;
+		if (prior >= 0 && instructions.get(prior).range().within(pos))
+			return prior;
+
+		// A caret before the first instruction can still be inside that instruction's range.
+		if (low < instructions.size() && instructions.get(low).range().within(pos))
+			return low;
+
+		// Whitespace between instructions has no instruction state to display.
+		return -1;
 	}
 
 	private void clearData() {
@@ -217,11 +281,13 @@ public class JvmStackAnalysisPane extends AstBuildConsumerComponent {
 			stackTable.getItems().clear();
 			varTable.getItems().clear();
 		});
-		lastInsnIndex = -1;
+		lastSelectedInsn = null;
+		lastAnalysisResults = null;
 	}
 
 	private void scheduleTableUpdate() {
-		if (currentMethod == null || analysisLookup == null || editor == null) return;
+		// Queue updates even while analysis is temporarily unavailable so stale rows are cleared.
+		if (currentMethod == null || editor == null) return;
 		FxThreadUtil.run(() -> notifyQueue.set(new Object()));
 	}
 
@@ -232,6 +298,8 @@ public class JvmStackAnalysisPane extends AstBuildConsumerComponent {
 
 	@Override
 	protected void onMethodSelected() {
+		lastSelectedInsn = null;
+		lastAnalysisResults = null;
 		scheduleTableUpdate();
 	}
 
@@ -242,6 +310,8 @@ public class JvmStackAnalysisPane extends AstBuildConsumerComponent {
 
 	@Override
 	protected void onPipelineOutputUpdate() {
+		lastSelectedInsn = null;
+		lastAnalysisResults = null;
 		scheduleTableUpdate();
 	}
 
@@ -255,6 +325,16 @@ public class JvmStackAnalysisPane extends AstBuildConsumerComponent {
 				.filter(c -> editor.getCodeArea().getSelection().getLength() == 0) // Skip updates while user is selecting text
 				.addObserver(e -> scheduleTableUpdate());
 	}
+
+	/**
+	 * Holds the displayed state and the state used to identify changes caused by the selected instruction.
+	 *
+	 * @param current
+	 * 		Frame currently displayed, or {@code null} when analysis data is incomplete.
+	 * @param prior
+	 * 		Frame immediately preceding the displayed state, or {@code null} when unavailable.
+	 */
+	private record FrameSelection(@Nullable Frame current, @Nullable Frame prior) {}
 
 	/**
 	 * Models the state of a variable.
