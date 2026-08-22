@@ -6,6 +6,7 @@ import software.coley.recaf.info.*;
 import software.coley.recaf.services.phantom.GeneratedPhantomWorkspaceResource;
 import software.coley.recaf.util.io.ByteHeaderUtil;
 import software.coley.recaf.util.Icons;
+import software.coley.recaf.util.MemorySegmentUtil;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceDirectoryResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceFileResource;
@@ -43,13 +44,15 @@ public class BasicResourceIconProviderFactory implements ResourceIconProviderFac
 				return PROVIDER_JAR;
 			if (file instanceof TextFileInfo)
 				return PROVIDER_TEXT;
-			if (ByteHeaderUtil.match(file.getRawContent(), ByteHeaderUtil.CLASS))
+
+			var header = MemorySegmentUtil.header(file.getRawContent());
+			if (ByteHeaderUtil.match(header, ByteHeaderUtil.CLASS))
 				return PROVIDER_CLASS;
-			if (ByteHeaderUtil.matchAny(file.getRawContent(), ByteHeaderUtil.PROGRAM_HEADERS))
+			if (ByteHeaderUtil.matchAny(header, ByteHeaderUtil.PROGRAM_HEADERS))
 				return PROVIDER_PROGRAM;
-			if (ByteHeaderUtil.matchAny(file.getRawContent(), ByteHeaderUtil.IMAGE_HEADERS))
+			if (ByteHeaderUtil.matchAny(header, ByteHeaderUtil.IMAGE_HEADERS))
 				return PROVIDER_IMAGE;
-			if (ByteHeaderUtil.matchAny(file.getRawContent(), ByteHeaderUtil.AUDIO_HEADERS))
+			if (ByteHeaderUtil.matchAny(header, ByteHeaderUtil.AUDIO_HEADERS))
 				return PROVIDER_AUDIO;
 		}
 		if (resource instanceof GeneratedPhantomWorkspaceResource)

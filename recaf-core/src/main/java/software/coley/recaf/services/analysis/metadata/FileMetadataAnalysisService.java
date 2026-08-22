@@ -10,12 +10,13 @@ import software.coley.recaf.info.TextFileInfo;
 import software.coley.recaf.path.FilePathNode;
 import software.coley.recaf.path.PathNodes;
 import software.coley.recaf.services.Service;
+import software.coley.recaf.util.MemorySegmentUtil;
+import software.coley.recaf.util.io.LargeInputStream;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.FileBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceFileResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
-import java.io.ByteArrayInputStream;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
@@ -116,7 +117,7 @@ public class FileMetadataAnalysisService implements Service {
 				parseError = "Certificate factory unavailable";
 			} else {
 				try {
-					certificates = List.copyOf(CERTIFICATE_FACTORY.generateCertificates(new ByteArrayInputStream(file.getRawContent())));
+					certificates = List.copyOf(CERTIFICATE_FACTORY.generateCertificates(new LargeInputStream(file.getRawContent())));
 				} catch (CertificateException ex) {
 					parseError = "Error parsing certificate: " + file.getName();
 				}
@@ -143,12 +144,12 @@ public class FileMetadataAnalysisService implements Service {
 	@SuppressWarnings("deprecation") // Don't care that MD5/SHA1 are deprecated, people still use them frequently.
 	private static FileHashResult hash(@Nonnull Workspace workspace, @Nonnull WorkspaceFileResource fileResource) {
 		FileInfo fileInfo = fileResource.getFileInfo();
-		byte[] content = fileInfo.getRawContent();
+		var content = fileInfo.getRawContent();
 		EnumMap<HashAlgorithm, String> hashes = new EnumMap<>(HashAlgorithm.class);
-		hashes.put(HashAlgorithm.MD5, Hashing.md5().hashBytes(content).toString());
-		hashes.put(HashAlgorithm.SHA1, Hashing.sha1().hashBytes(content).toString());
-		hashes.put(HashAlgorithm.SHA256, Hashing.sha256().hashBytes(content).toString());
-		hashes.put(HashAlgorithm.SHA512, Hashing.sha512().hashBytes(content).toString());
+		hashes.put(HashAlgorithm.MD5, MemorySegmentUtil.hash(content, Hashing.md5()).toString());
+		hashes.put(HashAlgorithm.SHA1, MemorySegmentUtil.hash(content, Hashing.sha1()).toString());
+		hashes.put(HashAlgorithm.SHA256, MemorySegmentUtil.hash(content, Hashing.sha256()).toString());
+		hashes.put(HashAlgorithm.SHA512, MemorySegmentUtil.hash(content, Hashing.sha512()).toString());
 		FilePathNode path = PathNodes.filePath(workspace, fileResource, fileResource.getFileBundle(), fileInfo);
 		return new FileHashResult(path, new EnumMap<>(hashes));
 	}

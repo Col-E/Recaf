@@ -1,21 +1,28 @@
 package software.coley.recaf.util.io;
 
-import jakarta.annotation.Nonnull;
-import jakarta.annotation.Nullable;
-import org.slf4j.Logger;
-import software.coley.collections.func.UncheckedConsumer;
-import software.coley.recaf.analytics.logging.Logging;
-import software.coley.recaf.util.ReflectUtil;
-
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.lang.foreign.MemorySegment;
 import java.lang.reflect.Field;
 import java.nio.file.attribute.FileTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+
+import org.slf4j.Logger;
+
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
+import software.coley.collections.func.UncheckedConsumer;
+import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.util.MemorySegmentUtil;
+import software.coley.recaf.util.ReflectUtil;
 
 /**
  * Utility for creating simple ZIP files.
@@ -37,7 +44,7 @@ public class ZipCreationUtils {
 	 * @throws IOException
 	 * 		When the content cannot be written.
 	 */
-	public static byte[] createSingleEntryZip(String name, byte[] content) throws IOException {
+	public static MemorySegment createSingleEntryZip(String name, byte[] content) throws IOException {
 		return createZip(zos -> {
 			zos.putNextEntry(new ZipEntry(name));
 			zos.write(content);
@@ -54,11 +61,13 @@ public class ZipCreationUtils {
 	 * @throws IOException
 	 * 		When the content cannot be written.
 	 */
-	public static byte[] createZip(Map<String, byte[]> entryMap) throws IOException {
+	public static MemorySegment createZip(Map<String, MemorySegment> entryMap) throws IOException {
 		return createZip(zos -> {
-			for (Map.Entry<String, byte[]> entry : entryMap.entrySet()) {
+			for (var entry : entryMap.entrySet()) {
 				zos.putNextEntry(new ZipEntry(entry.getKey()));
-				zos.write(entry.getValue());
+				for (var chunk : MemorySegmentUtil.toChunks(entry.getValue())) {
+					zos.write(chunk);
+				}
 				zos.closeEntry();
 			}
 		});
@@ -73,12 +82,12 @@ public class ZipCreationUtils {
 	 * @throws IOException
 	 * 		When the action fails.
 	 */
-	public static byte[] createZip(UncheckedConsumer<ZipOutputStream> consumer) throws IOException {
-		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		try (ZipOutputStream zos = new ZipOutputStream(baos)) {
+	public static MemorySegment createZip(UncheckedConsumer<ZipOutputStream> consumer) throws IOException {
+		var stream = new LargeOutputStream();
+		try (ZipOutputStream zos = new ZipOutputStream(stream)) {
 			consumer.accept(zos);
 		}
-		return baos.toByteArray();
+		return stream.toMemorySegment();
 	}
 
 	/**
@@ -157,7 +166,7 @@ public class ZipCreationUtils {
 		 * @return Builder.
 		 */
 		@Nonnull
-		public ZipBuilder add(@Nonnull String name, @Nonnull byte[] content) {
+		public ZipBuilder add(@Nonnull String name, @Nonnull MemorySegment content) {
 			return add(name, content, true, null, -1, -1, -1);
 		}
 
@@ -180,7 +189,7 @@ public class ZipCreationUtils {
 		 * @return Builder.
 		 */
 		@Nonnull
-		public ZipBuilder add(@Nonnull String name, @Nonnull byte[] content, boolean compression,
+		public ZipBuilder add(@Nonnull String name, @Nonnull MemorySegment content, boolean compression,
 							  @Nullable String comment, long createTime, long modifyTime, long accessTime) {
 			return add(new Entry(name, content, compression, comment, null, createTime, modifyTime, accessTime));
 		}
@@ -204,13 +213,13 @@ public class ZipCreationUtils {
 		 * 		When the content cannot be written.
 		 */
 		@Nonnull
-		public byte[] bytes() throws IOException {
+		public MemorySegment bytes() throws IOException {
 			return createZip(zos -> {
 				Set<String> dirsVisited = new HashSet<>();
 				CRC32 crc = new CRC32();
 				for (Entry entry : entries) {
 					String key = entry.name;
-					byte[] content = entry.content;
+					var content = entry.content;
 
 					// Write directories for upcoming entries if necessary
 					// - Ugly, but does the job.
@@ -250,18 +259,20 @@ public class ZipCreationUtils {
 
 					// Update CRC
 					crc.reset();
-					crc.update(content);
+					for (var chunk : MemorySegmentUtil.toChunks(content)) {
+						crc.update(chunk);
+					}
 
 					// Write ZIP entry
 					//  - Always use STORED for empty files to save space.
-					boolean doStore = entry.content.length == 0 || !entry.compression;
+					boolean doStore = entry.content.byteSize() == 0 || !entry.compression;
 					int level = doStore ? ZipEntry.STORED : ZipEntry.DEFLATED;
 					ZipEntry zipEntry = new ZipEntry(key);
 					zipEntry.setMethod(level);
 					zipEntry.setCrc(crc.getValue());
 					if (doStore) {
-						zipEntry.setSize(content.length);
-						zipEntry.setCompressedSize(content.length);
+						zipEntry.setSize(content.byteSize());
+						zipEntry.setCompressedSize(content.byteSize());
 					}
 					if (entry.comment != null) zipEntry.setComment(entry.comment);
 					if (entry.extra != null) zipEntry.setExtra(entry.extra);
@@ -270,7 +281,9 @@ public class ZipCreationUtils {
 					if (entry.accessTime >= 0L) zipEntry.setLastAccessTime(FileTime.fromMillis(entry.accessTime));
 
 					zos.putNextEntry(zipEntry);
-					zos.write(content);
+					for (var chunk : MemorySegmentUtil.toChunks(content)) {
+						zos.write(chunk);
+					}
 					zos.closeEntry();
 
 					// Reset to allow name hacks
@@ -281,7 +294,7 @@ public class ZipCreationUtils {
 
 		public static class Entry {
 			private final String name;
-			private final byte[] content;
+			private final MemorySegment content;
 			private final boolean compression;
 			private final String comment;
 			private final byte[] extra;
@@ -290,7 +303,7 @@ public class ZipCreationUtils {
 			private final long accessTime;
 
 			private Entry(@Nonnull String name,
-						  @Nonnull byte[] content,
+						  @Nonnull MemorySegment content,
 						  boolean compression,
 						  @Nullable String comment,
 						  @Nullable byte[] extra,

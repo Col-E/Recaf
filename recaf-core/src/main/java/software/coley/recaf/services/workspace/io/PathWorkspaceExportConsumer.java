@@ -1,8 +1,10 @@
 package software.coley.recaf.services.workspace.io;
 
 import jakarta.annotation.Nonnull;
+import software.coley.recaf.util.MemorySegmentUtil;
 
 import java.io.IOException;
+import java.lang.foreign.MemorySegment;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -35,12 +37,31 @@ public class PathWorkspaceExportConsumer implements WorkspaceExportConsumer {
 	}
 
 	@Override
+	public void write(@Nonnull MemorySegment data) throws IOException {
+		if (firstSingleWrite) {
+			MemorySegmentUtil.write(path, data, false);
+			firstSingleWrite = false;
+		} else {
+			MemorySegmentUtil.write(path, data, true);
+		}
+	}
+
+	@Override
 	public void writeRelative(@Nonnull String relativePath, @Nonnull byte[] bytes) throws IOException {
 		Path destination = path.resolve(relativePath);
 		Path parent = destination.getParent();
 		if (!Files.isDirectory(parent))
 			Files.createDirectories(parent);
 		Files.write(destination, bytes);
+	}
+
+	@Override
+	public void writeRelative(@Nonnull String relativePath, @Nonnull MemorySegment data) throws IOException {
+		Path destination = path.resolve(relativePath);
+		Path parent = destination.getParent();
+		if (!Files.isDirectory(parent))
+			Files.createDirectories(parent);
+		MemorySegmentUtil.write(destination, data, false);
 	}
 
 	@Override

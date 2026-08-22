@@ -42,8 +42,8 @@ public final class ByteArraySource implements ByteSource {
 
 	@Nonnull
 	@Override
-	public byte[] readAll() {
-		return Arrays.copyOfRange(bytes, off, len);
+	public MemorySegment readAll() {
+		return MemorySegment.ofArray(Arrays.copyOfRange(bytes, off, len));
 	}
 
 	@Nonnull

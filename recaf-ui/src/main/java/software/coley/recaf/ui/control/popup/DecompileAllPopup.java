@@ -33,6 +33,7 @@ import software.coley.recaf.ui.window.RecafStage;
 import software.coley.recaf.util.FileChooserBuilder;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Lang;
+import software.coley.recaf.util.MemorySegmentUtil;
 import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.util.io.ZipCreationUtils;
 import software.coley.recaf.workspace.model.Workspace;
@@ -41,8 +42,8 @@ import software.coley.recaf.workspace.model.resource.WorkspaceFileResource;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.foreign.MemorySegment;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -157,7 +158,7 @@ public class DecompileAllPopup extends RecafStage {
 									// Write decompilation output
 									String text = result.getText();
 									if (text != null)
-										builder.add(name + ".java", text.getBytes(StandardCharsets.UTF_8));
+										builder.add(name + ".java", MemorySegment.ofArray(text.getBytes(StandardCharsets.UTF_8)));
 								} else {
 									logger.error("Failed to decompile '{}'", name, error);
 								}
@@ -167,7 +168,7 @@ public class DecompileAllPopup extends RecafStage {
 									inProgressProperty.setValue(false);
 									Path path = pathProperty.get();
 									try {
-										Files.write(path, builder.bytes());
+										MemorySegmentUtil.write(path, builder.bytes(), false);
 									} catch (IOException ex) {
 										logger.error("Failed to write archive of decompiled classes to '{}'", path, ex);
 									}

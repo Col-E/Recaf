@@ -4,8 +4,9 @@ import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.builder.FileInfoBuilder;
 import software.coley.recaf.info.properties.Property;
 import software.coley.recaf.info.properties.PropertyContainer;
+import software.coley.recaf.util.MemorySegmentUtil;
 
-import java.util.Arrays;
+import java.lang.foreign.MemorySegment;
 import java.util.Map;
 
 /**
@@ -16,7 +17,7 @@ import java.util.Map;
 public class BasicFileInfo implements FileInfo {
 	private final PropertyContainer properties;
 	private final String name;
-	private final byte[] rawContent;
+	private final MemorySegment rawContent;
 
 	public BasicFileInfo(@Nonnull FileInfoBuilder<?> builder) {
 		this(builder.getName(),
@@ -32,7 +33,7 @@ public class BasicFileInfo implements FileInfo {
 	 * @param properties
 	 * 		Assorted properties.
 	 */
-	public BasicFileInfo(@Nonnull String name, @Nonnull byte[] rawContent, @Nonnull PropertyContainer properties) {
+	public BasicFileInfo(@Nonnull String name, @Nonnull MemorySegment rawContent, @Nonnull PropertyContainer properties) {
 		this.name = name;
 		this.rawContent = rawContent;
 		this.properties = properties;
@@ -40,7 +41,7 @@ public class BasicFileInfo implements FileInfo {
 
 	@Nonnull
 	@Override
-	public byte[] getRawContent() {
+	public MemorySegment getRawContent() {
 		return rawContent;
 	}
 
@@ -56,7 +57,7 @@ public class BasicFileInfo implements FileInfo {
 		if (o == null) return false;
 		if (o instanceof FileInfo other) {
 			if (!name.equals(other.getName())) return false;
-			return Arrays.equals(rawContent, other.getRawContent());
+			return MemorySegmentUtil.equals(rawContent, other.getRawContent());
 		}
 		return false;
 	}
@@ -64,7 +65,7 @@ public class BasicFileInfo implements FileInfo {
 	@Override
 	public int hashCode() {
 		int result = name.hashCode();
-		result = 31 * result + Arrays.hashCode(rawContent);
+		result = 31 * result + rawContent.hashCode();
 		return result;
 	}
 

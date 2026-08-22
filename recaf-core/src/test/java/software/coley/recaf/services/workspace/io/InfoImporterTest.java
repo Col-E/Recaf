@@ -11,6 +11,7 @@ import software.coley.recaf.util.io.ByteSource;
 import software.coley.recaf.util.io.ByteSources;
 
 import java.io.IOException;
+import java.lang.foreign.ValueLayout;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,6 +19,8 @@ import java.util.Collection;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 /**
@@ -87,7 +90,7 @@ class InfoImporterTest {
 	@Test
 	void testImportZip() throws IOException {
 		// Create virtual ZIP with single 'Hello.txt'
-		byte[] zipFileBytes = ZipCreationUtils.createSingleEntryZip("Hello.txt", "Hello world".getBytes(StandardCharsets.UTF_8));
+		byte[] zipFileBytes = ZipCreationUtils.createSingleEntryZip("Hello.txt", "Hello world".getBytes(StandardCharsets.UTF_8)).toArray(ValueLayout.JAVA_BYTE);
 		ByteSource zipSource = ByteSources.wrap(zipFileBytes);
 
 		// We don't know the file name, so we can only assume it is a ZIP
@@ -96,7 +99,7 @@ class InfoImporterTest {
 		assertTrue(read.asFile().isZipFile());
 		assertEquals(BasicZipFileInfo.class, read.getClass());
 		ZipFileInfo readZip = read.asFile().asZipFile();
-		assertArrayEquals(zipFileBytes, readZip.getRawContent());
+		assertArrayEquals(zipFileBytes, readZip.getRawContent().toArray(ValueLayout.JAVA_BYTE));
 
 		// However, if we provide various extensions then we can use the file name to infer what kind of ZIP it is.
 		read = importer.readInfo("data.jar", zipSource);
@@ -113,7 +116,7 @@ class InfoImporterTest {
 	@Test
 	void testImportFileWithoutZipPrefixHasZipMarkerAssigned() throws IOException {
 		// Create virtual ZIP with single 'Hello.txt' and suffix the file with a PE header.
-		byte[] zipFileBytes = ZipCreationUtils.createSingleEntryZip("Hello.txt", "Hello world".getBytes(StandardCharsets.UTF_8));
+		byte[] zipFileBytes = ZipCreationUtils.createSingleEntryZip("Hello.txt", "Hello world".getBytes(StandardCharsets.UTF_8)).toArray(ValueLayout.JAVA_BYTE);
 		byte[] inputBytes = new byte[4096];
 		inputBytes[0] = 0x4D;
 		inputBytes[1] = 0x5A;

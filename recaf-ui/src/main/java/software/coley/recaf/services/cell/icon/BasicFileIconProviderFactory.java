@@ -7,6 +7,7 @@ import software.coley.recaf.info.BinaryXmlFileInfo;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.util.io.ByteHeaderUtil;
 import software.coley.recaf.util.Icons;
+import software.coley.recaf.util.MemorySegmentUtil;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.FileBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -57,7 +58,7 @@ public class BasicFileIconProviderFactory implements FileIconProviderFactory {
 		}
 
 		// Content match
-		byte[] content = info.getRawContent();
+		byte[] content = MemorySegmentUtil.header(info.getRawContent());
 		if (ByteHeaderUtil.matchAny(content, ByteHeaderUtil.IMAGE_HEADERS))
 			return IMAGE;
 		if (ByteHeaderUtil.match(content, ByteHeaderUtil.CLASS))
