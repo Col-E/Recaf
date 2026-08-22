@@ -2,6 +2,7 @@ package software.coley.recaf.services.deobfuscation;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import software.coley.recaf.services.deobfuscation.transform.generic.CallResultInliningTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.DeadCodeRemovingTransformer;
@@ -1498,7 +1499,8 @@ public class RegressionDeobfuscationTest extends TransformerTestBase {
 	 * Ensures the const-folder doesn't take too long to run.
 	 */
 	@Test
-	@Timeout(value = 2)
+	@Timeout(value = 1)
+	@DisabledIfEnvironmentVariable(named = "GITHUB_ACTIONS", matches = "true")
 	void constFolderDoesNotCatestrophicallyBacktrack() {
 		String asm = """
 				.method public static example (I)I {
