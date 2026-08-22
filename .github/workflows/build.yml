@@ -28,9 +28,9 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v7
       - name: Setup JDK
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 22
@@ -38,7 +38,7 @@ jobs:
       # The project version extract NEEDS to have the gradle wrapper already downloaded.
       # So we have a dummy step here just to initialize it.
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v5
       # Run the tests and upload results/coverage
       - name: Run tests
         run: ./gradlew test
