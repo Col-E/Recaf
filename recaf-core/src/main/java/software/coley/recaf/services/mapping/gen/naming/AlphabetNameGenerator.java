@@ -33,11 +33,19 @@ public class AlphabetNameGenerator implements DeconflictingNameGenerator {
 
 	@Nonnull
 	private String name(@Nullable String original) {
+		return name(original, null);
+	}
+
+	@Nonnull
+	private String name(@Nullable String original, @Nullable String packageName) {
 		int seed = original == null ? alphabet.hashCode() : original.hashCode();
-		String name = StringUtil.generateName(alphabet, length, seed);
+		String simpleName = StringUtil.generateName(alphabet, length, seed);
+		String name = packageName == null ? simpleName : packageName + "/" + simpleName;
 		if (workspace != null) {
 			while (workspace.findClass(name) != null)
-				name = StringUtil.generateName(alphabet, length, seed++);
+				name = packageName == null ?
+						StringUtil.generateName(alphabet, length, ++seed) :
+						packageName + "/" + StringUtil.generateName(alphabet, length, ++seed);
 		}
 		return name;
 	}
@@ -50,11 +58,21 @@ public class AlphabetNameGenerator implements DeconflictingNameGenerator {
 	@Nonnull
 	@Override
 	public String mapClass(@Nonnull ClassInfo info) {
+		return mapClass(info, true);
+	}
+
+	@Nonnull
+	@Override
+	public String mapClass(@Nonnull ClassInfo info, boolean mapPackage) {
 		if (info.isInDefaultPackage())
 			return name(info.getName());
 
-		// Ensure classes in the same package are kept together
-		return name(info.getPackageName()) + "/" + name(info.getName());
+		if (!mapPackage)
+			return name(info.getName(), info.getPackageName());
+
+		// Ensure classes in the same package are kept together.
+		String mappedPackage = name(info.getPackageName());
+		return name(info.getName(), mappedPackage);
 	}
 
 	@Nonnull
