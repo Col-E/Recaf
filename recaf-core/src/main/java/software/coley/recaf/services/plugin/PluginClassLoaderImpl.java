@@ -6,6 +6,7 @@ import software.coley.recaf.util.io.ByteSource;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.foreign.ValueLayout;
 import java.net.*;
 import java.util.Collection;
 import java.util.Collections;
@@ -120,7 +121,7 @@ final class PluginClassLoaderImpl extends ClassLoader implements PluginClassLoad
 		if (classBytes != null) {
 			byte[] bytes;
 			try {
-				bytes = classBytes.readAll();
+				bytes = classBytes.readAll().toArray(ValueLayout.JAVA_BYTE);
 			} catch (IOException ex) {
 				throw new ClassNotFoundException(name, ex);
 			}

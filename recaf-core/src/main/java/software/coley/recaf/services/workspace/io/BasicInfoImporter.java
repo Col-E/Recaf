@@ -1,12 +1,17 @@
 package software.coley.recaf.services.workspace.io;
 
+import java.io.IOException;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
+
+import org.objectweb.asm.ClassReader;
+import org.slf4j.Logger;
+
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import me.darknet.dex.tree.codec.definition.CodeCodec;
-import org.objectweb.asm.ClassReader;
-import org.slf4j.Logger;
 import software.coley.cafedude.classfile.VersionConstants;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.FileInfo;
@@ -26,12 +31,11 @@ import software.coley.recaf.info.builder.ZipFileInfoBuilder;
 import software.coley.recaf.info.properties.builtin.IllegalClassSuspectProperty;
 import software.coley.recaf.info.properties.builtin.ZipMarkerProperty;
 import software.coley.recaf.services.text.TextFormatConfig;
-import software.coley.recaf.util.io.ByteHeaderUtil;
-import software.coley.recaf.util.io.IOUtil;
+import software.coley.recaf.util.MemorySegmentUtil;
 import software.coley.recaf.util.android.AndroidXmlUtil;
+import software.coley.recaf.util.io.ByteHeaderUtil;
 import software.coley.recaf.util.io.ByteSource;
-
-import java.io.IOException;
+import software.coley.recaf.util.io.IOUtil;
 
 /**
  * Basic implementation of the info importer.
@@ -55,12 +59,12 @@ public class BasicInfoImporter implements InfoImporter {
 	@Nonnull
 	@Override
 	public Info readInfo(@Nonnull String name, @Nonnull ByteSource source) throws IOException {
-		byte[] data = source.readAll();
+		var data = source.readAll();
 
 		// Check for Java classes
-		if (matchesClass(data)) {
+		if (matchesClass(MemorySegmentUtil.header(data))) {
 			try {
-				return readClass(name, data);
+				return readClass(name, data.toArray(ValueLayout.JAVA_BYTE));
 			} catch (Throwable t) {
 				// Invalid class. There are a few possibilities here:
 				// - The user has disabled patching in their settings and opened an obfuscated file that kills ASM.
@@ -75,7 +79,7 @@ public class BasicInfoImporter implements InfoImporter {
 		}
 
 		// Comparing against known file types.
-		boolean hasZipMarker = ByteHeaderUtil.matchAtAnyOffset(data, ByteHeaderUtil.ZIP);
+		boolean hasZipMarker = MemorySegmentUtil.matchAtAnyOffset(data, ByteHeaderUtil.ZIP);
 		FileInfo info = readAsSpecializedFile(name, data);
 		if (info != null) {
 			if (hasZipMarker)
@@ -124,46 +128,47 @@ public class BasicInfoImporter implements InfoImporter {
 	 * or {@code null} if no special case is matched.
 	 */
 	@Nullable
-	private static FileInfo readAsSpecializedFile(@Nonnull String name, byte[] data) {
-		if (ByteHeaderUtil.match(data, ByteHeaderUtil.DEX)) {
+	private static FileInfo readAsSpecializedFile(@Nonnull String name, MemorySegment data) {
+		var header = MemorySegmentUtil.header(data);
+		if (ByteHeaderUtil.match(header, ByteHeaderUtil.DEX)) {
 			CodeCodec.readDebug = false; // TODO: Remove this flag when debug parsing is fixed upstream.
 			return new DexFileInfoBuilder()
 					.withRawContent(data)
 					.withName(name)
 					.build();
-		} else if (ByteHeaderUtil.match(data, ByteHeaderUtil.MODULES)) {
+		} else if (ByteHeaderUtil.match(header, ByteHeaderUtil.MODULES)) {
 			return new ModulesFileInfoBuilder()
 					.withRawContent(data)
 					.withName(name)
 					.build();
 		} else if (name.toUpperCase().endsWith(".ARSC") &&
-				ByteHeaderUtil.match(data, ByteHeaderUtil.ARSC)) {
+				ByteHeaderUtil.match(header, ByteHeaderUtil.ARSC)) {
 			return new ArscFileInfoBuilder()
 					.withRawContent(data)
 					.withName(name)
 					.build();
 		} else if (name.toUpperCase().endsWith(".XML") &&
-				(ByteHeaderUtil.match(data, ByteHeaderUtil.BINARY_XML) || AndroidXmlUtil.hasXmlIndicators(data))) {
+				(ByteHeaderUtil.match(header, ByteHeaderUtil.BINARY_XML) || AndroidXmlUtil.hasXmlIndicators(header))) {
 			return new BinaryXmlFileInfoBuilder()
 					.withRawContent(data)
 					.withName(name)
 					.build();
-		} else if (ByteHeaderUtil.matchAny(data, ByteHeaderUtil.IMAGE_HEADERS)) {
+		} else if (ByteHeaderUtil.matchAny(header, ByteHeaderUtil.IMAGE_HEADERS)) {
 			return new ImageFileInfoBuilder()
 					.withRawContent(data)
 					.withName(name)
 					.build();
-		} else if (ByteHeaderUtil.matchAny(data, ByteHeaderUtil.AUDIO_HEADERS)) {
+		} else if (ByteHeaderUtil.matchAny(header, ByteHeaderUtil.AUDIO_HEADERS)) {
 			return new AudioFileInfoBuilder()
 					.withRawContent(data)
 					.withName(name)
 					.build();
-		} else if (ByteHeaderUtil.matchAny(data, ByteHeaderUtil.VIDEO_HEADERS)) {
+		} else if (ByteHeaderUtil.matchAny(header, ByteHeaderUtil.VIDEO_HEADERS)) {
 			return new VideoFileInfoBuilder()
 					.withRawContent(data)
 					.withName(name)
 					.build();
-		} else if (ByteHeaderUtil.matchAny(data, ByteHeaderUtil.PROGRAM_HEADERS)) {
+		} else if (ByteHeaderUtil.matchAny(header, ByteHeaderUtil.PROGRAM_HEADERS)) {
 			return new NativeLibraryFileInfoBuilder()
 					.withRawContent(data)
 					.withName(name)

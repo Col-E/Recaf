@@ -13,11 +13,12 @@ import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.FilePathNode;
 import software.coley.recaf.services.workspace.WorkspaceManager;
+import software.coley.recaf.util.io.LargeInputStream;
 import software.coley.recaf.workspace.model.Workspace;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.foreign.MemorySegment;
 import java.net.*;
 import java.net.spi.URLStreamHandlerProvider;
 import java.nio.charset.StandardCharsets;
@@ -93,7 +94,7 @@ public class RecafURLStreamHandlerProvider extends URLStreamHandlerProvider {
 	 * Connection impl to actually pull from the current workspace.
 	 */
 	private class ConnectionImpl extends URLConnection {
-		private byte[] content;
+		private MemorySegment content;
 
 		public ConnectionImpl(URL url) {
 			super(url);
@@ -108,7 +109,7 @@ public class RecafURLStreamHandlerProvider extends URLStreamHandlerProvider {
 		public InputStream getInputStream() throws IOException {
 			if (content == null)
 				loadContent();
-			return new ByteArrayInputStream(content);
+			return new LargeInputStream(content);
 		}
 
 
@@ -119,18 +120,25 @@ public class RecafURLStreamHandlerProvider extends URLStreamHandlerProvider {
 
 		@Override
 		public long getContentLengthLong() {
-			return getContentLength();
-		}
-
-		@Override
-		public int getContentLength() {
-			if (content == null)
+			if (content == null) {
 				try {
 					loadContent();
 				} catch (IOException ex) {
 					return -1;
 				}
-			return content.length;
+			}
+
+			return content.byteSize();
+		}
+
+		@Override
+		public int getContentLength() {
+			long length = getContentLengthLong();
+			if (length > Integer.MAX_VALUE) {
+				return -1;
+			}
+
+			return (int) length;
 		}
 
 		private void loadContent() throws IOException {
@@ -153,7 +161,7 @@ public class RecafURLStreamHandlerProvider extends URLStreamHandlerProvider {
 					if (classPath == null)
 						throw new IOException("No class in current workspace: " + path);
 					ClassInfo classInfo = classPath.getValue();
-					content = classInfo.asJvmClass().getBytecode();
+					content = MemorySegment.ofArray(classInfo.asJvmClass().getBytecode());
 					break;
 				case recafFile:
 					FilePathNode filePath = workspace.findFile(path);

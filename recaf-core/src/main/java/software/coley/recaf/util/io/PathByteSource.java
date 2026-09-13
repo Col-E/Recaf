@@ -1,6 +1,7 @@
 package software.coley.recaf.util.io;
 
 import jakarta.annotation.Nonnull;
+import software.coley.recaf.util.MemorySegmentUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,8 +30,8 @@ final class PathByteSource implements ByteSource {
 
 	@Nonnull
 	@Override
-	public byte[] readAll() throws IOException {
-		return Files.readAllBytes(path);
+	public MemorySegment readAll() throws IOException {
+		return MemorySegmentUtil.read(path);
 	}
 
 	@Nonnull

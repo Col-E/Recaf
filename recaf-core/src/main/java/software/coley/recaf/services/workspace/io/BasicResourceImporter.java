@@ -60,6 +60,7 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResourceBuilder;
 import java.io.File;
 import java.io.IOException;
 import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
 import java.net.URI;
 import java.net.URL;
 import java.nio.file.FileVisitOption;
@@ -170,7 +171,7 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 		// Check for DEX file format.
 		if (readInfoAsFile instanceof DexFileInfo) {
 			String dexName = readInfoAsFile.getName();
-			AndroidClassBundle dexBundle = DexIOUtil.read(readInfoAsFile.getRawContent());
+			AndroidClassBundle dexBundle = DexIOUtil.read(readInfoAsFile.getRawContent().toArray(ValueLayout.JAVA_BYTE));
 			return builder.withAndroidClassBundles(Map.of(dexName, dexBundle))
 					.build();
 		}
@@ -274,7 +275,7 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 					// Skipping ZIP bombs
 					if (info.isFile() && info.asFile().isZipFile()) {
 						ZipFileInfo zipFile = info.asFile().asZipFile();
-						if (Arrays.equals(zipFile.getRawContent(), zipInfo.getRawContent())) {
+						if (zipFile.getRawContent().equals(zipInfo.getRawContent())) {
 							logger.warn("Skip self-extracting ZIP bomb: {}", entryName);
 							return null;
 						} else if (Arrays.stream(Thread.currentThread().getStackTrace())

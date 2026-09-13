@@ -5,6 +5,7 @@ import software.coley.recaf.info.properties.Property;
 import software.coley.recaf.util.ExcludeFromJacocoGeneratedReport;
 import software.coley.recaf.util.StringUtil;
 
+import java.lang.foreign.MemorySegment;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
@@ -53,8 +54,8 @@ public class StubFileInfo implements FileInfo {
 
 	@Nonnull
 	@Override
-	public byte[] getRawContent() {
-		return new byte[0];
+	public MemorySegment getRawContent() {
+		return MemorySegment.ofArray(new byte[0]);
 	}
 
 	@Nonnull

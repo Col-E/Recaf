@@ -30,6 +30,7 @@ import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
 import software.coley.recaf.ui.control.FontIconView;
 
+import java.lang.foreign.ValueLayout;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
@@ -70,7 +71,7 @@ public class PePane extends BorderPane implements FileNavigable, UpdatableNaviga
 	}
 
 	private void refresh() {
-		ParseResult<PeImage> result = PeImage.read(new CadesBufferStream(path.getValue().getRawContent()));
+		ParseResult<PeImage> result = PeImage.read(new CadesBufferStream(path.getValue().getRawContent().toArray(ValueLayout.JAVA_BYTE)));
 		if (result.isOk()) {
 			PeImage pe = result.getOk();
 

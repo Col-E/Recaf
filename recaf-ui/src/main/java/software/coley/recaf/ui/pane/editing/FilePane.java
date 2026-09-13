@@ -1,12 +1,27 @@
 package software.coley.recaf.ui.pane.editing;
 
+import static software.coley.recaf.ui.pane.editing.FileDisplayMode.ARSC;
+import static software.coley.recaf.ui.pane.editing.FileDisplayMode.AUDIO;
+import static software.coley.recaf.ui.pane.editing.FileDisplayMode.EXECUTABLE_ELF;
+import static software.coley.recaf.ui.pane.editing.FileDisplayMode.EXECUTABLE_PE;
+import static software.coley.recaf.ui.pane.editing.FileDisplayMode.HEX;
+import static software.coley.recaf.ui.pane.editing.FileDisplayMode.IMAGE;
+import static software.coley.recaf.ui.pane.editing.FileDisplayMode.TEXT;
+import static software.coley.recaf.ui.pane.editing.FileDisplayMode.TEXT_BINARY_XML;
+import static software.coley.recaf.ui.pane.editing.FileDisplayMode.VIDEO;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import org.slf4j.Logger;
+
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import javafx.event.EventHandler;
 import javafx.scene.input.KeyEvent;
-import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.ArscFileInfo;
 import software.coley.recaf.info.AudioFileInfo;
@@ -31,15 +46,10 @@ import software.coley.recaf.ui.pane.editing.media.AudioPane;
 import software.coley.recaf.ui.pane.editing.media.ImagePane;
 import software.coley.recaf.ui.pane.editing.media.VideoPane;
 import software.coley.recaf.ui.pane.editing.text.TextPane;
+import software.coley.recaf.util.MemorySegmentUtil;
 import software.coley.recaf.util.io.ByteHeaderUtil;
 import software.coley.recaf.util.threading.ThreadUtil;
 import software.coley.recaf.workspace.model.bundle.Bundle;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import static software.coley.recaf.ui.pane.editing.FileDisplayMode.*;
 
 /**
  * Displays various kinds of {@link FileInfo} content by delegating to another view based on the file type.
@@ -89,6 +99,7 @@ public class FilePane extends AbstractContentPane<FilePathNode> implements FileN
 	}
 
 	public void setupForFileType(@Nonnull FileInfo info) {
+		var header = MemorySegmentUtil.header(info.getRawContent());
 		switch (info) {
 			case TextFileInfo textFileInfo -> setFileDisplayModes(List.of(TEXT, HEX));
 			case BinaryXmlFileInfo binaryXmlFileInfo -> setFileDisplayModes(List.of(TEXT_BINARY_XML, HEX));
@@ -98,9 +109,9 @@ public class FilePane extends AbstractContentPane<FilePathNode> implements FileN
 			case NativeLibraryFileInfo nativeLibraryFileInfo -> {
 				// TODO: Do we want to further specify the type hierarchy for different kinds of native libs?
 				//  - If we don't this kind of pattern may be repeated elsewhere
-				if (ByteHeaderUtil.match(info.getRawContent(), ByteHeaderUtil.PE)) {
+				if (ByteHeaderUtil.match(header, ByteHeaderUtil.PE)) {
 					setFileDisplayModes(List.of(EXECUTABLE_PE, HEX));
-				} else if (ByteHeaderUtil.match(info.getRawContent(), ByteHeaderUtil.ELF)) {
+				} else if (ByteHeaderUtil.match(header, ByteHeaderUtil.ELF)) {
 					setFileDisplayModes(List.of(EXECUTABLE_ELF, HEX));
 				} else {
 					setFileDisplayModes(List.of(HEX));
