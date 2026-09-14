@@ -38,6 +38,14 @@ public class IncludeKeywordNameFilter extends NameGeneratorFilter {
 	}
 
 	@Override
+	public boolean shouldMapPackage(@Nonnull ClassInfo info) {
+		String packageName = info.getPackageName();
+		if (packageName != null && containsKeyword(packageName))
+			return true;
+		return super.shouldMapPackage(info);
+	}
+
+	@Override
 	public boolean shouldMapField(@Nonnull ClassInfo owner, @Nonnull FieldMember info) {
 		if (containsKeyword(info.getName()))
 			return true;
