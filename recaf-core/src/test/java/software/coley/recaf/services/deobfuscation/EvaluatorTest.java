@@ -31,6 +31,8 @@ import software.coley.recaf.util.analysis.eval.FieldCacheManager;
 import software.coley.recaf.util.analysis.eval.InstancedObjectValue;
 import software.coley.recaf.util.analysis.lookup.InvokeVirtualLookup;
 import software.coley.recaf.util.analysis.value.ArrayValue;
+import software.coley.recaf.util.analysis.value.DoubleValue;
+import software.coley.recaf.util.analysis.value.FloatValue;
 import software.coley.recaf.util.analysis.value.IntValue;
 import software.coley.recaf.util.analysis.value.LongValue;
 import software.coley.recaf.util.analysis.value.ObjectValue;
@@ -127,6 +129,117 @@ public class EvaluatorTest extends TransformerTestBase {
 		ReValue retVal = evaluate(src, "decrypt", "(I)Ljava/lang/String;", null,
 				List.of(IntValue.of(26)));
 		assertStringValue("abcdefghijklmnopqrstuvwxyz", retVal);
+	}
+
+	@Test
+	void testStringNumberParsing() {
+		String compiled = compile("""
+				static byte parseByte(String value) { return Byte.parseByte(value); }
+				static short parseShort(String value) { return Short.parseShort(value); }
+				static int parseInt(String value) { return Integer.parseInt(value); }
+				static long parseLong(String value) { return Long.parseLong(value); }
+				static float parseFloat(String value) { return Float.parseFloat(value); }
+				static double parseDouble(String value) { return Double.parseDouble(value); }
+				""");
+		Workspace evaluationWorkspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(get(CLASS_NAME)));
+		InheritanceGraph graph = new InheritanceGraph(evaluationWorkspace);
+
+		// All the number types should be able to parse input string representations of their content.
+		assertIntValue(-12, evaluate(compiled, "parseByte", "(Ljava/lang/String;)B", null, List.of(ObjectValue.string("-12"))));
+		assertIntValue(123, evaluate(compiled, "parseShort", "(Ljava/lang/String;)S", null, List.of(ObjectValue.string("123"))));
+		assertIntValue(1234, evaluate(compiled, "parseInt", "(Ljava/lang/String;)I", null, List.of(ObjectValue.string("1234"))));
+		assertLongValue(123456789012L, evaluate(compiled, "parseLong", "(Ljava/lang/String;)J", null, List.of(ObjectValue.string("123456789012"))));
+		assertFloatValue(1.25f, evaluate(compiled, "parseFloat", "(Ljava/lang/String;)F", null, List.of(ObjectValue.string("1.25"))));
+		assertDoubleValue(12.5, evaluate(compiled, "parseDouble", "(Ljava/lang/String;)D", null, List.of(ObjectValue.string("12.5"))));
+	}
+
+	@Test
+	void testObjectsRequireNonNull() {
+		String compiled = compile("""
+				static String require(String value) { return java.util.Objects.requireNonNull(value); }
+				static String requireWithMessage(String value) { return java.util.Objects.requireNonNull(value, "value"); }
+				static String requireElse(String value, String fallback) { return java.util.Objects.requireNonNullElse(value, fallback); }
+				static String requireElseGet(String value, java.util.function.Supplier<String> supplier) {
+				    return java.util.Objects.requireNonNullElseGet(value, supplier);
+				}
+				""");
+		Workspace evaluationWorkspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(get(CLASS_NAME)));
+		InheritanceGraph graph = new InheritanceGraph(evaluationWorkspace);
+
+		// Passing in a non-null value should return the same value.
+		assertStringValue("value", evaluate(compiled, "require", "(Ljava/lang/String;)Ljava/lang/String;", null, List.of(ObjectValue.string("value"))));
+		assertStringValue("value", evaluate(compiled, "requireWithMessage", "(Ljava/lang/String;)Ljava/lang/String;", null, List.of(ObjectValue.string("value"))));
+
+		// Passing in a null value should throw a NullPointerException.
+		EvaluationResult nullResult = evaluateResult(compiled, "require", "(Ljava/lang/String;)Ljava/lang/String;", null, List.of(ObjectValue.VAL_OBJECT_NULL));
+		ThrowableValue nullException = assertInstanceOf(ThrowableValue.class, assertInstanceOf(EvaluationThrowsResult.class, nullResult).exception());
+		assertEquals("java/lang/NullPointerException", nullException.type().getInternalName());
+
+		// Passing in a null value with a message should throw a NullPointerException with the message.
+		EvaluationResult nullMessageResult = evaluateResult(compiled, "requireWithMessage", "(Ljava/lang/String;)Ljava/lang/String;", null,List.of(ObjectValue.VAL_OBJECT_NULL));
+		ThrowableValue nullMessageException = assertInstanceOf(ThrowableValue.class, assertInstanceOf(EvaluationThrowsResult.class, nullMessageResult).exception());
+		assertEquals("java/lang/NullPointerException", nullMessageException.type().getInternalName());
+		assertEquals("value", nullMessageException.getBackingException().getMessage());
+
+		// Non-null values win over the fallback for both overloads.
+		Supplier<String> supplier = () -> "fallback";
+		InstancedObjectValue<Supplier<String>> supplierValue = new InstancedObjectValue<>(supplier);
+		assertStringValue("value", evaluate(compiled, "requireElse", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;", null, List.of(ObjectValue.string("value"), ObjectValue.string("fallback"))));
+		assertStringValue("value", evaluate(compiled, "requireElseGet", "(Ljava/lang/String;Ljava/util/function/Supplier;)Ljava/lang/String;", null, List.of(ObjectValue.string("value"), supplierValue)));
+
+		// Null values use the fallback or invoke the supplied fallback factory.
+		assertStringValue("fallback", evaluate(compiled, "requireElse", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;", null, List.of(ObjectValue.VAL_OBJECT_NULL, ObjectValue.string("fallback"))));
+		assertStringValue("fallback", evaluate(compiled, "requireElseGet", "(Ljava/lang/String;Ljava/util/function/Supplier;)Ljava/lang/String;", null, List.of(ObjectValue.VAL_OBJECT_NULL, supplierValue)));
+
+		// A null fallback fails with the same null-pointer semantics as requireNonNull.
+		EvaluationResult nullFallbackResult = evaluateResult(compiled, "requireElse", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;", null, List.of(ObjectValue.VAL_OBJECT_NULL, ObjectValue.VAL_OBJECT_NULL));
+		ThrowableValue nullFallbackException = assertInstanceOf(ThrowableValue.class, assertInstanceOf(EvaluationThrowsResult.class, nullFallbackResult).exception());
+		assertEquals("java/lang/NullPointerException", nullFallbackException.type().getInternalName());
+	}
+
+	@Test
+	void testBoxedNumberToPrimitive() {
+		String compiled = compile("""
+				static int numberValue(Number value) { return value.intValue(); }
+				static String numberMappings(Number value) {
+				    return value.byteValue() + ":" + value.shortValue() + ":" + value.intValue()
+				            + ":" + value.longValue() + ":" + value.floatValue() + ":" + value.doubleValue();
+				}
+				static String boxedByte(Byte value) {
+				    return value.byteValue() + ":" + value.shortValue() + ":" + value.intValue()
+				            + ":" + value.longValue() + ":" + value.floatValue() + ":" + value.doubleValue();
+				}
+				static String boxedShort(Short value) {
+				    return value.byteValue() + ":" + value.shortValue() + ":" + value.intValue()
+				            + ":" + value.longValue() + ":" + value.floatValue() + ":" + value.doubleValue();
+				}
+				static String boxedInteger(Integer value) {
+				    return value.byteValue() + ":" + value.shortValue() + ":" + value.intValue()
+				            + ":" + value.longValue() + ":" + value.floatValue() + ":" + value.doubleValue();
+				}
+				static String boxedLong(Long value) {
+				    return value.byteValue() + ":" + value.shortValue() + ":" + value.intValue()
+				            + ":" + value.longValue() + ":" + value.floatValue() + ":" + value.doubleValue();
+				}
+				static String boxedFloat(Float value) {
+				    return value.byteValue() + ":" + value.shortValue() + ":" + value.intValue()
+				            + ":" + value.longValue() + ":" + value.floatValue() + ":" + value.doubleValue();
+				}
+				static String boxedDouble(Double value) {
+				    return value.byteValue() + ":" + value.shortValue() + ":" + value.intValue()
+				            + ":" + value.longValue() + ":" + value.floatValue() + ":" + value.doubleValue();
+				}
+				""");
+
+		// All of the boxed number types should be able to be converted to their primitive values.
+		String expected = "7:7:7:7:7.0:7.0";
+		assertStringValue(expected, evaluate(compiled, "numberMappings", "(Ljava/lang/Number;)Ljava/lang/String;", null, List.of(new InstancedObjectValue<>(Integer.valueOf(7)))));
+		assertStringValue(expected, evaluate(compiled, "boxedByte", "(Ljava/lang/Byte;)Ljava/lang/String;", null, List.of(new InstancedObjectValue<>(Byte.valueOf((byte) 7)))));
+		assertStringValue(expected, evaluate(compiled, "boxedShort", "(Ljava/lang/Short;)Ljava/lang/String;", null, List.of(new InstancedObjectValue<>(Short.valueOf((short) 7)))));
+		assertStringValue(expected, evaluate(compiled, "boxedInteger", "(Ljava/lang/Integer;)Ljava/lang/String;", null, List.of(new InstancedObjectValue<>(Integer.valueOf(7)))));
+		assertStringValue(expected, evaluate(compiled, "boxedLong", "(Ljava/lang/Long;)Ljava/lang/String;", null, List.of(new InstancedObjectValue<>(Long.valueOf(7)))));
+		assertStringValue(expected, evaluate(compiled, "boxedFloat", "(Ljava/lang/Float;)Ljava/lang/String;", null, List.of(new InstancedObjectValue<>(Float.valueOf(7)))));
+		assertStringValue(expected, evaluate(compiled, "boxedDouble", "(Ljava/lang/Double;)Ljava/lang/String;", null, List.of(new InstancedObjectValue<>(Double.valueOf(7)))));
 	}
 
 	@Test
@@ -2482,6 +2595,20 @@ public class EvaluatorTest extends TransformerTestBase {
 	private static void assertLongValue(long value, @Nullable ReValue result) {
 		if (result instanceof LongValue longVal)
 			assertEquals(value, longVal.value().orElseThrow());
+		else
+			fail("Evaluation failure, unexpected return value: " + result);
+	}
+
+	private static void assertFloatValue(float value, @Nullable ReValue result) {
+		if (result instanceof FloatValue floatVal)
+			assertEquals(value, floatVal.value().orElseThrow());
+		else
+			fail("Evaluation failure, unexpected return value: " + result);
+	}
+
+	private static void assertDoubleValue(double value, @Nullable ReValue result) {
+		if (result instanceof DoubleValue doubleVal)
+			assertEquals(value, doubleVal.value().orElseThrow());
 		else
 			fail("Evaluation failure, unexpected return value: " + result);
 	}

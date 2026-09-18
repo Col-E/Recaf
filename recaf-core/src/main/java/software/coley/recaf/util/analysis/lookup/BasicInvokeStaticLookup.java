@@ -120,8 +120,8 @@ public class BasicInvokeStaticLookup extends BasicLookupUtils implements InvokeS
 		METHODS.put("java/util/Objects.checkIndex(JJ)J", (Func_2<LongValue, LongValue>) (a, b) -> j(Objects.checkIndex(j(a), j(b))));
 		METHODS.put("java/util/Objects.hashCode(Ljava/lang/Object;)I", (Func_1<ObjectValue>) (a) -> i(Objects.hashCode(obj(a))));
 		METHODS.put("java/util/Objects.hash([Ljava/lang/Object;)I", (Func_1<ArrayValue>) (a) -> i(Objects.hash(arrobj(a))));
-		METHODS.put("java/util/Objects.requireNonNull(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;", (Func_2<ObjectValue, StringValue>) (a, b) -> obj(Objects.requireNonNull(obj(a), str(b))));
-		METHODS.put("java/util/Objects.requireNonNull(Ljava/lang/Object;)Ljava/lang/Object;", (Func_1<ObjectValue>) (a) -> obj(Objects.requireNonNull(obj(a))));
+		METHODS.put("java/util/Objects.requireNonNull(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;", (Func_2<ObjectValue, ObjectValue>) (a, b) -> obj((Object) obj(Objects.requireNonNull(a.isNull() ? null : a, str(b)))));
+		METHODS.put("java/util/Objects.requireNonNull(Ljava/lang/Object;)Ljava/lang/Object;", (Func_1<ObjectValue>) (a) -> obj((Object) obj(Objects.requireNonNull(a.isNull() ? null : a))));
 		METHODS.put("java/util/Objects.checkFromToIndex(JJJ)J", (Func_3<LongValue, LongValue, LongValue>) (a, b, c) -> j(Objects.checkFromToIndex(j(a), j(b), j(c))));
 		METHODS.put("java/util/Objects.checkFromToIndex(III)I", (Func_3<IntValue, IntValue, IntValue>) (a, b, c) -> i(Objects.checkFromToIndex(i(a), i(b), i(c))));
 		METHODS.put("java/util/Objects.checkFromIndexSize(III)I", (Func_3<IntValue, IntValue, IntValue>) (a, b, c) -> i(Objects.checkFromIndexSize(i(a), i(b), i(c))));

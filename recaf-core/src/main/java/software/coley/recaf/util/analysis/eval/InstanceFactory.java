@@ -61,6 +61,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.NavigableSet;
+import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
 import java.util.SortedMap;
@@ -1629,6 +1630,7 @@ public class InstanceFactory extends BasicLookupUtils {
 	 */
 	private void registerStaticMethodHandlers() {
 		registerStaticArrays();
+		registerObjects();
 
 		// Its just one method. How complex can it be?
 		//  [aware.gif]
@@ -1789,6 +1791,49 @@ public class InstanceFactory extends BasicLookupUtils {
 		// TODO: sort
 
 		// TODO: setAll
+	}
+
+	/**
+	 * Methods for {@link Objects}.
+	 */
+	private void registerObjects() {
+		// We already have static method handling in BasicInvokeStaticLookup#objects() but some methods need special
+		// handling like the requireNonNull family. The gist is for throwing behavior we cannot fully model that with
+		// the lookups, so these handlers are registered to ensure the evaluator can throw exceptions when appropriate.
+		registerStaticMethodHandler("java/util/Objects", "requireNonNull", "(Ljava/lang/Object;)Ljava/lang/Object;", (frame, interpreter, instruction, args) -> requireNonNull(instruction, args.getFirst(), null));
+		registerStaticMethodHandler("java/util/Objects", "requireNonNull", "(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;",
+				(frame, interpreter, instruction, args) -> {
+					ReValue messageValue = args.get(1);
+					String message = messageValue instanceof ObjectValue object ? str(object) : null;
+					return requireNonNull(instruction, args.getFirst(), message);
+				});
+
+		registerStaticMethodHandler("java/util/Objects", "requireNonNullElse", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+				(frame, interpreter, instruction, args) -> {
+					ReValue value = args.getFirst();
+					ReValue fallback = args.get(1);
+					if (!(value instanceof ObjectValue object) || !(fallback instanceof ObjectValue))
+						throw new AnalyzerException(instruction, "Objects.requireNonNullElse received a non-object value");
+					if (object.isNotNull())
+						return value;
+					if (object.isNull())
+						return requireNonNull(instruction, fallback, null);
+					throw new AnalyzerException(instruction, "Objects.requireNonNullElse received a possibly null value");
+				});
+		registerStaticMethodHandler("java/util/Objects", "requireNonNullElseGet", "(Ljava/lang/Object;Ljava/util/function/Supplier;)Ljava/lang/Object;",
+				(frame, interpreter, instruction, args) -> {
+					ReValue value = args.getFirst();
+					if (!(value instanceof ObjectValue object))
+						throw new AnalyzerException(instruction, "Objects.requireNonNullElseGet received a non-object value");
+					if (object.isNotNull())
+						return value;
+					if (!object.isNull())
+						throw new AnalyzerException(instruction, "Objects.requireNonNullElseGet received a possibly null value");
+					if (!(args.get(1) instanceof InstancedObjectValue<?> supplierValue)
+							|| !(supplierValue.getRealInstance() instanceof Supplier<?> supplier))
+						throw new AnalyzerException(instruction, "Objects.requireNonNullElseGet requires a host-backed Supplier");
+					return requireNonNull(instruction, fromHostObject(supplier.get()), null);
+				});
 	}
 
 	/**
@@ -2146,6 +2191,39 @@ public class InstanceFactory extends BasicLookupUtils {
 				return type.cast(realInstance);
 		}
 		throw new IllegalArgumentException("Expected host-backed " + type.getName());
+	}
+
+	/**
+	 * Require a non-null evaluator value.
+	 *
+	 * @param instruction
+	 * 		Method instruction that is performing the null check.
+	 * @param value
+	 * 		Evaluator value to check.
+	 * @param message
+	 * 		Optional message for the {@link NullPointerException} if thrown.
+	 *
+	 * @return The non-null evaluator value.
+	 *
+	 * @throws AnalyzerException
+	 * 		If the value is not an object, or is possibly null.
+	 * @throws NullPointerException
+	 * 		If the value is known to be null.
+	 */
+	@Nonnull
+	private static ReValue requireNonNull(@Nonnull MethodInsnNode instruction, @Nonnull ReValue value,
+	                                      @Nullable String message) throws AnalyzerException {
+		if (!(value instanceof ObjectValue object))
+			throw new AnalyzerException(instruction, "Objects.requireNonNull received a non-object value");
+
+		// Actual cases to test.
+		if (object.isNull())
+			throw new NullPointerException(message);
+		if (object.isNotNull())
+			return value;
+
+		// If it's neither Null or NotNull then its unknown, and we don't know what to do.
+		throw new AnalyzerException(instruction, "Objects.requireNonNull received a unknown nullability value");
 	}
 
 	/**

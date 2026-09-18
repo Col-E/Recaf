@@ -1780,8 +1780,7 @@ public class Evaluator {
 						// Resolve the method to evaluate, preferring the receiver type when available, and falling back to the current class.
 						ClassMethodPair resolvedMethod = resolveMethod(min, receiver, resolutionClassName, context);
 						if (resolvedMethod != null) {
-							EvaluationResult result = Evaluator.this.evaluate(resolvedMethod.classNode(), resolvedMethod.methodNode(),
-									receiver, valueList, context);
+							EvaluationResult result = Evaluator.this.evaluate(resolvedMethod.classNode(), resolvedMethod.methodNode(), receiver, valueList, context);
 							switch (result) {
 								case EvaluationYieldResult yielded -> {
 									if (isVoid)
@@ -1794,13 +1793,25 @@ public class Evaluator {
 								}
 								case EvaluationFailureResult failure -> throw new NestedEvaluationFailure(failure);
 							}
+						} else if (isWorkspaceClass(receiver, resolutionClassName, context))
+							throw new NestedEvaluationFailure(EvaluationResult.cannotEvaluate("Invoke-Virtual/Interface call could not be resolved: " + min.owner + '.' + min.name + min.desc));
+
+						// If the method is not modeled, check if we have a registered lookup for it.
+						// This lookup is also handled in the interpreter, but that route does not handle
+						// exceptions in the same way as the evaluator, so we need to handle it here first.
+						InvokeVirtualLookup lookup = interpreter.getInvokeVirtualLookup();
+						if (!isVoid && receiver.hasKnownValue()
+								&& lookup != null && lookup.hasLookup(min)
+								&& valueList.stream().allMatch(ReValue::hasKnownValue)) {
+							try {
+								push(lookup.get(min, receiver, valueList));
+								yield insn.getNext();
+							} catch (Throwable t) {
+								yield exceptionHandler.routeException(this, exceptionHandler.newThrowable(t), insn);
+							}
 						}
 
-						if (isWorkspaceClass(receiver, resolutionClassName, context))
-							throw new NestedEvaluationFailure(EvaluationResult.cannotEvaluate(
-									"Invoke-Virtual/Interface call could not be resolved: " + min.owner + '.' + min.name + min.desc));
-
-						// Fall back to normal interpreter execution, which can handle some remaining cases, including value lookups.
+						// Fall back to normal interpreter execution, operating on unmapped values.
 						// - Need to unmap values here since the underlying lookup system doesn't know how to handle our wrapped values.
 						valueList.addFirst(receiver);
 						List<ReValue> unmappedValueList = unmapValues(valueList);
@@ -1895,7 +1906,20 @@ public class Evaluator {
 							}
 						}
 
-						// Fall back to normal interpreter execution, which can handle some remaining cases, including value lookups.
+						// If the method is not modeled, check if we have a registered lookup for it.
+						// This lookup is also handled in the interpreter, but that route does not handle
+						// exceptions in the same way as the evaluator, so we need to handle it here first.
+						InvokeStaticLookup lookup = interpreter.getInvokeStaticLookup();
+						if (!isVoid && lookup != null && lookup.hasLookup(min) && valueList.stream().allMatch(ReValue::hasKnownValue)) {
+							try {
+								push(lookup.get(min, valueList));
+								yield insn.getNext();
+							} catch (Throwable t) {
+								yield exceptionHandler.routeException(this, exceptionHandler.newThrowable(t), insn);
+							}
+						}
+
+						// Fall back to normal interpreter execution, operating on unmapped values.
 						// - Need to unmap values here since the underlying lookup system doesn't know how to handle our wrapped values.
 						List<ReValue> unmappedValueList = unmapValues(valueList);
 						if (isVoid) {
