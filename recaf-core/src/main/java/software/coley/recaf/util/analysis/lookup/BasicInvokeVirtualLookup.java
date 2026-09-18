@@ -73,6 +73,7 @@ public class BasicInvokeVirtualLookup extends BasicLookupUtils implements Invoke
 
 	static {
 		strings();
+		numbers();
 
 		// primitives
 		booleans();
@@ -100,12 +101,6 @@ public class BasicInvokeVirtualLookup extends BasicLookupUtils implements Invoke
 		METHODS.put("java/lang/Byte.hashCode()I", (Func_1<ObjectValue>) (ctx) -> i(BasicLookupUtils.<Byte>obj(ctx).hashCode()));
 		METHODS.put("java/lang/Byte.compareTo(Ljava/lang/Byte;)I", (Func_2<ObjectValue, ObjectValue>) (ctx, a) -> i(BasicLookupUtils.<Byte>obj(ctx).compareTo(BasicLookupUtils.<Byte>obj(a))));
 		METHODS.put("java/lang/Byte.compareTo(Ljava/lang/Object;)I", (Func_2<ObjectValue, ObjectValue>) (ctx, a) -> i(BasicLookupUtils.<Byte>obj(ctx).compareTo(obj(a))));
-		METHODS.put("java/lang/Byte.byteValue()B", (Func_1<ObjectValue>) (ctx) -> b(BasicLookupUtils.<Byte>obj(ctx).byteValue()));
-		METHODS.put("java/lang/Byte.shortValue()S", (Func_1<ObjectValue>) (ctx) -> s(BasicLookupUtils.<Byte>obj(ctx).shortValue()));
-		METHODS.put("java/lang/Byte.intValue()I", (Func_1<ObjectValue>) (ctx) -> i(BasicLookupUtils.<Byte>obj(ctx).intValue()));
-		METHODS.put("java/lang/Byte.longValue()J", (Func_1<ObjectValue>) (ctx) -> j(BasicLookupUtils.<Byte>obj(ctx).longValue()));
-		METHODS.put("java/lang/Byte.floatValue()F", (Func_1<ObjectValue>) (ctx) -> f(BasicLookupUtils.<Byte>obj(ctx).floatValue()));
-		METHODS.put("java/lang/Byte.doubleValue()D", (Func_1<ObjectValue>) (ctx) -> d(BasicLookupUtils.<Byte>obj(ctx).doubleValue()));
 	}
 
 	private static void chars() {
@@ -123,12 +118,6 @@ public class BasicInvokeVirtualLookup extends BasicLookupUtils implements Invoke
 		METHODS.put("java/lang/Short.hashCode()I", (Func_1<ObjectValue>) (ctx) -> i(BasicLookupUtils.<Short>obj(ctx).hashCode()));
 		METHODS.put("java/lang/Short.compareTo(Ljava/lang/Short;)I", (Func_2<ObjectValue, ObjectValue>) (ctx, a) -> i(BasicLookupUtils.<Short>obj(ctx).compareTo(BasicLookupUtils.<Short>obj(a))));
 		METHODS.put("java/lang/Short.compareTo(Ljava/lang/Object;)I", (Func_2<ObjectValue, ObjectValue>) (ctx, a) -> i(BasicLookupUtils.<Short>obj(ctx).compareTo(obj(a))));
-		METHODS.put("java/lang/Short.byteValue()B", (Func_1<ObjectValue>) (ctx) -> b(BasicLookupUtils.<Short>obj(ctx).byteValue()));
-		METHODS.put("java/lang/Short.shortValue()S", (Func_1<ObjectValue>) (ctx) -> s(BasicLookupUtils.<Short>obj(ctx).shortValue()));
-		METHODS.put("java/lang/Short.intValue()I", (Func_1<ObjectValue>) (ctx) -> i(BasicLookupUtils.<Short>obj(ctx).intValue()));
-		METHODS.put("java/lang/Short.longValue()J", (Func_1<ObjectValue>) (ctx) -> j(BasicLookupUtils.<Short>obj(ctx).longValue()));
-		METHODS.put("java/lang/Short.floatValue()F", (Func_1<ObjectValue>) (ctx) -> f(BasicLookupUtils.<Short>obj(ctx).floatValue()));
-		METHODS.put("java/lang/Short.doubleValue()D", (Func_1<ObjectValue>) (ctx) -> d(BasicLookupUtils.<Short>obj(ctx).doubleValue()));
 	}
 
 	private static void ints() {
@@ -137,12 +126,6 @@ public class BasicInvokeVirtualLookup extends BasicLookupUtils implements Invoke
 		METHODS.put("java/lang/Integer.hashCode()I", (Func_1<ObjectValue>) (ctx) -> i(BasicLookupUtils.<Integer>obj(ctx).hashCode()));
 		METHODS.put("java/lang/Integer.compareTo(Ljava/lang/Object;)I", (Func_2<ObjectValue, ObjectValue>) (ctx, a) -> i(BasicLookupUtils.<Integer>obj(ctx).compareTo(BasicLookupUtils.<Integer>obj(a))));
 		METHODS.put("java/lang/Integer.compareTo(Ljava/lang/Integer;)I", (Func_2<ObjectValue, ObjectValue>) (ctx, a) -> i(BasicLookupUtils.<Integer>obj(ctx).compareTo(BasicLookupUtils.<Integer>obj(a))));
-		METHODS.put("java/lang/Integer.byteValue()B", (Func_1<ObjectValue>) (ctx) -> b(BasicLookupUtils.<Integer>obj(ctx).byteValue()));
-		METHODS.put("java/lang/Integer.shortValue()S", (Func_1<ObjectValue>) (ctx) -> s(BasicLookupUtils.<Integer>obj(ctx).shortValue()));
-		METHODS.put("java/lang/Integer.intValue()I", (Func_1<ObjectValue>) (ctx) -> i(BasicLookupUtils.<Integer>obj(ctx).intValue()));
-		METHODS.put("java/lang/Integer.longValue()J", (Func_1<ObjectValue>) (ctx) -> j(BasicLookupUtils.<Integer>obj(ctx).longValue()));
-		METHODS.put("java/lang/Integer.floatValue()F", (Func_1<ObjectValue>) (ctx) -> f(BasicLookupUtils.<Integer>obj(ctx).floatValue()));
-		METHODS.put("java/lang/Integer.doubleValue()D", (Func_1<ObjectValue>) (ctx) -> d(BasicLookupUtils.<Integer>obj(ctx).doubleValue()));
 	}
 
 	private static void longs() {
@@ -151,12 +134,6 @@ public class BasicInvokeVirtualLookup extends BasicLookupUtils implements Invoke
 		METHODS.put("java/lang/Long.hashCode()I", (Func_1<ObjectValue>) (ctx) -> i(BasicLookupUtils.<Long>obj(ctx).hashCode()));
 		METHODS.put("java/lang/Long.compareTo(Ljava/lang/Object;)I", (Func_2<ObjectValue, ObjectValue>) (ctx, a) -> i(BasicLookupUtils.<Long>obj(ctx).compareTo(obj(a))));
 		METHODS.put("java/lang/Long.compareTo(Ljava/lang/Long;)I", (Func_2<ObjectValue, ObjectValue>) (ctx, a) -> i(BasicLookupUtils.<Long>obj(ctx).compareTo(BasicLookupUtils.<Long>obj(a))));
-		METHODS.put("java/lang/Long.byteValue()B", (Func_1<ObjectValue>) (ctx) -> b(BasicLookupUtils.<Long>obj(ctx).byteValue()));
-		METHODS.put("java/lang/Long.shortValue()S", (Func_1<ObjectValue>) (ctx) -> s(BasicLookupUtils.<Long>obj(ctx).shortValue()));
-		METHODS.put("java/lang/Long.intValue()I", (Func_1<ObjectValue>) (ctx) -> i(BasicLookupUtils.<Long>obj(ctx).intValue()));
-		METHODS.put("java/lang/Long.longValue()J", (Func_1<ObjectValue>) (ctx) -> j(BasicLookupUtils.<Long>obj(ctx).longValue()));
-		METHODS.put("java/lang/Long.floatValue()F", (Func_1<ObjectValue>) (ctx) -> f(BasicLookupUtils.<Long>obj(ctx).floatValue()));
-		METHODS.put("java/lang/Long.doubleValue()D", (Func_1<ObjectValue>) (ctx) -> d(BasicLookupUtils.<Long>obj(ctx).doubleValue()));
 	}
 
 	private static void floats() {
@@ -166,12 +143,6 @@ public class BasicInvokeVirtualLookup extends BasicLookupUtils implements Invoke
 		METHODS.put("java/lang/Float.isInfinite()Z", (Func_1<ObjectValue>) (ctx) -> z(BasicLookupUtils.<Float>obj(ctx).isInfinite()));
 		METHODS.put("java/lang/Float.compareTo(Ljava/lang/Object;)I", (Func_2<ObjectValue, ObjectValue>) (ctx, a) -> i(BasicLookupUtils.<Float>obj(ctx).compareTo(obj(a))));
 		METHODS.put("java/lang/Float.compareTo(Ljava/lang/Float;)I", (Func_2<ObjectValue, ObjectValue>) (ctx, a) -> i(BasicLookupUtils.<Float>obj(ctx).compareTo(BasicLookupUtils.<Float>obj(a))));
-		METHODS.put("java/lang/Float.byteValue()B", (Func_1<ObjectValue>) (ctx) -> b(BasicLookupUtils.<Float>obj(ctx).byteValue()));
-		METHODS.put("java/lang/Float.shortValue()S", (Func_1<ObjectValue>) (ctx) -> s(BasicLookupUtils.<Float>obj(ctx).shortValue()));
-		METHODS.put("java/lang/Float.intValue()I", (Func_1<ObjectValue>) (ctx) -> i(BasicLookupUtils.<Float>obj(ctx).intValue()));
-		METHODS.put("java/lang/Float.longValue()J", (Func_1<ObjectValue>) (ctx) -> j(BasicLookupUtils.<Float>obj(ctx).longValue()));
-		METHODS.put("java/lang/Float.floatValue()F", (Func_1<ObjectValue>) (ctx) -> f(BasicLookupUtils.<Float>obj(ctx).floatValue()));
-		METHODS.put("java/lang/Float.doubleValue()D", (Func_1<ObjectValue>) (ctx) -> d(BasicLookupUtils.<Float>obj(ctx).doubleValue()));
 		METHODS.put("java/lang/Float.isNaN()Z", (Func_1<ObjectValue>) (ctx) -> z(BasicLookupUtils.<Float>obj(ctx).isNaN()));
 	}
 
@@ -182,13 +153,26 @@ public class BasicInvokeVirtualLookup extends BasicLookupUtils implements Invoke
 		METHODS.put("java/lang/Double.isInfinite()Z", (Func_1<ObjectValue>) (ctx) -> z(BasicLookupUtils.<Double>obj(ctx).isInfinite()));
 		METHODS.put("java/lang/Double.compareTo(Ljava/lang/Double;)I", (Func_2<ObjectValue, ObjectValue>) (ctx, a) -> i(BasicLookupUtils.<Double>obj(ctx).compareTo(BasicLookupUtils.<Double>obj(a))));
 		METHODS.put("java/lang/Double.compareTo(Ljava/lang/Object;)I", (Func_2<ObjectValue, ObjectValue>) (ctx, a) -> i(BasicLookupUtils.<Double>obj(ctx).compareTo(BasicLookupUtils.<Double>obj(a))));
-		METHODS.put("java/lang/Double.byteValue()B", (Func_1<ObjectValue>) (ctx) -> b(BasicLookupUtils.<Double>obj(ctx).byteValue()));
-		METHODS.put("java/lang/Double.shortValue()S", (Func_1<ObjectValue>) (ctx) -> s(BasicLookupUtils.<Double>obj(ctx).shortValue()));
-		METHODS.put("java/lang/Double.intValue()I", (Func_1<ObjectValue>) (ctx) -> i(BasicLookupUtils.<Double>obj(ctx).intValue()));
-		METHODS.put("java/lang/Double.longValue()J", (Func_1<ObjectValue>) (ctx) -> j(BasicLookupUtils.<Double>obj(ctx).longValue()));
-		METHODS.put("java/lang/Double.floatValue()F", (Func_1<ObjectValue>) (ctx) -> f(BasicLookupUtils.<Double>obj(ctx).floatValue()));
-		METHODS.put("java/lang/Double.doubleValue()D", (Func_1<ObjectValue>) (ctx) -> d(BasicLookupUtils.<Double>obj(ctx).doubleValue()));
 		METHODS.put("java/lang/Double.isNaN()Z", (Func_1<ObjectValue>) (ctx) -> z(BasicLookupUtils.<Double>obj(ctx).isNaN()));
+	}
+
+	private static void numbers() {
+		METHODS.put("java/lang/Number.byteValue()B", (Func_1<ObjectValue>) ctx -> b(BasicLookupUtils.<Number>obj(ctx).byteValue()));
+		METHODS.put("java/lang/Number.shortValue()S", (Func_1<ObjectValue>) ctx -> s(BasicLookupUtils.<Number>obj(ctx).shortValue()));
+		METHODS.put("java/lang/Number.intValue()I", (Func_1<ObjectValue>) ctx -> i(BasicLookupUtils.<Number>obj(ctx).intValue()));
+		METHODS.put("java/lang/Number.longValue()J", (Func_1<ObjectValue>) ctx -> j(BasicLookupUtils.<Number>obj(ctx).longValue()));
+		METHODS.put("java/lang/Number.floatValue()F", (Func_1<ObjectValue>) ctx -> f(BasicLookupUtils.<Number>obj(ctx).floatValue()));
+		METHODS.put("java/lang/Number.doubleValue()D", (Func_1<ObjectValue>) ctx -> d(BasicLookupUtils.<Number>obj(ctx).doubleValue()));
+
+		// Delegate to the parent class for child types, since they all inherit from Number.
+		String[] childTypes = {
+				"java/lang/Byte", "java/lang/Short", "java/lang/Integer",
+				"java/lang/Long", "java/lang/Float", "java/lang/Double"
+		};
+		String[] methods = {"byteValue()B", "shortValue()S", "intValue()I", "longValue()J", "floatValue()F", "doubleValue()D"};
+		for (String childType : childTypes)
+			for (String method : methods)
+				METHODS.put(childType + '.' + method, Objects.requireNonNull(METHODS.get("java/lang/Number." + method)));
 	}
 
 	private static void strings() {
