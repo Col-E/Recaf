@@ -117,6 +117,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
 
@@ -1221,6 +1222,7 @@ public class DeobfuscationWindow extends RecafStage {
 	 */
 	private class TransformPreview extends BorderPane {
 		private final Batch deobfuscationBatch = ThreadUtil.batch(ThreadPoolFactory.newSingleThreadExecutor("deobfuscation-preview"));
+		private final AtomicInteger previewGeneration = new AtomicInteger();
 		private final boolean andApply;
 		private final Editor editorDecompile;
 		private final Editor editorAssembly;
@@ -1305,29 +1307,33 @@ public class DeobfuscationWindow extends RecafStage {
 			//  and we have no good way of force killing them (rip Thread.stop) so the best we can really do is only
 			//  allow one of these tasks to run at a time, with one next 'pending' task.
 			//  While a task is executing we update what is the next 'pending' task when we call this method.
-			//  Once the current task is done, or there is nothing running we make the 'pending' the current task and run it.
+			//  Once the current task is done, or there is nothing running we make the 'pending' task the current task and run it.
+			int generation = previewGeneration.incrementAndGet();
 			deobfuscationBatch.add(() -> {
 				deobfuscationBatch.clear();
 				if (isDecompilePreview())
-					decompile();
+					decompile(generation);
 				else
-					disassemble();
+					disassemble(generation);
 			});
 			deobfuscationBatch.executeNewest();
 		}
 
 		/**
-		 * Renders the transformed class as jasm disassembly.
+		 * Displays the transformed class as jasm disassembly.
 		 */
-		private void disassemble() {
+		private void disassemble(int generation) {
 			// Show the placeholder hint until a class is selected.
 			if (classInfo == null) {
-				FxThreadUtil.run(() -> editorAssembly.setText("// Preview: Disassembly\n" + Lang.get("deobf.preview.noselection")));
+				FxThreadUtil.run(() -> {
+					if (generation == previewGeneration.get())
+						editorAssembly.setText("// Preview: Disassembly\n" + Lang.get("deobf.preview.noselection"));
+				});
 				return;
 			}
 
-			JvmClassInfo jvmClass = getProcessedClass();
-			if (jvmClass == null)
+			JvmClassInfo jvmClass = getProcessedClass(generation);
+			if (jvmClass == null || generation != previewGeneration.get())
 				return;
 
 			// Resolve the transformed class path within the workspace, rebuild with our updated class, and disassemble.
@@ -1341,21 +1347,30 @@ public class DeobfuscationWindow extends RecafStage {
 			path = Objects.requireNonNull(path.getParent()).child(jvmClass);
 			JvmAssemblerPipeline pipeline = assemblerPipelineManager.newJvmAssemblerPipeline(workspace);
 			pipeline.disassemble(path)
-					.ifOk(disassembly -> FxThreadUtil.run(() -> editorAssembly.setText(disassembly)))
+					.ifOk(disassembly -> FxThreadUtil.run(() -> {
+						if (generation == previewGeneration.get())
+							editorAssembly.setText(disassembly);
+					}))
 					.ifErr((errors) -> {
 						String errorListStr = errors.stream().map(Error::toString).collect(Collectors.joining("\n - "));
 						logger.warn("Errors processing {} for deobfuscation preview:\n - {}", className, errorListStr);
-						FxThreadUtil.run(() -> showPreviewFailure(new IllegalStateException(errorListStr)));
+						FxThreadUtil.run(() -> {
+							if (generation == previewGeneration.get())
+								showPreviewFailure(new IllegalStateException(errorListStr));
+						});
 					});
 		}
 
 		/**
-		 * Renders the transformed class as decompiled source.
+		 * Displays the transformed class as decompiled source.
 		 */
-		private void decompile() {
+		private void decompile(int generation) {
 			// Show the placeholder hint until a class is selected.
 			if (classInfo == null) {
-				FxThreadUtil.run(() -> editorDecompile.setText("// Preview: Decompile\n" + Lang.get("deobf.preview.noselection")));
+				FxThreadUtil.run(() -> {
+					if (generation == previewGeneration.get())
+						editorDecompile.setText("// Preview: Decompile\n" + Lang.get("deobf.preview.noselection"));
+				});
 				return;
 			}
 
@@ -1364,14 +1379,17 @@ public class DeobfuscationWindow extends RecafStage {
 			//  reflecting the inner class changes. However, our current decompiler API just pulls from the
 			//  workspace, which won't have the transformed inner class until after we apply.
 			//  - Will need to create a lightweight view of the workspace that overlays transformed classes for decompilation.
-			JvmClassInfo jvmClass = getProcessedClass();
-			if (jvmClass == null) return;
+			JvmClassInfo jvmClass = getProcessedClass(generation);
+			if (jvmClass == null || generation != previewGeneration.get())
+				return;
 
 			// TODO: Pull out common decompile code with "AbstractDecompilePane" to do this more aesthetically
 			//  - And by that I mean include the animation
 			//  - And the error handling for decompilation failures
 			//  - But not the rest of the unrelated "editing" capabilities of the "AbstractDecompilePane"
 			decompilerManager.decompile(workspaceManager.getCurrent(), jvmClass).whenCompleteAsync((result, error) -> {
+				if (generation != previewGeneration.get())
+					return;
 				if (result != null) {
 					editorDecompile.setText(result.getText());
 				} else if (error != null) {
@@ -1396,7 +1414,7 @@ public class DeobfuscationWindow extends RecafStage {
 		 * @return The previewed class, transformed when in apply mode, or {@code null} if transformation failed.
 		 */
 		@Nullable
-		private JvmClassInfo getProcessedClass() {
+		private JvmClassInfo getProcessedClass(int generation) {
 			JvmClassInfo jvmClass = classInfo.asJvmClass();
 
 			// Apply mode transforms the class without committing anything to the workspace.
@@ -1418,7 +1436,10 @@ public class DeobfuscationWindow extends RecafStage {
 						}
 					}
 				} catch (TransformationException e) {
-					FxThreadUtil.run(() -> showPreviewFailure(e));
+					FxThreadUtil.run(() -> {
+						if (generation == previewGeneration.get())
+							showPreviewFailure(e);
+					});
 					return null;
 				}
 			}
