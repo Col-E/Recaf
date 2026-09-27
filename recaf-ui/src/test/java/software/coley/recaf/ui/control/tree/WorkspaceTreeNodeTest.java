@@ -53,6 +53,8 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResourceBuilder;
 
 import java.io.IOException;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -141,12 +143,12 @@ class WorkspaceTreeNodeTest {
 
 		// Content available in the default package/root directory.
 		default2 = p3f.child((String) null);
-		default1 = default2.child(new BasicFileInfo("root.txt", new byte[0], new BasicPropertyContainer()));
+		default1 = default2.child(new BasicFileInfo("root.txt", MemorySegment.ofArray(new byte[0]), new BasicPropertyContainer()));
 
 		// The path will visually look like (root)//zero.txt in the workspace tree.
 		// This is not ideal, but there's not really any great alternatives either.
 		z2 = p3f.child("//");
-		z1 = z2.child(new BasicFileInfo("///zero.txt", new byte[0], new BasicPropertyContainer()));
+		z1 = z2.child(new BasicFileInfo("///zero.txt", MemorySegment.ofArray(new byte[0]), new BasicPropertyContainer()));
 
 		// Embedded resource containing just 'root.txt'
 		embeddedResource = new WorkspaceFileResourceBuilder(new BasicJvmClassBundle(), fromFiles(default1.getValue()))
@@ -509,7 +511,7 @@ class WorkspaceTreeNodeTest {
 	void multipleVersionedPaths() throws Exception {
 		String classPath = HelloWorld.class.getName().replace(".", "/");
 		String classPackage = classPath.substring(0, classPath.lastIndexOf('/'));
-		byte[] classBytes = TestClassUtils.fromRuntimeClass(HelloWorld.class).getBytecode();
+		var classBytes = MemorySegment.ofArray(TestClassUtils.fromRuntimeClass(HelloWorld.class).getBytecode());
 
 		// Create JAR with 'META-INF/versions/<dummyversion>/<dummypackage>/HelloWorld.class' for multiple versions.
 		byte[] zipBytes = ZipCreationUtils.builder()
@@ -519,7 +521,8 @@ class WorkspaceTreeNodeTest {
 				.add(JarFileInfo.MULTI_RELEASE_PREFIX + "16/" + classPath + ".class", classBytes)
 				.add(JarFileInfo.MULTI_RELEASE_PREFIX + "21/" + classPath + ".class", classBytes)
 				.add(JarFileInfo.MULTI_RELEASE_PREFIX + "25/" + classPath + ".class", classBytes)
-				.bytes();
+				.bytes()
+				.toArray(ValueLayout.JAVA_BYTE);
 		ByteSource zipSource = ByteSources.wrap(zipBytes);
 
 		// Build the workspace and validate the versioned bundles exist.

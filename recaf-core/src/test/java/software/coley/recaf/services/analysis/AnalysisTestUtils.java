@@ -7,6 +7,7 @@ import com.google.devrel.gmscore.tools.apk.arsc.XmlStartElementChunk;
 import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.BinaryXmlFileInfo;
 
+import java.lang.foreign.MemorySegment;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -71,7 +72,7 @@ class AnalysisTestUtils {
 		// Base mock,
 		BinaryXmlFileInfo manifest = mock(BinaryXmlFileInfo.class);
 		when(manifest.getName()).thenReturn("AndroidManifest.xml");
-		when(manifest.getRawContent()).thenReturn(new byte[0]);
+		when(manifest.getRawContent()).thenReturn(MemorySegment.ofArray(new byte[0]));
 
 		// Configure the string pool and binary resource file to return the given elements.
 		StringPoolChunk strings = mock(StringPoolChunk.class);

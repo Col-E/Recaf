@@ -1,5 +1,8 @@
 package software.coley.recaf.info.builder;
 
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
+
 import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.*;
 import software.coley.recaf.info.properties.BasicPropertyContainer;
@@ -19,7 +22,7 @@ import software.coley.recaf.util.StringUtil;
 public class FileInfoBuilder<B extends FileInfoBuilder<?>> {
 	private PropertyContainer properties = new BasicPropertyContainer();
 	private String name;
-	private byte[] rawContent;
+	private MemorySegment rawContent;
 	protected StringDecodingResult decodingResult;
 
 	public FileInfoBuilder() {
@@ -89,10 +92,14 @@ public class FileInfoBuilder<B extends FileInfoBuilder<?>> {
 	}
 
 	@SuppressWarnings("unchecked")
-	public B withRawContent(@Nonnull byte[] rawContent) {
+	public B withRawContent(MemorySegment rawContent) {
 		this.rawContent = rawContent;
 		decodingResult = null; // Clear decoding when content changes
 		return (B) this;
+	}
+
+	public B withRawContent(@Nonnull byte[] rawContent) {
+		return withRawContent(MemorySegment.ofArray(rawContent));
 	}
 
 	public PropertyContainer getProperties() {
@@ -103,7 +110,7 @@ public class FileInfoBuilder<B extends FileInfoBuilder<?>> {
 		return name;
 	}
 
-	public byte[] getRawContent() {
+	public MemorySegment getRawContent() {
 		return rawContent;
 	}
 
@@ -113,7 +120,7 @@ public class FileInfoBuilder<B extends FileInfoBuilder<?>> {
 	@Nonnull
 	protected StringDecodingResult getDecodingResult() {
 		if (decodingResult == null)
-			decodingResult = StringUtil.decodeString(rawContent);
+			decodingResult = StringUtil.decodeString(rawContent.toArray(ValueLayout.JAVA_BYTE));
 		return decodingResult;
 	}
 

@@ -22,6 +22,8 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Arrays;
@@ -92,22 +94,22 @@ class ResourceImporterTest {
 
 		// Validate file bundle content
 		FileInfo fileInfo = resource.getFileBundle().iterator().next();
-		assertArrayEquals(helloBytes, fileInfo.getRawContent(), "Missing data compared to baseline input bytes");
+		assertArrayEquals(helloBytes, fileInfo.getRawContent().toArray(ValueLayout.JAVA_BYTE), "Missing data compared to baseline input bytes");
 	}
 
 	@Test
 	void testImportMultiReleaseVersionedClasses() throws IOException {
 		String helloWorldPath = HelloWorld.class.getName().replace(".", "/");
-		byte[] helloWorldBytes = TestClassUtils.fromRuntimeClass(HelloWorld.class).getBytecode();
+		var helloWorldBytes = MemorySegment.ofArray(TestClassUtils.fromRuntimeClass(HelloWorld.class).getBytecode());
 
 		// Create JAR with 'HelloWorld' declared multiple times in different multi-release directories.
 		// None should overlap.
-		Map<String, byte[]> map = new LinkedHashMap<>();
+		Map<String, MemorySegment> map = new LinkedHashMap<>();
 		map.put(helloWorldPath + ".class", helloWorldBytes);
 		map.put(JarFileInfo.MULTI_RELEASE_PREFIX + "9/" + helloWorldPath + ".class", helloWorldBytes);
 		map.put(JarFileInfo.MULTI_RELEASE_PREFIX + "10/" + helloWorldPath + ".class", helloWorldBytes);
 		map.put(JarFileInfo.MULTI_RELEASE_PREFIX + "11/" + helloWorldPath + ".class", helloWorldBytes);
-		byte[] zipBytes = ZipCreationUtils.createZip(map);
+		byte[] zipBytes = ZipCreationUtils.createZip(map).toArray(ValueLayout.JAVA_BYTE);
 		ByteSource zipSource = ByteSources.wrap(zipBytes);
 		WorkspaceResource resource = importer.importResource(zipSource);
 
@@ -119,26 +121,26 @@ class ResourceImporterTest {
 		assertEquals(0, resource.getEmbeddedResources().size());
 
 		// Validate class bundle content
-		assertArrayEquals(helloWorldBytes, resource.getJvmClassBundle().iterator().next().getBytecode());
+		assertArrayEquals(helloWorldBytes.toArray(ValueLayout.JAVA_BYTE), resource.getJvmClassBundle().iterator().next().getBytecode());
 		for (JvmClassBundle versioned : resource.getVersionedJvmClassBundles().values()) {
-			assertArrayEquals(helloWorldBytes, versioned.iterator().next().getBytecode());
+			assertArrayEquals(helloWorldBytes.toArray(ValueLayout.JAVA_BYTE), versioned.iterator().next().getBytecode());
 		}
 	}
 
 	@Test
 	void testImportVersionedClassOnlyWhenNameMatches() throws IOException {
 		String helloWorldPath = HelloWorld.class.getName().replace(".", "/");
-		byte[] helloWorldBytes = TestClassUtils.fromRuntimeClass(HelloWorld.class).getBytecode();
+		var helloWorldBytes = MemorySegment.ofArray(TestClassUtils.fromRuntimeClass(HelloWorld.class).getBytecode());
 
 		// Create JAR with 'HelloWorld' declared twice.
 		// Once correctly as a Java 9 versioned class.
 		// Once incorrectly as a Java 10 versioned class. This one will be added as a file instead.
 		String validName = JarFileInfo.MULTI_RELEASE_PREFIX + "9/" + helloWorldPath + ".class";
 		String invalidName = JarFileInfo.MULTI_RELEASE_PREFIX + "10/Bogus.class";
-		Map<String, byte[]> map = new LinkedHashMap<>();
+		Map<String, MemorySegment> map = new LinkedHashMap<>();
 		map.put(validName, helloWorldBytes);
 		map.put(invalidName, helloWorldBytes);
-		byte[] zipBytes = ZipCreationUtils.createZip(map);
+		byte[] zipBytes = ZipCreationUtils.createZip(map).toArray(ValueLayout.JAVA_BYTE);
 		ByteSource zipSource = ByteSources.wrap(zipBytes);
 		WorkspaceResource resource = importer.importResource(zipSource);
 
@@ -156,12 +158,12 @@ class ResourceImporterTest {
 	@Test
 	void testSupportClassFakeDirectory() throws IOException {
 		String helloWorldPath = HelloWorld.class.getName().replace(".", "/");
-		byte[] helloWorldBytes = TestClassUtils.fromRuntimeClass(HelloWorld.class).getBytecode();
+		var helloWorldBytes = MemorySegment.ofArray(TestClassUtils.fromRuntimeClass(HelloWorld.class).getBytecode());
 
 		// Create JAR with 'HelloWorld' declared but the class file has a trailing '/' in the entry name.
-		Map<String, byte[]> map = new LinkedHashMap<>();
+		Map<String, MemorySegment> map = new LinkedHashMap<>();
 		map.put(helloWorldPath + ".class/", helloWorldBytes);
-		byte[] zipBytes = ZipCreationUtils.createZip(map);
+		byte[] zipBytes = ZipCreationUtils.createZip(map).toArray(ValueLayout.JAVA_BYTE);
 		ByteSource zipSource = ByteSources.wrap(zipBytes);
 		WorkspaceResource resource = importer.importResource(zipSource);
 
@@ -173,21 +175,22 @@ class ResourceImporterTest {
 		assertEquals(0, resource.getEmbeddedResources().size());
 
 		// Validate JVM class bundle content
-		assertArrayEquals(helloWorldBytes, resource.getJvmClassBundle().iterator().next().getBytecode());
+		assertArrayEquals(helloWorldBytes.toArray(ValueLayout.JAVA_BYTE), resource.getJvmClassBundle().iterator().next().getBytecode());
 	}
 
 	@Test
 	void testAlwaysUseLastClassEntry() throws IOException {
 		String helloWorldPath = HelloWorld.class.getName().replace(".", "/");
-		byte[] helloWorldBytes = TestClassUtils.fromRuntimeClass(HelloWorld.class).getBytecode();
-		byte[] emptyBytes = new byte[0];
+		var helloWorldBytes = MemorySegment.ofArray(TestClassUtils.fromRuntimeClass(HelloWorld.class).getBytecode());
+		var emptyBytes = MemorySegment.ofArray(new byte[0]);
 
 		// Create JAR with duplicate entries, with the last entry by the same name containing real data.
 		// The first is a red herring and should be ignored, as the JVM does when it encounters repeats.
 		byte[] zipBytes = ZipCreationUtils.builder()
 				.add(helloWorldPath + ".class", emptyBytes)
 				.add(helloWorldPath + ".class", helloWorldBytes)
-				.bytes();
+				.bytes()
+				.toArray(ValueLayout.JAVA_BYTE);
 		ByteSource zipSource = ByteSources.wrap(zipBytes);
 		WorkspaceResource resource = importer.importResource(zipSource);
 
@@ -199,21 +202,22 @@ class ResourceImporterTest {
 		assertEquals(0, resource.getEmbeddedResources().size());
 
 		// Validate the version chosen is the last one
-		assertArrayEquals(helloWorldBytes, resource.getJvmClassBundle().iterator().next().getBytecode());
-		assertArrayEquals(emptyBytes, resource.getFileBundle().iterator().next().getRawContent());
+		assertArrayEquals(helloWorldBytes.toArray(ValueLayout.JAVA_BYTE), resource.getJvmClassBundle().iterator().next().getBytecode());
+		assertArrayEquals(emptyBytes.toArray(ValueLayout.JAVA_BYTE), resource.getFileBundle().iterator().next().getRawContent().toArray(ValueLayout.JAVA_BYTE));
 	}
 
 	@Test
 	void testAlwaysUseLastMultiReleaseClassEntry() throws IOException {
 		String helloWorldPath = HelloWorld.class.getName().replace(".", "/");
-		byte[] helloWorldBytes = TestClassUtils.fromRuntimeClass(HelloWorld.class).getBytecode();
-		byte[] emptyBytes = new byte[0];
+		var helloWorldBytes = MemorySegment.ofArray(TestClassUtils.fromRuntimeClass(HelloWorld.class).getBytecode());
+		var emptyBytes = MemorySegment.ofArray(new byte[0]);
 
 		// Create JAR with 'HelloWorld' declared as duplicate entries in multi-release directories.
 		byte[] zipBytes = ZipCreationUtils.builder()
 				.add(JarFileInfo.MULTI_RELEASE_PREFIX + "9/" + helloWorldPath + ".class", emptyBytes)
 				.add(JarFileInfo.MULTI_RELEASE_PREFIX + "9/" + helloWorldPath + ".class", helloWorldBytes)
-				.bytes();
+				.bytes()
+				.toArray(ValueLayout.JAVA_BYTE);
 		ByteSource zipSource = ByteSources.wrap(zipBytes);
 		WorkspaceResource resource = importer.importResource(zipSource);
 
@@ -225,8 +229,8 @@ class ResourceImporterTest {
 		assertEquals(0, resource.getEmbeddedResources().size());
 
 		// Validate the version chosen is the last one
-		assertArrayEquals(helloWorldBytes, resource.getVersionedJvmClassBundles().get(9).iterator().next().getBytecode());
-		assertArrayEquals(emptyBytes, resource.getFileBundle().iterator().next().getRawContent());
+		assertArrayEquals(helloWorldBytes.toArray(ValueLayout.JAVA_BYTE), resource.getVersionedJvmClassBundles().get(9).iterator().next().getBytecode());
+		assertArrayEquals(emptyBytes.toArray(ValueLayout.JAVA_BYTE), resource.getFileBundle().iterator().next().getRawContent().toArray(ValueLayout.JAVA_BYTE));
 	}
 
 	/**
@@ -236,14 +240,16 @@ class ResourceImporterTest {
 	@RepeatedTest(100)
 	void testAlwaysUseLastFileEntry() throws IOException {
 		String path = HelloWorld.class.getName().replace(".", "/");
-		byte[] bytes = new byte[]{1, 2, 3};
+		var bytes = MemorySegment.ofArray(new byte[]{1, 2, 3});
+		var emptyBytes = MemorySegment.ofArray(new byte[0]);
 
 		// Create JAR with duplicate entries, with the last entry by the same name containing real data.
 		// The first is a red herring and should be ignored, as the JVM does when it encounters repeats.
 		byte[] zipBytes = ZipCreationUtils.builder()
-				.add(path + ".class", new byte[0])
+				.add(path + ".class", emptyBytes)
 				.add(path + ".class", bytes)
-				.bytes();
+				.bytes()
+				.toArray(ValueLayout.JAVA_BYTE);
 		ByteSource zipSource = ByteSources.wrap(zipBytes);
 		WorkspaceResource resource = importer.importResource(zipSource);
 
@@ -255,13 +261,13 @@ class ResourceImporterTest {
 		assertEquals(0, resource.getEmbeddedResources().size());
 
 		// Validate the version chosen is the last one
-		assertArrayEquals(bytes, resource.getFileBundle().iterator().next().getRawContent());
+		assertArrayEquals(bytes.toArray(ValueLayout.JAVA_BYTE), resource.getFileBundle().iterator().next().getRawContent().toArray(ValueLayout.JAVA_BYTE));
 	}
 
 	@RepeatedTest(100)
 	void testDeduplicateClasses() throws IOException {
 		String helloWorldPath = HelloWorld.class.getName().replace(".", "/");
-		byte[] helloWorldBytes = TestClassUtils.fromRuntimeClass(HelloWorld.class).getBytecode();
+		var helloWorldBytes = MemorySegment.ofArray(TestClassUtils.fromRuntimeClass(HelloWorld.class).getBytecode());
 
 		// Create JAR with duplicate entries.
 		//  - case 1: Class is first, followed by 'B.class'
@@ -270,12 +276,14 @@ class ResourceImporterTest {
 				.add(helloWorldPath + ".class", helloWorldBytes)
 				.add("software/coley/B.class", helloWorldBytes)
 				.add("B.class", helloWorldBytes)
-				.bytes();
+				.bytes()
+				.toArray(ValueLayout.JAVA_BYTE);
 		byte[] zipClassLast = ZipCreationUtils.builder()
 				.add("software/coley/B.class", helloWorldBytes)
 				.add("B.class", helloWorldBytes)
 				.add(helloWorldPath + ".class", helloWorldBytes)
-				.bytes();
+				.bytes()
+				.toArray(ValueLayout.JAVA_BYTE);
 
 		// Both cases should have the same outcome
 		for (byte[] zipBytes : Arrays.asList(zipClassFirst, zipClassLast)) {
@@ -300,7 +308,7 @@ class ResourceImporterTest {
 	@Test
 	void testDeduplicateVersionedClasses() throws IOException {
 		String helloWorldPath = HelloWorld.class.getName().replace(".", "/");
-		byte[] helloWorldBytes = TestClassUtils.fromRuntimeClass(HelloWorld.class).getBytecode();
+		var helloWorldBytes = MemorySegment.ofArray(TestClassUtils.fromRuntimeClass(HelloWorld.class).getBytecode());
 
 		// Create JAR with duplicate entries.
 		//  - case 1: Class is first, followed by 'B.class'
@@ -309,12 +317,14 @@ class ResourceImporterTest {
 				.add(JarFileInfo.MULTI_RELEASE_PREFIX + "9/" + helloWorldPath + ".class", helloWorldBytes)
 				.add(JarFileInfo.MULTI_RELEASE_PREFIX + "9/B.class", helloWorldBytes)
 				.add(JarFileInfo.MULTI_RELEASE_PREFIX + "9/software/coley/B.class", helloWorldBytes)
-				.bytes();
+				.bytes()
+				.toArray(ValueLayout.JAVA_BYTE);
 		byte[] zipClassLast = ZipCreationUtils.builder()
 				.add(JarFileInfo.MULTI_RELEASE_PREFIX + "9/software/coley/B.class", helloWorldBytes)
 				.add(JarFileInfo.MULTI_RELEASE_PREFIX + "9/B.class", helloWorldBytes)
 				.add(JarFileInfo.MULTI_RELEASE_PREFIX + "9/" + helloWorldPath + ".class", helloWorldBytes)
-				.bytes();
+				.bytes()
+				.toArray(ValueLayout.JAVA_BYTE);
 
 		// Both cases should have the same outcome
 		for (byte[] zipBytes : Arrays.asList(zipClassFirst, zipClassLast)) {
@@ -342,8 +352,8 @@ class ResourceImporterTest {
 		String insideZipName = "inner.zip";
 		String innerDataName = "data";
 		byte[] innerData = {1, 2, 3};
-		byte[] insideZipBytes = ZipCreationUtils.createSingleEntryZip(innerDataName, innerData);
-		byte[] outsideZipBytes = ZipCreationUtils.createSingleEntryZip(insideZipName, insideZipBytes);
+		byte[] insideZipBytes = ZipCreationUtils.createSingleEntryZip(innerDataName, innerData).toArray(ValueLayout.JAVA_BYTE);
+		byte[] outsideZipBytes = ZipCreationUtils.createSingleEntryZip(insideZipName, insideZipBytes).toArray(ValueLayout.JAVA_BYTE);
 		ByteSource classSource = ByteSources.wrap(outsideZipBytes);
 		WorkspaceResource resource = importer.importResource(classSource);
 
@@ -361,7 +371,7 @@ class ResourceImporterTest {
 		FileInfo innerDotZip = insideZipResource.getFileBundle().get(innerDataName);
 		assertNotNull(innerDotZip);
 		assertEquals(innerDataName, innerDotZip.getName());
-		assertArrayEquals(innerData, innerDotZip.getRawContent());
+		assertArrayEquals(innerData, innerDotZip.getRawContent().toArray(ValueLayout.JAVA_BYTE));
 	}
 
 	@Test
@@ -370,12 +380,12 @@ class ResourceImporterTest {
 		//  - hello.txt
 		//  - foo.zip (containing foo)
 		//  - bla/bla/bla/HelloWorld.class
-		Map<String, byte[]> map = new LinkedHashMap<>();
-		map.put("hello.txt", "Hello world".getBytes(StandardCharsets.UTF_8));
+		Map<String, MemorySegment> map = new LinkedHashMap<>();
+		map.put("hello.txt", MemorySegment.ofArray("Hello world".getBytes(StandardCharsets.UTF_8)));
 		map.put(HelloWorld.class.getName().replace(".", "/") + ".class",
-				TestClassUtils.fromRuntimeClass(HelloWorld.class).getBytecode());
+				MemorySegment.ofArray(TestClassUtils.fromRuntimeClass(HelloWorld.class).getBytecode()));
 		map.put("data.zip", ZipCreationUtils.createSingleEntryZip("foo", new byte[]{1, 2, 3}));
-		byte[] zipBytes = ZipCreationUtils.createZip(map);
+		byte[] zipBytes = ZipCreationUtils.createZip(map).toArray(ValueLayout.JAVA_BYTE);
 
 		// Write to disk temporarily for test duration
 		File tempFile = File.createTempFile("recaf", "test.zip");
@@ -397,14 +407,15 @@ class ResourceImporterTest {
 
 	@Test
 	void testSkipDirectories() throws IOException {
-		byte[] empty = new byte[0];
-		byte[] fileBytes = "data".getBytes(StandardCharsets.UTF_8);
+		var empty = MemorySegment.ofArray(new byte[0]);
+		var fileBytes = MemorySegment.ofArray("data".getBytes(StandardCharsets.UTF_8));
 		byte[] zipBytes = ZipCreationUtils.builder()
 				.add("com/", empty)
 				.add("com/example/", empty)
 				.add("com/example/application/", empty)
 				.add("com/example/application/Config.txt", fileBytes)
-				.bytes();
+				.bytes()
+				.toArray(ValueLayout.JAVA_BYTE);
 		WorkspaceResource resource = importer.importResource(ByteSources.wrap(zipBytes));
 
 		// Should have just ONE file in the file bundle
@@ -419,7 +430,7 @@ class ResourceImporterTest {
 
 		// Validate file bundle content
 		FileInfo fileInfo = resource.getFileBundle().iterator().next();
-		assertArrayEquals(fileBytes, fileInfo.getRawContent(), "Missing data compared to baseline input bytes");
+		assertArrayEquals(fileBytes.toArray(ValueLayout.JAVA_BYTE), fileInfo.getRawContent().toArray(ValueLayout.JAVA_BYTE), "Missing data compared to baseline input bytes");
 	}
 
 	@Test
@@ -432,10 +443,11 @@ class ResourceImporterTest {
 
 		// Create the file
 		String name = "com/example/application/Config.txt";
-		byte[] data = new byte[]{1, 2, 3, 4, 5};
+		var data = MemorySegment.ofArray(new byte[]{1, 2, 3, 4, 5});
 		byte[] zipBytes = ZipCreationUtils.builder()
 				.add(name, data, false, comment, timeCreate, timeModify, timeAccess)
-				.bytes();
+				.bytes()
+				.toArray(ValueLayout.JAVA_BYTE);
 		WorkspaceResource resource = importer.importResource(ByteSources.wrap(zipBytes));
 
 		// Should have just ONE file in the file bundle
@@ -450,7 +462,7 @@ class ResourceImporterTest {
 
 		// Validate file bundle content
 		FileInfo fileInfo = resource.getFileBundle().iterator().next();
-		assertArrayEquals(data, fileInfo.getRawContent(), "Missing data compared to baseline input bytes");
+		assertArrayEquals(data.toArray(ValueLayout.JAVA_BYTE), fileInfo.getRawContent().toArray(ValueLayout.JAVA_BYTE), "Missing data compared to baseline input bytes");
 		assertEquals(comment, ZipCommentProperty.get(fileInfo), "Missing comment");
 		assertEquals(timeCreate, ZipCreationTimeProperty.get(fileInfo), "Missing creation time");
 		assertEquals(timeModify, ZipModificationTimeProperty.get(fileInfo), "Missing modification time");
@@ -461,7 +473,7 @@ class ResourceImporterTest {
 	@Test
 	void testImportFileWithExeHeaderAsZipIfZipContentsAreValid() throws IOException {
 		// Create virtual ZIP with single 'Hello.txt' and suffix the file with a PE header.
-		byte[] zipFileBytes = ZipCreationUtils.createSingleEntryZip("Hello.txt", "Hello world".getBytes(StandardCharsets.UTF_8));
+		byte[] zipFileBytes = ZipCreationUtils.createSingleEntryZip("Hello.txt", "Hello world".getBytes(StandardCharsets.UTF_8)).toArray(ValueLayout.JAVA_BYTE);
 		byte[] inputBytes = new byte[4096];
 		inputBytes[0] = 0x4D;
 		inputBytes[1] = 0x5A;
@@ -476,8 +488,8 @@ class ResourceImporterTest {
 	@Test
 	void testZipBombEntryIsSkipped() throws IOException {
 		ResourceImporterConfig config = new ResourceImporterConfig();
-		config.getMaxZipEntrySize().setValue(1_000_000);
-		config.getMaxZipTotalSize().setValue(2_000_000);
+		config.getMaxZipEntrySize().setValue(1_000_000l);
+		config.getMaxZipTotalSize().setValue(2_000_000l);
 		config.getMaxZipCompressionRatio().setValue(100);
 		ResourceImporter limitedImporter = new BasicResourceImporter(
 				new BasicInfoImporter(new InfoImporterConfig(), new TextFormatConfig(), new BasicClassPatcher()),
@@ -496,7 +508,7 @@ class ResourceImporterTest {
 			for (int i = 0; i < 2048; i++)
 				output.write(zeros);
 			output.closeEntry();
-		});
+		}).toArray(ValueLayout.JAVA_BYTE);
 
 		WorkspaceResource resource = limitedImporter.importResource(ByteSources.wrap(zipBytes));
 		assertEquals(1, resource.getJvmClassBundle().size(), "Verifier-valid class should still be imported");
@@ -506,8 +518,8 @@ class ResourceImporterTest {
 	@Test
 	void testZipBombCannotUnderreportInflatedSize() throws IOException {
 		ResourceImporterConfig config = new ResourceImporterConfig();
-		config.getMaxZipEntrySize().setValue(1_000_000);
-		config.getMaxZipTotalSize().setValue(2_000_000);
+		config.getMaxZipEntrySize().setValue(1_000_000l);
+		config.getMaxZipTotalSize().setValue(2_000_000l);
 		config.getMaxZipCompressionRatio().setValue(10_000);
 		ResourceImporter limitedImporter = new BasicResourceImporter(
 				new BasicInfoImporter(new InfoImporterConfig(), new TextFormatConfig(), new BasicClassPatcher()),
@@ -522,7 +534,7 @@ class ResourceImporterTest {
 			for (int i = 0; i < 2048; i++)
 				output.write(zeros);
 			output.closeEntry();
-		});
+		}).toArray(ValueLayout.JAVA_BYTE);
 
 		// Lie about the uncompressed size in both places where ZIP records it. The LFH stores the four-byte size
 		// at offset 22, while the CEN header stores it at offset 24. Declaring one byte makes the metadata precheck

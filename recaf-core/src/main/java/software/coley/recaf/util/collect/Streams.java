@@ -190,9 +190,9 @@ public final class Streams {
 		return recurseWithoutCycles0(seed, flatMap, vertices, visited);
 	}
 
-	private static <T> @Nonnull Stream<T> recurseWithoutCycles0(@Nonnull T seed,
-	                                                            @Nonnull Function<T, Set<T>> flatMap,
-	                                                            @Nonnull Deque<Iterator<T>> vertices, Set<T> visited) {
+	private static <T> Stream<T> recurseWithoutCycles0(@Nonnull T seed,
+													   @Nonnull Function<T, Set<T>> flatMap,
+													   @Nonnull Deque<Iterator<T>> vertices, Set<T> visited) {
 		vertices.push(Collections.singletonList(seed).iterator());
 		return StreamSupport.stream(new Spliterators.AbstractSpliterator<>(Long.MAX_VALUE, Spliterator.IMMUTABLE | Spliterator.NONNULL) {
 			@Override

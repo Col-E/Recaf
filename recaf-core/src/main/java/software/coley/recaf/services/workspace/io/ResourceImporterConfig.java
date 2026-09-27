@@ -1,5 +1,9 @@
 package software.coley.recaf.services.workspace.io;
 
+import static software.coley.lljzip.util.MemorySegmentUtil.readLongSlice;
+
+import java.lang.foreign.MemorySegment;
+
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -19,15 +23,12 @@ import software.coley.lljzip.util.data.MemorySegmentData;
 import software.coley.lljzip.util.data.StringData;
 import software.coley.observables.ObservableBoolean;
 import software.coley.observables.ObservableInteger;
+import software.coley.observables.ObservableLong;
 import software.coley.observables.ObservableObject;
 import software.coley.recaf.config.BasicConfigContainer;
 import software.coley.recaf.config.BasicConfigValue;
 import software.coley.recaf.config.ConfigGroups;
 import software.coley.recaf.services.ServiceConfig;
-
-import java.lang.foreign.MemorySegment;
-
-import static software.coley.lljzip.util.MemorySegmentUtil.readLongSlice;
 
 /**
  * Config for {@link ResourceImporter}.
@@ -43,8 +44,8 @@ public class ResourceImporterConfig extends BasicConfigContainer implements Serv
 	private final ObservableBoolean adoptStandardCenFileNames = new ObservableBoolean(false);
 	private final ObservableInteger maxEmbeddedZipDepth = new ObservableInteger(3);
 	private final ObservableBoolean parallelize = new ObservableBoolean(true);
-	private final ObservableInteger maxZipEntrySize = new ObservableInteger(100_000_000);
-	private final ObservableInteger maxZipTotalSize = new ObservableInteger(1_000_000_000);
+	private final ObservableLong maxZipEntrySize = new ObservableLong(100_000_000);
+	private final ObservableLong maxZipTotalSize = new ObservableLong(1_000_000_000);
 	private final ObservableInteger maxZipCompressionRatio = new ObservableInteger(200);
 
 	@Inject
@@ -58,8 +59,8 @@ public class ResourceImporterConfig extends BasicConfigContainer implements Serv
 		addValue(new BasicConfigValue<>("adapt-standard-cen-file-names", boolean.class, adoptStandardCenFileNames));
 		addValue(new BasicConfigValue<>("max-embedded-zip-depth", int.class, maxEmbeddedZipDepth));
 		addValue(new BasicConfigValue<>("parallelize", boolean.class, parallelize));
-		addValue(new BasicConfigValue<>("max-zip-entry-size", int.class, maxZipEntrySize));
-		addValue(new BasicConfigValue<>("max-zip-total-size", int.class, maxZipTotalSize));
+		addValue(new BasicConfigValue<>("max-zip-entry-size", long.class, maxZipEntrySize));
+		addValue(new BasicConfigValue<>("max-zip-total-size", long.class, maxZipTotalSize));
 		addValue(new BasicConfigValue<>("max-zip-compression-ratio", int.class, maxZipCompressionRatio));
 	}
 
@@ -133,7 +134,7 @@ public class ResourceImporterConfig extends BasicConfigContainer implements Serv
 	 * @return Maximum number of decompressed bytes retained from one ZIP entry.
 	 */
 	@Nonnull
-	public ObservableInteger getMaxZipEntrySize() {
+	public ObservableLong getMaxZipEntrySize() {
 		return maxZipEntrySize;
 	}
 
@@ -141,7 +142,7 @@ public class ResourceImporterConfig extends BasicConfigContainer implements Serv
 	 * @return Maximum number of decompressed bytes retained from one ZIP archive.
 	 */
 	@Nonnull
-	public ObservableInteger getMaxZipTotalSize() {
+	public ObservableLong getMaxZipTotalSize() {
 		return maxZipTotalSize;
 	}
 
@@ -165,7 +166,7 @@ public class ResourceImporterConfig extends BasicConfigContainer implements Serv
 	 * @return Mapping of input bytes to a ZIP archive model.
 	 */
 	@Nonnull
-	public UncheckedFunction<byte[], ZipArchive> mapping() {
+	public UncheckedFunction<MemorySegment, ZipArchive> mapping() {
 		ZipStrategy strategy = zipStrategy.getValue();
 		if (strategy == ZipStrategy.JVM)
 			return newJvmMapping();
@@ -175,12 +176,12 @@ public class ResourceImporterConfig extends BasicConfigContainer implements Serv
 	}
 
 	@Nonnull
-	private UncheckedFunction<byte[], ZipArchive> newNaiveMapping() {
+	private UncheckedFunction<MemorySegment, ZipArchive> newNaiveMapping() {
 		return input -> ZipIO.read(input, new NaiveLocalFileZipReader(newPartAllocator()));
 	}
 
 	@Nonnull
-	private UncheckedFunction<byte[], ZipArchive> newStandardMapping() {
+	private UncheckedFunction<MemorySegment, ZipArchive> newStandardMapping() {
 		return input -> ZipIO.read(input, new ForwardScanZipReader(newPartAllocator()) {
 			@Override
 			public void postProcessLocalFileHeader(@Nonnull LocalFileHeader file) {
@@ -194,7 +195,7 @@ public class ResourceImporterConfig extends BasicConfigContainer implements Serv
 	}
 
 	@Nonnull
-	private UncheckedFunction<byte[], ZipArchive> newJvmMapping() {
+	private UncheckedFunction<MemorySegment, ZipArchive> newJvmMapping() {
 		return input -> ZipIO.read(input, new JvmZipReader(skipRevisitedCenToLocalLinks.getValue(), allowBasicJvmBaseOffsetZeroCheck.getValue()));
 	}
 

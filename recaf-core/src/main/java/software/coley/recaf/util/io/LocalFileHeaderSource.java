@@ -3,10 +3,10 @@ package software.coley.recaf.util.io;
 import jakarta.annotation.Nonnull;
 import software.coley.lljzip.format.compression.ZipCompressions;
 import software.coley.lljzip.format.model.LocalFileHeader;
-import software.coley.lljzip.util.MemorySegmentUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
 
@@ -37,8 +37,8 @@ public final class LocalFileHeaderSource implements ByteSource {
 
 	@Nonnull
 	@Override
-	public byte[] readAll() throws IOException {
-		return MemorySegmentUtil.toByteArray(decompress());
+	public MemorySegment readAll() throws IOException {
+		return decompress();
 	}
 
 	@Nonnull

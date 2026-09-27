@@ -1,5 +1,7 @@
 package software.coley.recaf.ui.control.animation;
 
+import java.lang.foreign.ValueLayout;
+
 import jakarta.annotation.Nonnull;
 import javafx.animation.Transition;
 import javafx.scene.control.Labeled;
@@ -39,7 +41,7 @@ public class LabelByteAnimationTransition extends Transition {
 	 * 		File to show raw bytes of.
 	 */
 	public void update(@Nonnull FileInfo info) {
-		this.bytes = info.getRawContent();
+		this.bytes = info.getRawContent().toArray(ValueLayout.JAVA_BYTE);
 		setCycleDuration(Duration.millis(bytes.length));
 	}
 

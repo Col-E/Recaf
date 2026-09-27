@@ -14,6 +14,7 @@ import software.coley.recaf.util.io.LocalFileHeaderSource;
 import software.coley.recaf.workspace.model.bundle.*;
 
 import java.io.IOException;
+import java.lang.foreign.ValueLayout;
 import java.util.Collections;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -50,7 +51,7 @@ public class AndroidApiResource extends BasicPropertyContainer implements Worksp
 				for (LocalFileHeader fileEntry : archive.getLocalFiles()) {
 					String name = fileEntry.getFileNameAsString();
 					if (name.endsWith(".class")) {
-						byte[] bytecode = new LocalFileHeaderSource(fileEntry).readAll();
+						byte[] bytecode = new LocalFileHeaderSource(fileEntry).readAll().toArray(ValueLayout.JAVA_BYTE);
 						JvmClassInfo info = new JvmClassInfoBuilder(bytecode).build();
 						bundle.put(info);
 					}

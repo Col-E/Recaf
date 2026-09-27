@@ -1,5 +1,19 @@
 package software.coley.recaf.services.workspace.io;
 
+import static software.coley.lljzip.format.compression.ZipCompressions.DEFLATED;
+import static software.coley.lljzip.format.compression.ZipCompressions.STORED;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.foreign.MemorySegment;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.TreeMap;
+import java.util.zip.DeflaterOutputStream;
+
 import jakarta.annotation.Nonnull;
 import me.darknet.dex.file.DexHeader;
 import me.darknet.dex.file.DexMapBuilder;
@@ -23,26 +37,14 @@ import software.coley.recaf.info.properties.builtin.ZipCompressionProperty;
 import software.coley.recaf.info.properties.builtin.ZipCreationTimeProperty;
 import software.coley.recaf.info.properties.builtin.ZipModificationTimeProperty;
 import software.coley.recaf.info.properties.builtin.ZipPrefixDataProperty;
+import software.coley.recaf.util.io.LargeInputStream;
+import software.coley.recaf.util.io.LargeOutputStream;
 import software.coley.recaf.util.io.ZipCreationUtils;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.VersionedJvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceFileResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.TreeMap;
-import java.util.zip.DeflaterOutputStream;
-
-import static software.coley.lljzip.format.compression.ZipCompressions.DEFLATED;
-import static software.coley.lljzip.format.compression.ZipCompressions.STORED;
 
 /**
  * Options for configuring / preparing a {@link WorkspaceExporter}.
@@ -110,7 +112,7 @@ public class WorkspaceExportOptions {
 	 * Basic implementation of {@link WorkspaceExporter} that pulls from the options defined here.
 	 */
 	private class WorkspaceExporterImpl implements WorkspaceExporter {
-		private final Map<String, byte[]> contents = new TreeMap<>();
+		private final Map<String, MemorySegment> contents = new TreeMap<>();
 		private final Map<String, Integer> compression = new HashMap<>();
 		private final Map<String, String> comments = new HashMap<>();
 		private final Map<String, Long> modifyTimes = new HashMap<>();
@@ -129,7 +131,7 @@ public class WorkspaceExportOptions {
 					if (contents.size() == 1 &&
 							workspace.getPrimaryResource() instanceof WorkspaceFileResource primaryFileResource &&
 							!(primaryFileResource.getFileInfo() instanceof ZipFileInfo)) {
-						byte[] data = contents.values().iterator().next();
+						var data = contents.values().iterator().next();
 						if (prefix != null)
 							consumer.write(prefix);
 						consumer.write(data);
@@ -167,10 +169,10 @@ public class WorkspaceExportOptions {
 					consumer.commit();
 					break;
 				case DIRECTORY:
-					for (Map.Entry<String, byte[]> entry : contents.entrySet()) {
+					for (var entry : contents.entrySet()) {
 						// Write everything relative to the path
-						String relativePath = entry.getKey();
-						byte[] content = entry.getValue();
+						var relativePath = entry.getKey();
+						var content = entry.getValue();
 						consumer.writeRelative(relativePath, content);
 					}
 					consumer.commit();
@@ -206,7 +208,7 @@ public class WorkspaceExportOptions {
 		 * @param resource
 		 * 		Resource to pull values from.
 		 */
-		private void mapInto(@Nonnull Map<String, byte[]> map, @Nonnull WorkspaceResource resource) {
+		private void mapInto(@Nonnull Map<String, MemorySegment> map, @Nonnull WorkspaceResource resource) {
 			// Place classes into map
 			resource.jvmClassBundleStream().forEach(bundle -> {
 				for (JvmClassInfo classInfo : bundle) {
@@ -221,7 +223,7 @@ public class WorkspaceExportOptions {
 					} else {
 						key = originalName;
 					}
-					map.put(key, classInfo.getBytecode());
+					map.put(key, MemorySegment.ofArray(classInfo.getBytecode()));
 					updateProperties(key, classInfo);
 				}
 			});
@@ -232,7 +234,7 @@ public class WorkspaceExportOptions {
 				for (Map.Entry<String, JvmClassInfo> classEntry : entry.getValue().entrySet()) {
 					String key = versionPath + classEntry.getKey() + ".class";
 					JvmClassInfo value = classEntry.getValue();
-					map.put(key, value.getBytecode());
+					map.put(key, MemorySegment.ofArray(value.getBytecode()));
 					updateProperties(key, value);
 				}
 			}
@@ -250,7 +252,7 @@ public class WorkspaceExportOptions {
 				try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
 					DexHeader.CODEC.write(header, output);
 					output.pipe(baos);
-					map.put(dexName, baos.toByteArray());
+					map.put(dexName, MemorySegment.ofArray(baos.toByteArray()));
 
 					// TODO: Also want to pull file properties from the original dex too
 					//  - updateProperties(dexName, bundle.getOriginalDexInfoOrSomething);
@@ -271,9 +273,9 @@ public class WorkspaceExportOptions {
 			for (Map.Entry<String, WorkspaceFileResource> entry : resource.getEmbeddedResources().entrySet()) {
 				String embeddedFilePath = entry.getKey();
 				WorkspaceFileResource embeddedResource = entry.getValue();
-				Map<String, byte[]> embeddedMap = new TreeMap<>();
+				Map<String, MemorySegment> embeddedMap = new TreeMap<>();
 				mapInto(embeddedMap, embeddedResource);
-				byte[] embeddedBytes = Unchecked.get(() -> ZipCreationUtils.createZip(embeddedMap));
+				var embeddedBytes = Unchecked.get(() -> ZipCreationUtils.createZip(embeddedMap));
 				map.put(embeddedFilePath, embeddedBytes);
 				FileInfo embeddedFile = embeddedResource.getFileInfo();
 				updateProperties(embeddedFilePath, embeddedFile);
@@ -320,13 +322,13 @@ public class WorkspaceExportOptions {
 					return STORED;
 				case SMART:
 					// Get content from info
-					byte[] content = null;
+					MemorySegment content = null;
 					if (info.isFile())
 						content = info.asFile().getRawContent();
 					else if (info.isClass()) {
 						ClassInfo classInfo = info.asClass();
 						if (classInfo.isJvmClass())
-							content = classInfo.asJvmClass().getBytecode();
+							content = MemorySegment.ofArray(classInfo.asJvmClass().getBytecode());
 					}
 
 					// Validate
@@ -334,8 +336,8 @@ public class WorkspaceExportOptions {
 						throw new IllegalStateException("Unhandled info type, cannot get byte[]: " + info.getClass().getName());
 
 					// Check if deflate would be more optimal.
-					InputStream in = new ByteArrayInputStream(content);
-					ByteArrayOutputStream out = new ByteArrayOutputStream();
+					InputStream in = new LargeInputStream(content);
+					LargeOutputStream out = new LargeOutputStream();
 					try (DeflaterOutputStream deflate = new DeflaterOutputStream(out)) {
 						byte[] buffer = new byte[2048];
 						int len;
@@ -343,8 +345,8 @@ public class WorkspaceExportOptions {
 							deflate.write(buffer, 0, len);
 						}
 						deflate.finish();
-						int inputSize = content.length;
-						int compressedSize = out.size();
+						long inputSize = content.byteSize();
+						long compressedSize = out.size();
 						if (compressedSize < inputSize)
 							return DEFLATED;
 					} catch (IOException ignored) {
