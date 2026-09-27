@@ -2,8 +2,8 @@ package software.coley.recaf.util;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
-import me.darknet.assembler.printer.JvmPrinterUtil;
-import me.darknet.assembler.util.JvmOpcodes;
+import me.darknet.assembler.backend.jvm.printer.JvmPrinterUtil;
+import me.darknet.assembler.backend.jvm.util.JvmOpcodes;
 import me.darknet.dex.tree.definitions.code.Code;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;

@@ -16,14 +16,15 @@ import me.darknet.assembler.ast.primitive.ASTCode;
 import me.darknet.assembler.ast.primitive.ASTInstruction;
 import me.darknet.assembler.ast.specific.ASTClass;
 import me.darknet.assembler.ast.specific.ASTMethod;
-import me.darknet.assembler.compile.analysis.Local;
-import me.darknet.assembler.compile.analysis.MethodAnalysisResult;
-import me.darknet.assembler.compile.analysis.Value;
-import me.darknet.assembler.compile.analysis.ValuedLocal;
-import me.darknet.assembler.compile.analysis.Values;
-import me.darknet.assembler.compile.analysis.frame.Frame;
-import me.darknet.assembler.compile.analysis.frame.TypedFrame;
-import me.darknet.assembler.compile.analysis.frame.ValuedFrame;
+import me.darknet.assembler.analysis.Value;
+import me.darknet.assembler.backend.jvm.util.JvmTypeUtils;
+import me.darknet.assembler.analysis.Values;
+import me.darknet.assembler.backend.jvm.compile.analysis.Local;
+import me.darknet.assembler.backend.jvm.compile.analysis.MethodAnalysisResult;
+import me.darknet.assembler.backend.jvm.compile.analysis.ValuedLocal;
+import me.darknet.assembler.backend.jvm.compile.analysis.frame.Frame;
+import me.darknet.assembler.backend.jvm.compile.analysis.frame.TypedFrame;
+import me.darknet.assembler.backend.jvm.compile.analysis.frame.ValuedFrame;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.reactfx.EventStreams;
@@ -36,7 +37,6 @@ import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Lang;
-import software.coley.recaf.util.Types;
 import software.coley.recaf.workspace.model.Workspace;
 
 import java.time.Duration;
@@ -45,7 +45,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
-import java.util.Objects;
 
 /**
  * Component panel for the assembler which shows the data from stack analysis of the currently selected method.
@@ -117,7 +116,7 @@ public class JvmStackAnalysisPane extends AstBuildConsumerComponent {
 				if (astElement instanceof ASTMethod astMethod) {
 					int index = getSelectedInsnIndexOfMethod(astMethod);
 					if (index >= 0) {
-						selectedInsn = astMethod.code().instructions().get(index);
+						selectedInsn = astMethod.getCode().getInstructions().get(index);
 						break;
 					}
 				} else if (astElement instanceof ASTClass astClass) {
@@ -125,7 +124,7 @@ public class JvmStackAnalysisPane extends AstBuildConsumerComponent {
 						if (child instanceof ASTMethod astMethod) {
 							int index = getSelectedInsnIndexOfMethod(astMethod);
 							if (index >= 0) {
-								selectedInsn = astMethod.code().instructions().get(index);
+								selectedInsn = astMethod.getCode().getInstructions().get(index);
 								break findIndex;
 							}
 						}
@@ -136,8 +135,8 @@ public class JvmStackAnalysisPane extends AstBuildConsumerComponent {
 
 		// Resolve the analysis before deciding whether the table is already current.
 		MethodAnalysisResult analysisResults = null;
-		if (selectedInsn != null && currentMethod != null && analysisLookup != null)
-			analysisResults = (MethodAnalysisResult) analysisLookup.results(currentMethod.getName(), currentMethod.getDescriptor());
+		if (selectedInsn != null && currentMethod != null && analysisLookupJvm != null)
+			analysisResults = (MethodAnalysisResult) analysisLookupJvm.results(currentMethod.getName(), currentMethod.getDescriptor());
 
 		// The AST and result are identity-bound, so an equal-looking instruction can still require a refresh.
 		if (lastSelectedInsn == selectedInsn && lastAnalysisResults == analysisResults)
@@ -172,9 +171,9 @@ public class JvmStackAnalysisPane extends AstBuildConsumerComponent {
 		if (thisFrame instanceof TypedFrame typedFrame) {
 			// Type-only analysis is basic.
 			for (Type classType : typedFrame.getStack())
-				stackItems.add(new JvmStackState(classType, Values.valueOf(classType), null));
+				stackItems.add(new JvmStackState(classType, Values.valueOf(JvmTypeUtils.toDescriptorType(classType)), null));
 			for (Local local : typedFrame.getLocals().values())
-				varItems.add(new JvmVariableState(local.name(), local.safeType(), Values.valueOf(local.safeType()), null));
+				varItems.add(new JvmVariableState(local.name(), local.safeType(), Values.valueOf(JvmTypeUtils.toDescriptorType(local.safeType())), null));
 		} else if (thisFrame instanceof ValuedFrame valuedFrame) {
 			// Compare against the frame before the selected instruction to highlight its effect.
 			ValuedFrame lastFrame = frameSelection.prior() instanceof ValuedFrame valuedPriorFrame ? valuedPriorFrame : null;
@@ -185,7 +184,7 @@ public class JvmStackAnalysisPane extends AstBuildConsumerComponent {
 			for (int i = 0; i < stack.length; i++) {
 				Value lastValue = i <= lastStack.length - 1 ? lastStack[i] : null;
 				Value value = stack[i];
-				stackItems.add(new JvmStackState(Objects.requireNonNullElse(value.type(), Types.OBJECT_TYPE), value, lastValue));
+				stackItems.add(new JvmStackState(JvmTypeUtils.toAsmType(value.type()), value, lastValue));
 			}
 
 			// And fill out the variables.
@@ -242,10 +241,10 @@ public class JvmStackAnalysisPane extends AstBuildConsumerComponent {
 		int pos = editor.getCodeArea().getCaretPosition();
 		if (!method.range().within(pos))
 			return -1;
-		ASTCode code = method.code();
+		ASTCode code = method.getCode();
 		if (code == null)
 			return -1;
-		List<ASTInstruction> instructions = code.instructions();
+		List<ASTInstruction> instructions = code.getInstructions();
 		if (instructions.isEmpty())
 			return -1;
 

@@ -20,8 +20,9 @@ import javafx.scene.paint.Color;
 import me.darknet.assembler.ast.ASTElement;
 import me.darknet.assembler.ast.specific.ASTClass;
 import me.darknet.assembler.ast.specific.ASTMethod;
-import me.darknet.assembler.compile.analysis.AnalysisResults;
-import me.darknet.assembler.compile.analysis.LocalVariableState;
+import me.darknet.assembler.backend.jvm.JvmTargetContext;
+import me.darknet.assembler.backend.jvm.compile.analysis.AnalysisResults;
+import me.darknet.assembler.backend.jvm.compile.analysis.LocalVariableState;
 import me.darknet.assembler.query.AssemblyQueries;
 import me.darknet.assembler.query.VariableAccessKind;
 import me.darknet.assembler.query.VariableQueryResult;
@@ -234,7 +235,7 @@ public class JvmVariablesPane extends AstBuildConsumerComponent {
 	}
 
 	private void scheduleTableUpdate() {
-		if (currentMethod == null || analysisLookup == null) return;
+		if (currentMethod == null || analysisLookupJvm == null) return;
 		FxThreadUtil.run(() -> notifyQueue.set(new Object()));
 	}
 
@@ -248,8 +249,8 @@ public class JvmVariablesPane extends AstBuildConsumerComponent {
 			return;
 
 		// Add variables to the table.
-		VariableQueryResult queryResult = AssemblyQueries.variables(astMethod);
-		AnalysisResults analysisResults = analysisLookup.results(currentMethod.getName(), currentMethod.getDescriptor());
+		VariableQueryResult queryResult = AssemblyQueries.variables(astMethod, JvmTargetContext.INSTANCE);
+		AnalysisResults analysisResults = analysisLookupJvm.results(currentMethod.getName(), currentMethod.getDescriptor());
 		if (analysisResults != null && !analysisResults.localVariableStates().isEmpty()) {
 			List<LocalVariableState> localVariableStates = analysisResults.localVariableStates().stream()
 					.sorted(Comparator.comparingInt(LocalVariableState::index))

@@ -35,6 +35,8 @@ public class AssemblerToolTabs implements AssemblerAstConsumer, AssemblerBuildCo
 	private final Instance<JvmExpressionCompilerPane> jvmExpressionCompilerPaneProvider;
 	private final Instance<SnippetsPane> snippetPaneProvider;
 	private final Instance<ControlFlowLines> controlFlowLineProvider;
+	private final Instance<DalvikRegistersPane> dalvikRegistersPaneProvider;
+	private final Instance<DalvikAnalysisPane> dalvikAnalysisPaneProvider;
 	private final List<Navigable> children = new CopyOnWriteArrayList<>();
 	private AssemblerPane owner;
 	private PathNode<?> path;
@@ -44,12 +46,16 @@ public class AssemblerToolTabs implements AssemblerAstConsumer, AssemblerBuildCo
 	                         @Nonnull Instance<JvmVariablesPane> jvmVariablesPaneProvider,
 	                         @Nonnull Instance<JvmExpressionCompilerPane> jvmExpressionCompilerPaneProvider,
 	                         @Nonnull Instance<SnippetsPane> snippetPaneProvider,
-	                         @Nonnull Instance<ControlFlowLines> controlFlowLineProvider) {
+	                         @Nonnull Instance<ControlFlowLines> controlFlowLineProvider,
+	                         @Nonnull Instance<DalvikRegistersPane> dalvikRegistersPaneProvider,
+	                         @Nonnull Instance<DalvikAnalysisPane> dalvikAnalysisPaneProvider) {
 		this.jvmStackAnalysisPaneProvider = jvmStackAnalysisPaneProvider;
 		this.jvmVariablesPaneProvider = jvmVariablesPaneProvider;
 		this.jvmExpressionCompilerPaneProvider = jvmExpressionCompilerPaneProvider;
 		this.snippetPaneProvider = snippetPaneProvider;
 		this.controlFlowLineProvider = controlFlowLineProvider;
+		this.dalvikRegistersPaneProvider = dalvikRegistersPaneProvider;
+		this.dalvikAnalysisPaneProvider = dalvikAnalysisPaneProvider;
 	}
 
 	/**
@@ -81,6 +87,17 @@ public class AssemblerToolTabs implements AssemblerAstConsumer, AssemblerBuildCo
 			});
 		} else if (classInPath.isAndroidClass()) {
 			// Create contents for Android classes
+			DalvikRegistersPane registersPane = dalvikRegistersPaneProvider.get();
+			DalvikAnalysisPane analysisPane = dalvikAnalysisPaneProvider.get();
+			ControlFlowLines controlFlowLines = controlFlowLineProvider.get();
+			// TODO: Snippets pane for Dalvik. Need to rework snippet storage to be lang-specific,
+			//  as Dalvik snippets are not compatible with JVM snippets. We don't want to show both at once.
+			children.addAll(Arrays.asList(registersPane, analysisPane, controlFlowLines));
+			FxThreadUtil.run(() -> {
+				owner.clearSideTabs();
+				owner.addSideTab(Lang.getBinding("assembler.registers.title"), CarbonIcons.LIST_BOXES, registersPane);
+				owner.addSideTab(Lang.getBinding("assembler.analysis.title"), CarbonIcons.VIEW_NEXT, analysisPane);
+			});
 		}
 	}
 
@@ -94,7 +111,7 @@ public class AssemblerToolTabs implements AssemblerAstConsumer, AssemblerBuildCo
 	}
 
 	@Override
-	public void consumeClass(@Nonnull ClassResult result,
+	public void consumeClass(@Nonnull ClassResult<?> result,
 	                         @Nonnull ClassInfo classInfo) {
 		for (Navigable navigableChild : getNavigableChildren())
 			if (navigableChild instanceof AssemblerBuildConsumer consumer)

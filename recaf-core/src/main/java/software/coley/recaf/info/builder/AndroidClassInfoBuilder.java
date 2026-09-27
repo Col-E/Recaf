@@ -21,6 +21,7 @@ import me.darknet.dex.tree.definitions.constant.HandleConstant;
 import me.darknet.dex.tree.definitions.constant.IntConstant;
 import me.darknet.dex.tree.definitions.constant.LongConstant;
 import me.darknet.dex.tree.definitions.constant.MemberConstant;
+import me.darknet.dex.tree.definitions.constant.MethodTypeConstant;
 import me.darknet.dex.tree.definitions.constant.NullConstant;
 import me.darknet.dex.tree.definitions.constant.ShortConstant;
 import me.darknet.dex.tree.definitions.constant.StringConstant;
@@ -228,6 +229,7 @@ public class AndroidClassInfoBuilder extends AbstractClassInfoBuilder<AndroidCla
 			case ShortConstant constant -> constant.value();
 			case StringConstant constant -> constant.value();
 			case TypeConstant constant -> Type.getType(constant.type().descriptor());
+			case MethodTypeConstant constant -> UNMAPPED_CONSTANT_VALUE;
 		};
 	}
 }

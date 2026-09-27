@@ -3,19 +3,23 @@ package software.coley.recaf.services.assembler;
 import jakarta.annotation.Nonnull;
 import me.darknet.assembler.ast.ASTElement;
 import me.darknet.assembler.ast.ElementType;
-import me.darknet.assembler.compiler.ClassRepresentation;
 import me.darknet.assembler.compiler.ClassResult;
 import me.darknet.assembler.compiler.Compiler;
 import me.darknet.assembler.compiler.CompilerOptions;
 import me.darknet.assembler.compiler.InheritanceChecker;
 import me.darknet.assembler.compiler.TypeAwareness;
-import me.darknet.assembler.error.Error;
-import me.darknet.assembler.error.Result;
+import me.darknet.assembler.error.Diagnostic;
+import me.darknet.assembler.error.DiagnosticCode;
+import me.darknet.assembler.error.DiagnosticPhase;
+import me.darknet.assembler.error.Outcome;
 import me.darknet.assembler.printer.AnnotationHolder;
 import me.darknet.assembler.printer.AnnotationPrinter;
 import me.darknet.assembler.printer.ClassPrinter;
 import me.darknet.assembler.printer.PrintContext;
 import me.darknet.assembler.printer.Printer;
+import me.darknet.assembler.processing.SemanticProcessor;
+import me.darknet.assembler.processing.ValidatedUnit;
+import me.darknet.assembler.target.TargetContext;
 import software.coley.observables.AbstractObservable;
 import software.coley.observables.ChangeListener;
 import software.coley.recaf.info.ClassInfo;
@@ -29,6 +33,7 @@ import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.workspace.model.Workspace;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -43,7 +48,7 @@ import java.util.List;
  *
  * @author Justus Garbe
  */
-public abstract class AbstractAssemblerPipeline<C extends ClassInfo, R extends ClassResult, I extends ClassRepresentation> implements AssemblerPipeline<C, R, I> {
+public abstract class AbstractAssemblerPipeline<C extends ClassInfo, R extends ClassResult<I>, I> implements AssemblerPipeline<C, R, I> {
 	protected final AssemblerPipelineConfig pipelineConfig;
 	private final AssemblerPipelineGeneralConfig generalConfig;
 	private final InheritanceGraph inheritanceGraph;
@@ -73,13 +78,18 @@ public abstract class AbstractAssemblerPipeline<C extends ClassInfo, R extends C
 	}
 
 	@Nonnull
-	protected abstract Result<ClassPrinter> classPrinter(@Nonnull ClassPathNode path);
+	protected abstract Outcome<ClassPrinter> classPrinter(@Nonnull ClassPathNode path);
 
 	@Nonnull
-	protected abstract CompilerOptions<? extends CompilerOptions<?>> getCompilerOptions();
+	protected abstract CompilerOptions<?, I> getCompilerOptions(@Nonnull C info);
+
+	protected abstract void setAnnotationPath(@Nonnull CompilerOptions<?, I> options, @Nonnull String path);
 
 	@Nonnull
-	protected abstract Compiler getCompiler();
+	protected abstract TargetContext getTargetContext();
+
+	@Nonnull
+	protected abstract Compiler<?, ?, ?> getCompiler();
 
 	@Nonnull
 	protected TypeAwareness getTypeAwareness() {
@@ -120,142 +130,165 @@ public abstract class AbstractAssemblerPipeline<C extends ClassInfo, R extends C
 
 	@Nonnull
 	@Override
-	public Result<R> assemble(@Nonnull List<ASTElement> elements, @Nonnull PathNode<?> path) {
+	public Outcome<R> assemble(@Nonnull List<ASTElement> elements, @Nonnull PathNode<?> path) {
 		return compile(elements, path);
 	}
 
 	@Nonnull
 	@Override
-	public Result<String> disassemble(@Nonnull ClassPathNode path) {
-		return classPrinter(path).map(this::print);
+	public Outcome<String> disassemble(@Nonnull ClassPathNode path) {
+		return printOutcome(classPrinter(path));
 	}
 
 	@Nonnull
 	@Override
-	public Result<String> disassemble(@Nonnull ClassMemberPathNode path) {
-		return memberPrinter(path).map(this::print);
+	public Outcome<String> disassemble(@Nonnull ClassMemberPathNode path) {
+		return printOutcome(memberPrinter(path));
 	}
 
 	@Nonnull
 	@Override
-	public Result<String> disassemble(@Nonnull AnnotationPathNode path) {
-		return annotationPrinter(path).map(this::print);
+	public Outcome<String> disassemble(@Nonnull AnnotationPathNode path) {
+		return printOutcome(annotationPrinter(path));
 	}
 
 	@Nonnull
-	@SuppressWarnings("unchecked")
-	protected Result<R> compile(@Nonnull List<ASTElement> elements, @Nonnull PathNode<?> path) {
+	private Outcome<String> printOutcome(@Nonnull Outcome<? extends Printer> outcome) {
+		if (!outcome.hasValue())
+			return Outcome.of(null, outcome.diagnostics());
+		return Outcome.of(print(outcome.requireValue()), outcome.diagnostics());
+	}
+
+	@Nonnull
+	@SuppressWarnings({"unchecked", "rawtypes"})
+	protected Outcome<R> compile(@Nonnull List<ASTElement> elements, @Nonnull PathNode<?> path) {
 		if (elements.isEmpty()) {
-			return Result.err(Error.of("No elements to compile", null));
+			return Outcome.failure(Diagnostic.error(DiagnosticPhase.TARGET_VALIDATION,
+					DiagnosticCode.MALFORMED_DECLARATION, "No elements to compile", null));
 		}
 		if (elements.size() != 1) {
-			return Result.err(Error.of("Multiple elements to compile", elements.get(1).location()));
+			return Outcome.failure(Diagnostic.error(DiagnosticPhase.TARGET_VALIDATION,
+					DiagnosticCode.MALFORMED_DECLARATION, "Multiple elements to compile", elements.get(1).location()));
 		}
 		ASTElement element = elements.get(0);
 
 		if (element == null) {
-			return Result.err(Error.of("No element to compile", null));
+			return Outcome.failure(Diagnostic.error(DiagnosticPhase.TARGET_VALIDATION,
+					DiagnosticCode.MALFORMED_DECLARATION, "No element to compile", null));
 		}
 
 		ClassInfo classInfo = path.getValueOfType(ClassInfo.class);
 		if (classInfo == null) {
-			return Result.err(Error.of("Dangling member", null));
+			return Outcome.failure(Diagnostic.error(DiagnosticPhase.TARGET_VALIDATION,
+					DiagnosticCode.UNCLASSIFIED, "Dangling member", null));
 		}
 
 		C info = (C) classInfo;
-
-		CompilerOptions<? extends CompilerOptions<?>> options = getCompilerOptions();
-		options.version(getClassVersion(info))
-				.awareness(getTypeAwareness())
-				.inheritanceChecker(getInheritanceChecker());
-
+		CompilerOptions<?, I> options = getCompilerOptions(info);
 		if (element.type() != ElementType.CLASS) {
-			options.overlay(getRepresentation(info));
+			options.withOverlay(getRepresentation(info));
 
 			if (element.type() == ElementType.ANNOTATION) {
-				// build annotation path
-				String annoPath = "this";
+				String annotationPath = "this";
 				PathNode<?> parent = path.getParent();
 				if (parent instanceof ClassMemberPathNode memberPathNode) {
-					annoPath += memberPathNode.isMethod() ? ".method." : ".field.";
-					annoPath += memberPathNode.getValue().getName() + ".";
-					annoPath += memberPathNode.getValue().getDescriptor();
+					annotationPath += memberPathNode.isMethod() ? ".method." : ".field.";
+					annotationPath += memberPathNode.getValue().getName() + ".";
+					annotationPath += memberPathNode.getValue().getDescriptor();
 				}
 
 				Annotated annotated = path.getValueOfType(Annotated.class);
-
 				if (annotated == null) {
-					return Result.err(Error.of("Dangling annotation", null));
+					return Outcome.failure(Diagnostic.error(DiagnosticPhase.TARGET_VALIDATION,
+							DiagnosticCode.UNCLASSIFIED, "Dangling annotation", null));
 				}
 
 				AnnotationInfo annotation = (AnnotationInfo) path.getValue();
-
-				annoPath += annotated.getAnnotations().indexOf(annotation);
-
-				options.annotationPath(annoPath);
+				annotationPath += annotated.getAnnotations().indexOf(annotation);
+				setAnnotationPath(options, annotationPath);
 			}
 		}
 
-		Compiler compiler = getCompiler();
+		Outcome<ValidatedUnit> processed = SemanticProcessor.process(elements, getTargetContext());
+		if (processed.hasErrors())
+			return Outcome.of(null, processed.diagnostics());
 
-		return (Result<R>) compiler.compile(elements, options);
+		Outcome<R> compiled = (Outcome<R>) ((Compiler) getCompiler()).compile(processed.requireValue(), options);
+		if (processed.diagnostics().isEmpty())
+			return compiled;
+
+		List<Diagnostic> diagnostics = new ArrayList<>(processed.diagnostics());
+		diagnostics.addAll(compiled.diagnostics());
+		return Outcome.of(compiled.value(), diagnostics);
 	}
 
 	@Nonnull
-	protected Result<Printer> memberPrinter(@Nonnull ClassMemberPathNode path) {
+	protected Outcome<Printer> memberPrinter(@Nonnull ClassMemberPathNode path) {
 		ClassPathNode owner = path.getParent();
 		if (owner == null)
-			return Result.err(Error.of("Dangling member", null));
+			return failure("Dangling member");
+
+		Outcome<ClassPrinter> classOutcome = classPrinter(owner);
+		if (!classOutcome.hasValue())
+			return Outcome.of(null, classOutcome.diagnostics());
 
 		ClassMember member = path.getValue();
-		return classPrinter(owner).flatMap((printer) -> {
-			Printer memberPrinter = null;
+		ClassPrinter printer = classOutcome.requireValue();
+		Printer memberPrinter = null;
+		if (member.isMethod()) {
+			memberPrinter = printer.method(member.getName(), member.getDescriptor());
+		} else if (member.isField()) {
+			memberPrinter = printer.field(member.getName(), member.getDescriptor());
+		}
 
-			if (member.isMethod()) {
-				memberPrinter = printer.method(member.getName(), member.getDescriptor());
-			} else if (member.isField()) {
-				memberPrinter = printer.field(member.getName(), member.getDescriptor());
-			}
-
-			if (memberPrinter == null) {
-				return Result.err(Error.of("Failed to find member", null));
-			} else {
-				return Result.ok(memberPrinter);
-			}
-		});
+		if (memberPrinter == null)
+			return failure(classOutcome, "Failed to find member");
+		return Outcome.of(memberPrinter, classOutcome.diagnostics());
 	}
 
 	@Nonnull
-	protected Result<AnnotationPrinter> annotationPrinter(@Nonnull AnnotationPathNode path) {
-		if (path.getParent() == null) {
-			return Result.err(Error.of("Dangling annotation", null));
-		}
+	protected Outcome<AnnotationPrinter> annotationPrinter(@Nonnull AnnotationPathNode path) {
+		if (path.getParent() == null)
+			return failure("Dangling annotation");
 
 		Object parent = path.getParent().getValue();
-		Result<? extends Printer> parentPrinter;
+		Outcome<? extends Printer> parentOutcome;
 		if (parent instanceof ClassPathNode classNode) {
-			parentPrinter = classPrinter(classNode);
+			parentOutcome = classPrinter(classNode);
 		} else if (parent instanceof ClassMemberPathNode classMember) {
-			parentPrinter = memberPrinter(classMember);
+			parentOutcome = memberPrinter(classMember);
 		} else {
-			return Result.err(Error.of("Invalid parent type", null));
+			return failure("Invalid parent type");
 		}
+
+		if (!parentOutcome.hasValue())
+			return Outcome.of(null, parentOutcome.diagnostics());
+		if (!(parent instanceof Annotated annotated))
+			return failure(parentOutcome, "Parent cannot hold annotations");
+
+		Printer printer = parentOutcome.requireValue();
+		if (!(printer instanceof AnnotationHolder holder))
+			return failure(parentOutcome, "Parent is not an annotation holder");
 
 		AnnotationInfo annotation = path.getValue();
+		AnnotationPrinter annotationPrinter = holder.annotation(annotated.getAnnotations().indexOf(annotation));
+		if (annotationPrinter == null)
+			return failure(parentOutcome, "Failed to find annotation");
+		return Outcome.of(annotationPrinter, parentOutcome.diagnostics());
+	}
 
-		if (parent instanceof Annotated annotated) {
+	@Nonnull
+	private static <T> Outcome<T> failure(@Nonnull String message) {
+		return Outcome.failure(Diagnostic.error(DiagnosticPhase.BACKEND_EMISSION,
+				DiagnosticCode.UNCLASSIFIED, message, null));
+	}
 
-			return parentPrinter.flatMap((printer) -> {
-				if (printer instanceof AnnotationHolder holder) {
-					return Result.ok(holder.annotation(annotated.getAnnotations().indexOf(annotation)));
-				} else {
-					return Result.err(Error.of("Parent is not an annotation holder", null));
-				}
-			});
-
-		} else {
-			return Result.err(Error.of("Parent cannot hold annotations", null));
-		}
+	@Nonnull
+	private static <T> Outcome<T> failure(@Nonnull Outcome<?> previous, @Nonnull String message) {
+		List<Diagnostic> diagnostics = new ArrayList<>(previous.diagnostics());
+		diagnostics.add(Diagnostic.error(DiagnosticPhase.BACKEND_EMISSION,
+				DiagnosticCode.UNCLASSIFIED, message, null));
+		return Outcome.of(null, diagnostics);
 	}
 
 	@Nonnull

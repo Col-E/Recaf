@@ -44,7 +44,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import me.darknet.assembler.error.Error;
+import me.darknet.assembler.error.Diagnostic;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import software.coley.observables.ObservableObject;
 import software.coley.recaf.analytics.logging.DebuggingLogger;
@@ -1347,18 +1347,12 @@ public class DeobfuscationWindow extends RecafStage {
 			path = Objects.requireNonNull(path.getParent()).child(jvmClass);
 			JvmAssemblerPipeline pipeline = assemblerPipelineManager.newJvmAssemblerPipeline(workspace);
 			pipeline.disassemble(path)
-					.ifOk(disassembly -> FxThreadUtil.run(() -> {
+					.onSuccess(disassembly -> FxThreadUtil.run(() -> {
 						if (generation == previewGeneration.get())
 							editorAssembly.setText(disassembly);
 					}))
-					.ifErr((errors) -> {
-						String errorListStr = errors.stream().map(Error::toString).collect(Collectors.joining("\n - "));
-						logger.warn("Errors processing {} for deobfuscation preview:\n - {}", className, errorListStr);
-						FxThreadUtil.run(() -> {
-							if (generation == previewGeneration.get())
-								showPreviewFailure(new IllegalStateException(errorListStr));
-						});
-					});
+					.onPartial(partial -> showDisassemblyFailure(generation, className, partial.diagnostics()))
+					.onFailure(failure -> showDisassemblyFailure(generation, className, failure.diagnostics()));
 		}
 
 		/**
@@ -1397,6 +1391,23 @@ public class DeobfuscationWindow extends RecafStage {
 					editorDecompile.setText("/*\nDecompilation failure\n" + trace + "\n*/");
 				}
 			}, FxThreadUtil.executor());
+		}
+
+		/**
+		 * @param generation
+		 * 		Preview generation the failure occurred in.
+		 * @param className
+		 * 		Class that failed to disassemble.
+		 * @param diagnostics
+		 * 		Diagnostics describing the failure.
+		 */
+		private void showDisassemblyFailure(int generation, String className, List<Diagnostic> diagnostics) {
+			String errorListStr = diagnostics.stream().map(Diagnostic::toString).collect(Collectors.joining("\n - "));
+			logger.warn("Errors processing {} for deobfuscation preview:\n - {}", className, errorListStr);
+			FxThreadUtil.run(() -> {
+				if (generation == previewGeneration.get())
+					showPreviewFailure(new IllegalStateException(errorListStr));
+			});
 		}
 
 		/**

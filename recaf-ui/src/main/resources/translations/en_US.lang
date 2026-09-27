@@ -548,6 +548,13 @@ assembler.analysis.stack=Stack
 assembler.analysis.variables=Variables
 assembler.analysis.type=Type
 assembler.analysis.value=Value
+assembler.analysis.register=Register
+assembler.analysis.pending-result=Pending result
+assembler.analysis.no-state=No analysis state at selected instruction
+assembler.analysis.state=State
+assembler.analysis.undefined=Undefined
+assembler.analysis.unknown=Unknown
+assembler.analysis.wide-tail=Wide tail of
 assembler.playground.title=Java to Bytecode
 assembler.playground.comment=// Write some Java code here to convert it to bytecode automatically\n// You can access the current class's fields/methods,\n// and the current method's parameters/variables.
 assembler.playground.class-context=Use class context
@@ -560,6 +567,11 @@ assembler.variables.usage=Usages
 assembler.variables.value=Value
 assembler.variables.empty=<Requires compiling at least once>
 assembler.variables.read-before-write=Read before written to
+assembler.registers.title=Register Usage
+assembler.registers.register=Register
+assembler.registers.reads=Reads
+assembler.registers.writes=Writes
+assembler.registers.empty=No register uses in selected method
 assembler.suggestions.none=No suggestions
 
 ## Comments

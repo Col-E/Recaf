@@ -8,7 +8,7 @@ import javafx.scene.paint.Color;
 import me.darknet.assembler.ast.ASTElement;
 import me.darknet.assembler.ast.primitive.ASTCode;
 import me.darknet.assembler.util.EscapeUtil;
-import me.darknet.assembler.util.JvmOpcodes;
+import me.darknet.assembler.backend.jvm.util.JvmOpcodes;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.model.PlainTextChange;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;

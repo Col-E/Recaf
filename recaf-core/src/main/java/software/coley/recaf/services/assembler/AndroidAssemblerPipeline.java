@@ -1,19 +1,23 @@
 package software.coley.recaf.services.assembler;
 
 import jakarta.annotation.Nonnull;
-import me.darknet.assembler.DalvikClassRepresentation;
 import me.darknet.assembler.ast.ASTElement;
-import me.darknet.assembler.compile.DalvikClassResult;
-import me.darknet.assembler.compile.DalvikCompiler;
-import me.darknet.assembler.compile.DalvikCompilerOptions;
+import me.darknet.assembler.backend.dalvik.DalvikClassRepresentation;
+import me.darknet.assembler.backend.dalvik.DalvikTargetContext;
+import me.darknet.assembler.backend.dalvik.compile.DalvikCompileResult;
+import me.darknet.assembler.backend.dalvik.compile.DalvikCompiler;
+import me.darknet.assembler.backend.dalvik.compile.DalvikCompilerOptions;
+import me.darknet.assembler.backend.dalvik.printer.DalvikClassPrinter;
 import me.darknet.assembler.compiler.Compiler;
 import me.darknet.assembler.compiler.CompilerOptions;
-import me.darknet.assembler.error.Result;
-import me.darknet.assembler.parser.BytecodeFormat;
+import me.darknet.assembler.error.Diagnostic;
+import me.darknet.assembler.error.DiagnosticCode;
+import me.darknet.assembler.error.DiagnosticPhase;
+import me.darknet.assembler.error.Outcome;
 import me.darknet.assembler.parser.processor.ASTProcessor;
 import me.darknet.assembler.printer.ClassPrinter;
-import me.darknet.assembler.printer.DalvikClassPrinter;
 import me.darknet.assembler.printer.Printer;
+import me.darknet.assembler.target.TargetContext;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.AndroidClassInfo;
@@ -31,10 +35,10 @@ import java.util.List;
  *
  * @author Matt Coley
  */
-public class AndroidAssemblerPipeline extends AbstractAssemblerPipeline<AndroidClassInfo, DalvikClassResult, DalvikClassRepresentation> {
+public class AndroidAssemblerPipeline extends AbstractAssemblerPipeline<AndroidClassInfo, DalvikCompileResult, DalvikClassRepresentation> {
 	public static final String SERVICE_ID = "dalvik-assembler";
 	private static final Logger logger = Logging.get(AndroidAssemblerPipeline.class);
-	private final ASTProcessor processor = new ASTProcessor(BytecodeFormat.DALVIK);
+	private final ASTProcessor processor = new ASTProcessor(DalvikTargetContext.INSTANCE);
 	private final InheritanceGraph inheritanceGraph;
 	private final Workspace workspace;
 
@@ -61,7 +65,7 @@ public class AndroidAssemblerPipeline extends AbstractAssemblerPipeline<AndroidC
 
 	@Nonnull
 	@Override
-	public Result<List<ASTElement>> concreteParse(@Nonnull List<ASTElement> elements) {
+	public Outcome<List<ASTElement>> concreteParse(@Nonnull List<ASTElement> elements) {
 		return processor.processAST(elements);
 	}
 
@@ -73,13 +77,28 @@ public class AndroidAssemblerPipeline extends AbstractAssemblerPipeline<AndroidC
 
 	@Nonnull
 	@Override
-	protected CompilerOptions<? extends CompilerOptions<?>> getCompilerOptions() {
-		return new DalvikCompilerOptions();
+	protected CompilerOptions<?, DalvikClassRepresentation> getCompilerOptions(@Nonnull AndroidClassInfo info) {
+		return new DalvikCompilerOptions()
+				.withVersion(getClassVersion(info))
+				.withTypeAwareness(getTypeAwareness())
+				.withInheritanceChecker(getInheritanceChecker());
+	}
+
+	@Override
+	protected void setAnnotationPath(@Nonnull CompilerOptions<?, DalvikClassRepresentation> options, @Nonnull String path) {
+		if (options instanceof DalvikCompilerOptions dakvikOptions)
+			dakvikOptions.withAnnotationPath(path);
 	}
 
 	@Nonnull
 	@Override
-	protected Compiler getCompiler() {
+	protected TargetContext getTargetContext() {
+		return DalvikTargetContext.INSTANCE;
+	}
+
+	@Nonnull
+	@Override
+	protected Compiler<?, ?, ?> getCompiler() {
 		return new DalvikCompiler();
 	}
 
@@ -103,13 +122,14 @@ public class AndroidAssemblerPipeline extends AbstractAssemblerPipeline<AndroidC
 
 	@Nonnull
 	@Override
-	protected Result<ClassPrinter> classPrinter(@Nonnull ClassPathNode path) {
+	protected Outcome<ClassPrinter> classPrinter(@Nonnull ClassPathNode path) {
 		ClassInfo classInfo = path.getValue();
 		try {
-			return Result.ok(new DalvikClassPrinter(path.getValue().asAndroidClass().getBackingDefinition()));
+			return Outcome.success(new DalvikClassPrinter(path.getValue().asAndroidClass().getBackingDefinition()));
 		} catch (Throwable t) {
 			logger.error("Uncaught error creating class printer for: {}", classInfo.getName(), t);
-			return Result.exception(t);
+			return Outcome.failure(Diagnostic.error(DiagnosticPhase.BACKEND_EMISSION, DiagnosticCode.BACKEND_FAILURE,
+					"Failed to create class printer for " + classInfo.getName() + ": " + t.getMessage(), null));
 		}
 	}
 }

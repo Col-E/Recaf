@@ -14,7 +14,7 @@ import me.darknet.assembler.ast.primitive.ASTLabel;
 import me.darknet.assembler.ast.primitive.ASTNumber;
 import me.darknet.assembler.ast.primitive.ASTObject;
 import me.darknet.assembler.ast.specific.ASTMethod;
-import me.darknet.assembler.parser.BytecodeFormat;
+import me.darknet.assembler.instructions.Instruction;
 import me.darknet.assembler.query.AssemblyQueries;
 import me.darknet.assembler.query.AssemblyUtils;
 import me.darknet.assembler.query.LabelQueryResult;
@@ -35,7 +35,8 @@ import me.darknet.assembler.query.resolution.Resolution;
 import me.darknet.assembler.query.resolution.TypeReferenceResolution;
 import me.darknet.assembler.query.resolution.VariableDeclarationResolution;
 import me.darknet.assembler.query.resolution.VariableReferenceResolution;
-import me.darknet.assembler.util.JvmOpcodes;
+import me.darknet.assembler.backend.jvm.JvmTargetContext;
+import me.darknet.assembler.backend.jvm.util.JvmOpcodes;
 import me.darknet.assembler.util.Location;
 import me.darknet.assembler.util.Range;
 import org.fxmisc.richtext.CodeArea;
@@ -253,10 +254,13 @@ public class BasicAssemblerContextMenuProviderFactory extends AbstractContextMen
 	private static void addTypeReferenceAction(@Nonnull AbstractContextMenuProviderFactory provider, @Nonnull ContextMenu menu,
 	                                           @Nonnull Workspace workspace, @Nonnull String instructionName,
 	                                           @Nonnull ASTInstruction instruction) {
-		if (!AssemblyUtils.isTypeReferenceInstruction(BytecodeFormat.JVM, instructionName))
+		if (!AssemblyUtils.isTypeReferenceInstruction(JvmTargetContext.INSTANCE, instructionName))
 			return;
 
-		int argumentIndex = AssemblyUtils.typeReferenceArgumentIndex(BytecodeFormat.JVM, instructionName);
+		Instruction<?> definition = JvmTargetContext.INSTANCE.instructions().get(instructionName);
+		if (definition == null)
+			return;
+		int argumentIndex = definition.typeReferenceOperandIndex();
 		if (argumentIndex < 0 || argumentIndex >= instruction.arguments().size())
 			return;
 
@@ -353,7 +357,7 @@ public class BasicAssemblerContextMenuProviderFactory extends AbstractContextMen
 
 	@Nonnull
 	private static List<UsageTarget> variableUsageTargets(@Nonnull ASTMethod method, @Nonnull String variableName) {
-		VariableQueryResult queryResult = AssemblyQueries.variables(method);
+		VariableQueryResult queryResult = AssemblyQueries.variables(method, JvmTargetContext.INSTANCE);
 		return queryResult.usagesOf(variableName).stream()
 				.sorted(Comparator.comparing(usage -> usage.reference().location()))
 				.map(usage -> new UsageTarget(
@@ -373,7 +377,7 @@ public class BasicAssemblerContextMenuProviderFactory extends AbstractContextMen
 
 	@Nonnull
 	private static List<UsageTarget> labelUsageTargets(@Nonnull ASTMethod method, @Nonnull String labelName) {
-		LabelQueryResult queryResult = AssemblyQueries.labels(method);
+		LabelQueryResult queryResult = AssemblyQueries.labels(method, JvmTargetContext.INSTANCE);
 		return queryResult.usagesOf(labelName).stream()
 				.sorted(Comparator.comparing(usage -> usage.reference().location()))
 				.map(usage -> new UsageTarget(

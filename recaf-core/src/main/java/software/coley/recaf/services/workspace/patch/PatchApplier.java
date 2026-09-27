@@ -4,8 +4,12 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import me.darknet.assembler.compile.JavaClassRepresentation;
-import me.darknet.assembler.error.Error;
+import me.darknet.assembler.ast.ASTElement;
+import me.darknet.assembler.backend.jvm.compile.JavaClassRepresentation;
+import me.darknet.assembler.backend.jvm.compile.JavaCompileResult;
+import me.darknet.assembler.error.Diagnostic;
+import me.darknet.assembler.parser.Token;
+import me.darknet.assembler.error.Outcome;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.Info;
@@ -63,7 +67,7 @@ public class PatchApplier implements Service {
 	 */
 	public boolean apply(@Nonnull WorkspacePatch patch, @Nullable PatchFeedback feedback) {
 		List<Runnable> tasks = new ArrayList<>();
-		ErrorDelegate errorConsumerDelegate = new ErrorDelegate(feedback == null ? null : feedback::onAssemblerErrorsObserved);
+		DiagnosticDelegate errorConsumerDelegate = new DiagnosticDelegate(feedback == null ? null : feedback::onAssemblerErrorsObserved);
 
 		for (RemovePath removal : patch.removals()) {
 			PathNode<?> path = removal.path();
@@ -100,31 +104,37 @@ public class PatchApplier implements Service {
 
 			// Apply patch
 			List<StringDiff.Diff> diffs = jvmAssemblerPatch.assemblerDiffs();
-			jvmAssemblerPipeline.disassemble(path).ifOk(disassemble -> {
-				// Apply diffs to disassembled class.
-				String patchedAssembly = StringDiff.Diff.apply(disassemble, diffs);
+			Outcome<String> disassembled = jvmAssemblerPipeline.disassemble(path);
+			if (reportOutcomeErrors(disassembled, errorConsumerDelegate))
+				continue;
 
-				// Reassemble the class and update the workspace.
-				// And parse / assemble step failure
-				jvmAssemblerPipeline.tokenize(patchedAssembly, "<patch>")
-						.flatMap(jvmAssemblerPipeline::roughParse)
-						.flatMap(jvmAssemblerPipeline::concreteParse)
-						.flatMap(concreteAst -> jvmAssemblerPipeline.assemble(concreteAst, path))
-						.ifOk(patchResult -> {
-							JavaClassRepresentation representation = patchResult.representation();
-							if (representation != null) {
-								tasks.add(() -> {
-									JvmClassInfo patchedClass = jvmClass.toJvmClassBuilder()
-											.adaptFrom(representation.classFile())
-											.build();
-									jvmBundle.put(patchedClass);
-								});
-							}
-						}).ifErr(errorConsumerDelegate::errors);
-			}).ifErr(errors -> {
-				// Disassemble failure
-				if (feedback != null) feedback.onAssemblerErrorsObserved(errors);
-			});
+			String patchedAssembly = StringDiff.Diff.apply(disassembled.requireValue(), diffs);
+			Outcome<List<Token>> tokens = jvmAssemblerPipeline.tokenize(patchedAssembly, "<patch>");
+			if (reportOutcomeErrors(tokens, errorConsumerDelegate))
+				continue;
+
+			Outcome<List<ASTElement>> roughAst = jvmAssemblerPipeline.roughParse(tokens.requireValue());
+			if (reportOutcomeErrors(roughAst, errorConsumerDelegate))
+				continue;
+
+			Outcome<List<ASTElement>> concreteAst = jvmAssemblerPipeline.concreteParse(roughAst.requireValue());
+			if (reportOutcomeErrors(concreteAst, errorConsumerDelegate))
+				continue;
+
+			Outcome<JavaCompileResult> patchResult =
+					jvmAssemblerPipeline.assemble(concreteAst.requireValue(), path);
+			if (reportOutcomeErrors(patchResult, errorConsumerDelegate))
+				continue;
+
+			JavaClassRepresentation representation = patchResult.requireValue().representation();
+			if (representation != null) {
+				tasks.add(() -> {
+					JvmClassInfo patchedClass = jvmClass.toJvmClassBuilder()
+							.adaptFrom(representation.classFile())
+							.build();
+					jvmBundle.put(patchedClass);
+				});
+			}
 		}
 
 		for (TextFilePatch filePatch : patch.textFilePatches()) {
@@ -163,6 +173,13 @@ public class PatchApplier implements Service {
 		return true;
 	}
 
+	private static boolean reportOutcomeErrors(@Nonnull Outcome<?> outcome,
+	                                            @Nonnull DiagnosticDelegate errorConsumerDelegate) {
+		outcome.onPartial(partial -> errorConsumerDelegate.errors(partial.errors()))
+				.onFailure(failure -> errorConsumerDelegate.errors(failure.errors()));
+		return !outcome.isSuccess();
+	}
+
 	@Nonnull
 	@Override
 	public String getServiceId() {
@@ -175,13 +192,13 @@ public class PatchApplier implements Service {
 		return config;
 	}
 
-	private static class ErrorDelegate {
-		private final Consumer<List<Error>> errorConsumer;
+	private static class DiagnosticDelegate {
+		private final Consumer<List<Diagnostic>> errorConsumer;
 		private boolean seenErrors;
 
-		private ErrorDelegate(@Nullable Consumer<List<Error>> errorConsumer) {this.errorConsumer = errorConsumer;}
+		private DiagnosticDelegate(@Nullable Consumer<List<Diagnostic>> errorConsumer) {this.errorConsumer = errorConsumer;}
 
-		public void errors(List<Error> errors) {
+		public void errors(List<Diagnostic> errors) {
 			seenErrors = true;
 			if (errorConsumer != null) errorConsumer.accept(errors);
 		}

@@ -1,7 +1,7 @@
 package software.coley.recaf.services.workspace.patch;
 
 import jakarta.annotation.Nonnull;
-import me.darknet.assembler.error.Error;
+import me.darknet.assembler.error.Diagnostic;
 import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.workspace.patch.model.WorkspacePatch;
 
@@ -20,7 +20,7 @@ public interface PatchFeedback {
 	 * @param errors
 	 * 		Assembler errors observed.
 	 */
-	default void onAssemblerErrorsObserved(@Nonnull List<Error> errors) {}
+	default void onAssemblerErrorsObserved(@Nonnull List<Diagnostic> errors) {}
 
 	/**
 	 * Called when a required path in a {@link WorkspacePatch} did not contain all necessary components.

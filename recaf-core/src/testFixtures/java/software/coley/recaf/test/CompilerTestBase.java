@@ -3,10 +3,11 @@ package software.coley.recaf.test;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import me.darknet.assembler.ast.ASTElement;
-import me.darknet.assembler.compile.JavaClassRepresentation;
-import me.darknet.assembler.compile.JavaCompileResult;
-import me.darknet.assembler.error.Error;
-import me.darknet.assembler.error.Result;
+import me.darknet.assembler.backend.jvm.compile.JavaClassRepresentation;
+import me.darknet.assembler.backend.jvm.compile.JavaCompileResult;
+import me.darknet.assembler.error.Diagnostic;
+import me.darknet.assembler.error.Outcome;
+import me.darknet.assembler.parser.Token;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.objectweb.asm.tree.ClassNode;
@@ -118,7 +119,7 @@ public class CompilerTestBase extends TestBase {
 	protected String disassemble(@Nonnull JvmClassInfo cls, boolean isFullBody) {
 		JvmClassBundle bundle = workspace.getPrimaryResource().getJvmClassBundle();
 		WorkspaceResource resource = workspace.getPrimaryResource();
-		Result<String> disassembly;
+		Outcome<String> disassembly;
 		if (isFullBody) {
 			ClassPathNode path = PathNodes.classPath(workspace, resource, bundle, cls);
 			disassembly = assembler.disassemble(path);
@@ -130,10 +131,7 @@ public class CompilerTestBase extends TestBase {
 			disassembly = assembler.disassemble(path);
 		}
 
-		if (disassembly.isOk())
-			return disassembly.get();
-		fail(disassembly.errors().stream().map(Error::toString).collect(Collectors.joining("\n")));
-		return "<error>";
+		return requireSuccess(disassembly, "", "\n");
 	}
 
 	@Nonnull
@@ -153,7 +151,7 @@ public class CompilerTestBase extends TestBase {
 		else
 			fail("Failed to compile test input");
 		JvmClassInfo cls = bundle.get(CLASS_NAME);
-		return assembler.disassemble(PathNodes.classPath(workspace, resource, bundle, cls)).get();
+		return disassemble(cls, true);
 	}
 
 	@Nonnull
@@ -173,7 +171,7 @@ public class CompilerTestBase extends TestBase {
 							.map(CompilerDiagnostic::toString)
 							.collect(Collectors.joining("\n")));
 		JvmClassInfo cls = bundle.get(type);
-		return assembler.disassemble(PathNodes.classPath(workspace, resource, bundle, cls)).get();
+		return disassemble(cls, true);
 	}
 
 	@Nonnull
@@ -182,12 +180,8 @@ public class CompilerTestBase extends TestBase {
 		WorkspaceResource resource = workspace.getPrimaryResource();
 		JvmClassBundle bundle = resource.getJvmClassBundle();
 		ClassPathNode path = PathNodes.classPath(workspace, resource, bundle, new StubClassInfo(CLASS_NAME).asJvmClass());
-		Result<JavaCompileResult> result = assembler.tokenize(assembly, "<assembly>")
-				.flatMap(assembler::roughParse)
-				.flatMap(assembler::concreteParse)
-				.flatMap(concreteAst -> assembler.assemble(concreteAst, path))
-				.ifErr(errors -> fail("Errors assembling test input:\n - " + errors.stream().map(Error::toString).collect(Collectors.joining("\n - "))));
-		JavaClassRepresentation representation = result.get().representation();
+		JavaCompileResult result = requireSuccess(assembler.assembleSource(assembly, "<assembly>", path), "Errors assembling test input:\n - ", "\n - ");
+		JavaClassRepresentation representation = result.representation();
 		if (representation == null)
 			fail("No assembler output for test case");
 		JvmClassInfo cls = new JvmClassInfoBuilder(representation.classFile()).build();
@@ -198,15 +192,21 @@ public class CompilerTestBase extends TestBase {
 	@Nonnull
 	protected List<ASTElement> assembleAst(@Nonnull String body, boolean isFullBody) {
 		String assembly = fillAssemblyTemplate(body, isFullBody);
-		WorkspaceResource resource = workspace.getPrimaryResource();
-		JvmClassBundle bundle = resource.getJvmClassBundle();
-		ClassPathNode path = PathNodes.classPath(workspace, resource, bundle, new StubClassInfo(CLASS_NAME).asJvmClass());
-		Result<List<ASTElement>> result = assembler.tokenize(assembly, "<assembly>")
-				.flatMap(assembler::roughParse)
-				.flatMap(assembler::concreteParse);
-		if (!result.isOk())
-			fail("Errors parsing test input:\n - " + result.errors().stream().map(Error::toString).collect(Collectors.joining("\n - ")));
-		return result.get();
+		List<Token> tokens = requireSuccess(assembler.tokenize(assembly, "<assembly>"), "Errors tokenizing test input:\n - ", "\n - ");
+		return requireSuccess(assembler.fullParse(tokens), "Errors parsing test input:\n - ", "\n - ");
+	}
+
+	@Nonnull
+	private static <T> T requireSuccess(@Nonnull Outcome<T> outcome, @Nonnull String errorPrefix,
+	                                    @Nonnull String diagnosticSeparator) {
+		outcome.onPartial(partial -> fail(errorPrefix + formatDiagnostics(partial.diagnostics(), diagnosticSeparator)))
+				.onFailure(failure -> fail(errorPrefix + formatDiagnostics(failure.diagnostics(), diagnosticSeparator)));
+		return outcome.requireValue();
+	}
+
+	@Nonnull
+	private static String formatDiagnostics(@Nonnull List<Diagnostic> diagnostics, @Nonnull String separator) {
+		return diagnostics.stream().map(Diagnostic::toString).collect(Collectors.joining(separator));
 	}
 
 	@Nonnull

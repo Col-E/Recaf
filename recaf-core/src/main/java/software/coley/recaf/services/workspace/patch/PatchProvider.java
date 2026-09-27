@@ -3,7 +3,7 @@ package software.coley.recaf.services.workspace.patch;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import me.darknet.assembler.error.Result;
+import me.darknet.assembler.error.Outcome;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.*;
@@ -117,18 +117,18 @@ public class PatchProvider implements Service {
 			ClassPathNode initialPath = parent.child(initial);
 			ClassPathNode currentPath = parent.child(current);
 			JvmAssemblerPipeline assembler = assemblerPipelineManager.newJvmAssemblerPipeline(workspace);
-			Result<String> initialDisassembleRes = assembler.disassemble(initialPath);
-			Result<String> currentDisassembleRes = assembler.disassemble(currentPath);
-			if (!initialDisassembleRes.hasValue())
-				throw new PatchGenerationException("Failed to disassemble initial state of '" + initial.getName() + "'");
-			if (initialDisassembleRes.hasErr())
+			Outcome<String> initialDisassembleRes = assembler.disassemble(initialPath);
+			Outcome<String> currentDisassembleRes = assembler.disassemble(currentPath);
+			initialDisassembleRes.onFailureThrow(failure ->
+					new PatchGenerationException("Failed to disassemble initial state of '" + initial.getName() + "'"));
+			if (initialDisassembleRes.isPartial())
 				throw new PatchGenerationException("Initial state of '" + initial.getName() + "' has assembler errors");
-			if (!currentDisassembleRes.hasValue())
-				throw new PatchGenerationException("Failed to disassemble current state of '" + initial.getName() + "'");
-			if (currentDisassembleRes.hasErr())
+			currentDisassembleRes.onFailureThrow(failure ->
+					new PatchGenerationException("Failed to disassemble current state of '" + initial.getName() + "'"));
+			if (currentDisassembleRes.isPartial())
 				throw new PatchGenerationException("Current state of '" + initial.getName() + "' has assembler errors");
-			String initialDisassemble = initialDisassembleRes.get();
-			String currentDisassemble = currentDisassembleRes.get();
+			String initialDisassemble = initialDisassembleRes.requireValue();
+			String currentDisassemble = currentDisassembleRes.requireValue();
 			List<StringDiff.Diff> assemblerDiffs = StringDiff.diff(initialDisassemble, currentDisassemble);
 			if (!assemblerDiffs.isEmpty())
 				jvmAssemblerPatches.add(new JvmAssemblerPatch(initialPath, assemblerDiffs));

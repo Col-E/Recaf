@@ -4,12 +4,16 @@ import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import javafx.scene.control.ContextMenu;
+import me.darknet.assembler.backend.dalvik.DalvikTargetContext;
+import me.darknet.assembler.backend.jvm.JvmTargetContext;
 import me.darknet.assembler.query.AssemblyQueries;
+import me.darknet.assembler.target.TargetContext;
 import me.darknet.assembler.query.resolution.Resolution;
 import org.fxmisc.richtext.CharacterHit;
 import org.fxmisc.richtext.CodeArea;
 import software.coley.recaf.analytics.logging.DebuggingLogger;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.path.AssemblerPathData;
 import software.coley.recaf.path.AssemblerPathNode;
 import software.coley.recaf.services.cell.CellConfigurationService;
@@ -59,7 +63,11 @@ public class AssemblerContextActionSupport extends AstBuildConsumerComponent {
 			area.moveTo(hit.getInsertionIndex());
 
 			// Create menu
-			Resolution resolution = AssemblyQueries.resolveAt(astElements, hit.getInsertionIndex());
+			ClassInfo classInfo = path.getValueOfType(ClassInfo.class);
+			TargetContext target = classInfo != null && classInfo.isAndroidClass()
+					? DalvikTargetContext.INSTANCE
+					: JvmTargetContext.INSTANCE;
+			Resolution resolution = AssemblyQueries.resolveAt(astElements, hit.getInsertionIndex(), target);
 			AssemblerPathData data = new AssemblerPathData(editor, resolution);
 			menu = cellConfigurationService.contextMenuOf(ContextSource.DECLARATION, new AssemblerPathNode(path, data));
 

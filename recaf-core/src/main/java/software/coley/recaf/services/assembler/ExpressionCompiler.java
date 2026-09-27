@@ -3,7 +3,7 @@ package software.coley.recaf.services.assembler;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
-import me.darknet.assembler.printer.JvmClassPrinter;
+import me.darknet.assembler.backend.jvm.printer.JvmClassPrinter;
 import me.darknet.assembler.printer.MethodPrinter;
 import me.darknet.assembler.printer.PrintContext;
 import org.objectweb.asm.ClassReader;
