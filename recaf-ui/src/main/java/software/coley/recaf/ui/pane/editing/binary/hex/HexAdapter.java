@@ -15,6 +15,8 @@ import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
 import software.coley.recaf.util.Animations;
 import software.coley.recaf.util.FxThreadUtil;
+import software.coley.recaf.workspace.WorkspaceSaveService;
+import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.FileBundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 
@@ -28,10 +30,13 @@ import java.util.Collections;
  */
 public class HexAdapter extends BorderPane implements UpdatableNavigable {
 	private static final Logger logger = Logging.get(HexAdapter.class);
+	private final WorkspaceSaveService saveService;
 	private final HexEditor editor;
 	private PathNode<?> path;
 
-	public HexAdapter(@Nonnull HexConfig config) {
+	public HexAdapter(@Nonnull HexConfig config, @Nonnull WorkspaceSaveService saveService) {
+		this.saveService = saveService;
+
 		setCenter(editor = new HexEditor(config));
 	}
 
@@ -85,7 +90,11 @@ public class HexAdapter extends BorderPane implements UpdatableNavigable {
 				editor.setCommitAction(data -> {
 					BundlePathNode parent = filePath.getParent().getParent();
 					FileBundle bundle = (FileBundle) parent.getValue();
-					bundle.put(fileInfo.toFileBuilder().withRawContent(data).build());
+					Workspace workspace = filePath.getValueOfType(Workspace.class);
+					if (workspace == null)
+						throw new IllegalStateException("Workspace missing from file path node");
+					FileInfo newFileInfo = fileInfo.toFileBuilder().withRawContent(data).build();
+					saveService.commit(workspace, bundle, newFileInfo);
 				});
 			}
 		} else if (path instanceof ClassPathNode classPath) {
@@ -101,7 +110,10 @@ public class HexAdapter extends BorderPane implements UpdatableNavigable {
 							BundlePathNode parent = classPath.getParent().getParent();
 							JvmClassBundle bundle = (JvmClassBundle) parent.getValue();
 							JvmClassInfo newClass = classInfo.asJvmClass().toJvmClassBuilder().adaptFrom(data).build();
-							bundle.put(newClass);
+							Workspace workspace = classPath.getValueOfType(Workspace.class);
+							if (workspace == null)
+								throw new IllegalStateException("Workspace missing from class path node");
+							saveService.commit(workspace, bundle, newClass);
 							FxThreadUtil.run(() -> Animations.animateSuccess(this, 1000));
 						} catch (Throwable t) {
 							// Skill issue

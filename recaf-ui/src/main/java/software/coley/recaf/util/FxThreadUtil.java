@@ -8,13 +8,14 @@ import javafx.beans.value.ObservableValue;
 import javafx.beans.value.WritableValue;
 import software.coley.recaf.RecafApplication;
 import software.coley.recaf.util.threading.Batch;
-import software.coley.recaf.util.threading.DirectBatch;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
 import software.coley.recaf.util.threading.ThreadUtil;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.function.Supplier;
 
 /**
  * Utility for working with JavaFX threading.
@@ -63,6 +64,21 @@ public class FxThreadUtil {
 	 */
 	public static void delayedRun(long delayMs, @Nonnull Runnable action) {
 		ThreadUtil.runDelayed(delayMs, () -> run(action));
+	}
+
+	/**
+	 * @param action
+	 * 		Supplier to start in new thread.
+	 * @param fallback
+	 * 		Fallback value if the supplier encounters a failure.
+	 *
+	 * @return Thread future.
+	 */
+	@Nonnull
+	public static <T> CompletableFuture<T> supply(@Nonnull Supplier<T> action, @Nullable T fallback) {
+		if (Platform.isFxApplicationThread())
+			return CompletableFuture.completedFuture(ThreadUtil.wrap(action, fallback).get());
+		return ThreadUtil.supply(action, fallback, jfxExecutor);
 	}
 
 	/**

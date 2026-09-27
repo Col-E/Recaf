@@ -1142,6 +1142,7 @@ service.io.export-config=Exporting
 service.io.export-config.bundle-supporting-resources=Bundle supporting resources into output
 service.io.export-config.compression=Compression strategy for contents of output
 service.io.export-config.create-zip-dir-entries=Create ZIP 'directory' entries in output
+service.io.export-config.auto-export-after-save=Automatically export after successful workspace saves
 service.io.export-config.warn-no-changes=Warn on exporting without any changes made
 service.io.gson-provider-config=Json
 service.io.gson-provider-config.pretty-print=Pretty printing

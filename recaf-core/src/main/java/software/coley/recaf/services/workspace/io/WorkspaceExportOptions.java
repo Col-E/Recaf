@@ -133,6 +133,7 @@ public class WorkspaceExportOptions {
 						if (prefix != null)
 							consumer.write(prefix);
 						consumer.write(data);
+						consumer.commit();
 						return;
 					}
 

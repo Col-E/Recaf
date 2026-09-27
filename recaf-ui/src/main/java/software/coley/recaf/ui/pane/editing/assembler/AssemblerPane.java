@@ -55,6 +55,7 @@ import software.coley.recaf.ui.pane.editing.text.TextConfig;
 import software.coley.recaf.util.Animations;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.threading.ThreadUtil;
+import software.coley.recaf.workspace.WorkspaceSaveService;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.Bundle;
 
@@ -77,6 +78,7 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 
 	private final AssemblerPipelineManager pipelineManager;
 	private final AssemblerToolTabs assemblerToolTabs;
+	private final WorkspaceSaveService saveService;
 	private final ProblemTracking problemTracking = new ProblemTracking();
 	private final Editor editor = new Editor();
 	private final AtomicBoolean updateLock = new AtomicBoolean();
@@ -98,6 +100,7 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 	                     @Nonnull KeybindingConfig keys,
 	                     @Nonnull SideTabsInjector sideTabsInjector,
 	                     @Nonnull WorkspaceManager workspaceManager,
+	                     @Nonnull WorkspaceSaveService saveService,
 	                     @Nonnull InheritanceGraphService graphService,
 	                     @Nonnull CellConfigurationService cellConfigurationService,
 	                     @Nonnull TabCompletionConfig tabCompletionConfig,
@@ -106,6 +109,7 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 
 		this.pipelineManager = pipelineManager;
 		this.assemblerToolTabs = assemblerToolTabs;
+		this.saveService = saveService;
 
 		assemblerToolTabs.setOwner(this);
 
@@ -551,7 +555,10 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 					Bundle<ClassInfo> bundle = path.getValueOfType(Bundle.class);
 					if (bundle == null)
 						throw new IllegalStateException("Bundle not included in assembler pane's path");
-					bundle.put(lastAssembledClass);
+					Workspace workspace = path.getValueOfType(Workspace.class);
+					if (workspace == null)
+						throw new IllegalStateException("Workspace not included in assembler pane's path");
+					saveService.commit(workspace, bundle, lastAssembledClass);
 					FxThreadUtil.run(() -> Animations.animateSuccess(editor, 1000));
 				} catch (Throwable t) {
 					logger.error("Uncaught exception when updating class of {}", lastAssembledClass.getName(), t);

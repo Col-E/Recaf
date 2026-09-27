@@ -25,6 +25,7 @@ public class ExportConfig extends BasicConfigContainer {
 	private final ObservableBoolean bundleSupportingResources = new ObservableBoolean(false);
 	private final ObservableBoolean createZipDirEntries = new ObservableBoolean(true);
 	private final ObservableBoolean warnNoChanges = new ObservableBoolean(true);
+	private final ObservableBoolean autoExportAfterSave = new ObservableBoolean(false);
 
 	@Inject
 	public ExportConfig() {
@@ -34,6 +35,7 @@ public class ExportConfig extends BasicConfigContainer {
 		addValue(new BasicConfigValue<>("bundle-supporting-resources", boolean.class, bundleSupportingResources));
 		addValue(new BasicConfigValue<>("create-zip-dir-entries", boolean.class, createZipDirEntries));
 		addValue(new BasicConfigValue<>("warn-no-changes", boolean.class, warnNoChanges));
+		addValue(new BasicConfigValue<>("auto-export-after-save", boolean.class, autoExportAfterSave));
 	}
 
 	/**
@@ -71,5 +73,13 @@ public class ExportConfig extends BasicConfigContainer {
 	@Nonnull
 	public ObservableBoolean getWarnNoChanges() {
 		return warnNoChanges;
+	}
+
+	/**
+	 * @return {@code true} to export after successful workspace-content saves.
+	 */
+	@Nonnull
+	public ObservableBoolean getAutoExportAfterSave() {
+		return autoExportAfterSave;
 	}
 }

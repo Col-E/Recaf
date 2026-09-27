@@ -4,12 +4,13 @@ import com.google.common.primitives.Bytes;
 import jakarta.annotation.Nonnull;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import software.coley.recaf.info.JarFileInfo;
 import software.coley.recaf.services.text.TextFormatConfig;
 import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.test.dummy.HelloWorld;
-import software.coley.recaf.util.io.ZipCreationUtils;
 import software.coley.recaf.util.io.ByteSources;
+import software.coley.recaf.util.io.ZipCreationUtils;
 import software.coley.recaf.workspace.model.BasicWorkspace;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -20,6 +21,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
@@ -226,5 +228,83 @@ class WorkspaceExporterTest {
 		// Verify the contents are the exact same. Because it's not an archive we should not be
 		// exporting it back bundled inside an archive.
 		assertArrayEquals(bytes, output, "Expected input and output to be exact match");
+	}
+
+	@Test
+	void testAutomaticDirectoryExportMirrorsWorkspace(@TempDir Path root) throws IOException {
+		Path output = root.resolve("out");
+
+		BasicWorkspace workspace = zipSourcedWorkspace();
+		try (PathWorkspaceExportConsumer consumer = new PathWorkspaceExportConsumer(output, PathWorkspaceExportConsumer.Mode.MIRROR_DIRECTORY)) {
+			new WorkspaceExportOptions(WorkspaceOutputType.DIRECTORY, consumer).create().export(workspace);
+		}
+
+		// Current workspace content is present, including generated embedded-resource output.
+		assertEquals("hello world", Files.readString(output.resolve("hello.txt")), "Missing file content in mirrored output");
+		assertTrue(Files.exists(output.resolve(HelloWorld.class.getName().replace(".", "/") + ".class")), "Missing class file in mirrored output");
+		assertTrue(Files.size(output.resolve("test.zip")) > 0, "Missing embedded resource output in mirrored output");
+
+		// Cleanup of the staging directory is done by the exporter, so it should be gone now.
+		try (var children = Files.list(root)) {
+			List<String> rootDirContents = children.map(path -> path.getFileName().toString()).sorted().toList();
+			assertEquals(List.of("out"), rootDirContents, "Staging or backup directory was left beside the mirrored output");
+		}
+	}
+
+	@Test
+	void testManualDirectoryExportPreservesUnrelatedEntries(@TempDir Path root) throws IOException {
+		BasicWorkspace workspace = zipSourcedWorkspace();
+
+		// Put some junk in the output directory that should not be deleted by the export process.
+		Path output = root.resolve("out");
+		Files.createDirectories(output.resolve("nested"));
+		Files.writeString(output.resolve("stale.txt"), "stale");
+		Files.writeString(output.resolve("nested/old.txt"), "old");
+
+		// Unlike directory mirror mode, manual directory export does not stage the output and instead writes directly to the output.
+		// So any existing files aren't moved to a backup location then deleted.
+		new WorkspaceExportOptions(WorkspaceOutputType.DIRECTORY,
+				new PathWorkspaceExportConsumer(output)).create().export(workspace);
+
+		assertEquals("stale", Files.readString(output.resolve("stale.txt")), "Manual export deleted an unrelated file");
+		assertEquals("old", Files.readString(output.resolve("nested/old.txt")), "Manual export deleted an unrelated nested file");
+		assertEquals("hello world", Files.readString(output.resolve("hello.txt")), "Missing file content in manual output");
+	}
+
+	@Test
+	void testAutomaticFileExportHandlesStagedOutput(@TempDir Path root) throws IOException {
+		// Make a workspace with some arbitrary bytes to export.
+		byte[] bytes = new byte[100];
+		for (int i = 0; i < bytes.length; i++)
+			bytes[i] = (byte) i;
+		BasicWorkspace workspace = new BasicWorkspace(importer.importResource(ByteSources.wrap(bytes)));
+
+		// Put some content in the target export path.
+		Path output = root.resolve("out.dat");
+		Files.writeString(output, "previous");
+
+		// Export the workspace to a staged file, then move it into place.
+		try (PathWorkspaceExportConsumer consumer = new PathWorkspaceExportConsumer(output, PathWorkspaceExportConsumer.Mode.ATOMIC_FILE)) {
+			new WorkspaceExportOptions(WorkspaceOutputType.FILE, consumer).create().export(workspace);
+		}
+
+		// The staged file should have been moved into place, replacing the previous content.
+		// Any staging files should have been cleaned up.
+		assertArrayEquals(bytes, Files.readAllBytes(output), "Staged file output was not installed");
+		try (var children = Files.list(root)) {
+			List<String> rootDirContents = children.map(path -> path.getFileName().toString()).sorted().toList();
+			assertEquals(List.of("out.dat"), rootDirContents, "Staging file was left beside the output");
+		}
+	}
+
+	@Nonnull
+	private static BasicWorkspace zipSourcedWorkspace() throws IOException {
+		String helloWorldPath = HelloWorld.class.getName().replace(".", "/");
+		byte[] zipBytes = ZipCreationUtils.builder()
+				.add(helloWorldPath + ".class", TestClassUtils.fromRuntimeClass(HelloWorld.class).getBytecode())
+				.add("hello.txt", "hello world".getBytes(StandardCharsets.UTF_8))
+				.add("test.zip", ZipCreationUtils.createSingleEntryZip("inside.txt", new byte[0]))
+				.bytes();
+		return new BasicWorkspace(importer.importResource(ByteSources.wrap(zipBytes)));
 	}
 }

@@ -33,6 +33,7 @@ import software.coley.recaf.ui.pane.editing.media.VideoPane;
 import software.coley.recaf.ui.pane.editing.text.TextPane;
 import software.coley.recaf.util.io.ByteHeaderUtil;
 import software.coley.recaf.util.threading.ThreadUtil;
+import software.coley.recaf.workspace.WorkspaceSaveService;
 import software.coley.recaf.workspace.model.bundle.Bundle;
 
 import java.util.ArrayList;
@@ -57,6 +58,7 @@ public class FilePane extends AbstractContentPane<FilePathNode> implements FileN
 	private final Instance<ElfPane> execElfProvider;
 	private final Instance<DecodingXmlPane> binaryXmlProvider;
 	private final Instance<ArscPane> arscProvider;
+	private final WorkspaceSaveService saveService;
 	private final HexConfig hexConfig;
 	private final KeybindingConfig keys;
 	private final List<FileDisplayMode> fileDisplayModes = new ArrayList<>();
@@ -72,6 +74,7 @@ public class FilePane extends AbstractContentPane<FilePathNode> implements FileN
 	                @Nonnull Instance<ElfPane> execElfProvider,
 	                @Nonnull Instance<DecodingXmlPane> binaryXmlProvider,
 	                @Nonnull Instance<ArscPane> arscProvider,
+	                @Nonnull WorkspaceSaveService saveService,
 	                @Nonnull HexConfig hexConfig,
 	                @Nonnull KeybindingConfig keys) {
 		this.textProvider = textProvider;
@@ -82,6 +85,7 @@ public class FilePane extends AbstractContentPane<FilePathNode> implements FileN
 		this.execElfProvider = execElfProvider;
 		this.binaryXmlProvider = binaryXmlProvider;
 		this.arscProvider = arscProvider;
+		this.saveService = saveService;
 		this.hexConfig = hexConfig;
 		this.keys = keys;
 
@@ -151,7 +155,7 @@ public class FilePane extends AbstractContentPane<FilePathNode> implements FileN
 
 		// Update content in pane.
 		switch (mode) {
-			case HEX -> setDisplay(new HexAdapter(hexConfig));
+			case HEX -> setDisplay(new HexAdapter(hexConfig, saveService));
 			case TEXT -> setDisplay(textProvider.get());
 			case TEXT_BINARY_XML -> setDisplay(binaryXmlProvider.get());
 			case IMAGE -> setDisplay(imageProvider.get());
