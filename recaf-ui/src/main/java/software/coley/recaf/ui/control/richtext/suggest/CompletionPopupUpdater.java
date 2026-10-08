@@ -10,14 +10,18 @@ import java.util.List;
 import static javafx.scene.input.KeyCode.*;
 
 /**
- * An event handler to target {@link KeyEvent#KEY_RELEASED} which updates
+ * An event handler to target {@link KeyEvent#KEY_TYPED} and {@link KeyEvent#KEY_RELEASED} which updates
  * the items and visibility state of a {@link CompletionPopup}.
+ * <p>
+ * Key-released events do not carry the typed character, so it is recorded from the key-typed event which precedes
+ * the release. The release is handled after the editor has inserted the text.
  *
  * @author Matt Coley
  */
 public class CompletionPopupUpdater<T> implements EventHandler<KeyEvent> {
 	private final TabCompleter<T> tabCompleter;
 	private final CompletionPopup<T> completionPopup;
+	private String typedCharacter = "";
 
 	public CompletionPopupUpdater(@Nonnull TabCompleter<T> tabCompleter,
 	                              @Nonnull CompletionPopup<T> completionPopup) {
@@ -27,6 +31,14 @@ public class CompletionPopupUpdater<T> implements EventHandler<KeyEvent> {
 
 	@Override
 	public void handle(KeyEvent event) {
+		if (event.getEventType() == KeyEvent.KEY_TYPED) {
+			typedCharacter = event.getCharacter();
+			return;
+		}
+
+		// Each release consumes the recorded character so it cannot apply to a later key release.
+		String typed = typedCharacter;
+		typedCharacter = "";
 		KeyCode code = event.getCode();
 
 		// Remove popup if backspace is pressed.
@@ -53,9 +65,10 @@ public class CompletionPopupUpdater<T> implements EventHandler<KeyEvent> {
 			return;
 		}
 
-		// Any non-word character should remove the popup.
+		// Any non-word character should remove the popup, unless the completer supports the typed character.
 		// Modifiers are also excluded so capitalizing letters won't hide the popup.
-		if (!code.isLetterKey() && !code.isDigitKey() && !code.isModifierKey() && code != PERIOD && !tabCompleter.isSpecialCompletableKeyCode(code)) {
+		boolean specialCharacter = typed.length() == 1 && tabCompleter.isSpecialCompletableCharacter(typed.charAt(0));
+		if (!code.isLetterKey() && !code.isDigitKey() && !code.isModifierKey() && code != PERIOD && !specialCharacter) {
 			completionPopup.hide();
 			return;
 		}

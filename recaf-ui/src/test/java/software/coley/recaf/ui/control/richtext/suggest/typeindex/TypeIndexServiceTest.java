@@ -1,4 +1,4 @@
-package software.coley.recaf.ui.control.richtext.suggest.java;
+package software.coley.recaf.ui.control.richtext.suggest.typeindex;
 
 import jakarta.annotation.Nonnull;
 import org.junit.jupiter.api.Test;
@@ -7,9 +7,8 @@ import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.StubClassInfo;
 import software.coley.recaf.info.StubFileInfo;
 import software.coley.recaf.services.workspace.WorkspaceManager;
-import software.coley.recaf.ui.control.richtext.suggest.java.lookups.VisibleTypeLookup;
-import software.coley.recaf.ui.control.richtext.suggest.java.typeindex.JavaTypeIndexService;
-import software.coley.recaf.ui.control.richtext.suggest.java.typeindex.TypeIndex;
+import software.coley.recaf.ui.control.richtext.suggest.lookups.TypeVisibility;
+import software.coley.recaf.ui.control.richtext.suggest.typeindex.TypeCandidate;
 import software.coley.recaf.workspace.model.BasicWorkspace;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.BasicJvmClassBundle;
@@ -25,19 +24,20 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.Set;
 import java.util.TreeMap;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 
 /**
- * Tests for {@link JavaTypeIndexService}.
+ * Tests for {@link TypeIndexService}.
  */
-class JavaTypeIndexServiceTest {
+class TypeIndexServiceTest {
 	@Test
 	void reusesCachedIndexAndAppliesAddedClassIncrementally() {
 		WorkspaceManager workspaceManager = mock(WorkspaceManager.class);
-		JavaTypeIndexService service = new JavaTypeIndexService(workspaceManager);
+		TypeIndexService service = new TypeIndexService(workspaceManager);
 		Workspace workspace = workspaceWith("example/Foo");
 
 		// Multiple get calls should return the same index instance while we have the same workspace.
@@ -59,7 +59,7 @@ class JavaTypeIndexServiceTest {
 	@Test
 	void updatesRenamedClassWithoutStaleEntries() {
 		WorkspaceManager workspaceManager = mock(WorkspaceManager.class);
-		JavaTypeIndexService service = new JavaTypeIndexService(workspaceManager);
+		TypeIndexService service = new TypeIndexService(workspaceManager);
 		Workspace workspace = workspaceWith("example/Foo");
 		JvmClassBundle bundle = workspace.getPrimaryResource().getJvmClassBundle();
 
@@ -89,7 +89,7 @@ class JavaTypeIndexServiceTest {
 		// Put 'Foo' in both the primary and a supporting resource.
 		// The primary should win, but when it is removed the supporting one should be promoted.
 		WorkspaceManager workspaceManager = mock(WorkspaceManager.class);
-		JavaTypeIndexService service = new JavaTypeIndexService(workspaceManager);
+		TypeIndexService service = new TypeIndexService(workspaceManager);
 		JvmClassInfo primaryFoo = new StubClassInfo("example/Foo").asJvmClass();
 		JvmClassInfo supportFoo = new StubClassInfo("example/Foo").asJvmClass();
 		BasicJvmClassBundle primaryBundle = new BasicJvmClassBundle();
@@ -125,7 +125,7 @@ class JavaTypeIndexServiceTest {
 	@Test
 	void addsAndRemovesLibraryIncrementallyIncludingEmbeddedAndVersionedClasses() {
 		WorkspaceManager workspaceManager = mock(WorkspaceManager.class);
-		JavaTypeIndexService service = new JavaTypeIndexService(workspaceManager);
+		TypeIndexService service = new TypeIndexService(workspaceManager);
 		Workspace workspace = workspaceWith("example/Host");
 		TypeIndex index = service.getIndex(workspace);
 
@@ -167,6 +167,25 @@ class JavaTypeIndexServiceTest {
 	}
 
 	@Test
+	void typesWithInternalNamePrefixKeepsNestedAndPackagedNamesDistinct() {
+		WorkspaceManager workspaceManager = mock(WorkspaceManager.class);
+		TypeIndexService service = new TypeIndexService(workspaceManager);
+		Workspace workspace = workspaceWith("a/b$c", "a/b/c");
+		TypeIndex index = service.getIndex(workspace);
+
+		Set<String> internalNames = index.typesWithInternalNamePrefix("a/b").stream()
+				.map(TypeCandidate::internalName)
+				.collect(java.util.stream.Collectors.toSet());
+		assertEquals(Set.of("a/b$c", "a/b/c"), internalNames);
+
+		TypeCandidate first = index.findType("a.b.c");
+		TypeCandidate second = index.findType("a.b.c");
+		assertNotNull(first);
+		assertEquals(first, second);
+		assertTrue(Set.of("a/b$c", "a/b/c").contains(first.internalName()));
+	}
+
+	@Test
 	void filtersPackagePrivateTypesOutsideCurrentPackage() {
 		TypeCandidate candidate = new TypeCandidate(
 				"HiddenType",
@@ -177,8 +196,8 @@ class JavaTypeIndexServiceTest {
 				0,
 				null
 		);
-		assertFalse(VisibleTypeLookup.isAccessibleType(candidate, "example"));
-		assertTrue(VisibleTypeLookup.isAccessibleType(candidate, "other"));
+		assertFalse(TypeVisibility.isAccessibleType(candidate, "example"));
+		assertTrue(TypeVisibility.isAccessibleType(candidate, "other"));
 	}
 
 	@Test
@@ -192,7 +211,7 @@ class JavaTypeIndexServiceTest {
 				Opcodes.ACC_PUBLIC,
 				null
 		);
-		assertTrue(VisibleTypeLookup.isAccessibleType(candidate, "example"));
+		assertTrue(TypeVisibility.isAccessibleType(candidate, "example"));
 	}
 
 	@Nonnull

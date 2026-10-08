@@ -4,11 +4,11 @@ import jakarta.annotation.Nonnull;
 import software.coley.recaf.path.DirectoryPathNode;
 import software.coley.recaf.ui.control.richtext.suggest.java.CompletionKind;
 import software.coley.recaf.ui.control.richtext.suggest.java.JavaCompletion;
-import software.coley.recaf.ui.control.richtext.suggest.java.JavaCompletionFactory;
 import software.coley.recaf.ui.control.richtext.suggest.java.JavaCompletionSession;
 import software.coley.recaf.ui.control.richtext.suggest.java.JavaLexicalContext;
-import software.coley.recaf.ui.control.richtext.suggest.java.TypeCandidate;
-import software.coley.recaf.ui.control.richtext.suggest.java.lookups.VisibleTypeLookup;
+import software.coley.recaf.ui.control.richtext.suggest.lookups.CompletionMatching;
+import software.coley.recaf.ui.control.richtext.suggest.lookups.TypeVisibility;
+import software.coley.recaf.ui.control.richtext.suggest.typeindex.TypeCandidate;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -32,14 +32,14 @@ public final class ImportCompletionProvider implements JavaCompletionProvider {
 
 		for (String packageName : session.typeIndex().childPackages(parentPackage)) {
 			String leaf = leafName(packageName);
-			if (!JavaCompletionFactory.matchesPrefix(leaf, suffix))
+			if (!CompletionMatching.matchesPrefix(leaf, suffix))
 				continue;
 			DirectoryPathNode packagePath = session.workspace().findPackage(packageName);
 			JavaCompletion.addOrReplace(completions, new JavaCompletion(
 					CompletionKind.PACKAGE,
 					packageName,
 					packageName,
-					JavaCompletionFactory.prefixPenalty(leaf, suffix),
+					CompletionMatching.prefixPenalty(leaf, suffix),
 					packagePath,
 					packageName,
 					0,
@@ -48,15 +48,15 @@ public final class ImportCompletionProvider implements JavaCompletionProvider {
 		}
 
 		for (TypeCandidate candidate : session.typeIndex().typesInPackage(parentPackage)) {
-			if (!VisibleTypeLookup.isAccessibleType(candidate, currentPackage))
+			if (!TypeVisibility.isAccessibleType(candidate, currentPackage))
 				continue;
-			if (!JavaCompletionFactory.matchesPrefix(candidate.simpleName(), suffix))
+			if (!CompletionMatching.matchesPrefix(candidate.simpleName(), suffix))
 				continue;
 			JavaCompletion.addOrReplace(completions, new JavaCompletion(
 					CompletionKind.TYPE,
 					candidate.qualifiedName(),
 					candidate.qualifiedName(),
-					10 + JavaCompletionFactory.prefixPenalty(candidate.simpleName(), suffix),
+					10 + CompletionMatching.prefixPenalty(candidate.simpleName(), suffix),
 					candidate.path(),
 					candidate.qualifiedName(),
 					0,

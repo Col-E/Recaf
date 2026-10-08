@@ -6,6 +6,7 @@ import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.services.source.ResolverAdapter;
+import software.coley.recaf.ui.control.richtext.suggest.typeindex.TypeCandidate;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.sourcesolver.model.CompilationUnitModel;
 import software.coley.sourcesolver.resolve.result.Resolution;

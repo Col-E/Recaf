@@ -5,8 +5,8 @@ import jakarta.annotation.Nullable;
 import org.objectweb.asm.Type;
 import software.coley.recaf.path.ClassMemberPathNode;
 import software.coley.recaf.path.ClassPathNode;
+import software.coley.recaf.ui.control.richtext.suggest.typeindex.TypeCandidate;
 
-import java.util.Comparator;
 import java.util.Objects;
 
 /**
@@ -15,14 +15,6 @@ import java.util.Objects;
  * @author Matt Coley
  */
 public final class JavaCompletionFactory {
-	/**
-	 * Default ordering for completions. Ranks are sorted first, then sort keys, then display text.
-	 */
-	public static final Comparator<JavaCompletion> DEFAULT_COMPLETION_ORDER = Comparator
-			.comparingInt(JavaCompletion::rank)
-			.thenComparing(JavaCompletion::sortKey, String.CASE_INSENSITIVE_ORDER)
-			.thenComparing(JavaCompletion::displayText, String.CASE_INSENSITIVE_ORDER);
-
 	private JavaCompletionFactory() {}
 
 	/**
@@ -177,31 +169,5 @@ public final class JavaCompletionFactory {
 			}
 			default -> type.getClassName();
 		};
-	}
-
-	/**
-	 * @param name
-	 * 		Name to check for prefix match.
-	 * @param partial
-	 * 		Partial text to match as a prefix.
-	 *
-	 * @return {@code true} if the name starts with the partial text, or if the partial text is empty. {@code false} otherwise.
-	 */
-	public static boolean matchesPrefix(@Nonnull String name, @Nonnull String partial) {
-		if (partial.isEmpty())
-			return true;
-		return name.startsWith(partial);
-	}
-
-	/**
-	 * @param name
-	 * 		Name to check for prefix match.
-	 * @param partial
-	 * 		Partial text to match as a prefix.
-	 *
-	 * @return Penalty score for the name based on prefix matching.
-	 */
-	public static int prefixPenalty(@Nonnull String name, @Nonnull String partial) {
-		return name.startsWith(partial) ? 0 : 1;
 	}
 }

@@ -17,7 +17,12 @@ import me.darknet.assembler.ast.specific.ASTMethod;
 import me.darknet.assembler.instructions.Instruction;
 import me.darknet.assembler.query.AssemblyQueries;
 import me.darknet.assembler.query.AssemblyUtils;
+import me.darknet.assembler.backend.dalvik.DalvikTargetContext;
+import me.darknet.assembler.target.TargetContext;
+import me.darknet.assembler.descriptor.Descriptors;
 import me.darknet.assembler.query.LabelQueryResult;
+import me.darknet.assembler.query.MemberReference;
+import me.darknet.assembler.query.SwitchTarget;
 import me.darknet.assembler.query.VariableQueryResult;
 import me.darknet.assembler.query.resolution.ClassAnnotationResolution;
 import me.darknet.assembler.query.resolution.ClassExtends;
@@ -36,11 +41,9 @@ import me.darknet.assembler.query.resolution.TypeReferenceResolution;
 import me.darknet.assembler.query.resolution.VariableDeclarationResolution;
 import me.darknet.assembler.query.resolution.VariableReferenceResolution;
 import me.darknet.assembler.backend.jvm.JvmTargetContext;
-import me.darknet.assembler.backend.jvm.util.JvmOpcodes;
 import me.darknet.assembler.util.Location;
 import me.darknet.assembler.util.Range;
 import org.fxmisc.richtext.CodeArea;
-import org.objectweb.asm.Type;
 import org.slf4j.Logger;
 import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.Logging;
@@ -75,8 +78,6 @@ import java.util.Objects;
 import static org.kordamp.ikonli.carbonicons.CarbonIcons.ARROW_RIGHT;
 import static org.kordamp.ikonli.carbonicons.CarbonIcons.HEALTH_CROSS;
 import static org.kordamp.ikonli.carbonicons.CarbonIcons.LIST_BOXES;
-import static org.objectweb.asm.Opcodes.IFEQ;
-import static org.objectweb.asm.Opcodes.JSR;
 import static software.coley.recaf.util.Menus.*;
 
 /**
@@ -108,8 +109,21 @@ public class BasicAssemblerContextMenuProviderFactory extends AbstractContextMen
 			ContextMenu menu = new ContextMenu();
 			Resolution resolution = assemblerData.resolution();
 			Editor editor = assemblerData.editor();
-			ResolutionMenuFiller<Resolution> filler = fillers.get(resolution.getClass());
-			if (filler != null) filler.accept(this, menu, editor, workspace, resolution);
+			TargetContext targetContext = declaringClass.isAndroidClass()
+					? DalvikTargetContext.INSTANCE
+					: JvmTargetContext.INSTANCE;
+			if (resolution instanceof InstructionResolution instructionResolution) {
+				addInstructionContextMenu(this, menu, editor, workspace, targetContext, instructionResolution);
+			} else if (resolution instanceof VariableDeclarationResolution declaration) {
+				addUsageMenu(menu, editor, variableUsageTargets(declaration.method(), targetContext, declaration.variable().identity().name()));
+			} else if (resolution instanceof VariableReferenceResolution reference) {
+				addUsageMenu(menu, editor, variableUsageTargets(reference.method(), targetContext, reference.usage().name()));
+			} else if (resolution instanceof LabelDeclarationResolution declaration) {
+				addUsageMenu(menu, editor, labelUsageTargets(declaration.method(), targetContext, declaration.label().name()));
+			} else {
+				ResolutionMenuFiller<Resolution> filler = fillers.get(resolution.getClass());
+				if (filler != null) filler.accept(this, menu, editor, workspace, resolution);
+			}
 			if (menu.getItems().isEmpty()) return null;
 			return menu;
 		};
@@ -197,27 +211,6 @@ public class BasicAssemblerContextMenuProviderFactory extends AbstractContextMen
 		register(MethodResolution.class, (provider, menu, editor, workspace, resolution) -> {
 			// No items
 		});
-		register(InstructionResolution.class, (provider, menu, editor, workspace, resolution) -> {
-			ASTInstruction instruction = resolution.instruction();
-			ASTIdentifier identifier = instruction.identifier();
-			String instructionName = identifier == null ? null : identifier.content();
-			if (instructionName == null)
-				return;
-
-			CodeArea area = editor.getCodeArea();
-			ASTElement selectedElement = instruction.pick(area.getCaretPosition());
-			addIntegerConversionActions(menu, area, selectedElement);
-			addMemberReferenceAction(provider, menu, workspace, instructionName, instruction);
-			addTypeReferenceAction(provider, menu, workspace, instructionName, instruction);
-			addFlowLabelAction(menu, area, resolution.method(), instructionName, instruction);
-			addSwitchTargetActions(menu, area, resolution.method(), instructionName, instruction, selectedElement);
-		});
-		register(VariableDeclarationResolution.class, (provider, menu, editor, workspace, resolution) ->
-				addUsageMenu(menu, editor, variableUsageTargets(resolution.method(), resolution.variable().identity().name())));
-		register(VariableReferenceResolution.class, (provider, menu, editor, workspace, resolution) ->
-				addUsageMenu(menu, editor, variableUsageTargets(resolution.method(), resolution.usage().name())));
-		register(LabelDeclarationResolution.class, (provider, menu, editor, workspace, resolution) ->
-				addUsageMenu(menu, editor, labelUsageTargets(resolution.method(), resolution.label().name())));
 		register(LabelReferenceResolution.class, (provider, menu, editor, workspace, resolution) -> {
 			String target = resolution.reference().content();
 			if (target != null)
@@ -238,10 +231,31 @@ public class BasicAssemblerContextMenuProviderFactory extends AbstractContextMen
 		});
 	}
 
+	private static void addInstructionContextMenu(@Nonnull AbstractContextMenuProviderFactory provider,
+	                                              @Nonnull ContextMenu menu,
+	                                              @Nonnull Editor editor,
+	                                              @Nonnull Workspace workspace,
+	                                              @Nonnull TargetContext targetContext,
+	                                              @Nonnull InstructionResolution resolution) {
+		ASTInstruction instruction = resolution.instruction();
+		ASTIdentifier identifier = instruction.identifier();
+		String instructionName = identifier == null ? null : identifier.content();
+		if (instructionName == null)
+			return;
+
+		CodeArea area = editor.getCodeArea();
+		ASTElement selectedElement = instruction.pick(area.getCaretPosition());
+		addIntegerConversionActions(menu, area, selectedElement);
+		addMemberReferenceAction(provider, menu, workspace, targetContext, instruction);
+		addTypeReferenceAction(provider, menu, workspace, targetContext, instructionName, instruction);
+		addFlowLabelAction(menu, area, resolution.method(), targetContext, instructionName, instruction);
+		addSwitchTargetActions(menu, area, resolution.method(), targetContext, instruction, selectedElement);
+	}
+
 	private static void addFlowLabelAction(@Nonnull ContextMenu menu, @Nonnull CodeArea area, @Nonnull ASTMethod method,
-	                                       @Nonnull String instructionName, @Nonnull ASTInstruction instruction) {
-		int opcode = JvmOpcodes.opcode(instructionName);
-		if (opcode < IFEQ || opcode > JSR || instruction.arguments().isEmpty())
+	                                       @Nonnull TargetContext targetContext, @Nonnull String instructionName,
+	                                       @Nonnull ASTInstruction instruction) {
+		if (!AssemblyUtils.isBranchInstruction(targetContext, instructionName) || instruction.arguments().isEmpty())
 			return;
 
 		String labelName = instruction.arguments().getLast().content();
@@ -252,19 +266,19 @@ public class BasicAssemblerContextMenuProviderFactory extends AbstractContextMen
 	}
 
 	private static void addTypeReferenceAction(@Nonnull AbstractContextMenuProviderFactory provider, @Nonnull ContextMenu menu,
-	                                           @Nonnull Workspace workspace, @Nonnull String instructionName,
-	                                           @Nonnull ASTInstruction instruction) {
-		if (!AssemblyUtils.isTypeReferenceInstruction(JvmTargetContext.INSTANCE, instructionName))
+	                                           @Nonnull Workspace workspace, @Nonnull TargetContext targetContext,
+	                                           @Nonnull String instructionName, @Nonnull ASTInstruction instruction) {
+		if (!AssemblyUtils.isTypeReferenceInstruction(targetContext, instructionName))
 			return;
 
-		Instruction<?> definition = JvmTargetContext.INSTANCE.instructions().get(instructionName);
+		Instruction<?> definition = targetContext.instructions().get(instructionName);
 		if (definition == null)
 			return;
 		int argumentIndex = definition.typeReferenceOperandIndex();
 		if (argumentIndex < 0 || argumentIndex >= instruction.arguments().size())
 			return;
 
-		String typeName = normalizeTypeReference(instruction.arguments().get(argumentIndex).content());
+		String typeName = Descriptors.internalName(instruction.arguments().get(argumentIndex).content());
 		if (typeName == null)
 			return;
 
@@ -281,14 +295,17 @@ public class BasicAssemblerContextMenuProviderFactory extends AbstractContextMen
 	}
 
 	private static void addMemberReferenceAction(@Nonnull AbstractContextMenuProviderFactory provider, @Nonnull ContextMenu menu,
-	                                             @Nonnull Workspace workspace, @Nonnull String instructionName,
+	                                             @Nonnull Workspace workspace, @Nonnull TargetContext targetContext,
 	                                             @Nonnull ASTInstruction instruction) {
-		MemberReference memberReference = parseMemberReference(instructionName, instruction);
+		// TODO: Fix "Go to method" for invoke-polymorphic.
+		if (instruction.identifier() != null && instruction.identifier().content().startsWith("invoke-polymorphic"))
+			return;
+
+		MemberReference memberReference = AssemblyUtils.resolveMemberReference(targetContext, instruction);
 		if (memberReference == null)
 			return;
 
-		ClassPathNode ownerPath = workspace.findClass(memberReference.owner());
-		ClassMemberPathNode memberPath = ownerPath == null ? null : ownerPath.child(memberReference.name(), memberReference.descriptor());
+		ClassMemberPathNode memberPath = resolveMemberPath(workspace, memberReference);
 		String key = memberReference.isMethod() ? "menu.goto.method" : "menu.goto.field";
 		ActionMenuItem gotoAction = action(key, ARROW_RIGHT, () -> {
 			try {
@@ -326,17 +343,16 @@ public class BasicAssemblerContextMenuProviderFactory extends AbstractContextMen
 	}
 
 	private static void addSwitchTargetActions(@Nonnull ContextMenu menu, @Nonnull CodeArea area, @Nonnull ASTMethod method,
-	                                           @Nonnull String instructionName, @Nonnull ASTInstruction instruction,
+	                                           @Nonnull TargetContext targetContext, @Nonnull ASTInstruction instruction,
 	                                           @Nullable ASTElement selectedElement) {
-		if (!"lookupswitch".equals(instructionName) && !"tableswitch".equals(instructionName))
-			return;
-
-		List<SwitchTarget> targets = parseSwitchTargets(instructionName, instruction);
+		List<MenuSwitchTarget> targets = AssemblyUtils.resolveSwitchTargets(targetContext, instruction).stream()
+				.map(target -> new MenuSwitchTarget(target, describeSwitchTarget(target)))
+				.toList();
 		if (targets.isEmpty())
 			return;
 
 		if (selectedElement != null) {
-			for (SwitchTarget target : targets) {
+			for (MenuSwitchTarget target : targets) {
 				if (target.matches(selectedElement)) {
 					menu.getItems().add(action("menu.goto.label", ARROW_RIGHT, () ->
 							gotoLabelDeclaration(method, area, target.labelName())));
@@ -348,7 +364,7 @@ public class BasicAssemblerContextMenuProviderFactory extends AbstractContextMen
 		Menu switchMenu = new Menu();
 		switchMenu.textProperty().bind(Lang.getBinding("menu.goto.switch.title"));
 		switchMenu.setGraphic(new FontIconView(ARROW_RIGHT));
-		for (SwitchTarget target : targets) {
+		for (MenuSwitchTarget target : targets) {
 			switchMenu.getItems().add(actionLiteral(target.description(), ARROW_RIGHT, () ->
 					gotoLabelDeclaration(method, area, target.labelName())));
 		}
@@ -356,8 +372,9 @@ public class BasicAssemblerContextMenuProviderFactory extends AbstractContextMen
 	}
 
 	@Nonnull
-	private static List<UsageTarget> variableUsageTargets(@Nonnull ASTMethod method, @Nonnull String variableName) {
-		VariableQueryResult queryResult = AssemblyQueries.variables(method, JvmTargetContext.INSTANCE);
+	private static List<UsageTarget> variableUsageTargets(@Nonnull ASTMethod method, @Nonnull TargetContext targetContext,
+	                                                      @Nonnull String variableName) {
+		VariableQueryResult queryResult = AssemblyQueries.variables(method, targetContext);
 		return queryResult.usagesOf(variableName).stream()
 				.sorted(Comparator.comparing(usage -> usage.reference().location()))
 				.map(usage -> new UsageTarget(
@@ -376,8 +393,9 @@ public class BasicAssemblerContextMenuProviderFactory extends AbstractContextMen
 	}
 
 	@Nonnull
-	private static List<UsageTarget> labelUsageTargets(@Nonnull ASTMethod method, @Nonnull String labelName) {
-		LabelQueryResult queryResult = AssemblyQueries.labels(method, JvmTargetContext.INSTANCE);
+	private static List<UsageTarget> labelUsageTargets(@Nonnull ASTMethod method, @Nonnull TargetContext targetContext,
+	                                                   @Nonnull String labelName) {
+		LabelQueryResult queryResult = AssemblyQueries.labels(method, targetContext);
 		return queryResult.usagesOf(labelName).stream()
 				.sorted(Comparator.comparing(usage -> usage.reference().location()))
 				.map(usage -> new UsageTarget(
@@ -434,121 +452,22 @@ public class BasicAssemblerContextMenuProviderFactory extends AbstractContextMen
 			gotoAstElement(area, label);
 	}
 
-	// TODO: Surely some of this can be pulled up into JASM upstream...
-
 	private static void replaceAstText(@Nonnull CodeArea area, @Nonnull ASTElement element, @Nonnull String replacement) {
 		Range range = element.range();
 		area.replaceText(range.start(), range.end(), replacement);
 	}
 
 	@Nullable
-	private static String normalizeTypeReference(@Nullable String typeReference) {
-		if (typeReference == null || typeReference.isBlank())
-			return null;
-		if (typeReference.charAt(0) != '[' && typeReference.charAt(0) != 'L')
-			return typeReference;
-
-		Type type = Type.getType(typeReference);
-		while (type.getSort() == Type.ARRAY) type = type.getElementType();
-		return type.getSort() == Type.OBJECT ? type.getInternalName() : null;
-	}
-
-	@Nullable
-	private static MemberReference parseMemberReference(@Nonnull String instructionName, @Nonnull ASTInstruction instruction) {
-		if ((!isFieldReferenceInstruction(instructionName) && !isMethodReferenceInstruction(instructionName)) ||
-				instruction.arguments().size() < 2)
-			return null;
-
-		String ownerAndName = instruction.arguments().get(0).content();
-		String descriptor = instruction.arguments().get(1).content();
-		if (ownerAndName == null || descriptor == null)
-			return null;
-
-		int split = ownerAndName.lastIndexOf('.');
-		if (split <= 0 || split >= ownerAndName.length() - 1)
-			return null;
-
-		return new MemberReference(
-				ownerAndName.substring(0, split),
-				ownerAndName.substring(split + 1),
-				descriptor,
-				isMethodReferenceInstruction(instructionName)
-		);
-	}
-
-	private static boolean isFieldReferenceInstruction(@Nonnull String instructionName) {
-		return "getfield".equals(instructionName) || "getstatic".equals(instructionName) ||
-				"putfield".equals(instructionName) || "putstatic".equals(instructionName);
-	}
-
-	private static boolean isMethodReferenceInstruction(@Nonnull String instructionName) {
-		return instructionName.startsWith("invoke") && !"invokedynamic".equals(instructionName);
+	static ClassMemberPathNode resolveMemberPath(@Nonnull Workspace workspace, @Nonnull MemberReference reference) {
+		ClassPathNode ownerPath = workspace.findClass(reference.owner());
+		return ownerPath == null ? null : ownerPath.child(reference.name(), reference.descriptor());
 	}
 
 	@Nonnull
-	private static List<SwitchTarget> parseSwitchTargets(@Nonnull String instructionName, @Nonnull ASTInstruction instruction) {
-		if (instruction.arguments().isEmpty())
-			return List.of();
-
-		ASTObject switchObject = instruction.argumentObject(instruction.arguments().size() - 1);
-		if (switchObject == null)
-			return List.of();
-
-		return "lookupswitch".equals(instructionName) ? parseLookupSwitchTargets(switchObject) : parseTableSwitchTargets(switchObject);
-	}
-
-	@Nonnull
-	private static List<SwitchTarget> parseLookupSwitchTargets(@Nonnull ASTObject switchObject) {
-		List<SwitchTarget> targets = new ArrayList<>();
-		for (int i = 0; i < switchObject.values().size(); i++) {
-			ASTIdentifier key = switchObject.values().key(i);
-			ASTElement value = switchObject.values().get(i);
-			String context = key == null ? null : key.literal();
-			String labelName = value == null ? null : value.content();
-			if (context == null || labelName == null)
-				continue;
-
-			targets.add(new SwitchTarget(
-					context,
-					labelName,
-					"default".equals(context) ? "Default -> " + labelName : "Case " + context + " -> " + labelName,
-					key,
-					value
-			));
-		}
-		return targets;
-	}
-
-	@Nonnull
-	private static List<SwitchTarget> parseTableSwitchTargets(@Nonnull ASTObject switchObject) {
-		List<SwitchTarget> targets = new ArrayList<>();
-		ASTElement defaultValue = switchObject.value("default");
-		String defaultLabel = defaultValue == null ? null : defaultValue.content();
-		if (defaultLabel != null)
-			targets.add(new SwitchTarget("default", defaultLabel, "Default -> " + defaultLabel,
-					switchObject.values().key("default"), defaultValue));
-
-		long min = 0;
-		ASTElement minValue = switchObject.value("min");
-		if (minValue instanceof ASTNumber number)
-			min = number.asLong();
-
-
-		ASTArray cases = switchObject.value("cases");
-		if (cases == null)
-			return targets;
-
-		long currentValue = min;
-		for (ASTElement caseTarget : cases.values()) {
-			String labelName = caseTarget.content();
-			if (labelName == null || labelName.isBlank())
-				continue;
-
-			String caseContext = Long.toString(currentValue++);
-			targets.add(new SwitchTarget(caseContext, labelName, "Case " + caseContext + " -> " + labelName,
-					caseTarget, caseTarget));
-		}
-		return targets;
+	private static String describeSwitchTarget(@Nonnull SwitchTarget target) {
+		return "default".equals(target.context())
+				? "Default -> " + target.labelName()
+				: "Case " + target.context() + " -> " + target.labelName();
 	}
 
 	private static int integerLiteralRadix(@Nonnull String content) {
@@ -572,16 +491,40 @@ public class BasicAssemblerContextMenuProviderFactory extends AbstractContextMen
 		return wide ? text + 'L' : text;
 	}
 
+	/**
+	 * A usage of a variable or label.
+	 *
+	 * @param description
+	 * 		Text to show in the menu for the usage.
+	 * @param element
+	 * 		Element that is the usage.
+	 * @param iconPath
+	 * 		Optional icon path for the usage type.
+	 */
 	private record UsageTarget(@Nonnull String description, @Nonnull ASTElement element, @Nullable String iconPath) {}
 
-	private record MemberReference(@Nonnull String owner, @Nonnull String name, @Nonnull String descriptor,
-	                               boolean isMethod) {}
+	/**
+	 * A resolved switch branch paired with the text its menu item shows.
+	 *
+	 * @param target
+	 * 		Branch resolved by JASM.
+	 * @param description
+	 * 		Menu text for the branch.
+	 */
+	private record MenuSwitchTarget(@Nonnull SwitchTarget target, @Nonnull String description) {
+		@Nonnull
+		String labelName() {
+			return target.labelName();
+		}
 
-	private record SwitchTarget(@Nonnull String context, @Nonnull String labelName, @Nonnull String description,
-	                            @Nullable ASTElement contextElement, @Nullable ASTElement labelElement) {
+		@Nonnull
+		String context() {
+			return target.context();
+		}
+
 		private boolean matches(@Nonnull ASTElement element) {
-			return element == contextElement || element == labelElement ||
-					context.equals(element.content()) || labelName.equals(element.content());
+			return element == target.contextElement() || element == target.labelElement() ||
+					context().equals(element.content()) || labelName().equals(element.content());
 		}
 	}
 

@@ -1,12 +1,10 @@
-package software.coley.recaf.ui.control.richtext.suggest.java.typeindex;
+package software.coley.recaf.ui.control.richtext.suggest.typeindex;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
-import org.objectweb.asm.Opcodes;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.PathNodes;
-import software.coley.recaf.ui.control.richtext.suggest.java.TypeCandidate;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
 import software.coley.recaf.workspace.model.bundle.Bundle;
@@ -21,6 +19,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
 import java.util.NavigableSet;
 import java.util.Objects;
 import java.util.Queue;
@@ -29,10 +28,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 /**
- * Search-oriented index of workspace types used by Java completion.
- * <p>
- * The index stores the same class information in a few lookup shapes so completion code can
- * answer package, qualified-name, and visible-type queries without rescanning the workspace.
+ * Search-oriented index of workspace types used by tab completion.
  *
  * @author Matt Coley
  */
@@ -43,9 +39,9 @@ public final class TypeIndex {
 			.thenComparingInt(entry -> System.identityHashCode(entry.key().bundle()))
 			.thenComparing(entry -> entry.key().className());
 	private final Workspace workspace;
-	private final Map<String, TypeCandidate> typesByQualifiedName = new HashMap<>();
-	private final Map<String, IndexedEntry> activeEntriesByQualifiedName = new HashMap<>();
-	private final Map<String, NavigableSet<IndexedEntry>> contributorsByQualifiedName = new HashMap<>();
+	private final Map<String, NavigableSet<IndexedEntry>> contributorsByInternalName = new HashMap<>();
+	private final NavigableMap<String, IndexedEntry> activeEntriesByInternalName = new TreeMap<>();
+	private final Map<String, NavigableSet<IndexedEntry>> activeWinnersByQualifiedName = new HashMap<>();
 	private final Map<String, NavigableSet<IndexedEntry>> activeTypesByPackage = new HashMap<>();
 	private final Map<String, Integer> activeTypeCountsByPackage = new HashMap<>();
 	private final Map<String, Map<String, Integer>> childPackageRefCounts = new HashMap<>();
@@ -153,13 +149,32 @@ public final class TypeIndex {
 
 	/**
 	 * @param qualifiedName
-	 * 		Dot-separated Java name.
+	 * 		Dot-separated name.
 	 *
-	 * @return Indexed type for the name, or {@code null} when absent.
+	 * @return Indexed type for the name, or {@code null} when absent. When several active types share the name,
+	 * the one with the lowest sequence is returned.
 	 */
 	@Nullable
 	public TypeCandidate findType(@Nonnull String qualifiedName) {
-		return typesByQualifiedName.get(qualifiedName);
+		NavigableSet<IndexedEntry> winners = activeWinnersByQualifiedName.get(qualifiedName);
+		return winners == null ? null : winners.first().candidate();
+	}
+
+	/**
+	 * @param prefix
+	 * 		Prefix of internal names, such as {@code java/util/Ar}. An empty prefix matches every type.
+	 *
+	 * @return Active types whose internal name starts with the prefix, ordered by internal name.
+	 */
+	@Nonnull
+	public List<TypeCandidate> typesWithInternalNamePrefix(@Nonnull String prefix) {
+		List<TypeCandidate> candidates = new ArrayList<>();
+		for (Map.Entry<String, IndexedEntry> entry : activeEntriesByInternalName.tailMap(prefix, true).entrySet()) {
+			if (!entry.getKey().startsWith(prefix))
+				break;
+			candidates.add(entry.getValue().candidate());
+		}
+		return List.copyOf(candidates);
 	}
 
 	/**
@@ -197,7 +212,7 @@ public final class TypeIndex {
 	 */
 	private void register(@Nonnull ClassPathNode path) {
 		ClassInfo info = path.getValue();
-		addEntry(new EntryKey(resourceOf(path), bundleOf(path), info.getName()), nextSequence++, createCandidate(path));
+		addEntry(new EntryKey(resourceOf(path), bundleOf(path), info.getName()), nextSequence++, TypeCandidate.fromPath(path));
 	}
 
 	/**
@@ -212,11 +227,12 @@ public final class TypeIndex {
 		IndexedEntry entry = new IndexedEntry(key, sequence, candidate);
 		entriesByKey.put(key, entry);
 
-		NavigableSet<IndexedEntry> contributors = contributorsByQualifiedName.computeIfAbsent(candidate.qualifiedName(),
+		String internalName = candidate.internalName();
+		NavigableSet<IndexedEntry> contributors = contributorsByInternalName.computeIfAbsent(internalName,
 				ignored -> new TreeSet<>(ENTRY_ORDER));
-		IndexedEntry previousWinner = activeEntriesByQualifiedName.get(candidate.qualifiedName());
+		IndexedEntry previousWinner = activeEntriesByInternalName.get(internalName);
 		contributors.add(entry);
-		refreshActiveWinner(candidate.qualifiedName(), previousWinner, contributors.first());
+		refreshActiveWinner(previousWinner, contributors.first());
 	}
 
 	/**
@@ -224,31 +240,27 @@ public final class TypeIndex {
 	 * 		Entry to remove from the index.
 	 */
 	private void removeEntry(@Nonnull IndexedEntry entry) {
-		String qualifiedName = entry.candidate().qualifiedName();
-		NavigableSet<IndexedEntry> contributors = contributorsByQualifiedName.get(qualifiedName);
+		String internalName = entry.candidate().internalName();
+		NavigableSet<IndexedEntry> contributors = contributorsByInternalName.get(internalName);
 		if (contributors == null || !contributors.remove(entry))
-			throw new IllegalStateException("Missing contributor set for " + qualifiedName);
+			throw new IllegalStateException("Missing contributor set for " + internalName);
 
-		IndexedEntry previousWinner = activeEntriesByQualifiedName.get(qualifiedName);
+		IndexedEntry previousWinner = activeEntriesByInternalName.get(internalName);
 		IndexedEntry currentWinner = contributors.isEmpty() ? null : contributors.first();
 		if (contributors.isEmpty())
-			contributorsByQualifiedName.remove(qualifiedName);
-		refreshActiveWinner(qualifiedName, previousWinner, currentWinner);
+			contributorsByInternalName.remove(internalName);
+		refreshActiveWinner(previousWinner, currentWinner);
 	}
 
 	/**
-	 * Refreshes the active winner for a qualified name after a change to its contributors.
+	 * Refreshes the active winner for an internal name after a change to its contributors.
 	 *
-	 * @param qualifiedName
-	 * 		Qualified name of the changed entry.
 	 * @param previousWinner
 	 * 		Prior active winner, or {@code null} if there was no winner.
 	 * @param currentWinner
 	 * 		New active winner, or {@code null} if there is no winner.
 	 */
-	private void refreshActiveWinner(@Nonnull String qualifiedName,
-	                                 @Nullable IndexedEntry previousWinner,
-	                                 @Nullable IndexedEntry currentWinner) {
+	private void refreshActiveWinner(@Nullable IndexedEntry previousWinner, @Nullable IndexedEntry currentWinner) {
 		// Skip if they're the same.
 		if (Objects.equals(previousWinner, currentWinner))
 			return;
@@ -258,8 +270,6 @@ public final class TypeIndex {
 			removeActiveEntry(previousWinner);
 		if (currentWinner != null)
 			addActiveEntry(currentWinner);
-		else
-			typesByQualifiedName.remove(qualifiedName);
 	}
 
 	/**
@@ -268,10 +278,11 @@ public final class TypeIndex {
 	 */
 	private void addActiveEntry(@Nonnull IndexedEntry entry) {
 		TypeCandidate candidate = entry.candidate();
-		activeEntriesByQualifiedName.put(candidate.qualifiedName(), entry);
-		typesByQualifiedName.put(candidate.qualifiedName(), candidate);
+		activeEntriesByInternalName.put(candidate.internalName(), entry);
+		activeWinnersByQualifiedName.computeIfAbsent(candidate.qualifiedName(), ignored -> new TreeSet<>(ENTRY_ORDER)).add(entry);
 		activeTypesByPackage.computeIfAbsent(candidate.packageName(), ignored -> new TreeSet<>(ENTRY_ORDER)).add(entry);
 
+		// Update the package count, and register the package hierarchy if this is the first type in the package.
 		int priorCount = activeTypeCountsByPackage.getOrDefault(candidate.packageName(), 0);
 		activeTypeCountsByPackage.put(candidate.packageName(), priorCount + 1);
 		if (priorCount == 0)
@@ -284,15 +295,24 @@ public final class TypeIndex {
 	 */
 	private void removeActiveEntry(@Nonnull IndexedEntry entry) {
 		TypeCandidate candidate = entry.candidate();
-		activeEntriesByQualifiedName.remove(candidate.qualifiedName());
-		typesByQualifiedName.remove(candidate.qualifiedName());
+		activeEntriesByInternalName.remove(candidate.internalName());
 
+		// Remove the entry from the qualified name and package lookups.
+		// If the sets are empty after removal, remove the set entirely.
+		NavigableSet<IndexedEntry> winners = activeWinnersByQualifiedName.get(candidate.qualifiedName());
+		if (winners == null || !winners.remove(entry))
+			throw new IllegalStateException("Missing active qualified name entry for " + candidate.internalName());
+		if (winners.isEmpty())
+			activeWinnersByQualifiedName.remove(candidate.qualifiedName());
+
+		// Same idea with package entries.
 		NavigableSet<IndexedEntry> packageEntries = activeTypesByPackage.get(candidate.packageName());
 		if (packageEntries == null || !packageEntries.remove(entry))
-			throw new IllegalStateException("Missing active package entry for " + candidate.qualifiedName());
+			throw new IllegalStateException("Missing active package entry for " + candidate.internalName());
 		if (packageEntries.isEmpty())
 			activeTypesByPackage.remove(candidate.packageName());
 
+		// And with the package counts.
 		int updatedCount = activeTypeCountsByPackage.getOrDefault(candidate.packageName(), 0) - 1;
 		if (updatedCount < 0)
 			throw new IllegalStateException("Negative package count for " + candidate.packageName());
@@ -336,12 +356,28 @@ public final class TypeIndex {
 		}
 	}
 
+	/**
+	 * Add a reference from a parent package to a child package.
+	 *
+	 * @param parent
+	 * 		Parent package name.
+	 * @param child
+	 * 		Child package name.
+	 */
 	private void incrementChildPackageRef(@Nonnull String parent, @Nonnull String child) {
 		Map<String, Integer> counts = childPackageRefCounts.computeIfAbsent(parent, ignored -> new TreeMap<>());
 		counts.merge(child, 1, Integer::sum);
 		childPackages.computeIfAbsent(parent, ignored -> new TreeSet<>()).add(child);
 	}
 
+	/**
+	 * Remove a reference from a parent package to a child package.
+	 *
+	 * @param parent
+	 * 		Parent package name.
+	 * @param child
+	 * 		Child package name.
+	 */
 	private void decrementChildPackageRef(@Nonnull String parent, @Nonnull String child) {
 		Map<String, Integer> counts = childPackageRefCounts.get(parent);
 		if (counts == null)
@@ -378,32 +414,17 @@ public final class TypeIndex {
 	 */
 	@Nonnull
 	private TypeCandidate createCandidate(@Nonnull WorkspaceResource resource, @Nonnull Bundle<?> bundle, @Nonnull ClassInfo info) {
-		return createCandidate(PathNodes.classPath(workspace, resource, bundle, info));
+		return TypeCandidate.fromPath(PathNodes.classPath(workspace, resource, bundle, info));
 	}
 
 	/**
-	 * @param path
-	 * 		Path to class to create a candidate for.
+	 * Visits all classes in the resource and its embedded resources.
 	 *
-	 * @return Candidate for the class.
+	 * @param resource
+	 * 		Resource to visit.
+	 * @param visitor
+	 * 		Visitor to call for each class.
 	 */
-	@Nonnull
-	private static TypeCandidate createCandidate(@Nonnull ClassPathNode path) {
-		ClassInfo info = path.getValue();
-		String packageName = Objects.requireNonNullElse(info.getPackageName(), "").replace('/', '.');
-		String qualifiedName = info.getName().replace('/', '.').replace('$', '.');
-		String simpleName = deriveSimpleName(info);
-		return new TypeCandidate(
-				simpleName,
-				qualifiedName,
-				info.getName(),
-				packageName,
-				(info.getAccess() & Opcodes.ACC_ANNOTATION) != 0,
-				info.getAccess(),
-				path
-		);
-	}
-
 	private static void visitJvmClasses(@Nonnull WorkspaceResource resource, @Nonnull ClassVisitor visitor) {
 		visitImmediateJvmClasses(resource, visitor);
 		Queue<WorkspaceFileResource> embedded = new ArrayDeque<>(resource.getEmbeddedResources().values());
@@ -414,6 +435,14 @@ public final class TypeIndex {
 		}
 	}
 
+	/**
+	 * Visits all classes in the resource and its embedded resources.
+	 *
+	 * @param resource
+	 * 		Resource to visit.
+	 * @param visitor
+	 * 		Visitor to call for each class.
+	 */
 	private static void visitAndroidClasses(@Nonnull WorkspaceResource resource, @Nonnull ClassVisitor visitor) {
 		visitImmediateAndroidClasses(resource, visitor);
 		Queue<WorkspaceFileResource> embedded = new ArrayDeque<>(resource.getEmbeddedResources().values());
@@ -424,6 +453,14 @@ public final class TypeIndex {
 		}
 	}
 
+	/**
+	 * Visits all classes in the resource, but not its embedded resources.
+	 *
+	 * @param resource
+	 * 		Resource to visit.
+	 * @param visitor
+	 * 		Visitor to call for each class.
+	 */
 	private static void visitImmediateJvmClasses(@Nonnull WorkspaceResource resource, @Nonnull ClassVisitor visitor) {
 		List<JvmClassBundle> bundles = new ArrayList<>();
 		bundles.addAll(resource.jvmClassBundleStream().toList());
@@ -434,6 +471,14 @@ public final class TypeIndex {
 		}
 	}
 
+	/**
+	 * Visits all classes in the resource, but not its embedded resources.
+	 *
+	 * @param resource
+	 * 		Resource to visit.
+	 * @param visitor
+	 * 		Visitor to call for each class.
+	 */
 	private static void visitImmediateAndroidClasses(@Nonnull WorkspaceResource resource, @Nonnull ClassVisitor visitor) {
 		for (AndroidClassBundle bundle : resource.getAndroidClassBundles().values()) {
 			for (ClassInfo info : bundle.values())
@@ -443,37 +488,47 @@ public final class TypeIndex {
 
 	@Nonnull
 	private static WorkspaceResource resourceOf(@Nonnull ClassPathNode path) {
-		return Objects.requireNonNull(path.getValueOfType(WorkspaceResource.class),
-				"Class path missing workspace resource");
+		return Objects.requireNonNull(path.getValueOfType(WorkspaceResource.class), "Class path missing workspace resource");
 	}
 
 	@Nonnull
 	private static Bundle<?> bundleOf(@Nonnull ClassPathNode path) {
-		return Objects.requireNonNull(path.getValueOfType(Bundle.class),
-				"Class path missing bundle");
+		return Objects.requireNonNull(path.getValueOfType(Bundle.class), "Class path missing bundle");
 	}
 
-	@Nonnull
-	private static String deriveSimpleName(@Nonnull ClassInfo info) {
-		// Nested classes should complete by their source-facing simple name rather than the full internal path.
-		String name = info.getName();
-		int lastSlash = name.lastIndexOf('/');
-		int lastDollar = name.lastIndexOf('$');
-		return name.substring(Math.max(lastSlash, lastDollar) + 1);
-	}
-
+	/**
+	 * Visitor for classes in a resource.
+	 */
 	private interface ClassVisitor {
+		/**
+		 * @param resource
+		 * 		Resource containing the class.
+		 * @param bundle
+		 * 		Bundle containing the class.
+		 * @param info
+		 * 		Class to visit.
+		 */
 		void visit(@Nonnull WorkspaceResource resource, @Nonnull Bundle<?> bundle, @Nonnull ClassInfo info);
 	}
 
+	/**
+	 * Unique key for an entry in the index.
+	 *
+	 * @param resource
+	 * 		Resource containing the class.
+	 * @param bundle
+	 * 		Bundle containing the class.
+	 * @param className
+	 * 		Class name, in internal form.
+	 */
 	private record EntryKey(@Nonnull WorkspaceResource resource, @Nonnull Bundle<?> bundle, @Nonnull String className) {
 		@Override
 		public boolean equals(Object other) {
 			if (this == other)
 				return true;
-			if (!(other instanceof EntryKey entryKey))
+			if (!(other instanceof EntryKey(WorkspaceResource otherResource, Bundle<?> otherBundle, String otherName)))
 				return false;
-			return resource == entryKey.resource && bundle == entryKey.bundle && className.equals(entryKey.className);
+			return resource == otherResource && bundle == otherBundle && className.equals(otherName);
 		}
 
 		@Override
@@ -482,5 +537,15 @@ public final class TypeIndex {
 		}
 	}
 
+	/**
+	 * Entry in the index.
+	 *
+	 * @param key
+	 * 		Unique key for the entry.
+	 * @param sequence
+	 * 		Sequence number for the entry, used to preserve relative ordering.
+	 * @param candidate
+	 * 		Type candidate represented by the entry.
+	 */
 	private record IndexedEntry(@Nonnull EntryKey key, long sequence, @Nonnull TypeCandidate candidate) {}
 }

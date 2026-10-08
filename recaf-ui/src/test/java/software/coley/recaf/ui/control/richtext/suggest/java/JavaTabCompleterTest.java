@@ -20,7 +20,7 @@ import software.coley.recaf.test.dummy.AccessibleFields;
 import software.coley.recaf.test.dummy.AccessibleMethods;
 import software.coley.recaf.test.dummy.ClassWithFieldsAndMethods;
 import software.coley.recaf.ui.control.richtext.suggest.TabCompletionConfig;
-import software.coley.recaf.ui.control.richtext.suggest.java.typeindex.JavaTypeIndexService;
+import software.coley.recaf.ui.control.richtext.suggest.typeindex.TypeIndexService;
 import software.coley.recaf.workspace.model.EmptyWorkspace;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.sourcesolver.model.CompilationUnitModel;
@@ -38,12 +38,12 @@ import static org.junit.jupiter.api.Assertions.*;
  * Tests for {@link JavaTabCompleter}.
  */
 class JavaTabCompleterTest extends TestBase {
-	private JavaTypeIndexService typeIndexService;
+	private TypeIndexService typeIndexService;
 
 	@BeforeEach
 	void setUp() {
 		workspaceManager.setCurrent(null);
-		typeIndexService = new JavaTypeIndexService(workspaceManager);
+		typeIndexService = new TypeIndexService(workspaceManager);
 	}
 
 	@Test
@@ -412,6 +412,24 @@ class JavaTabCompleterTest extends TestBase {
 		assertEquals("", nonVoidMethodWithParameters.trailingSuffix());
 		assertEquals(1, nonVoidMethodWithParameters.caretBacktrack());
 		assertEquals("substring()", nonVoidMethodWithParameters.fullInsertionText());
+	}
+
+	@Test
+	void identifierCompletionsOfPartial() {
+		String source = """
+				public class Demo {
+					void run() {
+						ret
+					}
+				}
+				""";
+		JavaCompletionContext context = scriptContext(source, null);
+		JavaTabCompleter completer = newCompleter(context);
+		int caret = source.indexOf("ret") + "ret".length();
+
+		assertContainsKeyword(completer.resolve(source, caret), "return");
+		assertTrue(completer.resolve(source, -1).isEmpty());
+		assertTrue(completer.resolve(source, source.length() + 1).isEmpty());
 	}
 
 	@Test

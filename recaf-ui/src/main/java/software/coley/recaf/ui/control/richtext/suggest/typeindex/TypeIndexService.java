@@ -1,4 +1,4 @@
-package software.coley.recaf.ui.control.richtext.suggest.java.typeindex;
+package software.coley.recaf.ui.control.richtext.suggest.typeindex;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.Cache;
@@ -12,12 +12,12 @@ import software.coley.recaf.workspace.model.Workspace;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Shared workspace-backed type index for Java source tab completion.
+ * Shared workspace-backed type index for tab completion.
  *
  * @author Matt Coley
  */
 @ApplicationScoped
-public class JavaTypeIndexService {
+public class TypeIndexService {
 	private final Cache<Workspace, CacheEntry> cache = CacheBuilder.newBuilder()
 			.weakKeys() // Intended for the side effect of using '==' for key comparisons over '.equals()'
 			.maximumSize(1) // Users will only ever operate on one workspace, so this is free pruning when they switch.
@@ -25,7 +25,7 @@ public class JavaTypeIndexService {
 			.build();
 
 	@Inject
-	public JavaTypeIndexService(@Nonnull WorkspaceManager workspaceManager) {
+	public TypeIndexService(@Nonnull WorkspaceManager workspaceManager) {
 		workspaceManager.addWorkspaceCloseListener(this::removeWorkspace);
 	}
 

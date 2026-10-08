@@ -1,6 +1,5 @@
 package software.coley.recaf.ui.control.richtext.suggest.java;
 
-import com.google.common.annotations.VisibleForTesting;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import software.coley.recaf.info.ClassInfo;
@@ -9,20 +8,18 @@ import software.coley.recaf.path.ClassMemberPathNode;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.PathNode;
 import software.coley.recaf.ui.control.richtext.suggest.TabCompletionConfig;
+import software.coley.recaf.ui.control.richtext.suggest.ranking.CompletionRanker;
+import software.coley.recaf.ui.control.richtext.suggest.ranking.RankingKeys;
 
-import java.util.Comparator;
-import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
 /**
- * Adaptive ranking for Java completions.
+ * Java-specific ranking keys and built-in baselines for {@link CompletionRanker}.
  *
  * @author Matt Coley
  */
-public class JavaCompletionRanker {
-	private static final int MAX_BASELINE_BOOST = 6;
-	private static final int MAX_LEARNED_BOOST = 8;
+public final class JavaCompletionRanking {
 	private static final Map<String, Integer> TYPE_BASELINES = new TreeMap<>();
 	private static final Map<String, Integer> OWNER_MEMBER_BASELINES = new TreeMap<>();
 
@@ -40,7 +37,6 @@ public class JavaCompletionRanker {
 		registerType(4, "java.util.List");
 		registerType(4, "java.util.Map");
 		registerType(4, "java.util.Set");
-		registerType(4, "java.io.File");
 		registerType(4, "java.io.File");
 		registerType(4, "java.nio.file.Paths");
 		registerType(4, "java.nio.file.Path");
@@ -66,117 +62,32 @@ public class JavaCompletionRanker {
 		registerMember(4, "java.lang.StringBuffer", "append");
 	}
 
-	private final TabCompletionConfig config;
-	private final Comparator<JavaCompletion> adaptiveOrder = Comparator
-			.comparingInt(JavaCompletion::rank)
-			.thenComparingInt(this::adaptiveRank)
-			.thenComparing(JavaCompletion::sortKey, String.CASE_INSENSITIVE_ORDER)
-			.thenComparing(JavaCompletion::displayText, String.CASE_INSENSITIVE_ORDER);
-
-	public JavaCompletionRanker(@Nonnull TabCompletionConfig config) {
-		this.config = config;
-	}
+	private JavaCompletionRanking() {}
 
 	/**
-	 * @param completions
-	 * 		Raw completion results.
+	 * @param config
+	 * 		Config holding adaptive ranking settings and learned usage counts.
 	 *
-	 * @return Sorted completion results.
+	 * @return Ranker for Java completions.
 	 */
 	@Nonnull
-	public List<JavaCompletion> rank(@Nonnull List<JavaCompletion> completions) {
-		Comparator<JavaCompletion> order = config.isAdaptiveRankingEnabled()
-				? adaptiveOrder
-				: JavaCompletionFactory.DEFAULT_COMPLETION_ORDER;
-		return completions.stream().sorted(order).toList();
-	}
-
-	/**
-	 * Track the selection of a completion for adaptive ranking purposes.
-	 *
-	 * @param completion
-	 * 		Accepted completion.
-	 */
-	public void recordSelection(@Nonnull JavaCompletion completion) {
-		if (!config.isAdaptiveRankingLearningEnabled() || !isAdaptiveKind(completion.kind()))
-			return;
-		String key = stableKey(completion);
-		if (key != null)
-			config.recordAdaptiveRankingSelection(key);
-	}
-
-	/**
-	 * Clears all learned ranking data.
-	 */
-	public void reset() {
-		config.clearAdaptiveRankingUsageCounts();
+	public static CompletionRanker<JavaCompletion> create(@Nonnull TabCompletionConfig config) {
+		return new CompletionRanker<>(config, new RankingKeys<>(
+				JavaCompletion::rank,
+				JavaCompletion::sortKey,
+				JavaCompletion::displayText,
+				JavaCompletionRanking::learningKey,
+				JavaCompletionRanking::baselineBoost));
 	}
 
 	/**
 	 * @param completion
-	 * 		Completion to compute a stable key for.
+	 * 		Completion to compute a learning key for.
 	 *
-	 * @return Stable key for the completion.
-	 *
-	 * @see TabCompletionConfig#getAdaptiveRankingUsageCount(String)
-	 */
-	@Nonnull
-	@VisibleForTesting
-	protected String stableKeyOrThrow(@Nonnull JavaCompletion completion) {
-		String key = stableKey(completion);
-		if (key == null)
-			throw new IllegalStateException("Completion did not have a stable adaptive ranking key");
-		return key;
-	}
-
-	private int adaptiveRank(@Nonnull JavaCompletion completion) {
-		if (!isAdaptiveKind(completion.kind()))
-			return 0;
-		return -(baselineBoost(completion) + learnedBoost(completion));
-	}
-
-	private int baselineBoost(@Nonnull JavaCompletion completion) {
-		return Math.min(MAX_BASELINE_BOOST, switch (completion.kind()) {
-			case TYPE -> {
-				String qualifiedName = qualifiedOwner(completion.path());
-				int boost = TYPE_BASELINES.getOrDefault(completion.insertionText(), 0);
-				if (qualifiedName != null)
-					boost = Math.max(boost, TYPE_BASELINES.getOrDefault(qualifiedName, 0));
-				yield boost;
-			}
-			case FIELD, METHOD -> {
-				String name = completion.sortKey();
-				String owner = ownerName(completion.path());
-				yield (owner == null) ? 0 : OWNER_MEMBER_BASELINES.getOrDefault(owner + "#" + name, 0);
-			}
-			default -> 0;
-		});
-	}
-
-	private int learnedBoost(@Nonnull JavaCompletion completion) {
-		String key = stableKey(completion);
-		if (key == null)
-			return 0;
-		int count = config.getAdaptiveRankingUsageCount(key);
-		if (count <= 0)
-			return 0;
-		return Math.min(MAX_LEARNED_BOOST, 2 + (31 - Integer.numberOfLeadingZeros(count)));
-	}
-
-	private static boolean isAdaptiveKind(@Nonnull CompletionKind kind) {
-		return kind == CompletionKind.TYPE || kind == CompletionKind.FIELD || kind == CompletionKind.METHOD;
-	}
-
-	/**
-	 * @param completion
-	 * 		Completion to compute a stable key for.
-	 *
-	 * @return Stable key for the completion, or {@code null} if a stable key cannot be computed.
-	 *
-	 * @see TabCompletionConfig#getAdaptiveRankingUsageCount(String)
+	 * @return Stable key for the completion, or {@code null} for keyword, local, and package completions.
 	 */
 	@Nullable
-	private static String stableKey(@Nonnull JavaCompletion completion) {
+	private static String learningKey(@Nonnull JavaCompletion completion) {
 		return switch (completion.kind()) {
 			case TYPE -> {
 				String qualifiedName = qualifiedOwner(completion.path());
@@ -195,6 +106,35 @@ public class JavaCompletionRanker {
 		};
 	}
 
+	/**
+	 * @param completion
+	 * 		Completion to compute a baseline boost for.
+	 *
+	 * @return Baseline boost for the completion.
+	 */
+	private static int baselineBoost(@Nonnull JavaCompletion completion) {
+		return switch (completion.kind()) {
+			case TYPE -> {
+				String qualifiedName = qualifiedOwner(completion.path());
+				int boost = TYPE_BASELINES.getOrDefault(completion.insertionText(), 0);
+				if (qualifiedName != null)
+					boost = Math.max(boost, TYPE_BASELINES.getOrDefault(qualifiedName, 0));
+				yield boost;
+			}
+			case FIELD, METHOD -> {
+				String owner = ownerName(completion.path());
+				yield (owner == null) ? 0 : OWNER_MEMBER_BASELINES.getOrDefault(owner + "#" + completion.sortKey(), 0);
+			}
+			default -> 0;
+		};
+	}
+
+	/**
+	 * @param path
+	 * 		Path to a member in the workspace.
+	 *
+	 * @return Owner name of the member, or {@code null} if the member is not backed by a workspace entry.
+	 */
 	@Nullable
 	private static String ownerName(@Nullable PathNode<?> path) {
 		if (path instanceof ClassMemberPathNode memberPath) {
@@ -207,6 +147,12 @@ public class JavaCompletionRanker {
 		return null;
 	}
 
+	/**
+	 * @param path
+	 * 		Path to a type in the workspace.
+	 *
+	 * @return Qualified name of the type, or {@code null} if the type is not backed by a workspace entry.
+	 */
 	@Nullable
 	private static String qualifiedOwner(@Nullable PathNode<?> path) {
 		if (path instanceof ClassPathNode classPath)
@@ -214,22 +160,52 @@ public class JavaCompletionRanker {
 		return null;
 	}
 
+	/**
+	 * @param classInfo
+	 * 		Class info to get a qualified name for.
+	 *
+	 * @return Qualified name of the class.
+	 */
 	@Nonnull
 	private static String qualifiedName(@Nonnull ClassInfo classInfo) {
 		return qualifiedName(classInfo.getName());
 	}
 
+	/**
+	 * @param internalName
+	 * 		Internal name to get a qualified name for.
+	 *
+	 * @return Qualified name of the class.
+	 */
 	@Nonnull
 	private static String qualifiedName(@Nonnull String internalName) {
 		return internalName.replace('/', '.').replace('$', '.');
 	}
 
+	/**
+	 * Registers a type with a baseline boost for ranking.
+	 *
+	 * @param boost
+	 * 		Baseline boost to apply to the type.
+	 * @param qualifiedName
+	 * 		Dot-separated qualified name of the type.
+	 */
 	private static void registerType(int boost, @Nonnull String qualifiedName) {
 		String simpleName = qualifiedName.substring(qualifiedName.lastIndexOf('.') + 1);
 		TYPE_BASELINES.put(qualifiedName, boost);
 		TYPE_BASELINES.put(simpleName, boost);
 	}
 
+	/**
+	 * Registers a member with a baseline boost for ranking.
+	 *
+	 * @param boost
+	 * 		Baseline boost to apply to the member.
+	 * @param ownerQualifiedName
+	 * 		Dot-separated qualified name of the member's owner type.
+	 * @param memberName
+	 * 		Name of the member.
+	 */
 	private static void registerMember(int boost, @Nonnull String ownerQualifiedName, @Nonnull String memberName) {
 		OWNER_MEMBER_BASELINES.put(ownerQualifiedName + "#" + memberName, boost);
 	}

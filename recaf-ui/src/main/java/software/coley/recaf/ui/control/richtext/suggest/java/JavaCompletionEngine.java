@@ -2,6 +2,7 @@ package software.coley.recaf.ui.control.richtext.suggest.java;
 
 import jakarta.annotation.Nonnull;
 import software.coley.recaf.ui.control.richtext.suggest.TabCompletionConfig;
+import software.coley.recaf.ui.control.richtext.suggest.ranking.CompletionRanker;
 import software.coley.recaf.ui.control.richtext.suggest.java.providers.IdentifierCompletionProvider;
 import software.coley.recaf.ui.control.richtext.suggest.java.providers.ImportCompletionProvider;
 import software.coley.recaf.ui.control.richtext.suggest.java.providers.JavaCompletionProvider;
@@ -18,7 +19,7 @@ import java.util.List;
  */
 public class JavaCompletionEngine {
 	private final TabCompletionConfig config;
-	private final JavaCompletionRanker completionRanker;
+	private final CompletionRanker<JavaCompletion> completionRanker;
 	private final JavaCompletionProvider memberProvider;
 	private final JavaCompletionProvider identifierProvider;
 	private final JavaCompletionProvider typeProvider;
@@ -27,7 +28,7 @@ public class JavaCompletionEngine {
 
 	public JavaCompletionEngine(@Nonnull TabCompletionConfig config) {
 		this(config,
-				new JavaCompletionRanker(config),
+				JavaCompletionRanking.create(config),
 				new MemberCompletionProvider(),
 				new IdentifierCompletionProvider(),
 				new TypeCompletionProvider(),
@@ -36,7 +37,7 @@ public class JavaCompletionEngine {
 	}
 
 	public JavaCompletionEngine(@Nonnull TabCompletionConfig config,
-	                            @Nonnull JavaCompletionRanker completionRanker,
+	                            @Nonnull CompletionRanker<JavaCompletion> completionRanker,
 	                            @Nonnull JavaCompletionProvider memberProvider,
 	                            @Nonnull JavaCompletionProvider identifierProvider,
 	                            @Nonnull JavaCompletionProvider typeProvider,

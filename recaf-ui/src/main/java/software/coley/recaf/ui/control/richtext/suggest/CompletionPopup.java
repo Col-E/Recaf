@@ -152,6 +152,7 @@ public abstract class CompletionPopup<T> {
 		completionPopupFocuser = new CompletionPopupFocuser(this);
 		completionPopupUpdater = new CompletionPopupUpdater<>(completer, this);
 
+		area.addEventFilter(KeyEvent.KEY_TYPED, completionPopupUpdater);
 		area.addEventFilter(KeyEvent.KEY_RELEASED, completionPopupUpdater);
 		area.addEventFilter(KeyEvent.KEY_TYPED, completionPopupFocuser);
 
@@ -178,8 +179,10 @@ public abstract class CompletionPopup<T> {
 	public void uninstall() {
 		CodeArea localArea = area;
 		if (localArea != null) {
-			if (completionPopupUpdater != null)
+			if (completionPopupUpdater != null) {
+				localArea.removeEventFilter(KeyEvent.KEY_TYPED, completionPopupUpdater);
 				localArea.removeEventFilter(KeyEvent.KEY_RELEASED, completionPopupUpdater);
+			}
 			if (completionPopupFocuser != null)
 				localArea.removeEventFilter(KeyEvent.KEY_TYPED, completionPopupFocuser);
 		}

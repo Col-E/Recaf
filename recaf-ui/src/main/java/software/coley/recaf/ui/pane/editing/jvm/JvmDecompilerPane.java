@@ -48,7 +48,7 @@ import software.coley.recaf.ui.control.richtext.problem.ProblemPhase;
 import software.coley.recaf.ui.control.richtext.search.SearchBar;
 import software.coley.recaf.ui.control.richtext.source.JavaContextActionSupport;
 import software.coley.recaf.ui.control.richtext.suggest.TabCompletionConfig;
-import software.coley.recaf.ui.control.richtext.suggest.java.typeindex.JavaTypeIndexService;
+import software.coley.recaf.ui.control.richtext.suggest.typeindex.TypeIndexService;
 import software.coley.recaf.ui.pane.editing.AbstractDecompilePane;
 import software.coley.recaf.ui.pane.editing.ToolsContainerComponent;
 import software.coley.recaf.ui.pane.editing.text.TextConfig;
@@ -105,14 +105,14 @@ public class JvmDecompilerPane extends AbstractDecompilePane {
 	                         @Nonnull FileTypeSyntaxAssociationService languageAssociation,
 	                         @Nonnull WorkspaceSaveService saveService,
 	                         @Nonnull DecompilerManager decompilerManager,
-	                         @Nonnull JavaTypeIndexService javaTypeIndexService,
+	                         @Nonnull TypeIndexService typeIndexService,
 	                         @Nonnull JavacCompiler javac,
 	                         @Nonnull JavacCompilerConfig javacConfig,
 	                         @Nonnull TabCompletionConfig tabCompletionConfig,
 	                         @Nonnull TextConfig textConfig,
 	                         @Nonnull Actions actions) {
 		super(decompileConfig, tutorialConfig, keys, searchBar, astService, contextActionSupport, navigationHistoryService, cellConfigurationService,
-				languageAssociation, decompilerManager, javaTypeIndexService, tabCompletionConfig, textConfig, actions);
+				languageAssociation, decompilerManager, typeIndexService, tabCompletionConfig, textConfig, actions);
 		this.javacDebug = new ObservableBoolean(javacConfig.getDefaultEmitDebug().getValue());
 		this.javacTarget = new ObservableInteger(javacConfig.getDefaultTargetVersion().getValue());
 		this.javacDownsampleTarget = new ObservableInteger(javacConfig.getDefaultDownsampleTargetVersion().getValue());

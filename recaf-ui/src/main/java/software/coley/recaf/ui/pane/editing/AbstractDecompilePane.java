@@ -55,7 +55,7 @@ import software.coley.recaf.ui.control.richtext.search.SearchBar;
 import software.coley.recaf.ui.control.richtext.source.JavaContextActionSupport;
 import software.coley.recaf.ui.control.richtext.suggest.TabCompletionConfig;
 import software.coley.recaf.ui.control.richtext.suggest.java.JavaTabCompleter;
-import software.coley.recaf.ui.control.richtext.suggest.java.typeindex.JavaTypeIndexService;
+import software.coley.recaf.ui.control.richtext.suggest.typeindex.TypeIndexService;
 import software.coley.recaf.ui.pane.editing.android.AndroidDecompilerPane;
 import software.coley.recaf.ui.pane.editing.jvm.DecompilerPaneConfig;
 import software.coley.recaf.ui.pane.editing.jvm.JvmDecompilerPane;
@@ -109,7 +109,7 @@ public class AbstractDecompilePane extends BorderPane implements ClassNavigable,
 	                                @Nonnull CellConfigurationService cellConfigurationService,
 	                                @Nonnull FileTypeSyntaxAssociationService languageAssociation,
 	                                @Nonnull DecompilerManager decompilerManager,
-	                                @Nonnull JavaTypeIndexService javaTypeIndexService,
+	                                @Nonnull TypeIndexService typeIndexService,
 	                                @Nonnull TabCompletionConfig tabCompletionConfig,
 	                                @Nonnull TextConfig textConfig,
 	                                @Nonnull Actions actions) {
@@ -137,7 +137,7 @@ public class AbstractDecompilePane extends BorderPane implements ClassNavigable,
 				navigationHistoryService.record(enclosingPath);
 		});
 		if (tabCompletionConfig.isEnabledInJavaSource())
-			editor.setTabCompleter(new JavaTabCompleter(contextActionSupport, cellConfigurationService, javaTypeIndexService, tabCompletionConfig));
+			editor.setTabCompleter(new JavaTabCompleter(contextActionSupport, cellConfigurationService, typeIndexService, tabCompletionConfig));
 		searchBar.install(editor);
 
 		// Setup common keybindings.

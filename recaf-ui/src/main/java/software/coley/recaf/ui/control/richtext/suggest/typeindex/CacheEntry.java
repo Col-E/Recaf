@@ -1,4 +1,4 @@
-package software.coley.recaf.ui.control.richtext.suggest.java.typeindex;
+package software.coley.recaf.ui.control.richtext.suggest.typeindex;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
@@ -26,7 +26,7 @@ import java.util.List;
  * and applies queued workspace deltas when the index is next requested.
  *
  * @author Matt Coley
- * @see JavaTypeIndexService
+ * @see TypeIndexService
  */
 public final class CacheEntry {
 	private static final Logger logger = Logging.get(CacheEntry.class);

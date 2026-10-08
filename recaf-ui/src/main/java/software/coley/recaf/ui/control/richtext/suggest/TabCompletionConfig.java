@@ -105,6 +105,14 @@ public class TabCompletionConfig extends BasicConfigContainer {
 	}
 
 	/**
+	 * @param length
+	 * 		Max length of a completion string to allow.
+	 */
+	public void setMaxCompletionLength(int length) {
+		maxCompletionLength.setValue(length);
+	}
+
+	/**
 	 * @return {@code true} when adaptive ranking should be used for completion ordering.
 	 */
 	public boolean isAdaptiveRankingEnabled() {

@@ -10,11 +10,14 @@ import me.darknet.assembler.ast.specific.ASTClass;
 import me.darknet.assembler.ast.specific.ASTField;
 import me.darknet.assembler.ast.specific.ASTMethod;
 import me.darknet.assembler.backend.dalvik.DalvikClassRepresentation;
+import me.darknet.assembler.backend.dalvik.DalvikTargetContext;
+import me.darknet.assembler.backend.jvm.JvmTargetContext;
 import me.darknet.assembler.backend.jvm.compile.JavaClassRepresentation;
 import me.darknet.assembler.compiler.ClassResult;
 import me.darknet.assembler.error.Diagnostic;
 import me.darknet.assembler.error.Outcome;
 import me.darknet.assembler.parser.Token;
+import me.darknet.assembler.target.TargetContext;
 import me.darknet.assembler.util.Location;
 import org.fxmisc.richtext.CodeArea;
 import org.slf4j.Logger;
@@ -48,6 +51,7 @@ import software.coley.recaf.ui.control.richtext.problem.ProblemTracking;
 import software.coley.recaf.ui.control.richtext.search.SearchBar;
 import software.coley.recaf.ui.control.richtext.suggest.TabCompletionConfig;
 import software.coley.recaf.ui.control.richtext.suggest.assembler.AssemblerTabCompleter;
+import software.coley.recaf.ui.control.richtext.suggest.typeindex.TypeIndexService;
 import software.coley.recaf.ui.control.richtext.syntax.RegexLanguages;
 import software.coley.recaf.ui.control.richtext.syntax.RegexSyntaxHighlighter;
 import software.coley.recaf.ui.pane.editing.AbstractContentPane;
@@ -102,6 +106,7 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 	                     @Nonnull WorkspaceSaveService saveService,
 	                     @Nonnull InheritanceGraphService graphService,
 	                     @Nonnull CellConfigurationService cellConfigurationService,
+	                     @Nonnull TypeIndexService typeIndexService,
 	                     @Nonnull TabCompletionConfig tabCompletionConfig,
 	                     @Nonnull TextConfig textConfig) {
 		super(Side.BOTTOM);
@@ -117,7 +122,7 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 		InheritanceGraph inheritanceGraph = Objects.requireNonNull(graphService.getCurrentWorkspaceInheritanceGraph(), "Graph not created");
 		if (tabCompletionConfig.isEnabledInAssembler()) {
 			Workspace workspace = Objects.requireNonNull(workspaceManager.getCurrent());
-			tabCompleter = new AssemblerTabCompleter(workspace, inheritanceGraph, cellConfigurationService, tabCompletionConfig);
+			tabCompleter = new AssemblerTabCompleter(workspace, inheritanceGraph, typeIndexService, cellConfigurationService, tabCompletionConfig);
 			editor.setTabCompleter(tabCompleter);
 		}
 		editor.getCodeArea().getStylesheets().add(LanguageStylesheets.getJasmStylesheet());
@@ -320,6 +325,12 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 
 			// Setup from existing class data from the path.
 			lastAssembledClass = path.getValueOfType(ClassInfo.class);
+			if (tabCompleter != null && lastAssembledClass != null) {
+				tabCompleter.setEditedClass(lastAssembledClass);
+				TargetContext targetContext = lastAssembledClass.isAndroidClass()
+						? DalvikTargetContext.INSTANCE : JvmTargetContext.INSTANCE;
+				tabCompleter.setTargetContext(targetContext);
+			}
 			lastAssembledClassRepresentation = pipeline.getRepresentation(Unchecked.cast(lastAssembledClass));
 			lastResult = representationResult(lastAssembledClassRepresentation);
 			eachChild(UpdatableNavigable.class, c -> c.onUpdatePath(path));

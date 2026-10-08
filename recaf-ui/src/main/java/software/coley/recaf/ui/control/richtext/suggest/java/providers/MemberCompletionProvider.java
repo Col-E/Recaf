@@ -10,8 +10,8 @@ import software.coley.recaf.ui.control.richtext.suggest.java.JavaCompletionSessi
 import software.coley.recaf.ui.control.richtext.suggest.java.JavaLexicalContext;
 import software.coley.recaf.ui.control.richtext.suggest.java.ReceiverMode;
 import software.coley.recaf.ui.control.richtext.suggest.java.ReceiverResolver;
+import software.coley.recaf.ui.control.richtext.suggest.lookups.CompletionMatching;
 import software.coley.recaf.ui.control.richtext.suggest.java.ResolvedReceiver;
-import software.coley.recaf.ui.control.richtext.suggest.java.lookups.MemberLookup;
 import software.coley.sourcesolver.resolve.entry.ArrayEntry;
 import software.coley.sourcesolver.resolve.entry.ClassEntry;
 import software.coley.sourcesolver.resolve.entry.EntryPool;
@@ -28,7 +28,6 @@ import java.util.Map;
  */
 public final class MemberCompletionProvider implements JavaCompletionProvider {
 	private final ReceiverResolver receiverResolver = new ReceiverResolver();
-	private final MemberLookup memberLookup = new MemberLookup();
 
 	@Nonnull
 	@Override
@@ -49,7 +48,7 @@ public final class MemberCompletionProvider implements JavaCompletionProvider {
 		boolean methodsOnly = context.kind() == ContextKind.METHOD_REFERENCE;
 
 		if (receiver.type() instanceof ArrayEntry) {
-			if (receiver.mode() != ReceiverMode.STATIC_ONLY && !methodsOnly && JavaCompletionFactory.matchesPrefix("length", partial)) {
+			if (receiver.mode() != ReceiverMode.STATIC_ONLY && !methodsOnly && CompletionMatching.matchesPrefix("length", partial)) {
 				JavaCompletion.addOrReplace(completions, new JavaCompletion(
 						CompletionKind.FIELD,
 						"length : int",
@@ -61,7 +60,7 @@ public final class MemberCompletionProvider implements JavaCompletionProvider {
 						""
 				));
 			}
-			if (receiver.mode() != ReceiverMode.STATIC_ONLY && JavaCompletionFactory.matchesPrefix("clone", partial)) {
+			if (receiver.mode() != ReceiverMode.STATIC_ONLY && CompletionMatching.matchesPrefix("clone", partial)) {
 				JavaCompletion.addOrReplace(completions, JavaCompletionFactory.methodCompletion(
 						"clone",
 						"()Ljava/lang/Object;",
@@ -73,7 +72,7 @@ public final class MemberCompletionProvider implements JavaCompletionProvider {
 			EntryPool pool = resolver.getEntryPool();
 			ClassEntry objectEntry = pool.getClass("java/lang/Object");
 			if (objectEntry != null)
-				memberLookup.collectMemberCompletions(session, completions, objectEntry, currentClassEntry, partial, true, true,
+				session.collectMemberCompletions(completions, objectEntry, currentClassEntry, partial, true, true,
 						currentPackage, ReceiverMode.INSTANCE_ONLY, insertMethodCall);
 			return new ArrayList<>(completions.values());
 		}
@@ -81,7 +80,7 @@ public final class MemberCompletionProvider implements JavaCompletionProvider {
 		if (!(receiver.type() instanceof ClassEntry classEntry))
 			return List.of();
 
-		memberLookup.collectMemberCompletions(session, completions, classEntry, currentClassEntry, partial, methodsOnly, false,
+		session.collectMemberCompletions(completions, classEntry, currentClassEntry, partial, methodsOnly, false,
 				currentPackage, receiver.mode(), insertMethodCall);
 		return new ArrayList<>(completions.values());
 	}
