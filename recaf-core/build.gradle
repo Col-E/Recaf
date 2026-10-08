@@ -26,6 +26,8 @@ dependencies {
     api(libs.instrument.server)
     api(libs.jelf)
     api(libs.lljzip)
+    api(libs.apkzlib)
+    api(libs.apksig)
     api(libs.bundles.logging)
     api(libs.mapping.io)
     api(libs.natural.order)

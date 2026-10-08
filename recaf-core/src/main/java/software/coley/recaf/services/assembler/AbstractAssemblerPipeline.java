@@ -77,20 +77,81 @@ public abstract class AbstractAssemblerPipeline<C extends ClassInfo, R extends C
 			context.setDebugTryCatchRanges(true);
 	}
 
+	/**
+	 * @param path
+	 * 		Path to the target content.
+	 *
+	 * @return Printer for the target class. Outcome failure if the class cannot be read from.
+	 */
 	@Nonnull
 	protected abstract Outcome<ClassPrinter> classPrinter(@Nonnull ClassPathNode path);
 
+	/**
+	 * @param info
+	 * 		Class info to get compiler options for.
+	 *
+	 * @return Compiler options for the target class.
+	 */
 	@Nonnull
 	protected abstract CompilerOptions<?, I> getCompilerOptions(@Nonnull C info);
 
+	/**
+	 * @param info
+	 * 		Class info to get compiler options for.
+	 * @param path
+	 * 		Path to the target content.
+	 * @see #configureCompilerOptions(CompilerOptions, PathNode)
+	 * @return Compiler options for the target class.
+	 */
+	@Nonnull
+	protected final CompilerOptions<?, I> createCompilerOptions(@Nonnull C info, @Nonnull PathNode<?> path) {
+		CompilerOptions<?, I> options = getCompilerOptions(info);
+		configureCompilerOptions(options, path);
+		return options;
+	}
+
+	/**
+	 * Configures compiler options that depend on the target path.
+	 *
+	 * @param options
+	 * 		Options to configure.
+	 * @param path
+	 * 		Path to the target content.
+	 */
+	protected void configureCompilerOptions(@Nonnull CompilerOptions<?, I> options, @Nonnull PathNode<?> path) {
+		// No path-dependent options by default.
+	}
+
+	/**
+	 * Set the path to a single annotation to edit. Example input paths:
+	 * <ul>
+	 *     <li>{@code path/to/class.<index>}</li>
+	 *     <li>{@code path/to/class.field.<name>.<descriptor>.<index>}</li>
+	 *     <li>{@code path/to/class.method.<name>.<descriptor>.<index>}</li>
+	 * </ul>
+	 *
+	 * @param options
+	 * 		Options to configure.
+	 * @param path
+	 * 		Path to the target content.
+	 */
 	protected abstract void setAnnotationPath(@Nonnull CompilerOptions<?, I> options, @Nonnull String path);
 
+	/**
+	 * @return Target context for this pipeline.
+	 */
 	@Nonnull
 	protected abstract TargetContext getTargetContext();
 
+	/**
+	 * @return Compiler implementation for this pipeline.
+	 */
 	@Nonnull
 	protected abstract Compiler<?, ?, ?> getCompiler();
 
+	/**
+	 * @return Type awareness for this pipeline.
+	 */
 	@Nonnull
 	protected TypeAwareness getTypeAwareness() {
 		return new TypeAwareness() {
@@ -111,6 +172,9 @@ public abstract class AbstractAssemblerPipeline<C extends ClassInfo, R extends C
 		};
 	}
 
+	/**
+	 * @return Inheritance checker for this pipeline.
+	 */
 	@Nonnull
 	protected InheritanceChecker getInheritanceChecker() {
 		return new InheritanceChecker() {
@@ -125,8 +189,6 @@ public abstract class AbstractAssemblerPipeline<C extends ClassInfo, R extends C
 			}
 		};
 	}
-
-	protected abstract int getClassVersion(@Nonnull C info);
 
 	@Nonnull
 	@Override
@@ -184,7 +246,7 @@ public abstract class AbstractAssemblerPipeline<C extends ClassInfo, R extends C
 		}
 
 		C info = (C) classInfo;
-		CompilerOptions<?, I> options = getCompilerOptions(info);
+		CompilerOptions<?, I> options = createCompilerOptions(info, path);
 		if (element.type() != ElementType.CLASS) {
 			options.withOverlay(getRepresentation(info));
 

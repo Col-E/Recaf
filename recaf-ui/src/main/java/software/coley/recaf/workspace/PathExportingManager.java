@@ -12,18 +12,23 @@ import javafx.stage.Stage;
 import org.slf4j.Logger;
 import software.coley.observables.ObservableString;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.info.ApkFileInfo;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.Info;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.properties.builtin.InputFilePathProperty;
 import software.coley.recaf.services.workspace.WorkspaceManager;
+import software.coley.recaf.services.workspace.io.ApkSigningOptions;
 import software.coley.recaf.services.workspace.io.PathWorkspaceExportConsumer;
 import software.coley.recaf.services.workspace.io.WorkspaceCompressType;
 import software.coley.recaf.services.workspace.io.WorkspaceExportOptions;
 import software.coley.recaf.services.workspace.io.WorkspaceExporter;
 import software.coley.recaf.services.workspace.io.WorkspaceOutputType;
+import software.coley.recaf.services.workspace.io.ApkSigningConfig;
 import software.coley.recaf.ui.config.ExportConfig;
 import software.coley.recaf.ui.config.RecentFilesConfig;
+import software.coley.recaf.ui.control.popup.ApkSigningCredentialsPopup;
+import software.coley.recaf.util.CancelSignal;
 import software.coley.recaf.util.DirectoryChooserBuilder;
 import software.coley.recaf.util.ErrorDialogs;
 import software.coley.recaf.util.FileChooserBuilder;
@@ -31,6 +36,7 @@ import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Icons;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.StringUtil;
+import software.coley.recaf.util.android.ApkSigningCredentialCodec;
 import software.coley.recaf.util.io.IOUtil;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceDirectoryResource;
@@ -42,9 +48,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Map;
+import java.util.concurrent.CompletionException;
 
 /**
  * Manager module handle exporting {@link Info} and {@link Workspace} instances to {@link Path}s.
@@ -57,14 +65,17 @@ public class PathExportingManager {
 	private final Map<Workspace, Path> sessionExportPaths = Collections.synchronizedMap(new IdentityHashMap<>());
 	private final WorkspaceManager workspaceManager;
 	private final ExportConfig exportConfig;
+	private final ApkSigningConfig apkSigningConfig;
 	private final RecentFilesConfig recentFilesConfig;
 
 	@Inject
 	public PathExportingManager(WorkspaceManager workspaceManager,
 	                            ExportConfig exportConfig,
+	                            ApkSigningConfig apkSigningConfig,
 	                            RecentFilesConfig recentFilesConfig) {
 		this.workspaceManager = workspaceManager;
 		this.exportConfig = exportConfig;
+		this.apkSigningConfig = apkSigningConfig;
 		this.recentFilesConfig = recentFilesConfig;
 
 		// We don't want to keep workspaces in-memory, for obvious reasons...
@@ -130,6 +141,8 @@ public class PathExportingManager {
 		try {
 			exportToPath(workspace, exportPath, false);
 			logger.info("Exported {} to path '{}'", contentDescription, exportPath);
+		} catch (CancelSignal ignored) {
+			// Cancellation is a normal user choice; leave the existing output and sidecar untouched.
 		} catch (IOException ex) {
 			logger.error("Failed to export {} to path '{}'", contentDescription, exportPath, ex);
 			showWorkspaceExportError(ex);
@@ -163,7 +176,19 @@ public class PathExportingManager {
 
 		// Export the workspace to the given path.
 		try (PathWorkspaceExportConsumer consumer = new PathWorkspaceExportConsumer(path, mode)) {
-			createResourceExporter(primaryResource, consumer).export(workspace);
+			ApkSigningOptions signingOptions = createApkSigningOptions(primaryResource);
+			createResourceExporter(primaryResource, consumer, signingOptions).export(workspace);
+		}
+
+		// An edited APK cannot keep the v4 sidecar for the previous archive contents.
+		if (primaryResource instanceof WorkspaceFileResource fileResource &&
+				fileResource.getFileInfo() instanceof ApkFileInfo) {
+			Path sidecarPath = path.resolveSibling(path.getFileName() + ".idsig");
+			try {
+				Files.deleteIfExists(sidecarPath);
+			} catch (IOException ex) {
+				throw new IOException("Failed to remove stale APK v4 signature sidecar: " + sidecarPath, ex);
+			}
 		}
 
 		// Exports of temporary workspace copies must not change the active workspace's destination.
@@ -197,8 +222,58 @@ public class PathExportingManager {
 				return false;
 		}
 
-		exportToPath(workspace, destination, true);
-		return true;
+		try {
+			exportToPath(workspace, destination, true);
+			return true;
+		} catch (CancelSignal ignored) {
+			return false;
+		}
+	}
+
+	@Nullable
+	private ApkSigningOptions createApkSigningOptions(@Nonnull WorkspaceResource resource) throws IOException {
+		// If signing is not enabled, or the resource is not an APK, then we don't need to sign.
+		if (!apkSigningConfig.getSigningEnabled().getValue()
+				|| !(resource instanceof WorkspaceFileResource fileResource)
+				|| !(fileResource.getFileInfo() instanceof ApkFileInfo))
+			return null;
+
+		// Validate the configuration before prompting for the master password.
+		// No need to ask for a password to a keystore that doesn't exist.
+		Path keyStorePath = apkSigningConfig.requireKeystoreSettings();
+		String envelope = apkSigningConfig.requireCredentialEnvelope();
+
+		// Prompt for the master password to decrypt the stored credentials.
+		char[] masterPassword;
+		try {
+			masterPassword = ApkSigningCredentialsPopup.promptMasterPassword().join();
+		} catch (CompletionException ex) {
+			throw new IOException("Unable to request APK signing master password", ex);
+		}
+		if (masterPassword == null)
+			throw CancelSignal.get();
+
+		// Decrypt the stored credentials and create the signing options.
+		try {
+			ApkSigningCredentialCodec.Credentials credentials;
+			try {
+				credentials = ApkSigningCredentialCodec.decrypt(masterPassword, envelope);
+			} catch (IOException ex) {
+				throw new IOException("Incorrect master password or invalid stored APK signing credentials", ex);
+			}
+			try (credentials) {
+				try {
+					return new ApkSigningOptions(keyStorePath,
+							apkSigningConfig.getKeystoreType().getValue(),
+							apkSigningConfig.getKeyAlias().getValue(),
+							credentials.storePassword(), credentials.keyPassword());
+				} catch (RuntimeException ex) {
+					throw new IOException("Invalid APK signing configuration", ex);
+				}
+			}
+		} finally {
+			Arrays.fill(masterPassword, '\0');
+		}
 	}
 
 	/**
@@ -429,7 +504,8 @@ public class PathExportingManager {
 
 	@Nonnull
 	private WorkspaceExporter createResourceExporter(@Nonnull WorkspaceResource resource,
-	                                                 @Nonnull PathWorkspaceExportConsumer exportConsumer) {
+	                                                 @Nonnull PathWorkspaceExportConsumer exportConsumer,
+	                                                 @Nullable ApkSigningOptions signingOptions) {
 		WorkspaceCompressType compression = exportConfig.getCompression().getValue();
 		WorkspaceExportOptions options;
 		if (resource instanceof WorkspaceDirectoryResource) {
@@ -441,6 +517,7 @@ public class PathExportingManager {
 		}
 		options.setBundleSupporting(exportConfig.getBundleSupportingResources().getValue());
 		options.setCreateZipDirEntries(exportConfig.getCreateZipDirEntries().getValue());
+		options.setApkSigningOptions(signingOptions);
 		return options.create();
 	}
 }

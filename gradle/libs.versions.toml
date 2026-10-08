@@ -1,5 +1,7 @@
 [versions]
 acc-agent = "1.0.4"
+apkzlib = "8.13.0"
+apksig = "8.13.0"
 assertj = "3.27.7"
 asm = "9.10.1"
 atlantafx = "2.1.0"
@@ -8,7 +10,7 @@ cafedude = "2.6.7"
 cdi-api = "4.1.0"
 cdi-impl = "6.0.4.Final"
 cfr = "0.152"
-dex = "5834f90b07"
+dex = "64e9606a57"
 diffutils = "4.17"
 docking = "0.16.0"
 downgrader = "1.3.6"
@@ -21,7 +23,7 @@ image-io-ext-ico = "3.0.2"
 instrument-server = "1.6.0"
 jackson = "2.22.0"
 jakarta-annotation = "3.0.0"
-jasm = "3436509354"
+jasm = "d738c5a9b5"
 jelf = "0.11.0"
 jlinker = "3.0.1"
 junit = "5.13.4"
@@ -52,6 +54,9 @@ peterabeles-gversion = "1.10.3"
 
 [libraries]
 acc-agent = { module = "software.coley:javafx-access-agent", version.ref = "acc-agent" }
+
+apkzlib = { module = "com.android.tools.build:apkzlib", version.ref = "apkzlib" }
+apksig = { module = "com.android.tools.build:apksig", version.ref = "apksig" }
 
 assertj = { module = "org.assertj:assertj-core", version.ref = "assertj" }
 

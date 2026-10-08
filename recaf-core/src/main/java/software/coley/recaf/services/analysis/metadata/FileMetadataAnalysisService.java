@@ -1,12 +1,12 @@
 package software.coley.recaf.services.analysis.metadata;
 
-import com.google.common.hash.Hashing;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.TextFileInfo;
+import software.coley.recaf.info.properties.builtin.OriginalFileHashesProperty;
 import software.coley.recaf.path.FilePathNode;
 import software.coley.recaf.path.PathNodes;
 import software.coley.recaf.services.Service;
@@ -140,15 +140,17 @@ public class FileMetadataAnalysisService implements Service {
 		return config;
 	}
 
-	@SuppressWarnings("deprecation") // Don't care that MD5/SHA1 are deprecated, people still use them frequently.
+	@Nonnull
 	private static FileHashResult hash(@Nonnull Workspace workspace, @Nonnull WorkspaceFileResource fileResource) {
 		FileInfo fileInfo = fileResource.getFileInfo();
-		byte[] content = fileInfo.getRawContent();
+		OriginalFileHashesProperty.Hashes originalHashes = OriginalFileHashesProperty.get(fileInfo);
+		if (originalHashes == null)
+			originalHashes = OriginalFileHashesProperty.compute(fileInfo.getRawContent());
 		EnumMap<HashAlgorithm, String> hashes = new EnumMap<>(HashAlgorithm.class);
-		hashes.put(HashAlgorithm.MD5, Hashing.md5().hashBytes(content).toString());
-		hashes.put(HashAlgorithm.SHA1, Hashing.sha1().hashBytes(content).toString());
-		hashes.put(HashAlgorithm.SHA256, Hashing.sha256().hashBytes(content).toString());
-		hashes.put(HashAlgorithm.SHA512, Hashing.sha512().hashBytes(content).toString());
+		hashes.put(HashAlgorithm.MD5, originalHashes.md5());
+		hashes.put(HashAlgorithm.SHA1, originalHashes.sha1());
+		hashes.put(HashAlgorithm.SHA256, originalHashes.sha256());
+		hashes.put(HashAlgorithm.SHA512, originalHashes.sha512());
 		FilePathNode path = PathNodes.filePath(workspace, fileResource, fileResource.getFileBundle(), fileInfo);
 		return new FileHashResult(path, new EnumMap<>(hashes));
 	}

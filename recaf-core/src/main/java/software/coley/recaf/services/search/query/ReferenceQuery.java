@@ -364,7 +364,7 @@ public class ReferenceQuery implements AndroidClassQuery, JvmClassQuery {
 	}
 
 	/**
-	 * Visits references in dex classes.
+	 * Visits references in DEX classes.
 	 */
 	private class DexReferenceClassVisitor extends DexClassVisitor {
 		private final Logger logger = Logging.get(DexReferenceClassVisitor.class);
@@ -442,7 +442,7 @@ public class ReferenceQuery implements AndroidClassQuery, JvmClassQuery {
 	}
 
 	/**
-	 * Visits references in dex fields.
+	 * Visits references in DEX fields.
 	 */
 	private class DexReferenceFieldVisitor extends DexFieldVisitor {
 		private final ResultSink resultSink;
@@ -484,7 +484,7 @@ public class ReferenceQuery implements AndroidClassQuery, JvmClassQuery {
 	}
 
 	/**
-	 * Visits references in dex methods.
+	 * Visits references in DEX methods.
 	 */
 	private class DexReferenceMethodVisitor extends DexMethodVisitor {
 		private final ResultSink resultSink;
@@ -673,7 +673,7 @@ public class ReferenceQuery implements AndroidClassQuery, JvmClassQuery {
 	}
 
 	/**
-	 * Visits references in dex annotations.
+	 * Visits references in DEX annotations.
 	 */
 	private class DexAnnotationReferenceVisitor extends DexAnnotationVisitor {
 		private final ResultSink resultSink;
@@ -699,7 +699,7 @@ public class ReferenceQuery implements AndroidClassQuery, JvmClassQuery {
 	}
 
 	/**
-	 * Visits references in dex constants.
+	 * Visits references in DEX constants.
 	 */
 	private class DexConstantReferenceVisitor extends DexConstantVisitor {
 		private final ResultSink resultSink;

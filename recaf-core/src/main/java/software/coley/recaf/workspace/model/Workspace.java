@@ -281,7 +281,7 @@ public interface Workspace extends Closing {
 		while (!resourceQueue.isEmpty()) {
 			WorkspaceResource resource = resourceQueue.remove();
 
-			// Check all android bundles (dex files).
+			// Check all android bundles (DEX files).
 			for (AndroidClassBundle bundle : resource.getAndroidClassBundles().values()) {
 				AndroidClassInfo classInfo = bundle.get(name);
 				if (classInfo != null)

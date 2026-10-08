@@ -173,7 +173,7 @@ public class BundlePathNode extends AbstractPathNode<WorkspaceResource, Bundle> 
 			if (cmp != 0)
 				return cmp;
 
-			// Order dex class bundles to be in alphabetical order.
+			// Order DEX class bundles to be in alphabetical order.
 			if (getParent() != null &&
 					bundle instanceof AndroidClassBundle &&
 					otherBundle instanceof AndroidClassBundle) {

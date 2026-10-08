@@ -4,10 +4,9 @@ import jakarta.annotation.Nonnull;
 import me.darknet.dex.tree.definitions.instructions.Instruction;
 import software.coley.recaf.services.search.match.Matcher;
 import software.coley.recaf.services.search.match.Matchers;
-import software.coley.recaf.services.search.query.structure.jvm.JvmOpcodeInsnMatcher;
 
 /**
- * Matches a dex opcode without constraining its instruction subtype.
+ * Matches a DEX opcode without constraining its instruction subtype.
  *
  * @param opcode
  * 		Opcode matcher.

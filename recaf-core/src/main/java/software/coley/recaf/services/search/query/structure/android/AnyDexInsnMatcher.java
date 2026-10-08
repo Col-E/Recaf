@@ -4,7 +4,7 @@ import jakarta.annotation.Nonnull;
 import me.darknet.dex.tree.definitions.instructions.Instruction;
 
 /**
- * Matches any dex instruction.
+ * Matches any DEX instruction.
  *
  * @author Matt Coley
  */

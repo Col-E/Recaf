@@ -1,5 +1,6 @@
 package software.coley.recaf.workspace.model.bundle;
 
+import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
@@ -10,7 +11,7 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
  */
 public interface AndroidClassBundle extends ClassBundle<AndroidClassInfo> {
 	/**
-	 * The dex file format version.
+	 * The DEX file format version.
 	 *
 	 * @return Container version.
 	 */
@@ -24,7 +25,21 @@ public interface AndroidClassBundle extends ClassBundle<AndroidClassInfo> {
 	 * This section is empty in unlinked files, and runtime implementations may use it as they see fit.
 	 * </blockquote>
 	 *
-	 * @return Dex link data.
+	 * @return DEX link data.
 	 */
 	byte[] getLinkData();
+
+	/**
+	 * @return Metadata associated with this DEX entry.
+	 */
+	@Nonnull
+	AndroidDexMetadata getDexMetadata();
+
+	/**
+	 * Discard hidden-API data.
+	 * <p>
+	 * Should be used after adding/removing classes to the bundle,
+	 * or when the members of a class have been re-ordered <i>(or added/removed)</i>.
+	 */
+	void discardHiddenApiData();
 }

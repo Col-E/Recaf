@@ -9,6 +9,7 @@ import me.darknet.assembler.ast.ASTElement;
 import me.darknet.assembler.ast.specific.ASTClass;
 import me.darknet.assembler.ast.specific.ASTField;
 import me.darknet.assembler.ast.specific.ASTMethod;
+import me.darknet.assembler.backend.dalvik.DalvikClassRepresentation;
 import me.darknet.assembler.backend.jvm.compile.JavaClassRepresentation;
 import me.darknet.assembler.compiler.ClassResult;
 import me.darknet.assembler.error.Diagnostic;
@@ -89,10 +90,6 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 	private Object lastAssembledClassRepresentation;
 	private ClassInfo lastAssembledClass;
 	private List<ASTElement> lastConcreteAst;
-
-	private static <T> ClassResult<T> representationResult(T representation) {
-		return () -> representation;
-	}
 
 	@Inject
 	public AssemblerPane(@Nonnull AssemblerPipelineManager pipelineManager,
@@ -494,15 +491,13 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 					lastResult = result;
 					lastAssembledClassRepresentation = representation;
 
-					if (representation instanceof JavaClassRepresentation javaClassRep) {
+					ClassInfo assembledClass = classInfoFromRepresentation(pipeline, representation);
+					if (assembledClass != null) {
 						// Get last class's field/method count for ensuring no duplication happened.
 						// If the user changes the definition of a field/method it inserts a new one
 						// instead of changing the existing declaration.
 						int fieldCount = lastAssembledClass.getFields().size();
 						int methodCount = lastAssembledClass.getMethods().size();
-
-						// Update last class.
-						ClassInfo assembledClass = pipeline.getClassInfo(Unchecked.cast(javaClassRep));
 
 						// Update the local path value, this will also inform sub-components of the new content.
 						// The update-lock must be set so that we don't trigger a disassembly (which would trigger an endless loop)
@@ -565,6 +560,11 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 		});
 	}
 
+	/**
+	 * Assemble the current editor's text and update the workspace when successful.
+	 *
+	 * @return Future of parse completion.
+	 */
 	@Nonnull
 	@SuppressWarnings("unchecked")
 	private CompletableFuture<Void> assembleAndUpdateWorkspace() {
@@ -628,6 +628,16 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 		});
 	}
 
+	/**
+	 * Add the given error to {@link #problemTracking} and refresh the UI.
+	 *
+	 * @param message
+	 * 		Error message.
+	 * @param location
+	 * 		Error location.
+	 * @param phase
+	 * 		Phase the problem belongs to.
+	 */
 	private void processError(@Nonnull String message, @Nullable Location location, @Nonnull ProblemPhase phase) {
 		int line = location == null ? 1 : location.line();
 		int start = location == null ? 1 : location.column();
@@ -642,5 +652,34 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 	@Nonnull
 	public Editor getEditor() {
 		return editor;
+	}
+
+	/**
+	 * @param representation
+	 * 		Class representation to wrap in a {@link ClassResult}.
+	 * @param <T>
+	 * 		Type of representation.
+	 *
+	 * @return Class result that returns the given representation.
+	 */
+	@Nonnull
+	private static <T> ClassResult<T> representationResult(T representation) {
+		return () -> representation;
+	}
+
+	/**
+	 * @param pipeline
+	 * 		Pipeline to use for looking up class info.
+	 * @param representation
+	 * 		Class representation to look up.
+	 *
+	 * @return Class info for the given representation, or {@code null} if the representation is not a class.
+	 */
+	@Nullable
+	private static ClassInfo classInfoFromRepresentation(@Nonnull AssemblerPipeline<?, ?, ?> pipeline,
+	                                                     @Nonnull Object representation) {
+		if (representation instanceof JavaClassRepresentation || representation instanceof DalvikClassRepresentation)
+			return pipeline.getClassInfo(Unchecked.cast(representation));
+		return null;
 	}
 }

@@ -10,7 +10,7 @@ import software.coley.recaf.services.search.match.Matcher;
 import software.coley.recaf.services.search.query.structure.TryCatchBlockMatcher;
 
 /**
- * Matches a dex protected range and handler.
+ * Matches a DEX protected range and handler.
  *
  * @param start
  * 		Protected-range start matcher.

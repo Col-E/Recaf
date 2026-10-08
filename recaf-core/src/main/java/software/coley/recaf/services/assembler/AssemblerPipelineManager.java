@@ -103,7 +103,7 @@ public class AssemblerPipelineManager implements Service {
 			return currentAndroidPipeline;
 
 		InheritanceGraph graph = graphService.getOrCreateInheritanceGraph(workspace);
-		return new AndroidAssemblerPipeline(workspace, Objects.requireNonNull(graph), config, androidConfig);
+		return new AndroidAssemblerPipeline(Objects.requireNonNull(graph), config, androidConfig);
 	}
 
 	@Nonnull

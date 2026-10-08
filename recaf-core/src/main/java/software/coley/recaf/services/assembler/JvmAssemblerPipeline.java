@@ -27,7 +27,6 @@ import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.builder.JvmClassInfoBuilder;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
-import software.coley.recaf.util.JavaVersion;
 import software.coley.recaf.workspace.model.Workspace;
 
 import java.util.List;
@@ -99,11 +98,6 @@ public class JvmAssemblerPipeline extends AbstractAssemblerPipeline<JvmClassInfo
 	@Override
 	protected Compiler<?, ?, ?> getCompiler() {
 		return new JvmCompiler();
-	}
-
-	@Override
-	protected int getClassVersion(@Nonnull JvmClassInfo info) {
-		return info.getVersion() - JavaVersion.VERSION_OFFSET;
 	}
 
 	@Nonnull

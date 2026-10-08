@@ -65,10 +65,10 @@ public class AndroidClassInfoBuilder extends AbstractClassInfoBuilder<AndroidCla
 	}
 
 	/**
-	 * Create a builder with data pulled from the given dex class definition.
+	 * Create a builder with data pulled from the given DEX class definition.
 	 *
 	 * @param def
-	 * 		Dex class definition to pull data from.
+	 * 		DEX class definition to pull data from.
 	 */
 	public AndroidClassInfoBuilder(@Nonnull ClassDefinition def) {
 		super();
@@ -86,7 +86,7 @@ public class AndroidClassInfoBuilder extends AbstractClassInfoBuilder<AndroidCla
 	}
 
 	/**
-	 * @return Wrapped dex class, if any. Used as a source for information when adapted from.
+	 * @return Wrapped DEX class, if any. Used as a source for information when adapted from.
 	 *
 	 * @see #adaptFrom(ClassDefinition) Where this value is set.
 	 */

@@ -39,7 +39,7 @@ public interface InsnMatcher {
 	 * @param instruction
 	 * 		Dex instruction.
 	 *
-	 * @return {@code true} when this matcher accepts the dex instruction.
+	 * @return {@code true} when this matcher accepts the DEX instruction.
 	 */
 	boolean matchesAndroid(@Nonnull Instruction instruction);
 }
