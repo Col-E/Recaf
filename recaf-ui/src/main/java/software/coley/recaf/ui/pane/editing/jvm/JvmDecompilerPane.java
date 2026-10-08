@@ -297,7 +297,16 @@ public class JvmDecompilerPane extends AbstractDecompilePane {
 						updatedClasses.add(newInfo);
 					});
 
-					saveService.commit(workspace, bundle, updatedClasses, notInCompilation);
+					saveService.commit(workspace, bundle, updatedClasses, notInCompilation).whenComplete((v, t) -> {
+						if (t != null) {
+							logger.error("Failed to commit changes to workspace", t);
+						} else {
+							ClassPathNode contextPath = contextActionSupport.getPath();
+							if (contextPath.getValue() != path.getValue())
+								super.onUpdatePath(path);
+						}
+					});
+
 				} finally {
 					updateLock.set(false);
 				}

@@ -3,6 +3,7 @@ package software.coley.recaf.services.cell.text;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import me.darknet.assembler.backend.dalvik.compile.analysis.DalvikConstantTypeResolver;
 import me.darknet.assembler.backend.dalvik.printer.DalvikCodePrinter;
 import me.darknet.assembler.backend.jvm.printer.JvmPrinterUtil;
 import me.darknet.assembler.printer.PrintContext;
@@ -268,7 +269,8 @@ public class TextProviderService implements Service {
 			PrintContext.CodePrint ctx = new PrintContext.CodePrint(new PrintContext<>(" "));
 			DalvikCodePrinter printer = new DalvikCodePrinter(ctx,
 					new LazyMap<>(new HashMap<>(), v -> "v" + v),
-					new LazyMap<>(new HashMap<>(), v -> "L" + v));
+					new LazyMap<>(new HashMap<>(), v -> "L" + v),
+					new LazyMap<>(new HashMap<>(), v -> DalvikConstantTypeResolver.ResolvedType.UNKNOWN));
 			ExecutionEngine.execute(printer, insn);
 			String text = ctx.toString().replace('\n', ' ').trim();
 			return formatConfig.filterMaxLength(text);
