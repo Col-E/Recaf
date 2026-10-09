@@ -147,6 +147,20 @@ public class AsmInsnUtil implements Opcodes {
 	 * @param op
 	 * 		Instruction opcode.
 	 *
+	 * @return {@code true} when it is any integer binary operation.
+	 */
+	public static boolean isIntBinaryOperation(int op) {
+		return switch (op) {
+			case IADD, ISUB, IMUL, IDIV, IREM,
+			     ISHL, ISHR, IUSHR, IAND, IOR, IXOR -> true;
+			default -> false;
+		};
+	}
+
+	/**
+	 * @param op
+	 * 		Instruction opcode.
+	 *
 	 * @return {@code true} when it is any variable storing instruction.
 	 */
 	public static boolean isVarStore(int op) {

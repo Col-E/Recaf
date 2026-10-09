@@ -104,6 +104,12 @@ class AsmInsnUtilTest {
 	}
 
 	@Test
+	void testIsIntBinaryOperation() {
+		assertTrue(isIntBinaryOperation(IADD));
+		assertFalse(isIntBinaryOperation(FADD));
+	}
+
+	@Test
 	void testIsVarStore() {
 		for (int i = 0; i < 255; i++) {
 			if (i == ISTORE || i == FSTORE || i == LSTORE || i == DSTORE || i == ASTORE) {

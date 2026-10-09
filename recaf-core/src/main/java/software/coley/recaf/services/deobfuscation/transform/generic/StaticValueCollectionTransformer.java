@@ -10,8 +10,10 @@ import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.FieldNode;
+import org.objectweb.asm.tree.JumpInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.VarInsnNode;
 import org.objectweb.asm.tree.analysis.Frame;
 import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.DebuggingLogger;
@@ -26,6 +28,7 @@ import software.coley.recaf.services.transform.JvmTransformerContext;
 import software.coley.recaf.services.transform.TransformationException;
 import software.coley.recaf.services.transform.TransformationParameter;
 import software.coley.recaf.util.ClassMethodPair;
+import software.coley.recaf.util.AsmInsnUtil;
 import software.coley.recaf.util.analysis.Nullness;
 import software.coley.recaf.util.analysis.ReAnalyzer;
 import software.coley.recaf.util.analysis.ReFrame;
@@ -69,13 +72,15 @@ public class StaticValueCollectionTransformer implements JvmClassTransformer, Co
 	public static final String IDENTIFIER = "peephole.data.staticcollect";
 	public static final String KEY_MAX_STEPS = IDENTIFIER + ".max-steps";
 
-	private static final int DEFAULT_MAX_STEPS = 20_000; // TODO: This transformer is 'hidden' and only used via the inliner so this doesn't get exposed in the UI...
+	private static final int DEFAULT_MAX_STEPS = 20_000;
 	private static final TransformationParameter<Integer> MAX_STEPS_PARAMETER =
 			new TransformationParameter<>(KEY_MAX_STEPS, int.class, DEFAULT_MAX_STEPS);
 
 	private static final DebuggingLogger logger = Logging.get(StaticValueCollectionTransformer.class);
 
 	private final Map<String, StaticValues> classValues = new ConcurrentHashMap<>();
+	private final Map<String, InitializerInfo> initializers = new ConcurrentHashMap<>();
+	private final Set<String> mutableArrays = ConcurrentHashMap.newKeySet();
 	private final InheritanceGraphService graphService;
 	private InheritanceGraph inheritanceGraph;
 
@@ -96,10 +101,38 @@ public class StaticValueCollectionTransformer implements JvmClassTransformer, Co
 	 */
 	@Nullable
 	public ReValue getStaticValue(@Nonnull String className, @Nonnull String fieldName, @Nonnull String fieldDesc) {
+		// A final array reference only means it cannot be re-assigned.
+		// The array contents are still mutable, so we cannot treat the array as a constant.
+		if (fieldDesc.startsWith("[") && mutableArrays.contains(arrayKey(className, fieldName, fieldDesc)))
+			return null;
+
+		// Otherwise, if the field is final, and we have a known value, return it.
 		StaticValues values = classValues.get(className);
 		if (values == null)
 			return null;
 		return values.get(fieldName, fieldDesc);
+	}
+
+	/**
+	 * Reading a static field of a class initializes the class, which can have effects visible
+	 * outside the class. Replacing such a read with a constant would then remove those effects.
+	 *
+	 * @param className
+	 * 		Name of a class to check, which may have been collected by this transformer.
+	 *
+	 * @return {@code true} when initializing the class or any of its parents may have effects other
+	 * than assigning the class's own static fields. Also {@code true} when this cannot be determined.
+	 */
+	public boolean isInitializationObservable(@Nonnull String className) {
+		Set<String> visited = new HashSet<>();
+		String current = className;
+		while (current != null && !current.startsWith("java/")) {
+			InitializerInfo info = initializers.get(current);
+			if (info == null || info.observable() || !visited.add(current))
+				return true;
+			current = info.superName();
+		}
+		return false;
 	}
 
 	@Nonnull
@@ -196,6 +229,33 @@ public class StaticValueCollectionTransformer implements JvmClassTransformer, Co
 		for (MethodNode method : node.methods) {
 			if (!method.name.equals("<clinit>") && (method.access & Opcodes.ACC_PRIVATE) == 0)
 				collectExternalMethods(method, className, methodsByKey, externallyReachableMethods, new HashSet<>());
+		}
+
+		// Find static arrays that are used in ways that allow their contents to change after initialization.
+		// Uses by the initializer, and helpers only it can reach, are what populate the array in the first place.
+		// Any other use must be a direct read, since something else could otherwise hold on to the reference.
+		for (MethodNode method : node.methods) {
+			if (method.instructions == null)
+				continue;
+			String methodKey = key(method.name, method.desc);
+			boolean isInitialization = method == clinit
+					|| (initializationHelpers.contains(methodKey) && !externallyReachableMethods.contains(methodKey));
+			for (AbstractInsnNode instruction : method.instructions) {
+				// Must be an array.
+				if (instruction.getOpcode() != Opcodes.GETSTATIC
+						|| !(instruction instanceof FieldInsnNode fieldInsn)
+						|| !fieldInsn.desc.startsWith("["))
+					continue;
+
+				// If the array is used by the initializer, or any reachable helper,
+				// then this is probably part of initialization.
+				if (isInitialization && fieldInsn.owner.equals(className))
+					continue;
+
+				// Otherwise, the array mutation is happening outside of initialization, so its effectively mutable.
+				if (!isReadOnlyArrayUse(method, fieldInsn))
+					mutableArrays.add(arrayKey(fieldInsn.owner, fieldInsn.name, fieldInsn.desc));
+			}
 		}
 
 		// Track every non-initializer writer and count direct initializer writes before analysis.
@@ -322,6 +382,11 @@ public class StaticValueCollectionTransformer implements JvmClassTransformer, Co
 					&& unresolvedHelperEdges.isEmpty()
 					&& evaluationCapture.helpersCompleted();
 		}
+
+		// Record whether the class initializer is observable (locally seen changes only, nothing external).
+		initializers.put(className, new InitializerInfo(
+				isInitializerObservable(clinit, className, evaluatorCompleted ? evaluationCapture : null),
+				initialClassState.getSuperName()));
 
 		// Commit tentative fields only after all static write checks have completed.
 		if (helperEvaluationCompleted) {
@@ -493,6 +558,129 @@ public class StaticValueCollectionTransformer implements JvmClassTransformer, Co
 	}
 
 	/**
+	 * @param clinit
+	 * 		Static initializer of the class, if it has one.
+	 * @param className
+	 * 		Internal name of the class.
+	 * @param completedEvaluation
+	 * 		Capture of a completed evaluation of the initializer, or {@code null} if it was not evaluated successfully.
+	 *
+	 * @return {@code true} when the initializer may do anything other than computing values for the
+	 * class's own static fields, such as writing another class's fields or calling methods with side effects.
+	 */
+	private static boolean isInitializerObservable(@Nullable MethodNode clinit, @Nonnull String className,
+	                                               @Nullable EvaluationCapture completedEvaluation) {
+		if (clinit == null || clinit.instructions == null)
+			return false;
+
+		// The evaluator only completes when every method it ran was understood, so calls it ran can be trusted.
+		// What it cannot trust is anything that touches the static state of other classes, which includes
+		// code in the helpers it ran, so that is tracked separately.
+		boolean evaluated = completedEvaluation != null && !completedEvaluation.accessedForeignStatics();
+		for (AbstractInsnNode instruction : clinit.instructions) {
+			switch (instruction.getOpcode()) {
+				case Opcodes.GETSTATIC, Opcodes.PUTSTATIC -> {
+					if (instruction instanceof FieldInsnNode fieldInsn && isForeignStatic(fieldInsn, className))
+						return true;
+				}
+				case Opcodes.MONITORENTER, Opcodes.MONITOREXIT, Opcodes.ATHROW -> {
+					return true;
+				}
+				case Opcodes.INVOKESTATIC, Opcodes.INVOKEVIRTUAL, Opcodes.INVOKESPECIAL,
+				     Opcodes.INVOKEINTERFACE, Opcodes.INVOKEDYNAMIC -> {
+					if (!evaluated)
+						return true;
+				}
+				default -> {
+					// Nothing to do.
+				}
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * @param field
+	 * 		Static field reference.
+	 * @param className
+	 * 		Internal name of the class using the field.
+	 *
+	 * @return {@code true} when the field belongs to some other class, excluding the JDK
+	 * since initializing those classes has no effect that the program can observe.
+	 */
+	private static boolean isForeignStatic(@Nonnull FieldInsnNode field, @Nonnull String className) {
+		return !field.owner.equals(className) && !field.owner.startsWith("java/");
+	}
+
+	/**
+	 * @param method
+	 * 		Method containing the instruction.
+	 * @param arrayProducer
+	 * 		Instruction pushing an array onto the stack.
+	 *
+	 * @return {@code true} when the array is only used to read one of its elements or its length,
+	 * either directly or after being held in a local variable. Passing the array anywhere else,
+	 * or writing to it, returns {@code false}.
+	 */
+	private static boolean isReadOnlyArrayUse(@Nonnull MethodNode method, @Nonnull AbstractInsnNode arrayProducer) {
+		AbstractInsnNode next = arrayProducer.getNext();
+		while (next != null && (next.getOpcode() == -1 || next.getOpcode() == Opcodes.NOP))
+			next = next.getNext();
+		if (next == null || next.getOpcode() != Opcodes.ASTORE)
+			return isDirectArrayRead(arrayProducer);
+
+		// The array is held in a local variable, so every use of the variable must also be a direct read.
+		int variable = ((VarInsnNode) next).var;
+		for (AbstractInsnNode insn : method.instructions)
+			if (insn.getOpcode() == Opcodes.ALOAD && ((VarInsnNode) insn).var == variable && !isDirectArrayRead(insn))
+				return false;
+		return true;
+	}
+
+	/**
+	 * @param arrayProducer
+	 * 		Instruction pushing an array onto the stack.
+	 *
+	 * @return {@code true} when the array is only used to read one of its elements or its length,
+	 * with indices simple enough to follow. Passing the array anywhere else, or writing to it, returns {@code false}.
+	 */
+	private static boolean isDirectArrayRead(@Nonnull AbstractInsnNode arrayProducer) {
+		// Number of values pushed on top of the array since it was pushed.
+		int above = 0;
+		int jumps = 0;
+		for (AbstractInsnNode insn = arrayProducer.getNext(); insn != null; insn = insn.getNext()) {
+			int op = insn.getOpcode();
+			if (op == -1 || op == Opcodes.NOP)
+				continue;
+
+			// Unconditional jumps are followed, as the index may be computed after paths merge.
+			if (op == Opcodes.GOTO) {
+				if (++jumps > 8)
+					return false;
+				insn = ((JumpInsnNode) insn).label;
+				continue;
+			}
+			if (op == Opcodes.ARRAYLENGTH)
+				return above == 0;
+			if (AsmInsnUtil.isArrayLoad(op))
+				return above == 1;
+
+			// Anything else must be part of computing the index.
+			if (AsmInsnUtil.isConstIntValue(insn) || op == Opcodes.ILOAD) {
+				above++;
+			} else if (AsmInsnUtil.isIntBinaryOperation(op)) {
+				// Consumes two values and pushes one.
+				if (above < 2)
+					return false;
+				above--;
+			} else {
+				return false;
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * @param method
 	 * 		Method to check for {@link Opcodes#INVOKESTATIC} use.
 	 *
@@ -596,6 +784,7 @@ public class StaticValueCollectionTransformer implements JvmClassTransformer, Co
 		private final Map<String, Integer> helperEntries = new HashMap<>();
 		private final Map<String, Integer> helperReturns = new HashMap<>();
 		private final Set<String> helperThrows = new HashSet<>();
+		private boolean foreignStaticAccess;
 
 		private EvaluationCapture(@Nonnull String className, @Nonnull Set<String> helperKeys) {
 			this.className = className;
@@ -610,6 +799,9 @@ public class StaticValueCollectionTransformer implements JvmClassTransformer, Co
 				String fieldKey = key(fieldInsn.name, fieldInsn.desc);
 				writeCounts.merge(fieldKey, 1, (oldCount, ignored) -> Math.min(2, oldCount + 1));
 			}
+			if ((instruction.getOpcode() == Opcodes.PUTSTATIC || instruction.getOpcode() == Opcodes.GETSTATIC)
+					&& instruction instanceof FieldInsnNode fieldInsn && isForeignStatic(fieldInsn, className))
+				foreignStaticAccess = true;
 		}
 
 		@Override
@@ -636,6 +828,10 @@ public class StaticValueCollectionTransformer implements JvmClassTransformer, Co
 			String methodKey = key(methodNode.name, methodNode.desc);
 			if (classNode.name.equals(className) && helperKeys.contains(methodKey))
 				helperThrows.add(methodKey);
+		}
+
+		private boolean accessedForeignStatics() {
+			return foreignStaticAccess;
 		}
 
 		private boolean helpersCompleted() {
@@ -673,6 +869,11 @@ public class StaticValueCollectionTransformer implements JvmClassTransformer, Co
 		return false;
 	}
 
+	@Nonnull
+	private static String arrayKey(@Nonnull String owner, @Nonnull String name, @Nonnull String desc) {
+		return owner + '.' + key(name, desc);
+	}
+
 	/**
 	 * @param name
 	 * 		Field name.
@@ -697,6 +898,14 @@ public class StaticValueCollectionTransformer implements JvmClassTransformer, Co
 	public List<TransformationParameter<?>> getParameterDefinitions() {
 		return List.of(MAX_STEPS_PARAMETER);
 	}
+
+	/**
+	 * @param observable
+	 * 		Whether initializing the class may have effects beyond assigning its own static fields.
+	 * @param superName
+	 * 		Name of the parent class, initialized before the class itself.
+	 */
+	private record InitializerInfo(boolean observable, @Nullable String superName) {}
 
 	/**
 	 * Wrapper/utility for field finality storage/lookups.
