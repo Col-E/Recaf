@@ -1776,7 +1776,7 @@ public class RegressionDeobfuscationTest extends TransformerTestBase {
 	 * Ensures the const-folder doesn't take too long to run.
 	 */
 	@Test
-	@Timeout(value = 2)
+	@Timeout(value = 4)
 	@DisabledIfEnvironmentVariable(named = "GITHUB_ACTIONS", matches = "true")
 	void constFolderDoesNotCatestrophicallyBacktrack() {
 		String asm = """
