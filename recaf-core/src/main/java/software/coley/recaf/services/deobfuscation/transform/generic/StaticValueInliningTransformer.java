@@ -8,6 +8,7 @@ import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.analysis.Frame;
 import software.coley.recaf.info.JvmClassInfo;
@@ -26,7 +27,12 @@ import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
+import java.util.ArrayDeque;
 import java.util.Collections;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import static software.coley.recaf.services.deobfuscation.transform.generic.OpaqueConstantFoldingTransformer.toInsn;
@@ -62,14 +68,20 @@ public class StaticValueInliningTransformer implements JvmClassTransformer {
 
 		boolean dirty = false;
 		ClassNode node = context.getNode(bundle, initialClassState);
+		Set<String> initializationMethods = collectInitializationMethods(node);
 		for (MethodNode method : node.methods) {
-			// Skip static initializer and abstract methods.
-			if (method.name.equals("<clinit>") || method.instructions == null)
+			// Skip abstract methods, and anything that can run while the class is still initializing.
+			// Those may read fields before the initializer has assigned the values we would inline.
+			if (method.instructions == null || initializationMethods.contains(method.name + method.desc))
 				continue;
 
 			// Replace static field reads with their known values.
 			for (AbstractInsnNode instruction : method.instructions) {
 				if (instruction.getOpcode() != Opcodes.GETSTATIC || !(instruction instanceof FieldInsnNode fieldInsn))
+					continue;
+
+				// Reading a field of another class initializes it, which we cannot drop if it has other effects.
+				if (!fieldInsn.owner.equals(node.name) && staticValueCollector.isInitializationObservable(fieldInsn.owner))
 					continue;
 
 				// Get replacement for the field value, if its representable as an inlinable constant.
@@ -136,6 +148,44 @@ public class StaticValueInliningTransformer implements JvmClassTransformer {
 		// Record transformed class if we made any changes.
 		if (dirty)
 			context.setNode(bundle, initialClassState, node);
+	}
+
+	/**
+	 * @param node
+	 * 		Class to check.
+	 *
+	 * @return Keys <i>(name and descriptor)</i> of the static initializer and every method of the class
+	 * that it can reach by calling other methods of the same class, such as helpers and constructors.
+	 */
+	@Nonnull
+	private static Set<String> collectInitializationMethods(@Nonnull ClassNode node) {
+		Map<String, MethodNode> methodsByKey = new HashMap<>();
+		for (MethodNode method : node.methods)
+			methodsByKey.put(method.name + method.desc, method);
+
+		Set<String> reachable = new HashSet<>();
+		Deque<MethodNode> queue = new ArrayDeque<>();
+		MethodNode clinit = methodsByKey.get("<clinit>()V");
+		if (clinit != null) {
+			reachable.add("<clinit>()V");
+			queue.add(clinit);
+		}
+
+		// Walk calls to other methods of the same class, and add them to the reachable set.
+		while (!queue.isEmpty()) {
+			MethodNode method = queue.poll();
+			if (method.instructions == null)
+				continue;
+			for (AbstractInsnNode instruction : method.instructions) {
+				if (!(instruction instanceof MethodInsnNode methodInsn) || !methodInsn.owner.equals(node.name))
+					continue;
+				String key = methodInsn.name + methodInsn.desc;
+				MethodNode target = methodsByKey.get(key);
+				if (target != null && reachable.add(key))
+					queue.add(target);
+			}
+		}
+		return reachable;
 	}
 
 	@Nonnull
