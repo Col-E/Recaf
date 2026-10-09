@@ -51,8 +51,11 @@ public class DeadCodeRemovingTransformer implements JvmClassTransformer {
 		ClassNode node = context.getNode(bundle, initialClassState);
 		for (MethodNode method : node.methods)
 			dirty |= prune(node, method);
-		if (dirty)
+		if (dirty) {
+			// Removed blocks take their frames with them, but later delta frames can be relative to them.
+			context.setRecomputeFrames(className);
 			context.setNode(bundle, initialClassState, node);
+		}
 	}
 
 	public boolean prune(@Nonnull ClassNode node, @Nonnull MethodNode method) throws TransformationException {

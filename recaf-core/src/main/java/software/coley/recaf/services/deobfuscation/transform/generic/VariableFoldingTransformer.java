@@ -232,8 +232,11 @@ public class VariableFoldingTransformer implements JvmClassTransformer {
 				}
 			}
 		}
-		if (dirty)
+		if (dirty) {
+			// Removed stores and folded loads change which locals are assigned, which existing frames may still claim.
+			context.setRecomputeFrames(className);
 			context.setNode(bundle, initialClassState, node);
+		}
 	}
 
 	/**

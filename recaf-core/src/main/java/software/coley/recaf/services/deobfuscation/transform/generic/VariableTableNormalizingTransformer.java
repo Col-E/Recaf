@@ -44,6 +44,7 @@ public class VariableTableNormalizingTransformer implements JvmClassTransformer 
 	                      @Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle,
 	                      @Nonnull JvmClassInfo initialClassState) throws TransformationException {
 		boolean dirty = false;
+		boolean slotsChanged = false;
 		String className = initialClassState.getName();
 		ClassNode node = context.getNode(bundle, initialClassState);
 		for (MethodNode method : node.methods) {
@@ -69,6 +70,7 @@ public class VariableTableNormalizingTransformer implements JvmClassTransformer 
 				// Reduce the number of used local slots to the minimum required by the method.
 				boolean compacted = compactLocalSlots(method, argumentTypes, isStatic);
 				dirty |= compacted;
+				slotsChanged |= compacted;
 				if (compacted)
 					method.localVariables = null;
 
@@ -77,6 +79,7 @@ public class VariableTableNormalizingTransformer implements JvmClassTransformer 
 				if (method.maxLocals != normalizedMaxLocals) {
 					method.maxLocals = normalizedMaxLocals;
 					dirty = true;
+					slotsChanged = true;
 				}
 
 				// If the method only uses parameter variables, but has local variable metadata for non-parameter variables,
@@ -134,8 +137,12 @@ public class VariableTableNormalizingTransformer implements JvmClassTransformer 
 				}
 			}
 		}
-		if (dirty)
+		if (dirty) {
+			// Renumbered slots and a smaller max locals leave existing frames naming slots that no longer exist.
+			if (slotsChanged)
+				context.setRecomputeFrames(className);
 			context.setNode(bundle, initialClassState, node);
+		}
 	}
 
 	/**
