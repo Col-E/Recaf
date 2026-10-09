@@ -633,8 +633,22 @@ public class AsmInsnUtil implements Opcodes {
 	 */
 	@Nullable
 	public static AbstractInsnNode getPreviousInsn(@Nonnull AbstractInsnNode insn) {
+		return getPreviousInsn(insn, false);
+	}
+
+	/**
+	 * @param insn
+	 * 		Instruction to begin from.
+	 * @param skipNop
+	 *        {@code true} to skip {@link Opcodes#NOP} instructions, {@code false} to include them.
+	 *
+	 * @return Previous non-metadata instruction.
+	 * Can be {@code null} for no previous instruction at the start of a method.
+	 */
+	@Nullable
+	public static AbstractInsnNode getPreviousInsn(@Nonnull AbstractInsnNode insn, boolean skipNop) {
 		AbstractInsnNode prev = insn.getPrevious();
-		while (prev != null && isMetaData(prev))
+		while (prev != null && (isMetaData(prev) || (skipNop && prev.getOpcode() == NOP)))
 			prev = prev.getPrevious();
 		return prev;
 	}

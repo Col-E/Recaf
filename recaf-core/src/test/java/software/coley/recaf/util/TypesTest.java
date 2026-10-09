@@ -140,6 +140,16 @@ public class TypesTest {
 	}
 
 	@Test
+	void testIsReference() {
+		assertTrue(Types.isReference(Type.getType("Ljava/lang/String;")));
+		assertTrue(Types.isReference(Type.getType("[I")));
+		assertTrue(Types.isReference(Type.getObjectType("java/lang/String")));
+		//
+		assertFalse(Types.isReference(Type.getType("I")));
+		assertFalse(Types.isReference(Type.getType("V")));
+	}
+
+	@Test
 	void testIsWide() {
 		assertTrue(Types.isWide(Type.getType("D")));
 		assertTrue(Types.isWide(Type.getType("J")));

@@ -9,9 +9,11 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.IincInsnNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.InvokeDynamicInsnNode;
 import org.objectweb.asm.tree.LabelNode;
 import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
@@ -27,11 +29,19 @@ import software.coley.recaf.services.transform.ClassTransformer;
 import software.coley.recaf.services.transform.JvmClassTransformer;
 import software.coley.recaf.services.transform.JvmTransformerContext;
 import software.coley.recaf.services.transform.TransformationException;
+import software.coley.recaf.util.AsmInsnUtil;
+import software.coley.recaf.util.Types;
 import software.coley.recaf.util.analysis.ReFrame;
 import software.coley.recaf.util.analysis.eval.EvaluationResult;
 import software.coley.recaf.util.analysis.eval.EvaluationYieldResult;
 import software.coley.recaf.util.analysis.eval.Evaluator;
 import software.coley.recaf.util.analysis.eval.FieldCacheManager;
+import software.coley.recaf.util.analysis.lookup.BasicGetStaticLookup;
+import software.coley.recaf.util.analysis.lookup.BasicInvokeStaticLookup;
+import software.coley.recaf.util.analysis.lookup.BasicInvokeVirtualLookup;
+import software.coley.recaf.util.analysis.lookup.GetStaticLookup;
+import software.coley.recaf.util.analysis.lookup.InvokeStaticLookup;
+import software.coley.recaf.util.analysis.lookup.InvokeVirtualLookup;
 import software.coley.recaf.util.analysis.value.DoubleValue;
 import software.coley.recaf.util.analysis.value.FloatValue;
 import software.coley.recaf.util.analysis.value.IntValue;
@@ -47,6 +57,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -67,6 +78,9 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 	public static final String IDENTIFIER = "peephole.data.constfold";
 	private static final int[] ARG_1_SIZE = new int[255];
 	private static final int[] ARG_2_SIZE = new int[255];
+	private static final GetStaticLookup STATIC_FIELD_LOOKUP = new BasicGetStaticLookup();
+	private static final InvokeStaticLookup STATIC_METHOD_LOOKUP = new BasicInvokeStaticLookup();
+	private static final InvokeVirtualLookup VIRTUAL_METHOD_LOOKUP = new BasicInvokeVirtualLookup();
 	private final InheritanceGraphService graphService;
 	private InheritanceGraph inheritanceGraph;
 	private JvmTransformerContext context;
@@ -437,6 +451,13 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 					validSequence = false;
 					break;
 				}
+
+				// Abort if the sequence does something besides computing values. Folding replaces the whole sequence
+				// with a constant, which would delete the effect. Variable writes are handled below.
+				if (hasUnkeepableSideEffect(insn)) {
+					validSequence = false;
+					break;
+				}
 				if (insn.getType() == AbstractInsnNode.LABEL && hasInboundFlowReferences(method, Collections.singletonList(insn))) {
 					validSequence = false;
 					break;
@@ -485,7 +506,9 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 			// - Explicitly marked as invalid
 			// - Too small
 			// - The sequence isn't balanced, or requires a larger scope to include all "contributing" instructions
-			if (!validSequence || sequence.size() < 2 || shouldContinueSequence(sequence))
+			if (!validSequence || sequence.size() < 2
+					|| shouldContinueSequence(sequence)
+					|| !isSelfContainedAroundArrayStores(sequence))
 				continue;
 
 			// Additionally if the sequence does NOT end with 'xreturn' then it should
@@ -521,16 +544,39 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 			if (replacement != null) {
 				// If we have a replacement, remove all instructions in the sequence and replace the
 				// operation instruction with one that pushes a constant value of the result in its place.
-				for (AbstractInsnNode item : sequence)
-					instructions.set(item, new InsnNode(NOP));
+				//
+				// The exception is calls and field reads that may have side effects.
+				// Those are kept in place, with their result discarded, as the folded sequence still runs them.
+				// Inserting pops shifts the indices of later instructions, so the operation is replaced by its node.
+				boolean keptSideEffects = false;
+				for (AbstractInsnNode item : sequence) {
+					if (item == instruction)
+						continue;
+
+					// If the instruction is a side-effecting producer (field read, method call, etc.)
+					// then we need to keep it in place and pop its result off the stack.
+					if (isSideEffectingProducer(item)) {
+						Type producedType = getProducedType(item);
+						if (producedType.getSort() != Type.VOID)
+							instructions.insert(item, new InsnNode(producedType.getSize() == 2 ? POP2 : POP));
+						keptSideEffects = true;
+					} else {
+						instructions.set(item, new InsnNode(NOP));
+					}
+				}
 				if (isReturn) {
-					// We know the sequence size must be >= 2, so the instruction before
-					// the return should have been replaced with a nop, and is safe to replace
-					// with our constant.
-					AbstractInsnNode old = instructions.get(i - 1);
-					instructions.set(old, replacement);
+					if (keptSideEffects) {
+						// The instruction before the return may be a kept side effect, so our constant goes after it.
+						instructions.insertBefore(instruction, replacement);
+					} else {
+						// We know the sequence size must be >= 2, so the instruction before
+						// the return should have been replaced with a nop, and is safe to replace
+						// with our constant.
+						AbstractInsnNode old = instructions.get(i - 1);
+						instructions.set(old, replacement);
+					}
 				} else {
-					instructions.set(instructions.get(i), replacement);
+					instructions.set(instruction, replacement);
 
 					// Insert variable writes to ensure their states are not affected by our inlining.
 					if (!sequenceVarWrites.isEmpty()) {
@@ -548,6 +594,11 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 					}
 				}
 				dirty = true;
+
+				// Kept side effects had a pop inserted after them, which shifts the indices that 'frames' was computed
+				// against. Stop this pass so the next one re-analyzes the method instead of using stale frames.
+				if (keptSideEffects)
+					break;
 			} else {
 				// If we don't have a replacement (since the end state cannot be resolved) see if we can at least
 				// fold redundant operations like "x = x * 1".
@@ -657,8 +708,41 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 		if (!context.isAssignable(inheritanceGraph, targetType, valueType))
 			return false;
 
+		// The verifier does not know the runtime type of the value.
+		// It only knows the static type of whatever produced it, such as 'Object' for an 'aaload' from 'Object[]'.
+		// If that is not assignable to the cast type then the cast is still needed to pass verification.
+		Type staticType = getStaticOperandType(instruction);
+		if (staticType == null || !context.isAssignable(inheritanceGraph, targetType, staticType))
+			return false;
+
 		instructions.set(instruction, new InsnNode(NOP));
 		return true;
+	}
+
+	/**
+	 * @param consumer
+	 * 		Instruction consuming an object off the stack.
+	 *
+	 * @return The type the verifier assigns to the consumed value, or {@code null} when that cannot be determined
+	 * from the instruction directly providing the value.
+	 */
+	@Nullable
+	private static Type getStaticOperandType(@Nonnull AbstractInsnNode consumer) {
+		AbstractInsnNode producer = AsmInsnUtil.getPreviousInsn(consumer, true);
+		if (producer == null)
+			return null;
+
+		return switch (producer) {
+			case LdcInsnNode ldc when ldc.cst instanceof String ->
+					Type.getObjectType("java/lang/String");
+			case TypeInsnNode type when type.getOpcode() == CHECKCAST ->
+					type.desc.startsWith("[") ? Type.getType(type.desc) : Type.getObjectType(type.desc);
+			case FieldInsnNode field when field.getOpcode() == GETSTATIC || field.getOpcode() == GETFIELD ->
+					Type.getType(field.desc);
+			case MethodInsnNode method ->
+					Type.getReturnType(method.desc);
+			default -> null;
+		};
 	}
 
 	/**
@@ -855,11 +939,105 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 		if (op >= ILOAD && op <= ALOAD)
 			return true;
 		if (op == GETSTATIC)
-			return true;
+			return insn instanceof FieldInsnNode fin && STATIC_FIELD_LOOKUP.hasLookup(fin);
 		return op == INVOKESTATIC
 				&& insn instanceof MethodInsnNode min
 				&& min.desc.startsWith("()")
-				&& !min.desc.endsWith(")V");
+				&& !min.desc.endsWith(")V")
+				&& STATIC_METHOD_LOOKUP.hasLookup(min);
+	}
+
+	/**
+	 * Check if the instruction is a no-arg static call or static field read that is not backed by a static lookup.
+	 * Unlike lookup-backed values, these cannot be proven to be free of side effects since they can potentially
+	 * initialize other classes, or have other side effects, so they must not be removed or duplicated by folding.
+	 *
+	 * @param insn
+	 * 		Instruction to check.
+	 *
+	 * @return {@code true} when the instruction must be kept when its surrounding sequence is folded.
+	 */
+	private static boolean isSideEffectingProducer(@Nonnull AbstractInsnNode insn) {
+		return switch (insn) {
+			case MethodInsnNode min when min.getOpcode() == INVOKESTATIC -> min.desc.startsWith("()") && !STATIC_METHOD_LOOKUP.hasLookup(min);
+			case FieldInsnNode fin when fin.getOpcode() == GETSTATIC -> !STATIC_FIELD_LOOKUP.hasLookup(fin);
+			default -> false;
+		};
+	}
+
+	/**
+	 * Array stores are only safe to fold away when nothing else can observe the array.
+	 * That is the case when every array reachable by the sequence was created by the sequence itself.
+	 *
+	 * @param sequence
+	 * 		Instruction sequence about to be folded.
+	 *
+	 * @return {@code true} when the sequence has no array stores, or all of them write to arrays it created.
+	 */
+	private static boolean isSelfContainedAroundArrayStores(@Nonnull List<AbstractInsnNode> sequence) {
+		if (sequence.stream().noneMatch(insn -> isArrayStore(insn.getOpcode())))
+			return true;
+
+		// References can come from variables, fields, and calls. Any such source that the sequence did
+		// not assign itself may be an array that is still in use after the sequence.
+		Set<Integer> assignedVariables = new HashSet<>();
+		for (AbstractInsnNode insn : sequence) {
+			switch (insn) {
+				case VarInsnNode varInsn when varInsn.getOpcode() == ASTORE -> assignedVariables.add(varInsn.var);
+				case VarInsnNode varInsn when varInsn.getOpcode() == ALOAD -> {
+					if (!assignedVariables.contains(varInsn.var))
+						return false;
+				}
+				case FieldInsnNode fieldInsn when fieldInsn.getOpcode() == GETSTATIC || fieldInsn.getOpcode() == GETFIELD -> {
+					if (Types.isReference(Type.getType(fieldInsn.desc)))
+						return false;
+				}
+				case MethodInsnNode methodInsn when isSideEffectingProducer(methodInsn) -> {
+					if (Types.isReference(Type.getReturnType(methodInsn.desc)))
+						return false;
+				}
+				default -> {
+					// Nothing to do.
+				}
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Check if the instruction has an effect outside of the stack and local variables, which folding cannot keep.
+	 * This excludes {@link #isSideEffectingProducer(AbstractInsnNode) producers} which folding keeps in place.
+	 *
+	 * @param insn
+	 * 		Instruction to check.
+	 *
+	 * @return {@code true} when folding a sequence containing the instruction would delete an observable effect.
+	 */
+	private static boolean hasUnkeepableSideEffect(@Nonnull AbstractInsnNode insn) {
+		int op = insn.getOpcode();
+		if (op == PUTSTATIC || op == PUTFIELD || op == MONITORENTER || op == MONITOREXIT)
+			return true;
+		return switch (insn) {
+			case InvokeDynamicInsnNode ignored -> true;
+			case MethodInsnNode min -> !isSideEffectingProducer(min) && !(min.getOpcode() == INVOKESTATIC ?
+					STATIC_METHOD_LOOKUP.hasLookup(min) : VIRTUAL_METHOD_LOOKUP.hasLookup(min));
+			default -> false;
+		};
+	}
+
+	/**
+	 * @param insn
+	 * 		A {@link #isSideEffectingProducer(AbstractInsnNode) side effecting producer}.
+	 *
+	 * @return Type of the value the instruction pushes onto the stack.
+	 */
+	@Nonnull
+	private static Type getProducedType(@Nonnull AbstractInsnNode insn) {
+		if (insn instanceof MethodInsnNode min)
+			return Type.getReturnType(min.desc);
+		if (insn instanceof FieldInsnNode fin)
+			return Type.getType(fin.desc);
+		throw new IllegalArgumentException("Instruction is not a side effecting producer: " + insn.getClass().getSimpleName() + " " + insn.getOpcode());
 	}
 
 	/**

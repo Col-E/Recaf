@@ -287,6 +287,16 @@ public class Types {
 	 * @param type
 	 * 		Type to check.
 	 *
+	 * @return {@code true} for {@link Type#OBJECT} or {@link Type#ARRAY} types.
+	 */
+	public static boolean isReference(@Nonnull Type type) {
+		return type.getSort() == Type.OBJECT || type.getSort() == Type.ARRAY;
+	}
+
+	/**
+	 * @param type
+	 * 		Type to check.
+	 *
 	 * @return {@code true} if it is a wide type.
 	 */
 	public static boolean isWide(@Nullable Type type) {
