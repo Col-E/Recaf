@@ -454,6 +454,99 @@ public class StaticValueInliningTest extends TransformerTestBase {
 		});
 	}
 
+	@Test
+	void readInInitializerHelperIsNotInlined() {
+		compileFull("Example", """
+				class Example {
+				    static final int VALUE;
+				    static int early;
+				    static {
+				        early = report();
+				        VALUE = 40 + two();
+				    }
+				    static int report() { return VALUE; }
+				    static int two() { return 2; }
+				    static int run() { return early; }
+				}
+				""");
+
+		// The static initializer calls report() before VALUE is assigned, so it should see the default value of 0.
+		// We shouldn't inline the final value of VALUE into report() because that would change what it observes.
+		assertEquals(0, invokeStatic("Example", "run", "Example"));
+		transformAndApply(List.of(StaticValueInliningTransformer.class));
+		assertEquals(0, invokeStatic("Example", "run", "Example"));
+	}
+
+	@Test
+	void elementOfMutatedFinalArrayIsNotInlined() {
+		compileFull("Example", """
+				class Example {
+				    private static final int[] TABLE = {1, 2, 3};
+				    static void mutate() { TABLE[0] = 9; }
+				    static int run() {
+				        mutate();
+				        return TABLE[0];
+				    }
+				}
+				""");
+
+		// Same idea but with array contents.
+		assertEquals(9, invokeStatic("Example", "run", "Example"));
+		transformAndApply(List.of(StaticValueInliningTransformer.class));
+		assertEquals(9, invokeStatic("Example", "run", "Example"));
+	}
+
+	@Test
+	void elementOfFinalArrayMutatedByOtherClassIsNotInlined() {
+		compileFull("Example", """
+				class Other {
+				    static void mutate() { Example.TABLE[0] = 9; }
+				}
+				class Example {
+				    static final int[] TABLE = {1, 2, 3};
+				    static int run() {
+				        Other.mutate();
+				        return TABLE[0];
+				    }
+				}
+				""");
+
+		// Same idea but the array mutation is done by another class.
+		assertEquals(9, invokeStatic("Example", "run", "Example", "Other"));
+		transformAndApply(List.of(StaticValueInliningTransformer.class));
+		assertEquals(9, invokeStatic("Example", "run", "Example", "Other"));
+	}
+
+	@Test
+	void readTriggeringForeignInitializerIsNotInlined() {
+		compileFull("Example", """
+				class Flag {
+				    static boolean registered;
+				}
+				class Registry {
+				    static final int ID;
+				    static {
+				        Flag.registered = true;
+				        ID = 40 + two();
+				    }
+				    private static int two() { return 2; }
+				}
+				class Example {
+				    static int run() {
+				        int id = Registry.ID;
+				        return Flag.registered ? id : -1;
+				    }
+				}
+				""");
+
+		// The static initializer of Registry sets Flag.registered to true.
+		// Inlining the value of Registry.ID into Example.run() would remove the side effect of setting Flag.registered.
+		// If that happens, the test will fail because Flag.registered will be false and Example.run() will return -1.
+		assertEquals(42, invokeStatic("Example", "run", "Example", "Flag", "Registry"));
+		transformAndApply(List.of(StaticValueInliningTransformer.class));
+		assertEquals(42, invokeStatic("Example", "run", "Example", "Flag", "Registry"));
+	}
+
 	private void validateNoInlining(@Nonnull String assembly) {
 		validateNoTransformation(assembly, List.of(StaticValueInliningTransformer.class));
 	}

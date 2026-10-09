@@ -3,6 +3,8 @@ package software.coley.recaf.services.deobfuscation;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
+import org.objectweb.asm.Label;
+import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.InsnNode;
@@ -16,6 +18,7 @@ import software.coley.recaf.services.deobfuscation.transform.generic.OpaqueConst
 import software.coley.recaf.services.deobfuscation.transform.generic.OpaquePredicateFoldingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.RedundantTryCatchRemovingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.VariableFoldingTransformer;
+import software.coley.recaf.services.deobfuscation.transform.generic.VariableTableNormalizingTransformer;
 import software.coley.recaf.services.transform.JvmTransformResult;
 import software.coley.recaf.services.transform.TransformationParameters;
 import software.coley.recaf.util.AsmInsnUtil;
@@ -33,6 +36,92 @@ import static org.junit.jupiter.api.Assertions.*;
  * An assortment of deobfuscation tests, specifically to ensure weird bugs that occurred at one point do not come back.
  */
 public class RegressionDeobfuscationTest extends TransformerTestBase {
+	private static final String COUNTER_SOURCE = """
+			class Counter {
+			    static int count;
+			    static int next() { return ++count; }
+			}
+			""";
+
+	private static final String SIDE_EFFECT_SEQUENCES = """
+			.super java/lang/Object
+			.class public super Example {
+			    .field static keys [I
+			    .field static sink I
+
+			    .method static <clinit> ()V {
+			        code: {
+			        A:
+			            iconst_1
+			            newarray int
+			            putstatic Example.keys [I
+			            return
+			        B:
+			        }
+			    }
+
+			    .method static record (I)V {
+			        parameters: { value },
+			        code: {
+			        A:
+			            iload value
+			            putstatic Example.sink I
+			            return
+			        B:
+			        }
+			    }
+
+			    .method static arrayStore ()I {
+			        code: {
+			        A:
+			            iconst_1
+			            getstatic Example.keys [I
+			            iconst_0
+			            bipush 7
+			            iastore
+			            iconst_2
+			            iadd
+			            pop
+			            getstatic Example.keys [I
+			            iconst_0
+			            iaload
+			            ireturn
+			        B:
+			        }
+			    }
+
+			    .method static fieldStore ()I {
+			        code: {
+			        A:
+			            iconst_1
+			            iconst_2
+			            bipush 7
+			            putstatic Example.sink I
+			            iadd
+			            pop
+			            getstatic Example.sink I
+			            ireturn
+			        B:
+			        }
+			    }
+
+			    .method static argumentCall ()I {
+			        code: {
+			        A:
+			            iconst_1
+			            iconst_2
+			            bipush 7
+			            invokestatic Example.record (I)V
+			            iadd
+			            pop
+			            getstatic Example.sink I
+			            ireturn
+			        B:
+			        }
+			    }
+			}
+			""";
+
 	@Test
 	void gotoInlining1a() {
 		String asm = """
@@ -804,7 +893,7 @@ public class RegressionDeobfuscationTest extends TransformerTestBase {
 				        iand
 				        tableswitch {
 				            min: 0,
-				            max: 3,
+				            max: 2,
 				            cases: { C, D, B },
 				            default: B
 				        }
@@ -1427,7 +1516,7 @@ public class RegressionDeobfuscationTest extends TransformerTestBase {
 				        invokestatic java/lang/Integer.parseInt (Ljava/lang/String;)I
 				        tableswitch {
 				            min: 0,
-				            max: 1,
+				            max: 0,
 				            cases: { U },
 				            default: H
 				        }
@@ -1436,7 +1525,7 @@ public class RegressionDeobfuscationTest extends TransformerTestBase {
 				        invokestatic java/lang/Integer.parseInt (Ljava/lang/String;)I
 				        tableswitch {
 				            min: 0,
-				            max: 1,
+				            max: 0,
 				            cases: { J },
 				            default: AA
 				        }
@@ -1473,7 +1562,7 @@ public class RegressionDeobfuscationTest extends TransformerTestBase {
 				        iload i0
 				        tableswitch {
 				            min: 0,
-				            max: 1,
+				            max: 0,
 				            cases: { W },
 				            default: D
 				        }
@@ -1481,7 +1570,7 @@ public class RegressionDeobfuscationTest extends TransformerTestBase {
 				        iload i0
 				        tableswitch {
 				            min: 0,
-				            max: 1,
+				            max: 0,
 				            cases: { F },
 				            default: N
 				        }
@@ -1490,7 +1579,7 @@ public class RegressionDeobfuscationTest extends TransformerTestBase {
 				        invokestatic java/lang/Integer.parseInt (Ljava/lang/String;)I
 				        tableswitch {
 				            min: 0,
-				            max: 1,
+				            max: 0,
 				            cases: { B },
 				            default: Y
 				        }
@@ -1591,7 +1680,7 @@ public class RegressionDeobfuscationTest extends TransformerTestBase {
 				        invokestatic java/lang/Integer.parseInt (Ljava/lang/String;)I
 				        tableswitch {
 				            min: 0,
-				            max: 1,
+				            max: 0,
 				            cases: { B },
 				            default: X
 				        }
@@ -1602,7 +1691,7 @@ public class RegressionDeobfuscationTest extends TransformerTestBase {
 				        iload i
 				        tableswitch {
 				            min: 0,
-				            max: 1,
+				            max: 0,
 				            cases: { X },
 				            default: D
 				        }
@@ -2016,6 +2105,321 @@ public class RegressionDeobfuscationTest extends TransformerTestBase {
 			assertEquals(1, StringUtil.count("iconst_1", dis), "Expected to keep the second original value");
 			assertEquals(0, StringUtil.count("iconst_2", dis), "Expected to remove the top producer");
 			assertEquals(4, StringUtil.count("pop", dis), "Expected the surviving copy to be popped");
+		});
+	}
+
+	/**
+	 * A discarded call result must not delete the call, as the call may have side effects.
+	 */
+	@Test
+	void constantFoldingKeepsDiscardedStaticCall() {
+		compileFull("Example", COUNTER_SOURCE + """
+				class Example {
+				    static int run() {
+				        Counter.next();
+				        return Counter.count;
+				    }
+				}
+				""");
+		assertEquals(1, invokeStatic("Example", "run", "Example", "Counter"));
+		transformAndApply(List.of(OpaqueConstantFoldingTransformer.class));
+		assertEquals(1, invokeStatic("Example", "run", "Example", "Counter"));
+	}
+
+	/**
+	 * A call whose result is duplicated must still only be called once.
+	 */
+	@Test
+	void constantFoldingKeepsDuplicatedStaticCallSingle() {
+		compileFull("Example", COUNTER_SOURCE + """
+				class Example {
+				    static int run() {
+				        int x, y;
+				        x = y = Counter.next();
+				        return Counter.count * 100 + x * 10 + y;
+				    }
+				}
+				""");
+		assertEquals(111, invokeStatic("Example", "run", "Example", "Counter"));
+		transformAndApply(List.of(OpaqueConstantFoldingTransformer.class));
+		assertEquals(111, invokeStatic("Example", "run", "Example", "Counter"));
+	}
+
+	/**
+	 * An unused local assigned from a call must not delete the call, as the call may have side effects.
+	 */
+	@Test
+	void variableFoldingKeepsDeadStoreStaticCall() {
+		compileFull("Example", COUNTER_SOURCE + """
+				class Example {
+				    static int run() {
+				        int unused = Counter.next();
+				        return Counter.count;
+				    }
+				}
+				""");
+		assertEquals(1, invokeStatic("Example", "run", "Example", "Counter"));
+		transformAndApply(List.of(VariableFoldingTransformer.class));
+		assertEquals(1, invokeStatic("Example", "run", "Example", "Counter"));
+	}
+
+	/**
+	 * A side effecting call between folded operands must be kept even though the arithmetic folds.
+	 */
+	@Test
+	void constantFoldingKeepsVoidStaticCallBetweenOperands() {
+		assemble("""
+			.super java/lang/Object
+			.class public super Example {
+			    .field static hits I
+
+			    .method static setupXorKeys ()V {
+			        code: {
+			        A:
+			            getstatic Example.hits I
+			            iconst_1
+			            iadd
+			            putstatic Example.hits I
+			            return
+			        B:
+			        }
+			    }
+
+			    .method static run ()I {
+			        code: {
+			        A:
+			            iconst_1
+			            iconst_1
+			            invokestatic Example.setupXorKeys ()V
+			            iadd
+			            getstatic Example.hits I
+			            iadd
+			            ireturn
+			        B:
+			        }
+			    }
+			}
+			""", true);
+		assertEquals(3, invokeStatic("Example", "run", "Example"));
+		transformAndApply(List.of(OpaqueConstantFoldingTransformer.class));
+		assertEquals(3, invokeStatic("Example", "run", "Example"));
+	}
+
+	/**
+	 * A value returning call whose result is discarded between folded operands must be kept.
+	 */
+	@Test
+	void constantFoldingKeepsPoppedStaticCallBetweenOperands() {
+		assemble("""
+			.super java/lang/Object
+			.class public super Example {
+			    .field static count I
+
+			    .method static next ()I {
+			        code: {
+			        A:
+			            getstatic Example.count I
+			            iconst_1
+			            iadd
+			            dup
+			            putstatic Example.count I
+			            ireturn
+			        B:
+			        }
+			    }
+
+			    .method static run ()I {
+			        code: {
+			        A:
+			            iconst_1
+			            invokestatic Example.next ()I
+			            pop
+			            iconst_1
+			            iadd
+			            getstatic Example.count I
+			            iadd
+			            ireturn
+			        B:
+			        }
+			    }
+			}
+			""", true);
+		assertEquals(3, invokeStatic("Example", "run", "Example"));
+		transformAndApply(List.of(OpaqueConstantFoldingTransformer.class));
+		assertEquals(3, invokeStatic("Example", "run", "Example"));
+	}
+
+	/**
+	 * A cast that looks redundant for the known runtime value must be kept when the verifier
+	 * only knows the less specific static type of the operand.
+	 */
+	@Test
+	void constantFoldingKeepsCastRequiredByVerifier() {
+		compileFull("Example", """
+				class Example {
+				    static int run() {
+				        Object[] holder = new Object[4];
+				        holder[3] = new Object[5];
+				        ((Object[]) holder[3])[0] = "x";
+				        return ((Object[]) holder[3])[0] == null ? 0 : 1;
+				    }
+				}
+				""");
+		assertEquals(1, invokeStatic("Example", "run", "Example"));
+		transformAndApply(List.of(OpaqueConstantFoldingTransformer.class));
+		assertEquals(1, invokeStatic("Example", "run", "Example"));
+	}
+
+	/**
+	 * Removing a dead block removes its stack map frame, which later delta frames <i>(chop/append/same)</i>
+	 * may be relative to. Frames must be recomputed so the output still verifies.
+	 */
+	@Test
+	void deadCodeRemovalRecomputesFramesAfterDeadFrame() {
+		putDeadFrameClass();
+		assertEquals(1, invokeStatic("DeadFrame", "run", "DeadFrame"));
+		transformAndApply(List.of(DeadCodeRemovingTransformer.class));
+		assertEquals(1, invokeStatic("DeadFrame", "run", "DeadFrame"));
+	}
+
+	/**
+	 * Opaque predicate folding runs dead code removal as a dependency, so it must also recompute frames.
+	 */
+	@Test
+	void opaquePredicateFoldingRecomputesFramesAfterDeadFrame() {
+		putDeadFrameClass();
+		assertEquals(1, invokeStatic("DeadFrame", "run", "DeadFrame"));
+		transformAndApply(List.of(OpaquePredicateFoldingTransformer.class));
+		assertEquals(1, invokeStatic("DeadFrame", "run", "DeadFrame"));
+	}
+
+	/**
+	 * Removing a dead store leaves a later stack map frame claiming the local is assigned.
+	 * Frames must be recomputed so the output still verifies.
+	 */
+	@Test
+	void variableFoldingRecomputesFramesAfterDeadStoreRemoval() {
+		compileFull("Example", """
+				class Example {
+				    static int field = 7;
+				    static int run() {
+				        int unused = field;
+				        if (field > 5) return 9;
+				        return 3;
+				    }
+				}
+				""");
+		assertEquals(9, invokeStatic("Example", "run", "Example"));
+		transformAndApply(List.of(VariableFoldingTransformer.class));
+		assertEquals(9, invokeStatic("Example", "run", "Example"));
+	}
+
+	/**
+	 * Compacting local slots and shrinking max locals leaves frames naming slots that no longer exist.
+	 * Frames must be recomputed so the output can be written and still verifies.
+	 */
+	@Test
+	void variableTableNormalizingRecomputesFramesAfterSlotCompaction() {
+		putClass("SlotGap", node -> {
+			MethodVisitor mv = node.visitMethod(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, "run", "()I", null, null);
+			Label join = new Label();
+			mv.visitCode();
+			mv.visitIntInsn(Opcodes.BIPUSH, 42);
+			mv.visitVarInsn(Opcodes.ISTORE, 2);
+			mv.visitInsn(Opcodes.ICONST_0);
+			mv.visitJumpInsn(Opcodes.IFEQ, join);
+			mv.visitIincInsn(2, 1);
+
+			// The only used local is in slot 2, with slots 0 and 1 unused.
+			mv.visitLabel(join);
+			mv.visitFrame(Opcodes.F_FULL, 3, new Object[]{Opcodes.TOP, Opcodes.TOP, Opcodes.INTEGER}, 0, new Object[0]);
+			mv.visitVarInsn(Opcodes.ILOAD, 2);
+			mv.visitInsn(Opcodes.IRETURN);
+			mv.visitMaxs(1, 3);
+			mv.visitEnd();
+		});
+		assertEquals(42, invokeStatic("SlotGap", "run", "SlotGap"));
+		transformAndApply(List.of(VariableTableNormalizingTransformer.class));
+		assertEquals(42, invokeStatic("SlotGap", "run", "SlotGap"));
+	}
+
+	/**
+	 * Folding a sequence must not delete array element stores it contains.
+	 */
+	@Test
+	void constantFoldingKeepsArrayStoreInFoldedSequence() {
+		assemble(SIDE_EFFECT_SEQUENCES, true);
+		assertEquals(7, invokeStatic("Example", "arrayStore", "Example"));
+		transformAndApply(List.of(OpaqueConstantFoldingTransformer.class));
+		assertEquals(7, invokeStatic("Example", "arrayStore", "Example"));
+	}
+
+	/**
+	 * Folding a sequence must not delete field stores it contains.
+	 */
+	@Test
+	void constantFoldingKeepsFieldStoreInFoldedSequence() {
+		assemble(SIDE_EFFECT_SEQUENCES, true);
+		assertEquals(7, invokeStatic("Example", "fieldStore", "Example"));
+		transformAndApply(List.of(OpaqueConstantFoldingTransformer.class));
+		assertEquals(7, invokeStatic("Example", "fieldStore", "Example"));
+	}
+
+	/**
+	 * Folding a sequence must not delete calls with arguments it contains.
+	 */
+	@Test
+	void constantFoldingKeepsArgumentCallInFoldedSequence() {
+		assemble(SIDE_EFFECT_SEQUENCES, true);
+		assertEquals(7, invokeStatic("Example", "argumentCall", "Example"));
+		transformAndApply(List.of(OpaqueConstantFoldingTransformer.class));
+		assertEquals(7, invokeStatic("Example", "argumentCall", "Example"));
+	}
+
+	/**
+	 * A folded sequence whose result is known regardless of a side-effecting call operand must keep the call's
+	 * value discarded at its position, without disturbing the stack around the folded constant.
+	 */
+	@Test
+	void constantFoldingKeepsCallOperandOfKnownResultOnOneBranch() {
+		compileFull("Example", """
+				class Example {
+				    static int get() { return 5; }
+				    static int run() {
+				        int r = 1;
+				        if (get() > 4) { r = 0 * get(); }
+				        return r + 2;
+				    }
+				}
+				""");
+		assertEquals(2, invokeStatic("Example", "run", "Example"));
+		transformAndApply(List.of(OpaqueConstantFoldingTransformer.class));
+		assertEquals(2, invokeStatic("Example", "run", "Example"));
+	}
+
+	private void putDeadFrameClass() {
+		putClass("DeadFrame", node -> {
+			MethodVisitor mv = node.visitMethod(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, "run", "()I", null, null);
+			Label dead = new Label();
+			Label live = new Label();
+			mv.visitCode();
+			mv.visitInsn(Opcodes.ICONST_1);
+			mv.visitVarInsn(Opcodes.ISTORE, 0);
+			mv.visitJumpInsn(Opcodes.GOTO, live);
+
+			// Unreachable, but its frame appends two ints to the initial frame and is the base for the next frame.
+			mv.visitLabel(dead);
+			mv.visitFrame(Opcodes.F_APPEND, 2, new Object[]{Opcodes.INTEGER, Opcodes.INTEGER}, 0, null);
+			mv.visitIincInsn(1, 1);
+			mv.visitJumpInsn(Opcodes.GOTO, live);
+
+			// Reachable, and chops one local relative to the dead frame.
+			mv.visitLabel(live);
+			mv.visitFrame(Opcodes.F_CHOP, 1, null, 0, null);
+			mv.visitVarInsn(Opcodes.ILOAD, 0);
+			mv.visitInsn(Opcodes.IRETURN);
+			mv.visitMaxs(1, 2);
+			mv.visitEnd();
 		});
 	}
 }
