@@ -156,9 +156,17 @@ public class CompilerTestBase extends TestBase {
 
 	@Nonnull
 	protected String compileFull(@Nonnull String type, @Nonnull String src) {
+		return compileFull(type, src, true);
+	}
+
+	@Nonnull
+	protected String compileFull(@Nonnull String type, @Nonnull String src, boolean debugInfo) {
 		JavacArguments args = new JavacArgumentsBuilder()
 				.withClassName(type)
 				.withClassSource(src)
+				.withDebugVariables(debugInfo)
+				.withDebugLineNumbers(debugInfo)
+				.withDebugSourceName(debugInfo)
 				.build();
 		CompilerResult result = javac.compile(args, workspace, null);
 		WorkspaceResource resource = workspace.getPrimaryResource();

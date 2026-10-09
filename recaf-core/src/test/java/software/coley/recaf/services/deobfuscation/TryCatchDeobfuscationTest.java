@@ -971,6 +971,83 @@ public class TryCatchDeobfuscationTest extends TransformerTestBase {
 				    }
 				}
 				""";
-		validateNoTransformation(asm, List.of(RedundantTryCatchRemovingTransformer.class));
+				validateNoTransformation(asm, List.of(RedundantTryCatchRemovingTransformer.class));
+	}
+
+	/**
+	 * A catch of a workspace exception must be kept when only a subclass of it is ever constructed.
+	 */
+	@Test
+	void keepCatchOfBaseOfConstructedException() {
+		compileFull("Example", """
+				class AppException extends RuntimeException {}
+				class SpecificAppException extends AppException {}
+				class Example {
+				    static void fail() { throw new SpecificAppException(); }
+				    static int run() {
+				        try {
+				            fail();
+				        } catch (AppException e) {
+				            return 1;
+				        }
+				        return 0;
+				    }
+				}
+				""");
+		assertEquals(1, invokeStatic("Example", "run", "Example", "AppException", "SpecificAppException"));
+		transformAndApply(List.of(RedundantTryCatchRemovingTransformer.class));
+		assertEquals(1, invokeStatic("Example", "run", "Example", "AppException", "SpecificAppException"));
+	}
+
+	/**
+	 * A catch of a workspace exception must be kept when it is only constructed through a constructor reference.
+	 */
+	@Test
+	void keepCatchOfConstructorReferenceException() {
+		compileFull("Example", """
+				import java.util.Optional;
+				class SupplierOnlyException extends RuntimeException {}
+				class Example {
+				    static int run() {
+				        try {
+				            Optional.empty().orElseThrow(SupplierOnlyException::new);
+				        } catch (SupplierOnlyException e) {
+				            return 1;
+				        }
+				        return 0;
+				    }
+				}
+				""");
+		assertEquals(1, invokeStatic("Example", "run", "Example", "SupplierOnlyException"));
+		transformAndApply(List.of(RedundantTryCatchRemovingTransformer.class));
+		assertEquals(1, invokeStatic("Example", "run", "Example", "SupplierOnlyException"));
+	}
+
+	/**
+	 * Handlers with identical code that continue to different places must not be merged.
+	 * Compiled without debug info, as {@code javac -g:none} would.
+	 */
+	@Test
+	void keepIdenticalHandlersWithDifferentContinuations() {
+		compileFull("Example", """
+				class Example {
+				    static int log;
+				    static void risky() { throw new IllegalStateException(); }
+				    static int run() {
+				        while (true) {
+				            try { risky(); } catch (IllegalStateException e) { log += 1; break; }
+				        }
+				        log += 10;
+				        while (true) {
+				            try { risky(); } catch (IllegalStateException e) { log += 1; break; }
+				        }
+				        log += 100;
+				        return log;
+				    }
+				}
+				""", false);
+		assertEquals(112, invokeStatic("Example", "run", "Example"));
+		transformAndApply(List.of(DuplicateCatchMergingTransformer.class));
+		assertEquals(112, invokeStatic("Example", "run", "Example"));
 	}
 }

@@ -8,7 +8,9 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.JumpInsnNode;
 import org.objectweb.asm.tree.LabelNode;
+import org.objectweb.asm.tree.LookupSwitchInsnNode;
 import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.TableSwitchInsnNode;
 import org.objectweb.asm.tree.TryCatchBlockNode;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.transform.JvmClassTransformer;
@@ -167,11 +169,59 @@ public class DuplicateCatchMergingTransformer implements JvmClassTransformer {
 
 		private CodeBlock(@Nonnull List<AbstractInsnNode> instructions) {
 			this.instructions = instructions;
+
+			// Number the labels within the block.
+			// The upstream 'JvmPrinterUtil.toString(insn)' otherwise prints them all as 'A' which isn't correct.
+			Map<LabelNode, Integer> blockLabels = new IdentityHashMap<>();
+			for (AbstractInsnNode insn : instructions)
+				if (insn instanceof LabelNode label)
+					blockLabels.put(label, blockLabels.size());
+
 			this.disassembled = instructions.stream()
 					.skip(1) // Skip first label, which will always be unique
-					.map(JvmPrinterUtil::toString)
+					.map(insn -> describe(insn, blockLabels))
 					.collect(Collectors.joining("\n"));
 			this.index = indexOf(instructions.getFirst());
+		}
+
+		/**
+		 * @param insn
+		 * 		Instruction to describe.
+		 * @param blockLabels
+		 * 		Labels within the block, mapped to their order in the block.
+		 *
+		 * @return Text that is the same for instructions that have the same effect in an equivalent block.
+		 */
+		@Nonnull
+		private static String describe(@Nonnull AbstractInsnNode insn, @Nonnull Map<LabelNode, Integer> blockLabels) {
+			return switch (insn) {
+				case LabelNode label -> "label " + describe(label, blockLabels);
+				case JumpInsnNode jump -> jump.getOpcode() + " " + describe(jump.label, blockLabels);
+				case TableSwitchInsnNode tableSwitch -> "tableswitch " + tableSwitch.min + " " + tableSwitch.max
+						+ " default " + describe(tableSwitch.dflt, blockLabels)
+						+ tableSwitch.labels.stream().map(label -> " " + describe(label, blockLabels)).collect(Collectors.joining());
+				case LookupSwitchInsnNode lookupSwitch -> {
+					StringBuilder sb = new StringBuilder("lookupswitch default " + describe(lookupSwitch.dflt, blockLabels));
+					for (int i = 0; i < lookupSwitch.keys.size(); i++)
+						sb.append(' ').append(lookupSwitch.keys.get(i)).append(' ').append(describe(lookupSwitch.labels.get(i), blockLabels));
+					yield sb.toString();
+				}
+				default -> JvmPrinterUtil.toString(insn);
+			};
+		}
+
+		/**
+		 * @param label
+		 * 		Label to describe.
+		 * @param blockLabels
+		 * 		Labels within the block, mapped to their order in the block.
+		 *
+		 * @return Text that is the same for labels that have the same effect in an equivalent block.
+		 */
+		@Nonnull
+		private static String describe(@Nonnull LabelNode label, @Nonnull Map<LabelNode, Integer> blockLabels) {
+			Integer blockIndex = blockLabels.get(label);
+			return blockIndex != null ? "inner-" + blockIndex : "outer-" + indexOf(label);
 		}
 
 		/**
