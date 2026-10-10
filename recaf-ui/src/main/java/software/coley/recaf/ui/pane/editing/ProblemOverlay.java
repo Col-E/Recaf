@@ -4,7 +4,6 @@ import atlantafx.base.controls.Popover;
 import atlantafx.base.theme.Styles;
 import jakarta.annotation.Nonnull;
 import javafx.beans.binding.Bindings;
-import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -49,6 +48,7 @@ import java.util.Collection;
 public class ProblemOverlay extends Group implements EditorComponent, ProblemInvalidationListener {
 	private final ChangeListener<Boolean> handleScrollbarVisibility = (ob, old, cur) -> ScrollbarPaddingUtil.handleScrollbarVisibility(this, cur);
 	private final IntegerProperty problemCount = new SimpleIntegerProperty(-1);
+	private final BooleanProperty hasLineProblems = new SimpleBooleanProperty();
 	private final Object problemRefreshLock = new Object();
 	private Editor editor;
 	private boolean problemRefreshPending;
@@ -113,13 +113,15 @@ public class ProblemOverlay extends Group implements EditorComponent, ProblemInv
 				problemBox.setOnMouseEntered(me -> problemBox.getStyleClass().add("background"));
 				problemBox.setOnMouseExited(me -> problemBox.getStyleClass().remove("background"));
 
-				// When clicked, center the relevant problem.
-				problemBox.setOnMousePressed(me -> {
-					CodeArea codeArea = editor.getCodeArea();
-					codeArea.moveTo(line - 1, 0);
-					codeArea.selectLine();
-					codeArea.showParagraphAtCenter(codeArea.getCurrentParagraph());
-				});
+				// When clicked, center the relevant problem (if it can be mapped to a line)
+				if (line >= 0) {
+					problemBox.setOnMousePressed(me -> {
+						CodeArea codeArea = editor.getCodeArea();
+						codeArea.moveTo(line - 1, 0);
+						codeArea.selectLine();
+						codeArea.showParagraphAtCenter(codeArea.getCurrentParagraph());
+					});
+				}
 				children.add(problemBox);
 			}
 
@@ -183,11 +185,10 @@ public class ProblemOverlay extends Group implements EditorComponent, ProblemInv
 			return new Tooltip(Lang.get("assembler.problem.N").replace("N", String.valueOf(size)));
 		}));
 
-		BooleanBinding hasProblems = problemCount.greaterThan(0);
-		hasProblems.addListener((ob, had, has) -> {
-			// When there are problems, this is the left-most button.
-			// When there are no problems, this is the only button.
-			// Thus, our left-pill state should be bound to having problems.
+		hasLineProblems.addListener((ob, had, has) -> {
+			// When there are navigable problems, this is the left-most button.
+			// When there are no navigable problems, this is the only button.
+			// Thus, our left-pill state should be bound to having navigable problems.
 			ObservableList<String> styleClass = indicator.getStyleClass();
 			if (has)
 				styleClass.add(Styles.LEFT_PILL);
@@ -207,11 +208,11 @@ public class ProblemOverlay extends Group implements EditorComponent, ProblemInv
 			CodeArea codeArea = editor.getCodeArea();
 			int line = codeArea.getCurrentParagraph() + 1;
 			Integer prevLineWithError = tracking.getItems().floorKey(line - 1);
-			if (prevLineWithError == null)
+			if (prevLineWithError == null || prevLineWithError < 0)
 				prevLineWithError = tracking.getItems().floorKey(line);
-			if (prevLineWithError == null)
-				prevLineWithError = tracking.getItems().firstKey();
-			if (prevLineWithError != null) {
+			if (prevLineWithError == null || prevLineWithError < 0)
+				prevLineWithError = tracking.getItems().floorKey(Integer.MAX_VALUE);
+			if (prevLineWithError != null && prevLineWithError >= 0) {
 				codeArea.moveTo(prevLineWithError - 1, 0);
 				codeArea.selectLine();
 				codeArea.showParagraphAtCenter(codeArea.getCurrentParagraph());
@@ -227,11 +228,11 @@ public class ProblemOverlay extends Group implements EditorComponent, ProblemInv
 			CodeArea codeArea = editor.getCodeArea();
 			int line = codeArea.getCurrentParagraph() + 1;
 			Integer nextLineWithError = tracking.getItems().ceilingKey(line + 1);
-			if (nextLineWithError == null)
+			if (nextLineWithError == null || nextLineWithError < 0)
 				nextLineWithError = tracking.getItems().ceilingKey(line);
-			if (nextLineWithError == null)
-				nextLineWithError = tracking.getItems().firstKey();
-			if (nextLineWithError != null) {
+			if (nextLineWithError == null || nextLineWithError < 0)
+				nextLineWithError = tracking.getItems().ceilingKey(0);
+			if (nextLineWithError != null && nextLineWithError >= 0) {
 				codeArea.moveTo(nextLineWithError - 1, 0);
 				codeArea.selectLine();
 				codeArea.showParagraphAtCenter(codeArea.getCurrentParagraph());
@@ -242,7 +243,7 @@ public class ProblemOverlay extends Group implements EditorComponent, ProblemInv
 		prev.setFocusTraversable(false);
 		next.setFocusTraversable(false);
 		HBox buttons = new HBox(prev, next);
-		buttons.visibleProperty().bind(hasProblems);
+		buttons.visibleProperty().bind(hasLineProblems);
 
 		// Add to layout
 		getChildren().add(new HBox(indicator, new Group(buttons)));
@@ -260,8 +261,9 @@ public class ProblemOverlay extends Group implements EditorComponent, ProblemInv
 			// Track if there are problems
 			tracking.addListener(this);
 
-			// Initial value set to trigger a UI refresh.
+			// Initial values set to trigger a UI refresh.
 			problemCount.set(tracking.getAllItems().size());
+			hasLineProblems.set(hasNavigableProblems(tracking));
 
 			// Layout tweaks
 			StackPane.setAlignment(this, Pos.TOP_RIGHT);
@@ -316,6 +318,7 @@ public class ProblemOverlay extends Group implements EditorComponent, ProblemInv
 		ProblemTracking tracking = currentEditor == null ? null : currentEditor.getProblemTracking();
 		if (tracking != null) {
 			problemCount.set(tracking.getAllItems().size());
+			hasLineProblems.set(hasNavigableProblems(tracking));
 			currentEditor.redrawParagraphGraphics();
 		}
 
@@ -328,5 +331,9 @@ public class ProblemOverlay extends Group implements EditorComponent, ProblemInv
 		}
 		if (refreshAgain)
 			FxThreadUtil.run(this::refreshProblemState);
+	}
+
+	private static boolean hasNavigableProblems(@Nonnull ProblemTracking tracking) {
+		return tracking.getItems().keySet().stream().anyMatch(line -> line >= 0);
 	}
 }

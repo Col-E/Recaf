@@ -126,6 +126,7 @@ public class MappingGeneratorPane extends StackPane {
 	private static final NameGeneratorProvider<?> fallbackProvider = new IncrementingNameGeneratorProvider();
 	private final StringProperty currentProvider = new SimpleStringProperty(IncrementingNameGeneratorProvider.ID);
 	private final ObjectProperty<Mappings> mappingsToApply = new SimpleObjectProperty<>();
+	private final BooleanProperty previewRunning = new SimpleBooleanProperty();
 	private final ListView<FilterWithConfigNode<?>> filters = new ListView<>();
 	private final List<String> stringPredicates;
 	private final List<String> stringPredicatesWithNull;
@@ -139,6 +140,7 @@ public class MappingGeneratorPane extends StackPane {
 	private final MappingApplierService mappingApplierService;
 	private final Pane previewGroup;
 	private Runnable applyCallback;
+	private BiConsumer<Workspace, Mappings> previewCallback;
 
 	@Inject
 	public MappingGeneratorPane(@Nonnull WorkspaceManager workspaceManager,
@@ -185,6 +187,7 @@ public class MappingGeneratorPane extends StackPane {
 		//  - UI components (which can hold large virtualized text models for the mapping text representation)
 		FxThreadUtil.run(() -> {
 			mappingsToApply.setValue(null);
+			previewCallback = null;
 			previewGroup.getChildren().clear();
 			filters.getItems().clear();
 			getChildren().clear();
@@ -335,9 +338,15 @@ public class MappingGeneratorPane extends StackPane {
 			}
 		});
 
-		// Buttons to generate/apply mappings
+		// Buttons to generate, preview, and apply mappings
 		Button configureGenerator = new ActionButton(new FontIconView(CarbonIcons.SETTINGS, 20), this::configureGenerator);
 		Button generateButton = new ActionButton(Lang.getBinding("mapgen.generate"), this::generate);
+		Button previewButton = new ActionButton(CarbonIcons.VIEW, Lang.getBinding("mapapply.preview"), () -> {
+			Mappings mappings = mappingsToApply.get();
+			BiConsumer<Workspace, Mappings> callback = previewCallback;
+			if (mappings != null && callback != null)
+				callback.accept(workspace, mappings);
+		});
 		Button applyButton = new ActionButton(Lang.getBinding("mapgen.apply"), this::apply);
 		List<String> providerIds = nameGeneratorProviders.getProviders().keySet().stream().sorted().collect(Collectors.toList());
 		BoundComboBox<String> generatorCombo = new BoundComboBox<>(currentProvider, providerIds, new StringConverter<>() {
@@ -355,13 +364,14 @@ public class MappingGeneratorPane extends StackPane {
 		generateButton.setMaxWidth(Double.MAX_VALUE);
 		applyButton.setMaxWidth(Double.MAX_VALUE);
 		HBox.setHgrow(applyButton, Priority.ALWAYS);
+		previewButton.disableProperty().bind(mappingsToApply.isNull().or(previewRunning));
 		applyButton.disableProperty().bind(mappingsToApply.isNull());
 
 		// Layout
 		InputGroup inputGroup = new InputGroup(configureGenerator, generateButton, generatorCombo);
 		HBox.setHgrow(generateButton, Priority.ALWAYS);
 		HBox.setHgrow(inputGroup, Priority.ALWAYS);
-		HBox buttons = new HBox(inputGroup, applyButton);
+		HBox buttons = new HBox(inputGroup, previewButton, applyButton);
 		buttons.setSpacing(10);
 		VBox layout = new VBox(editor, stats, buttons);
 		VBox.setVgrow(editor, Priority.ALWAYS);
@@ -486,6 +496,22 @@ public class MappingGeneratorPane extends StackPane {
 	 */
 	public void setApplyCallback(@Nullable Runnable applyCallback) {
 		this.applyCallback = applyCallback;
+	}
+
+	/**
+	 * @param previewCallback
+	 * 		Callback to run when generated mappings should be previewed.
+	 */
+	public void setPreviewCallback(@Nullable BiConsumer<Workspace, Mappings> previewCallback) {
+		this.previewCallback = previewCallback;
+	}
+
+	/**
+	 * @param previewRunning
+	 * 		Whether a mapping preview is currently being computed.
+	 */
+	public void setPreviewRunning(boolean previewRunning) {
+		this.previewRunning.set(previewRunning);
 	}
 
 	@Nonnull

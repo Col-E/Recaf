@@ -697,6 +697,15 @@ mapapply=Apply mappings
 mapapply.pick.file=Choose mappings file
 mapapply.pick.dir=Choose mappings directory
 mapapply.settings.unique=Assume unique keys, ignore inheritance
+mapapply.preview=Preview changes
+mapapply.preview.title=Mapping preview
+mapapply.preview.no-changes=These mappings do not modify any classes.
+mapapply.preview.noselection=Select a modified class to preview its before and after states.
+mapapply.preview.before-unavailable=The original class for this result is unavailable.
+mapapply.preview.error.title=Mapping preview failed
+mapapply.preview.error.header=Could not compute the mapping preview
+mapapply.preview.error.content=The preview failed. No workspace changes were made.
+mapapply.problem.missing-classes=Mappings reference %d class owners that are not present in the workspace. Hierarchy lookup may be incomplete:\n%s
 
 ## Mapping generator
 mapgen=Mapping generator
