@@ -16,7 +16,6 @@ import java.util.TreeSet;
  */
 public final class EscapeUtil {
 	private static final Int2ObjectMap<String> WHITESPACE_TO_ESCAPE = new Int2ObjectMap<>();
-	private static final Object2IntMap<String> ESCAPE_TO_WHITESPACE = new Object2IntMap<>(); // TODO: Shouldn't we use this?
 	private static final Set<String> WHITESPACE_STRINGS = new TreeSet<>();
 	private static final BitSet WHITESPACE_LOOKUP = new BitSet(Character.MAX_VALUE + 1);
 	public static final char TERMINATOR = '\0';
@@ -352,7 +351,6 @@ public final class EscapeUtil {
 		// Mapping between whitespace unicode value and character
 		WHITESPACE_STRINGS.add(String.valueOf(unescape));
 		WHITESPACE_TO_ESCAPE.put(unescape, escape);
-		ESCAPE_TO_WHITESPACE.put(escape, unescape);
 		WHITESPACE_LOOKUP.set(unescape);
 	}
 
