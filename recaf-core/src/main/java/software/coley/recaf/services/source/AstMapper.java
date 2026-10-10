@@ -195,36 +195,51 @@ public class AstMapper {
 	@Nonnull
 	private String replacePatternIn(@Nonnull Model named, @Nonnull String source,
 	                                @Nullable String before, @Nullable String after) {
-		if (before != null && after != null && !before.equals(after)) {
-			Range namedRange = extractRelevantRange(named, source);
-			if (namedRange.end() > source.length() || namedRange.isUnknown())
-				return source;
+		if (before == null || after == null || before.isEmpty() || before.equals(after))
+			return source;
 
-			String namedSource = getSource(namedRange, source);
-			String prefix = source.substring(0, namedRange.begin());
-			String suffix = source.substring(namedRange.end());
-			String replaced = namedSource.replace(before, after);
+		// Determine the range of the named model to limit the search for the pattern.
+		Range namedRange = extractRelevantRange(named, source);
+		int begin = namedRange.begin();
+		int end = namedRange.end();
+		if (namedRange.isUnknown() || begin < 0 || end > source.length() || end < begin)
+			return source;
 
-			// TODO: We should ensure only one replacement ever happens.
-			//  - We could only replace if the content replaced is surrounded by boundaries.
-			//  - Or just validate our range only has one instance of the 'before' text in it
+		// If the pattern is a valid identifier, then we need to ensure that the match is bounded by non-identifier characters.
+		boolean identifier = isJavaIdentifier(before);
+		int match = -1;
+		int lastStart = end - before.length();
+		for (int search = begin; search <= lastStart; ) {
+			int candidate = source.indexOf(before, search);
+			if (candidate < 0 || candidate > lastStart)
+				break;
 
-			if (!replaced.equals(namedSource))
-				return prefix + replaced + suffix;
+			if (!identifier || hasIdentifierBoundaries(source, candidate, candidate + before.length())) {
+				if (match >= 0)
+					return source;
+				match = candidate;
+			}
+			search = candidate + 1;
 		}
-		return source;
+
+		// No match.
+		if (match < 0)
+			return source;
+
+		// Replace the match with the new name.
+		return source.substring(0, match) + after + source.substring(match + before.length());
 	}
 
 	@Nonnull
 	private Range extractRelevantRange(@Nonnull Model model, @Nonnull String source) {
 		if (model instanceof ClassModel classModel) {
-			// The class model is often the FULL range of the file, and we only want the named section.
-			String name = classModel.getName();
-			int begin = classModel.getRange().begin();
-			int end = source.indexOf(name, begin) + name.length();
-			if (end < begin)
-				return Range.UNKNOWN;
-			return new Range(begin, end);
+			// Class model ranges may include annotations, so prefer the exact range of the name model.
+			if (classModel.getNameModel() != null && !classModel.getNameModel().getRange().isUnknown())
+				return classModel.getNameModel().getRange();
+
+			// Otherwise, locate the identifier after the class declaration keyword. The range can include annotations
+			// that mention the class name, so selecting the first textual match is not sufficient.
+			return findClassNameRange(classModel, source);
 		} else if (model instanceof VariableModel variableModel) {
 			// The variable range should include only the variable name.
 			// The name doesn't have an associated model, but is after the declared type.
@@ -346,9 +361,120 @@ public class AstMapper {
 	}
 
 	@Nonnull
-	private static String getSource(@Nonnull Range range, @Nonnull String source) {
-		int end = Math.min(source.length(), range.end());
-		return source.substring(range.begin(), end);
+	private static Range findClassNameRange(@Nonnull ClassModel classModel, @Nonnull String source) {
+		Range range = classModel.getRange();
+		int begin = range.begin();
+		int end = Math.min(range.end(), source.length());
+		if (range.isUnknown() || begin < 0 || begin > end)
+			return Range.UNKNOWN;
+
+		String name = classModel.getName();
+		boolean expectingName = false;
+		for (int i = begin; i < end; ) {
+			char current = source.charAt(i);
+			if (Character.isWhitespace(current)) {
+				i++;
+				continue;
+			}
+
+			// Comments may occur between the declaration keyword and name, and should not contribute tokens.
+			if (current == '/' && i + 1 < end) {
+				char next = source.charAt(i + 1);
+				if (next == '/') {
+					i += 2;
+					while (i < end && source.charAt(i) != '\n' && source.charAt(i) != '\r')
+						i++;
+					continue;
+				} else if (next == '*') {
+					i += 2;
+					while (i + 1 < end && (source.charAt(i) != '*' || source.charAt(i + 1) != '/'))
+						i++;
+					i = Math.min(end, i + 2);
+					continue;
+				}
+			}
+
+			if (current == '"' || current == '\'') {
+				i = skipQuotedLiteral(source, i, end, current);
+				expectingName = false;
+				continue;
+			}
+
+			int codePoint = source.codePointAt(i);
+			if (Character.isJavaIdentifierStart(codePoint)) {
+				int tokenBegin = i;
+				i += Character.charCount(codePoint);
+				while (i < end) {
+					codePoint = source.codePointAt(i);
+					if (!Character.isJavaIdentifierPart(codePoint))
+						break;
+					i += Character.charCount(codePoint);
+				}
+
+				int tokenLength = i - tokenBegin;
+				if (expectingName && tokenLength == name.length() && source.regionMatches(tokenBegin, name, 0, tokenLength))
+					return new Range(tokenBegin, i);
+				expectingName = isClassDeclarationKeyword(source, tokenBegin, tokenLength);
+				continue;
+			}
+
+			i += Character.charCount(codePoint);
+			expectingName = false;
+		}
+
+		return Range.UNKNOWN;
+	}
+
+	private static boolean isJavaIdentifier(@Nonnull String value) {
+		if (value.isEmpty())
+			return false;
+
+		int index = 0;
+		int codePoint = value.codePointAt(index);
+		if (!Character.isJavaIdentifierStart(codePoint))
+			return false;
+
+		index += Character.charCount(codePoint);
+		while (index < value.length()) {
+			codePoint = value.codePointAt(index);
+			if (!Character.isJavaIdentifierPart(codePoint))
+				return false;
+			index += Character.charCount(codePoint);
+		}
+		return true;
+	}
+
+	private static boolean hasIdentifierBoundaries(@Nonnull String source, int begin, int end) {
+		return (begin == 0 || !Character.isJavaIdentifierPart(source.codePointBefore(begin)))
+				&& (end == source.length() || !Character.isJavaIdentifierPart(source.codePointAt(end)));
+	}
+
+	private static boolean isClassDeclarationKeyword(@Nonnull String source, int begin, int length) {
+		return (length == 5 && source.regionMatches(begin, "class", 0, length))
+				|| (length == 9 && source.regionMatches(begin, "interface", 0, length))
+				|| (length == 4 && source.regionMatches(begin, "enum", 0, length))
+				|| (length == 6 && source.regionMatches(begin, "record", 0, length));
+	}
+
+	private static int skipQuotedLiteral(@Nonnull String source, int begin, int end, char quote) {
+		boolean textBlock = quote == '"' && begin + 2 < end
+				&& source.charAt(begin + 1) == '"'
+				&& source.charAt(begin + 2) == '"';
+		int delimiterLength = textBlock ? 3 : 1;
+		int index = begin + delimiterLength;
+		while (index < end) {
+			char current = source.charAt(index);
+			if (current == '\\') {
+				index = Math.min(end, index + 2);
+				continue;
+			}
+			if (current == quote && (!textBlock || index + 2 < end
+					&& source.charAt(index + 1) == '"'
+					&& source.charAt(index + 2) == '"'))
+				return index + delimiterLength;
+			index++;
+		}
+		return end;
 	}
 
 	private record NamedResolutions(@Nonnull NamedModel named, @Nonnull Resolution resolution) {}

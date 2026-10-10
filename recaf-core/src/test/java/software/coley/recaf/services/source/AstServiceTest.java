@@ -823,7 +823,25 @@ public class AstServiceTest extends TestBase {
 		}
 
 		@Test
-		void renameClass_ReplacesCast() {
+		void renameClass_DoesNotReplaceAnnotationValue() {
+			String source = """
+					package software.coley.recaf.test.dummy;
+					@Deprecated(since = "HelloWorld")
+					class HelloWorld {}
+					""";
+			handleUnit(source, unit -> {
+				IntermediateMappings mappings = new IntermediateMappings();
+				String owner = HelloWorld.class.getName().replace('.', '/');
+				mappings.addClass(owner, "software/coley/recaf/test/dummy/Howdy");
+
+				String modified = applyMappings(unit, mappings);
+				assertTrue(modified.contains("@Deprecated(since = \"HelloWorld\")"), modified);
+				assertTrue(modified.contains("class Howdy {}"), modified);
+			});
+		}
+
+		@Test
+		void renameClass_ReplaceCast() {
 			String source = """
 					package software.coley.recaf.test.dummy;
 					
