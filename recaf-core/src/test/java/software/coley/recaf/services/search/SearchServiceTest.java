@@ -473,6 +473,7 @@ public class SearchServiceTest extends TestBase {
 			code.setDebugInfo(new DebugInformation(
 					List.of(),
 					List.of(),
+					List.of(),
 					List.of(new DebugInformation.LocalVariable(0, "local", targetType, null, begin, end))
 			));
 			me.darknet.dex.tree.definitions.MethodMember method = newDexMethod("probe", "()V", ACC_PUBLIC | ACC_STATIC, code);
