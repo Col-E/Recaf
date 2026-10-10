@@ -2,10 +2,12 @@ package software.coley.recaf.util;
 
 import org.junit.jupiter.api.Test;
 import org.objectweb.asm.Handle;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.FrameNode;
+import org.objectweb.asm.tree.IincInsnNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.IntInsnNode;
@@ -21,6 +23,7 @@ import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.MultiANewArrayInsnNode;
 import org.objectweb.asm.tree.TableSwitchInsnNode;
 import org.objectweb.asm.tree.TryCatchBlockNode;
+import org.objectweb.asm.tree.TypeInsnNode;
 import org.objectweb.asm.tree.VarInsnNode;
 
 import java.util.ArrayList;
@@ -702,7 +705,171 @@ class AsmInsnUtilTest {
 		assertEquals(0, getSizeConsumed(new LineNumberNode(25, new LabelNode())));
 		assertEquals(0, getSizeConsumed(new FrameNode(0, 0, new Object[0], 0, new Object[0])));
 
-		// TODO: The rest are specific per-op and not by instruction 'type'
+		// Note: From here down the semantics are less around the ASM type of instruction
+		// and rely instead on the opcode. I mean, just look at all the InsnNode cases between the groups.
+
+		// Constants, local loads, and non-consuming control-flow instructions.
+		assertConsumedSize(0,
+				new InsnNode(NOP),
+				new InsnNode(ACONST_NULL),
+				new InsnNode(ICONST_M1),
+				new InsnNode(ICONST_0),
+				new InsnNode(ICONST_1),
+				new InsnNode(ICONST_2),
+				new InsnNode(ICONST_3),
+				new InsnNode(ICONST_4),
+				new InsnNode(ICONST_5),
+				new InsnNode(LCONST_0),
+				new InsnNode(LCONST_1),
+				new InsnNode(FCONST_0),
+				new InsnNode(FCONST_1),
+				new InsnNode(FCONST_2),
+				new InsnNode(DCONST_0),
+				new InsnNode(DCONST_1),
+				new IntInsnNode(BIPUSH, 1),
+				new IntInsnNode(SIPUSH, 1),
+				new LdcInsnNode(1),
+				new LdcInsnNode(1F),
+				new VarInsnNode(ILOAD, 0),
+				new VarInsnNode(LLOAD, 0),
+				new VarInsnNode(FLOAD, 0),
+				new VarInsnNode(DLOAD, 0),
+				new VarInsnNode(ALOAD, 0),
+				new IincInsnNode(0, 1),
+				new JumpInsnNode(GOTO, new LabelNode()),
+				new JumpInsnNode(JSR, new LabelNode()),
+				new VarInsnNode(RET, 0),
+				new InsnNode(RETURN),
+				new TypeInsnNode(NEW, "Example"),
+				new TypeInsnNode(CHECKCAST, "Example"));
+
+		// Array loads consume the array and index; array stores also consume their value.
+		assertConsumedSize(2,
+				new InsnNode(IALOAD),
+				new InsnNode(LALOAD),
+				new InsnNode(FALOAD),
+				new InsnNode(DALOAD),
+				new InsnNode(AALOAD),
+				new InsnNode(BALOAD),
+				new InsnNode(CALOAD),
+				new InsnNode(SALOAD));
+		assertConsumedSize(3,
+				new InsnNode(IASTORE),
+				new InsnNode(FASTORE),
+				new InsnNode(AASTORE),
+				new InsnNode(BASTORE),
+				new InsnNode(CASTORE),
+				new InsnNode(SASTORE));
+		assertConsumedSize(4,
+				new InsnNode(LASTORE),
+				new InsnNode(DASTORE));
+
+		// Single-slot operations include stores, conversions, branches, and array operations.
+		assertConsumedSize(1,
+				new VarInsnNode(ISTORE, 0),
+				new VarInsnNode(FSTORE, 0),
+				new VarInsnNode(ASTORE, 0),
+				new InsnNode(POP),
+				new InsnNode(INEG),
+				new InsnNode(FNEG),
+				new InsnNode(I2L),
+				new InsnNode(I2F),
+				new InsnNode(I2D),
+				new InsnNode(F2I),
+				new InsnNode(F2L),
+				new InsnNode(F2D),
+				new InsnNode(I2B),
+				new InsnNode(I2C),
+				new InsnNode(I2S),
+				new InsnNode(ARRAYLENGTH),
+				new InsnNode(ATHROW),
+				new InsnNode(MONITORENTER),
+				new InsnNode(MONITOREXIT),
+				new JumpInsnNode(IFEQ, new LabelNode()),
+				new JumpInsnNode(IFNE, new LabelNode()),
+				new JumpInsnNode(IFLT, new LabelNode()),
+				new JumpInsnNode(IFGE, new LabelNode()),
+				new JumpInsnNode(IFGT, new LabelNode()),
+				new JumpInsnNode(IFLE, new LabelNode()),
+				new JumpInsnNode(IFNULL, new LabelNode()),
+				new JumpInsnNode(IFNONNULL, new LabelNode()),
+				new TableSwitchInsnNode(0, 0, new LabelNode(), new LabelNode()),
+				new LookupSwitchInsnNode(new LabelNode(), new int[]{0}, new LabelNode[]{new LabelNode()}),
+				new InsnNode(IRETURN),
+				new InsnNode(FRETURN),
+				new InsnNode(ARETURN),
+				new IntInsnNode(NEWARRAY, Opcodes.T_INT),
+				new TypeInsnNode(ANEWARRAY, "Example"),
+				new TypeInsnNode(INSTANCEOF, "Example"));
+
+		// Stack operations, wide stores/pops, integer/float arithmetic, and comparisons.
+		assertConsumedSize(0,
+				new InsnNode(DUP),
+				new InsnNode(DUP_X1),
+				new InsnNode(DUP_X2),
+				new InsnNode(DUP2),
+				new InsnNode(DUP2_X1),
+				new InsnNode(DUP2_X2),
+				new InsnNode(SWAP));
+		assertConsumedSize(2,
+				new VarInsnNode(LSTORE, 0),
+				new VarInsnNode(DSTORE, 0),
+				new InsnNode(POP2),
+				new InsnNode(IADD),
+				new InsnNode(FADD),
+				new InsnNode(ISUB),
+				new InsnNode(FSUB),
+				new InsnNode(IMUL),
+				new InsnNode(FMUL),
+				new InsnNode(IDIV),
+				new InsnNode(FDIV),
+				new InsnNode(IREM),
+				new InsnNode(FREM),
+				new InsnNode(ISHL),
+				new InsnNode(ISHR),
+				new InsnNode(IUSHR),
+				new InsnNode(IAND),
+				new InsnNode(IOR),
+				new InsnNode(IXOR),
+				new InsnNode(FCMPL),
+				new InsnNode(FCMPG),
+				new InsnNode(L2I),
+				new InsnNode(L2F),
+				new InsnNode(D2I),
+				new InsnNode(D2F),
+				new JumpInsnNode(IF_ICMPEQ, new LabelNode()),
+				new JumpInsnNode(IF_ICMPNE, new LabelNode()),
+				new JumpInsnNode(IF_ICMPLT, new LabelNode()),
+				new JumpInsnNode(IF_ICMPGE, new LabelNode()),
+				new JumpInsnNode(IF_ICMPGT, new LabelNode()),
+				new JumpInsnNode(IF_ICMPLE, new LabelNode()),
+				new JumpInsnNode(IF_ACMPEQ, new LabelNode()),
+				new JumpInsnNode(IF_ACMPNE, new LabelNode()),
+				new InsnNode(LRETURN),
+				new InsnNode(DRETURN));
+		assertConsumedSize(3,
+				new InsnNode(LSHL),
+				new InsnNode(LSHR),
+				new InsnNode(LUSHR));
+		assertConsumedSize(4,
+				new InsnNode(DREM),
+				new InsnNode(DDIV),
+				new InsnNode(DMUL),
+				new InsnNode(DSUB),
+				new InsnNode(DADD),
+				new InsnNode(LREM),
+				new InsnNode(LDIV),
+				new InsnNode(LMUL),
+				new InsnNode(LSUB),
+				new InsnNode(LADD),
+				new InsnNode(LAND),
+				new InsnNode(LOR),
+				new InsnNode(LXOR),
+				new InsnNode(LCMP),
+				new InsnNode(DCMPL),
+				new InsnNode(DCMPG));
+		assertConsumedSize(2, new InsnNode(LNEG), new InsnNode(DNEG), new InsnNode(L2D), new InsnNode(D2L));
+
 	}
 
 	@Test
@@ -753,6 +920,173 @@ class AsmInsnUtilTest {
 		assertEquals(0, getSizeProduced(new LineNumberNode(25, new LabelNode())));
 		assertEquals(0, getSizeProduced(new FrameNode(0, 0, new Object[0], 0, new Object[0])));
 
-		// TODO: The rest are specific per-op and not by instruction 'type'
+		// Note: From here down the semantics are less around the ASM type of instruction
+		// and rely instead on the opcode. I mean, just look at all the InsnNode cases between the groups.
+
+		// Instructions that do not produce stack slots.
+		assertProducedSize(0,
+				new InsnNode(NOP),
+				new IincInsnNode(0, 1),
+				new JumpInsnNode(GOTO, new LabelNode()),
+				new VarInsnNode(RET, 0),
+				new InsnNode(RETURN),
+				new InsnNode(SWAP),
+				new TypeInsnNode(CHECKCAST, "Example"),
+				new VarInsnNode(ISTORE, 0),
+				new VarInsnNode(LSTORE, 0),
+				new VarInsnNode(FSTORE, 0),
+				new VarInsnNode(DSTORE, 0),
+				new VarInsnNode(ASTORE, 0),
+				new InsnNode(IASTORE),
+				new InsnNode(LASTORE),
+				new InsnNode(FASTORE),
+				new InsnNode(DASTORE),
+				new InsnNode(AASTORE),
+				new InsnNode(BASTORE),
+				new InsnNode(CASTORE),
+				new InsnNode(SASTORE),
+				new InsnNode(POP),
+				new InsnNode(POP2),
+				new TableSwitchInsnNode(0, 0, new LabelNode(), new LabelNode()),
+				new LookupSwitchInsnNode(new LabelNode(), new int[]{0}, new LabelNode[]{new LabelNode()}),
+				new InsnNode(IRETURN),
+				new InsnNode(LRETURN),
+				new InsnNode(FRETURN),
+				new InsnNode(DRETURN),
+				new InsnNode(ARETURN),
+				new InsnNode(ATHROW),
+				new InsnNode(MONITORENTER),
+				new InsnNode(MONITOREXIT),
+				new JumpInsnNode(IFEQ, new LabelNode()),
+				new JumpInsnNode(IFNE, new LabelNode()),
+				new JumpInsnNode(IFLT, new LabelNode()),
+				new JumpInsnNode(IFGE, new LabelNode()),
+				new JumpInsnNode(IFGT, new LabelNode()),
+				new JumpInsnNode(IFLE, new LabelNode()),
+				new JumpInsnNode(IFNULL, new LabelNode()),
+				new JumpInsnNode(IFNONNULL, new LabelNode()),
+				new JumpInsnNode(IF_ICMPEQ, new LabelNode()),
+				new JumpInsnNode(IF_ICMPNE, new LabelNode()),
+				new JumpInsnNode(IF_ICMPLT, new LabelNode()),
+				new JumpInsnNode(IF_ICMPGE, new LabelNode()),
+				new JumpInsnNode(IF_ICMPGT, new LabelNode()),
+				new JumpInsnNode(IF_ICMPLE, new LabelNode()),
+				new JumpInsnNode(IF_ACMPEQ, new LabelNode()),
+				new JumpInsnNode(IF_ACMPNE, new LabelNode()));
+
+		// One-slot results include constants, category-1 values, arithmetic, conversions, comparisons, and allocations.
+		assertProducedSize(1,
+				new InsnNode(ACONST_NULL),
+				new InsnNode(ICONST_M1),
+				new InsnNode(ICONST_0),
+				new InsnNode(ICONST_1),
+				new InsnNode(ICONST_2),
+				new InsnNode(ICONST_3),
+				new InsnNode(ICONST_4),
+				new InsnNode(ICONST_5),
+				new InsnNode(FCONST_0),
+				new InsnNode(FCONST_1),
+				new InsnNode(FCONST_2),
+				new IntInsnNode(BIPUSH, 1),
+				new IntInsnNode(SIPUSH, 1),
+				new VarInsnNode(ILOAD, 0),
+				new VarInsnNode(FLOAD, 0),
+				new VarInsnNode(ALOAD, 0),
+				new InsnNode(IALOAD),
+				new InsnNode(FALOAD),
+				new InsnNode(AALOAD),
+				new InsnNode(BALOAD),
+				new InsnNode(CALOAD),
+				new InsnNode(SALOAD),
+				new InsnNode(DUP),
+				new InsnNode(DUP_X1),
+				new InsnNode(DUP_X2),
+				new InsnNode(IADD),
+				new InsnNode(FADD),
+				new InsnNode(ISUB),
+				new InsnNode(FSUB),
+				new InsnNode(IMUL),
+				new InsnNode(FMUL),
+				new InsnNode(IDIV),
+				new InsnNode(FDIV),
+				new InsnNode(IREM),
+				new InsnNode(FREM),
+				new InsnNode(INEG),
+				new InsnNode(FNEG),
+				new InsnNode(ISHL),
+				new InsnNode(ISHR),
+				new InsnNode(IUSHR),
+				new InsnNode(IAND),
+				new InsnNode(IOR),
+				new InsnNode(IXOR),
+				new InsnNode(I2F),
+				new InsnNode(F2I),
+				new InsnNode(D2I),
+				new InsnNode(D2F),
+				new InsnNode(I2B),
+				new InsnNode(I2C),
+				new InsnNode(I2S),
+				new InsnNode(LCMP),
+				new InsnNode(FCMPL),
+				new InsnNode(FCMPG),
+				new InsnNode(DCMPL),
+				new InsnNode(DCMPG),
+				new TypeInsnNode(NEW, "Example"),
+				new IntInsnNode(NEWARRAY, Opcodes.T_INT),
+				new TypeInsnNode(ANEWARRAY, "Example"),
+				new InsnNode(ARRAYLENGTH),
+				new TypeInsnNode(INSTANCEOF, "Example"),
+				new MultiANewArrayInsnNode("[[LExample;", 2));
+
+		// Wide constants/loads, wide array values, stack operations, and results.
+		assertProducedSize(2,
+				new InsnNode(LCONST_0),
+				new InsnNode(LCONST_1),
+				new InsnNode(DCONST_0),
+				new InsnNode(DCONST_1),
+				new VarInsnNode(LLOAD, 0),
+				new VarInsnNode(DLOAD, 0),
+				new InsnNode(LALOAD),
+				new InsnNode(DALOAD),
+				new InsnNode(DUP2),
+				new InsnNode(DUP2_X1),
+				new InsnNode(DUP2_X2),
+				new InsnNode(LDIV),
+				new InsnNode(LMUL),
+				new InsnNode(LSUB),
+				new InsnNode(LADD),
+				new InsnNode(LREM),
+				new InsnNode(LNEG),
+				new InsnNode(LSHL),
+				new InsnNode(LSHR),
+				new InsnNode(LUSHR),
+				new InsnNode(LAND),
+				new InsnNode(LOR),
+				new InsnNode(LXOR),
+				new InsnNode(DADD),
+				new InsnNode(DSUB),
+				new InsnNode(DMUL),
+				new InsnNode(DDIV),
+				new InsnNode(DREM),
+				new InsnNode(DNEG),
+				new InsnNode(I2L),
+				new InsnNode(I2D),
+				new InsnNode(L2D),
+				new InsnNode(F2L),
+				new InsnNode(F2D),
+				new InsnNode(D2L));
+
+		// JSR alone produces a return address for its subroutine.
+		assertProducedSize(1, new JumpInsnNode(JSR, new LabelNode()));
+	}
+
+	private static void assertConsumedSize(int expected, AbstractInsnNode... instructions) {
+		for (AbstractInsnNode instruction : instructions)
+			assertEquals(expected, getSizeConsumed(instruction), getInsnName(instruction.getOpcode()) + " consumed size");
+	}
+
+	private static void assertProducedSize(int expected, AbstractInsnNode... instructions) {
+		for (AbstractInsnNode instruction : instructions)
+			assertEquals(expected, getSizeProduced(instruction), getInsnName(instruction.getOpcode()) + " produced size");
 	}
 }
