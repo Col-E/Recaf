@@ -9,6 +9,7 @@ import me.darknet.assembler.compiler.ClassResult;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.path.PathNode;
+import software.coley.recaf.services.assembler.SnippetTarget;
 import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
 import software.coley.recaf.ui.control.richtext.Editor;
@@ -75,6 +76,7 @@ public class AssemblerToolTabs implements AssemblerAstConsumer, AssemblerBuildCo
 			JvmVariablesPane variablesPane = jvmVariablesPaneProvider.get();
 			JvmExpressionCompilerPane expressionPane = jvmExpressionCompilerPaneProvider.get();
 			SnippetsPane snippetsPane = snippetPaneProvider.get();
+			snippetsPane.setTarget(SnippetTarget.JVM);
 			ControlFlowLines controlFlowLines = controlFlowLineProvider.get();
 			children.addAll(Arrays.asList(stackAnalysisPane, variablesPane, expressionPane, snippetsPane, controlFlowLines));
 			FxThreadUtil.run(() -> {
@@ -89,14 +91,15 @@ public class AssemblerToolTabs implements AssemblerAstConsumer, AssemblerBuildCo
 			// Create contents for Android classes
 			DalvikRegistersPane registersPane = dalvikRegistersPaneProvider.get();
 			DalvikAnalysisPane analysisPane = dalvikAnalysisPaneProvider.get();
+			SnippetsPane snippetsPane = snippetPaneProvider.get();
+			snippetsPane.setTarget(SnippetTarget.DALVIK);
 			ControlFlowLines controlFlowLines = controlFlowLineProvider.get();
-			// TODO: Snippets pane for Dalvik. Need to rework snippet storage to be lang-specific,
-			//  as Dalvik snippets are not compatible with JVM snippets. We don't want to show both at once.
-			children.addAll(Arrays.asList(registersPane, analysisPane, controlFlowLines));
+			children.addAll(Arrays.asList(registersPane, analysisPane, snippetsPane, controlFlowLines));
 			FxThreadUtil.run(() -> {
 				owner.clearSideTabs();
 				owner.addSideTab(Lang.getBinding("assembler.registers.title"), CarbonIcons.LIST_BOXES, registersPane);
 				owner.addSideTab(Lang.getBinding("assembler.analysis.title"), CarbonIcons.VIEW_NEXT, analysisPane);
+				owner.addSideTab(Lang.getBinding("assembler.snippets.title"), CarbonIcons.BOOK, snippetsPane);
 			});
 		}
 	}

@@ -33,6 +33,7 @@ import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.assembler.Snippet;
 import software.coley.recaf.services.assembler.SnippetListener;
 import software.coley.recaf.services.assembler.SnippetManager;
+import software.coley.recaf.services.assembler.SnippetTarget;
 import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.ui.LanguageStylesheets;
 import software.coley.recaf.ui.control.ActionButton;
@@ -47,6 +48,7 @@ import software.coley.recaf.util.Lang;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Objects;
 
 /**
  * Pane for creating new snippets, editing existing ones, and listing all available snippets.
@@ -64,13 +66,12 @@ public class SnippetsPane extends StackPane implements SnippetListener, Navigabl
 	private final ObservableList<Snippet> snippetList = FXCollections.observableArrayList();
 	private final ObjectProperty<Snippet> currentSnippet = new SimpleObjectProperty<>();
 	private final ComboBox<Snippet> snippetComboBox = new ComboBox<>(snippetList);
+	private SnippetTarget target;
 
 	@Inject
 	public SnippetsPane(@Nonnull SnippetManager snippetManager) {
 		this.snippetManager = snippetManager;
 
-		// Initialize snippet list and add listener to ensure it gets updated when new snippets are made/removed.
-		snippetList.addAll(snippetManager.getSnippets());
 		snippetManager.addSnippetListener(this);
 
 		// Configure for assembly content
@@ -110,6 +111,27 @@ public class SnippetsPane extends StackPane implements SnippetListener, Navigabl
 	}
 
 	/**
+	 * @param target
+	 * 		Target assembler dialect for snippet filtering.
+	 */
+	public void setTarget(@Nonnull SnippetTarget target) {
+		if (this.target != null)
+			throw new IllegalStateException("Snippet pane target is already set");
+
+		// Load snippets for the target and filter the list to only show those.
+		this.target = target;
+		snippetList.setAll(snippetManager.getSnippets(target));
+	}
+
+	/**
+	 * @return Target assembler dialect for snippet filtering.
+	 */
+	@Nonnull
+	private SnippetTarget getTarget() {
+		return Objects.requireNonNull(target, "Snippet pane target has not been set");
+	}
+
+	/**
 	 * Creates a new snippet to work off of.
 	 */
 	private void newSnippet() {
@@ -118,7 +140,7 @@ public class SnippetsPane extends StackPane implements SnippetListener, Navigabl
 		TextField nameText = new TextField();
 		TextField descText = new TextField();
 		Button commit = new ActionButton(CarbonIcons.DOCUMENT_ADD, Lang.getBinding("dialog.finish"), () -> {
-			currentSnippet.set(new Snippet(nameText.getText(), descText.getText(), editor.getText()));
+			currentSnippet.set(new Snippet(nameText.getText(), descText.getText(), editor.getText(), getTarget()));
 			editor.setText("// " + nameText.getText());
 			bringAttention(btnSave); // Must happen after setting the snippet for the order of clearing/setting effects.
 		});
@@ -254,17 +276,26 @@ public class SnippetsPane extends StackPane implements SnippetListener, Navigabl
 
 	@Override
 	public void onSnippetAdded(@Nonnull Snippet snippet) {
-		Lists.sortedInsert(Snippet.NAME_COMPARATOR, snippetList, snippet);
+		if (target != null && snippet.target() == target)
+			Lists.sortedInsert(Snippet.NAME_COMPARATOR, snippetList, snippet);
 	}
 
 	@Override
 	public void onSnippetModified(@Nonnull Snippet old, @Nonnull Snippet current) {
-		int i = snippetList.indexOf(old);
-		if (i >= 0) snippetList.set(i, current);
+		boolean oldMatches = target != null && old.target() == target;
+		boolean currentMatches = target != null && current.target() == target;
+		int index = oldMatches ? snippetList.indexOf(old) : -1;
+		if (index >= 0 && currentMatches)
+			snippetList.set(index, current);
+		else if (index >= 0)
+			snippetList.remove(index);
+		else if (currentMatches)
+			Lists.sortedInsert(Snippet.NAME_COMPARATOR, snippetList, current);
 	}
 
 	@Override
 	public void onSnippetRemoved(@Nonnull Snippet snippet) {
-		snippetList.remove(snippet);
+		if (target != null && snippet.target() == target)
+			snippetList.remove(snippet);
 	}
 }

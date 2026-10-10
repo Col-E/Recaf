@@ -11,6 +11,7 @@ import software.coley.recaf.behavior.PrioritySortable;
 import software.coley.recaf.services.Service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -32,24 +33,33 @@ public class SnippetManager implements Service {
 	}
 
 	/**
-	 * @return List of recorded snippets.
+	 * @param target
+	 * 		Target assembler dialect.
+	 *
+	 * @return List of recorded snippets for the given target.
 	 */
 	@Nonnull
-	public List<Snippet> getSnippets() {
+	public List<Snippet> getSnippets(@Nonnull SnippetTarget target) {
 		return config.getSnippets().values().stream()
+				.filter(snippet -> snippet.target() == target)
 				.sorted(Snippet.NAME_COMPARATOR)
 				.toList();
 	}
 
 	/**
+	 * @param target
+	 * 		Target assembler dialect.
 	 * @param name
-	 * 		Name of snippet to look up.
+	 * 		Snippet name / title.
 	 *
-	 * @return Snippet by the given name, if one exists.
+	 * @return Snippet by the given target and name, if one exists.
 	 */
 	@Nullable
-	public Snippet getByName(@Nonnull String name) {
-		return config.getSnippets().get(name);
+	public Snippet getByName(@Nonnull SnippetTarget target, @Nonnull String name) {
+		for (Snippet snippet : config.getSnippets().values())
+			if (snippet.target() == target && snippet.name().equals(name))
+				return snippet;
+		return null;
 	}
 
 	/**
@@ -57,12 +67,23 @@ public class SnippetManager implements Service {
 	 *
 	 * @param snippet
 	 * 		Snippet to register.
-	 * 		If an existing snippet with the same {@link Snippet#name()} exists, it will be replaced.
+	 * 		If an existing snippet with the same {@link Snippet#name()}
+	 * 		and {@link Snippet#target()} exists, it will be replaced.
 	 */
 	public void putSnippet(@Nonnull Snippet snippet) {
-		String name = snippet.name();
-		Snippet old = config.getSnippets().put(name, snippet);
+		Map<String, Snippet> snippets = config.getSnippets();
+
+		// Get existing matching snippet, if one exists.
+		Map.Entry<String, Snippet> existing = findByTargetAndName(snippets, snippet.target(), snippet.name());
+		String key = existing == null ? createStorageKey(snippets, snippet) : existing.getKey();
+		Snippet old = existing == null ? null : existing.getValue();
+
+		// Only replace if the content is different.
 		if (snippet.equals(old)) return;
+		snippets.put(key, snippet);
+
+		// Notify listeners of the change.
+		String name = snippet.name();
 		if (old == null)
 			Unchecked.checkedForEach(listeners, listener -> listener.onSnippetAdded(snippet),
 					(listener, t) -> logger.error("Exception thrown when registering snippet '{}'", name, t));
@@ -78,17 +99,23 @@ public class SnippetManager implements Service {
 	 * 		Snippet to remove.
 	 */
 	public void removeSnippet(@Nonnull Snippet snippet) {
-		removeSnippet(snippet.name());
+		removeSnippet(snippet.target(), snippet.name());
 	}
 
 	/**
-	 * Remove a given snippet by name.
+	 * Remove a given snippet by target and name.
 	 *
+	 * @param target
+	 * 		Target assembler dialect.
 	 * @param name
-	 * 		Snippet name / identifier.
+	 * 		Snippet name / title.
 	 */
-	public void removeSnippet(@Nonnull String name) {
-		Snippet removed = config.getSnippets().remove(name);
+	public void removeSnippet(@Nonnull SnippetTarget target, @Nonnull String name) {
+		Map<String, Snippet> snippets = config.getSnippets();
+		Map.Entry<String, Snippet> entry = findByTargetAndName(snippets, target, name);
+		if (entry == null) return;
+
+		Snippet removed = snippets.remove(entry.getKey());
 		if (removed != null)
 			Unchecked.checkedForEach(listeners, listener -> listener.onSnippetRemoved(removed),
 					(listener, t) -> logger.error("Exception thrown when removing snippet '{}'", name, t));
@@ -108,6 +135,27 @@ public class SnippetManager implements Service {
 	 */
 	public void removeSnippetListener(@Nonnull SnippetListener listener) {
 		listeners.remove(listener);
+	}
+
+	@Nullable
+	private static Map.Entry<String, Snippet> findByTargetAndName(@Nonnull Map<String, Snippet> snippets,
+	                                                              @Nonnull SnippetTarget target,
+	                                                              @Nonnull String name) {
+		for (Map.Entry<String, Snippet> entry : snippets.entrySet()) {
+			Snippet snippet = entry.getValue();
+			if (snippet.target() == target && snippet.name().equals(name))
+				return entry;
+		}
+		return null;
+	}
+
+	@Nonnull
+	private static String createStorageKey(@Nonnull Map<String, Snippet> snippets, @Nonnull Snippet snippet) {
+		String base = snippet.target().name() + ":" + snippet.name();
+		String key = base;
+		for (int suffix = 1; snippets.containsKey(key); suffix++)
+			key = base + ":" + suffix;
+		return key;
 	}
 
 	@Nonnull
