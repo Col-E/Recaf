@@ -1,6 +1,5 @@
 package software.coley.recaf.ui.pane.editing.media;
 
-import atlantafx.base.controls.Spacer;
 import atlantafx.base.theme.Styles;
 import jakarta.annotation.Nonnull;
 import javafx.geometry.Insets;
@@ -78,6 +77,7 @@ public abstract class MediaPane extends BorderPane implements FileNavigable, Upd
 		buttonBox.setAlignment(Pos.CENTER);
 		buttonBox.setPadding(new Insets(1));
 		Slider slider = new Slider();
+		slider.setPadding(new Insets(0, 0, 0, 10)); // Left padding to give the buttons some space
 		FxThreadUtil.delayedRun(250, () -> {
 			Player player = getPlayer();
 			double maxSeconds = player.getMaxSeconds() * 1000;
@@ -97,7 +97,7 @@ public abstract class MediaPane extends BorderPane implements FileNavigable, Upd
 					slider.setValue(player.getCurrentSeconds() * 1000);
 			});
 		});
-		HBox wrapper = new HBox(buttonBox, new Spacer(), slider);
+		HBox wrapper = new HBox(buttonBox, slider);
 		HBox.setHgrow(slider, Priority.ALWAYS);
 		wrapper.setAlignment(Pos.CENTER);
 		return wrapper;
