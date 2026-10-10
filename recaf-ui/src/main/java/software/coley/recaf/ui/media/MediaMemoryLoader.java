@@ -1,11 +1,13 @@
 package software.coley.recaf.ui.media;
 
+import com.sun.media.jfxmedia.locator.Locator;
 import com.sun.media.jfxmedia.locator.LocatorCache;
 import com.sun.media.jfxmediaimpl.MediaUtils;
 import jakarta.annotation.Nonnull;
 import javafx.scene.media.Media;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.util.RecafURLStreamHandlerProvider;
+import software.coley.recaf.util.io.ByteHeaderUtil;
 import software.coley.recaf.workspace.model.Workspace;
 
 import java.io.IOException;
@@ -60,7 +62,7 @@ public class MediaMemoryLoader {
 		mediaData.flip();
 
 		// Determine the content type of the media so that JavaFX can read it.
-		String contentType = getContentType(mediaData);
+		String contentType = getContentType(sourceUri, mediaData);
 		URI mediaUri = createMemoryUri(path);
 		LocatorCache.CacheReference cacheReference = CACHE.registerURICache(mediaUri, mediaData, contentType);
 		try {
@@ -74,23 +76,53 @@ public class MediaMemoryLoader {
 	}
 
 	/**
+	 * Determines the content type of the media by reading its signature and falling back to the file extension if needed.
+	 *
+	 * @param sourceUri
+	 * 		URI of the workspace-backed source, used for extension fallback.
 	 * @param mediaData
 	 * 		Media bytes to read the signature from.
 	 *
 	 * @return Content type of the media.
 	 */
 	@Nonnull
-	private static String getContentType(@Nonnull ByteBuffer mediaData) throws IOException {
+	private static String getContentType(@Nonnull URI sourceUri, @Nonnull ByteBuffer mediaData) throws IOException {
 		byte[] signature = new byte[MediaUtils.MAX_FILE_SIGNATURE_LENGTH];
 		ByteBuffer content = mediaData.duplicate();
 		int signatureLength = Math.min(content.remaining(), signature.length);
 		content.get(signature, 0, signatureLength);
+
+		// Determine content type from the file extension and the signature.
+		String filenameContentType = MediaUtils.filenameToContentType(sourceUri);
+		String signatureContentType;
+		com.sun.media.jfxmedia.MediaException signatureError = null;
 		try {
-			return MediaUtils.fileSignatureToContentType(signature, signature.length);
+			signatureContentType = MediaUtils.fileSignatureToContentType(signature, signature.length);
 		} catch (com.sun.media.jfxmedia.MediaException ex) {
-			throw new IOException("Media unsupported", ex);
+			if (ByteHeaderUtil.match(signature, ByteHeaderUtil.WAV) || MediaUtils.CONTENT_TYPE_WAV.equals(filenameContentType))
+				throw new IOException("Media unsupported", ex);
+			signatureError = ex;
+			signatureContentType = Locator.DEFAULT_CONTENT_TYPE;
 		}
+
+		// If the signature is recognized, we can trust it over the file extension.
+		if (!Locator.DEFAULT_CONTENT_TYPE.equals(signatureContentType))
+			return signatureContentType;
+
+		// If we have a quick-time video, we can just lie and say it's an MP4.
+		// This will let JavaFX play it even though it supposedly doesn't support QuickTime.
+		if (ByteHeaderUtil.match(signature, ByteHeaderUtil.QUICKTIME_FTYP))
+			return MediaUtils.CONTENT_TYPE_MP4;
+
+		// Otherwise, if the signature is unrecognized, we can try relying on the file extension.
+		if (!Locator.DEFAULT_CONTENT_TYPE.equals(filenameContentType) &&
+				!MediaUtils.CONTENT_TYPE_WAV.equals(filenameContentType))
+			return filenameContentType;
+
+		// No valid signature or extension.
+		throw new IOException("Media unsupported", signatureError);
 	}
+
 
 	/**
 	 * @param path

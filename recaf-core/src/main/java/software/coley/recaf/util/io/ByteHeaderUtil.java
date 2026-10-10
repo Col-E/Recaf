@@ -84,6 +84,7 @@ public class ByteHeaderUtil {
 	// Video
 	// For MP4/QuickTime see: https://www.ftyps.com/
 	public static final int[] MP4_FTYP = {WILD, WILD, WILD, WILD, 0x66, 0x74, 0x79, 0x70};
+	public static final int[] QUICKTIME_FTYP = {WILD, WILD, WILD, WILD, 0x66, 0x74, 0x79, 0x70, 0x71, 0x74, 0x20, 0x20};
 	public static final int[] MKV = {0x1A, 0x45, 0xDF, 0xA3, 0xA3, 0x42, 0x86, 0x81, 0x01, 0x42, 0xF7, 0x81};
 	public static final List<int[]> VIDEO_HEADERS = List.of(
 			MP4_FTYP,
