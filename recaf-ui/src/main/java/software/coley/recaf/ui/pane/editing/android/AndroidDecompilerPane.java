@@ -21,6 +21,7 @@ import software.coley.recaf.ui.pane.editing.AbstractDecompilePane;
 import software.coley.recaf.ui.pane.editing.ToolsContainerComponent;
 import software.coley.recaf.ui.pane.editing.jvm.DecompilerPaneConfig;
 import software.coley.recaf.ui.pane.editing.text.TextConfig;
+import software.coley.recaf.workspace.model.bundle.Bundle;
 
 /**
  * Displays an {@link AndroidClassInfo} via a configured {@link Editor} as decompiled by {@link DecompilerManager}.
@@ -53,5 +54,14 @@ public class AndroidDecompilerPane extends AbstractDecompilePane {
 		new AndroidDecompilerPaneConfigurator(toolsContainer, decompilerConfig, decompiler, decompilerManager);
 		new AndroidClassInfoProvider(toolsContainer, this);
 		installToolsContainer(toolsContainer);
+
+		// Setup Android-specific keybindings.
+		setOnKeyPressed(e -> {
+			if (keys.getUndo().match(e)) {
+				Bundle<?> bundle = path.getValueOfType(Bundle.class);
+				if (bundle != null)
+					bundle.decrementHistory(path.getValue().getName());
+			}
+		});
 	}
 }
