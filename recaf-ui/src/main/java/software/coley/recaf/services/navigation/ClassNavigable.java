@@ -2,6 +2,7 @@ package software.coley.recaf.services.navigation;
 
 import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.ClassInfo;
+import software.coley.recaf.info.InnerClassInfo;
 import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.path.ClassPathNode;
 
@@ -24,4 +25,12 @@ public interface ClassNavigable extends Navigable {
 	 * 		Member to focus.
 	 */
 	void requestFocus(@Nonnull ClassMember member);
+
+	/**
+	 * Requests focus of the inner class contained within this navigable representation of a class.
+	 *
+	 * @param innerClass
+	 * 		Inner class to focus.
+	 */
+	void requestFocus(@Nonnull InnerClassInfo innerClass);
 }

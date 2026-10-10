@@ -25,6 +25,7 @@ import software.coley.collections.Unchecked;
 import software.coley.collections.box.Box;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.ClassInfo;
+import software.coley.recaf.info.InnerClassInfo;
 import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.path.ClassMemberPathNode;
 import software.coley.recaf.path.ClassPathNode;
@@ -266,6 +267,12 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 	@Override
 	public ClassPathNode getClassPath() {
 		return Objects.requireNonNull(path.getPathOfType(ClassInfo.class), "Missing class parent path");
+	}
+
+	@Override
+	public void requestFocus(@Nonnull InnerClassInfo innerClass) {
+		// TODO: When the AST is of a class, rather than a member, we should be able to focus on the inner class declaration.
+		//  - There isn't a full inner class structure containing all the methods and such, but just the attribute detailing 'inner class' which is the closest we can get to a declaration.
 	}
 
 	@Override

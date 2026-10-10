@@ -67,6 +67,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 /**
  * Displays fields, methods and other subcomponents of a {@link ClassInfo}.
@@ -134,8 +135,7 @@ public class FieldsAndMethodsPane extends BorderPane implements ClassNavigable, 
 	}
 
 	/**
-	 * Sets up a double click listener on the tree that will call {@link ClassNavigable#requestFocus(ClassMember)}
-	 * with the current selected item.
+	 * Sets up a double-click listener on the tree that focuses the selected member or inner class.
 	 *
 	 * @param navigableClass
 	 * 		Parent class navigable component.
@@ -144,9 +144,18 @@ public class FieldsAndMethodsPane extends BorderPane implements ClassNavigable, 
 		tree.setOnMouseClicked(mouseEvent -> {
 			if (mouseEvent.getClickCount() == 2 || (mouseEvent.isControlDown() && mouseEvent.getButton() == MouseButton.PRIMARY)) {
 				TreeItem<PathNode<?>> selectedItem = tree.getSelectionModel().getSelectedItem();
-				if (!navigationLock && selectedItem != null && selectedItem.getValue() instanceof ClassMemberPathNode memberPathNode) {
-					navigationLock = true;
-					navigableClass.requestFocus(memberPathNode.getValue());
+				if (navigationLock || selectedItem == null)
+					return;
+				PathNode<?> selectedPath = selectedItem.getValue();
+				if (!(selectedPath instanceof ClassMemberPathNode) && !(selectedPath instanceof InnerClassPathNode))
+					return;
+				navigationLock = true;
+				try {
+					if (selectedPath instanceof ClassMemberPathNode memberPathNode)
+						navigableClass.requestFocus(memberPathNode.getValue());
+					else if (selectedPath instanceof InnerClassPathNode innerClassPathNode)
+						navigableClass.requestFocus(innerClassPathNode.getValue());
+				} finally {
 					navigationLock = false;
 				}
 			}
@@ -309,15 +318,31 @@ public class FieldsAndMethodsPane extends BorderPane implements ClassNavigable, 
 	public void requestFocus(@Nonnull ClassMember member) {
 		// Skip if lock is active. Implies we are the source of the request.
 		if (navigationLock) return;
+		requestFocusWhenReady(pathNode -> member.equals(pathNode.getValue()));
+	}
 
-		// Select the given member.
+	/**
+	 * Requests focus of an inner class in the fields-and-methods tree.
+	 *
+	 * @param innerClass
+	 * 		Inner class to focus.
+	 */
+	@Override
+	public void requestFocus(@Nonnull InnerClassInfo innerClass) {
+		// Skip if lock is active. Implies we are the source of the request.
+		if (navigationLock) return;
+		requestFocusWhenReady(pathNode -> pathNode instanceof InnerClassPathNode
+				&& innerClass.equals(pathNode.getValue()));
+	}
+
+	private void requestFocusWhenReady(@Nonnull Predicate<PathNode<?>> matcher) {
 		TreeItem<PathNode<?>> root = tree.getRoot();
 		if (root == null)
 			// If the value is null, it's probably waiting on the initialization from the path update handling.
 			// Request focus with a small delay.
-			FxThreadUtil.delayedRun(100, () -> requestFocusInternal(member));
+			FxThreadUtil.delayedRun(100, () -> requestFocusInternal(matcher));
 		else
-			requestFocusInternal(member);
+			requestFocusInternal(matcher);
 	}
 
 	@Override
@@ -367,9 +392,12 @@ public class FieldsAndMethodsPane extends BorderPane implements ClassNavigable, 
 		tree.setRoot(null);
 	}
 
-	private void requestFocusInternal(@Nonnull ClassMember member) {
-		for (TreeItem<PathNode<?>> child : tree.getRoot().getChildren()) {
-			if (member.equals(child.getValue().getValue())) {
+	private void requestFocusInternal(@Nonnull Predicate<PathNode<?>> matcher) {
+		TreeItem<PathNode<?>> root = tree.getRoot();
+		if (root == null)
+			return;
+		for (TreeItem<PathNode<?>> child : root.getChildren()) {
+			if (matcher.test(child.getValue())) {
 				var selectionModel = tree.getSelectionModel();
 				selectionModel.select(child);
 				tree.getFocusModel().focus(selectionModel.getSelectedIndex());

@@ -22,6 +22,7 @@ import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.info.InnerClassInfo;
 import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.info.properties.builtin.RemapOriginTaskProperty;
 import software.coley.recaf.path.ClassPathNode;
@@ -40,6 +41,7 @@ import software.coley.recaf.services.navigation.ClassNavigable;
 import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.services.navigation.NavigationHistoryService;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
+import software.coley.recaf.services.source.AstMapper;
 import software.coley.recaf.services.source.AstResolveResult;
 import software.coley.recaf.services.source.AstService;
 import software.coley.recaf.services.source.ResolverAdapter;
@@ -215,6 +217,11 @@ public class AbstractDecompilePane extends BorderPane implements ClassNavigable,
 	public void requestFocus(@Nonnull ClassMember member) {
 		contextActionSupport.select(member);
 		requestFocus();
+	}
+
+	@Override
+	public void requestFocus(@Nonnull InnerClassInfo innerClass) {
+		// TODO: contextActionSupport.select(innerClass); requestFocus();
 	}
 
 	@Override
