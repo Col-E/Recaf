@@ -8,6 +8,7 @@ import javafx.geometry.Side;
 import me.darknet.assembler.ast.ASTElement;
 import me.darknet.assembler.ast.specific.ASTClass;
 import me.darknet.assembler.ast.specific.ASTField;
+import me.darknet.assembler.ast.specific.ASTInner;
 import me.darknet.assembler.ast.specific.ASTMethod;
 import me.darknet.assembler.backend.dalvik.DalvikClassRepresentation;
 import me.darknet.assembler.backend.dalvik.DalvikTargetContext;
@@ -271,8 +272,29 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 
 	@Override
 	public void requestFocus(@Nonnull InnerClassInfo innerClass) {
-		// TODO: When the AST is of a class, rather than a member, we should be able to focus on the inner class declaration.
-		//  - There isn't a full inner class structure containing all the methods and such, but just the attribute detailing 'inner class' which is the closest we can get to a declaration.
+		if (lastConcreteAst == null)
+			return;
+
+		ASTInner astInner = findInnerClassDeclaration(lastConcreteAst, innerClass);
+		if (astInner != null) {
+			CodeArea area = editor.getCodeArea();
+			area.moveTo(astInner.range().start());
+			area.showParagraphAtCenter(area.getCurrentParagraph());
+			requestFocus();
+		}
+	}
+
+	@Nullable
+	static ASTInner findInnerClassDeclaration(@Nonnull List<ASTElement> ast, @Nonnull InnerClassInfo innerClass) {
+		for (ASTElement root : ast) {
+			if (root instanceof ASTClass astClass) {
+				for (ASTInner astInner : astClass.getInners()) {
+					if (astInner.innerClass() != null && innerClass.getInnerClassName().equals(astInner.innerClass().literal()))
+						return astInner;
+				}
+			}
+		}
+		return null;
 	}
 
 	@Override

@@ -5,6 +5,7 @@ import org.objectweb.asm.Handle;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.MethodNode;
+import software.coley.recaf.info.InnerClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.path.ClassMemberPathNode;
 import software.coley.recaf.path.ClassPathNode;
@@ -12,10 +13,10 @@ import software.coley.recaf.services.source.AstService;
 import software.coley.recaf.services.source.ResolverAdapter;
 import software.coley.recaf.test.TestBase;
 import software.coley.recaf.test.TestClassUtils;
+import software.coley.recaf.test.dummy.ClassWithInner;
 import software.coley.recaf.test.dummy.ClassWithLambda;
 import software.coley.recaf.test.dummy.LambdaCalcExample;
 import software.coley.recaf.test.dummy.LambdaExample;
-import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.util.Handles;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.sourcesolver.model.ClassModel;
@@ -30,14 +31,41 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.objectweb.asm.Opcodes.*;
 
 /**
- * Tests for {@link JavaContextActionSupport} <i>(At this point, only static methods,
- * because the rest of the class is bound to an {@link Editor} which makes things trickier to test...
- * Really ought to work on that at some point.)</i>.
+ * Tests for {@link JavaContextActionSupport}, including source resolution and inner-class declaration lookup.
  */
 class JavaContextActionSupportTest extends TestBase {
 	private static final String SRC_LambdaCalcExample = readSrc(LambdaCalcExample.class);
 	private static final String SRC_LambdaExample = readSrc(LambdaExample.class);
 	private static final String SRC_ClassWithLambda = readSrc(ClassWithLambda.class);
+
+	@Test
+	void findsInnerClassModelForSelection() throws IOException {
+		// Set up a workspace that has a class with an inner.
+		JvmClassInfo outerInfo = TestClassUtils.fromRuntimeClass(ClassWithInner.class);
+		JvmClassInfo innerInfo = TestClassUtils.fromRuntimeClass(ClassWithInner.TheInner.class);
+		Workspace workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(outerInfo, innerInfo));
+		ClassPathNode classPath = workspace.findClass(outerInfo.getName());
+		assertNotNull(classPath);
+
+		InnerClassInfo innerClass = outerInfo.getInnerClasses().stream()
+				.filter(candidate -> candidate.getInnerClassName().equals(innerInfo.getName()))
+				.findFirst().orElseThrow();
+
+		// Parse the source and resolve the inner class declaration to its workspace model.
+		AstService astService = recaf.get(AstService.class);
+		String source = readSrc(ClassWithInner.class);
+		CompilationUnitModel unit;
+		synchronized (astService.getSharedJavaParser()) {
+			unit = astService.getSharedJavaParser().parse(source);
+		}
+
+		// The inner class declaration is at the index of "class TheInner" in the source.
+		ResolverAdapter resolver = astService.newJavaResolver(workspace, classPath, unit);
+		ClassModel innerModel = JavaContextActionSupport.findInnerClassModel(unit, resolver, innerClass);
+		assertNotNull(innerModel, "Inner class source declaration was not resolved to its workspace class");
+		assertEquals("TheInner", innerModel.getName());
+		assertTrue(innerModel.getRange().isWithin(source.indexOf("class TheInner")));
+	}
 
 	@Test
 	void resolvesEachLambdaBodyToItsSyntheticMethod() throws IOException {

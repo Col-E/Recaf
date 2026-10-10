@@ -27,6 +27,7 @@ import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.behavior.Closing;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.ClassInfo;
+import software.coley.recaf.info.InnerClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.info.member.MethodMember;
@@ -291,6 +292,29 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 						(listener, t) -> logger.error("Exception thrown on select listener '{}'", listener.getClass(), t));
 			} catch (Throwable t) {
 				logger.error("Unhandled exception in Java context support - select '{}'", member.getName(), t);
+			}
+		}
+	}
+
+	/**
+	 * Selects an inner class declaration in the AST.
+	 *
+	 * @param innerClass
+	 * 		Inner class to select.
+	 */
+	public void select(@Nonnull InnerClassInfo innerClass) {
+		CompilationUnitModel localUnit = unit;
+		ResolverAdapter localResolver = resolver;
+		if (localUnit == null || localResolver == null) {
+			queuedSelectionTask = () -> select(innerClass);
+		} else {
+			queuedSelectionTask = null;
+			try {
+				ClassModel classModel = findInnerClassModel(localUnit, localResolver, innerClass);
+				if (classModel != null)
+					selectRange(classModel.getRange());
+			} catch (Throwable t) {
+				logger.error("Unhandled exception in Java context support - select inner '{}'", innerClass.getInnerClassName(), t);
 			}
 		}
 	}
@@ -810,6 +834,19 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 			ClassInfo classInfo = classPath.getValue();
 			ThreadUtil.run(() -> initialize(classInfo));
 		}
+	}
+
+	@Nullable
+	protected static ClassModel findInnerClassModel(@Nonnull CompilationUnitModel unit,
+	                                                @Nonnull ResolverAdapter resolver,
+	                                                @Nonnull InnerClassInfo innerClass) {
+		for (ClassModel classModel : unit.getRecursiveChildrenOfType(ClassModel.class)) {
+			PathNode<?> resolvedPath = getResolvedPath(resolver, classModel);
+			ClassPathNode classPath = resolvedPath == null ? null : resolvedPath.getPathOfType(ClassInfo.class);
+			if (classPath != null && innerClass.getInnerClassName().equals(classPath.getValue().getName()))
+				return classModel;
+		}
+		return null;
 	}
 
 	@Nullable

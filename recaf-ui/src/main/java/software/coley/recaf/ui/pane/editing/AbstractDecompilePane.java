@@ -221,7 +221,8 @@ public class AbstractDecompilePane extends BorderPane implements ClassNavigable,
 
 	@Override
 	public void requestFocus(@Nonnull InnerClassInfo innerClass) {
-		// TODO: contextActionSupport.select(innerClass); requestFocus();
+		contextActionSupport.select(innerClass);
+		requestFocus();
 	}
 
 	@Override
