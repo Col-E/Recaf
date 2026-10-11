@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -97,7 +96,7 @@ public class SelectedWordHighlighting implements EditorComponent {
 	 * 		Words to exclude from selected-word highlighting.
 	 */
 	public SelectedWordHighlighting(int maxMatches, int maxMatchesPerLine,
-	                               @Nonnull Collection<String> selectionBlacklist) {
+	                                @Nonnull Collection<String> selectionBlacklist) {
 		this(maxMatches, maxMatchesPerLine, toBlacklistPredicate(selectionBlacklist));
 	}
 
@@ -122,7 +121,7 @@ public class SelectedWordHighlighting implements EditorComponent {
 	 * 		Predicate returning {@code true} for words to exclude from selected-word highlighting.
 	 */
 	public SelectedWordHighlighting(int maxMatches, int maxMatchesPerLine,
-	                               @Nonnull Predicate<String> selectionBlacklist) {
+	                                @Nonnull Predicate<String> selectionBlacklist) {
 		this.maxMatches = maxMatches;
 		this.maxMatchesPerLine = maxMatchesPerLine;
 		this.selectionBlacklist = selectionBlacklist;
@@ -397,38 +396,72 @@ public class SelectedWordHighlighting implements EditorComponent {
 		if (editor == null || codeArea == null || mouseSelectionInProgress)
 			return;
 
-		List<IntRange> affectedRanges = updateMatchesAndGetAffectedRanges(editor.getText(), codeArea.getSelectedText(), codeArea.getCaretPosition());
-		affectedRanges = withTextChangeRanges(affectedRanges, changes);
+		List<IntRange> previousStyledRanges = styledRanges;
+		List<IntRange> updatedRanges = findMatchRanges(editor.getText(), codeArea.getSelectedText(), codeArea.getCaretPosition());
+		List<IntRange> affectedRanges = withTextChangeRanges(previousStyledRanges, changes);
+		affectedRanges = mergeRanges(affectedRanges, updatedRanges);
+		matchRanges = updatedRanges;
+		styledRanges = updatedRanges;
 		restyleSelectedWordHighlights(affectedRanges);
 	}
 
 	/**
 	 * @param ranges
-	 * 		Collection of affected ranges to restyle.
+	 * 		Ranges that were styled before the text changes.
 	 * @param changes
-	 * 		Text changes that may have affected the selected word matches.
+	 * 		Text changes that may have shifted or inherited selected-word styling.
 	 *
-	 * @return Collection of affected ranges to restyle, including any additional ranges that were affected by the text changes.
+	 * @return Previous styled ranges mapped through the changes, plus inserted ranges that may have inherited styling.
 	 */
 	@Nonnull
-	private List<IntRange> withTextChangeRanges(@Nonnull List<IntRange> ranges, @Nonnull List<PlainTextChange> changes) {
-		if (changes.isEmpty() || editor == null)
+	private static List<IntRange> withTextChangeRanges(@Nonnull List<IntRange> ranges, @Nonnull List<PlainTextChange> changes) {
+		if (changes.isEmpty())
 			return ranges;
 
-		// Add ranges for the text changes, clamped to the current text length for safety.
-		List<IntRange> allRanges = new ArrayList<>(ranges.size() + changes.size());
-		allRanges.addAll(ranges);
-		int textLength = editor.getTextLength();
+		// Copy existing ranges so we can shift them through the changes.
+		List<IntRange> affectedRanges = new ArrayList<>(ranges);
 		for (PlainTextChange change : changes) {
-			int start = Math.max(0, Math.min(change.getPosition(), textLength));
-			int end = Math.max(start, Math.min(change.getInsertionEnd(), textLength));
+			int changeStart = change.getPosition();
+			int removalEnd = change.getRemovalEnd();
+			int insertionEnd = change.getInsertionEnd();
+			int delta = insertionEnd - removalEnd;
 
-			// Inserted text can inherit the selected-word style from adjacent text.
-			// Include it in the patch set so stale match styling is stripped before current matches are applied.
-			if (start < end)
-				allRanges.add(new IntRange(start, end));
+			List<IntRange> shiftedRanges = new ArrayList<>(affectedRanges.size() + 1);
+			for (IntRange range : affectedRanges) {
+				if (changeStart == removalEnd) {
+					// Insertion shifts styled text after it.
+					// Insertion inside a styled range extends that range.
+					if (range.end() <= changeStart) {
+						shiftedRanges.add(range);
+					} else if (range.start() >= changeStart) {
+						shiftedRanges.add(new IntRange(range.start() + delta, range.end() + delta));
+					} else {
+						shiftedRanges.add(new IntRange(range.start(), range.end() + delta));
+					}
+				} else {
+					// Preserve any styled text that survived before or after the removed interval.
+					if (range.start() < changeStart) {
+						int prefixEnd = Math.min(range.end(), changeStart);
+						if (range.start() < prefixEnd)
+							shiftedRanges.add(new IntRange(range.start(), prefixEnd));
+					}
+					if (range.end() > removalEnd) {
+						int suffixStart = Math.max(range.start(), removalEnd) + delta;
+						int suffixEnd = range.end() + delta;
+						if (suffixStart < suffixEnd)
+							shiftedRanges.add(new IntRange(suffixStart, suffixEnd));
+					}
+				}
+			}
+
+			affectedRanges = shiftedRanges;
+			if (changeStart < insertionEnd) {
+				// Inserted text can inherit the selected-word style from adjacent text. Track it through later changes too.
+				IntRange insertedRange = new IntRange(changeStart, insertionEnd);
+				affectedRanges = mergeRanges(affectedRanges, Collections.singletonList(insertedRange));
+			}
 		}
-		return allRanges;
+		return affectedRanges;
 	}
 
 	/**
