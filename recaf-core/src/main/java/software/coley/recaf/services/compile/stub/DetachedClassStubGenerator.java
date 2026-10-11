@@ -69,6 +69,7 @@ public class DetachedClassStubGenerator extends ClassStubGenerator {
 		return false;
 	}
 
+	@Nonnull
 	@Override
 	public String getLocalModifier() {
 		return "abstract";

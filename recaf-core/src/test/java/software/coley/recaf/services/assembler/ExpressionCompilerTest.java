@@ -109,6 +109,170 @@ class ExpressionCompilerTest extends CompilerTestBase {
 	}
 
 	@Test
+	void genericClassAndMethodContextPreserveTypes() {
+		compileFull("GenericExpressionContext", """
+				import java.util.ArrayList;
+				import java.util.List;
+				import java.util.Map;
+				import java.util.function.Supplier;
+				
+				class GenericExpressionContext<T extends CharSequence> extends ArrayList<T> implements Supplier<T> {
+					T value;
+					List<? extends T> values;
+					List<? super T> sinks;
+					Map<String, List<T>> nested;
+					Map.Entry<String, T> entry;
+					List<String>[] stringLists;
+				
+					@Override
+					public T get() {
+						return value;
+					}
+				
+					public <V extends CharSequence> V identity(V value) {
+						return value;
+					}
+				
+					public <U extends CharSequence> U context(U generic, List<String> strings) {
+						List<String> local = strings;
+						return generic;
+					}
+				}
+				""");
+		JvmClassInfo classInfo = get("GenericExpressionContext");
+		ExpressionCompiler assembler = recaf.get(ExpressionCompiler.class);
+		assembler.setClassContext(classInfo);
+		assembler.setMethodContext(classInfo.getFirstDeclaredMethodByName("context"));
+
+		String suffix = "return generic;";
+		assertSuccess(compile(assembler, "T fieldValue = value; T entryValue = entry.getValue();" + suffix));
+		assertSuccess(compile(assembler, "T wildcardValue = values.get(0);" + suffix));
+		assertSuccess(compile(assembler, "sinks.add(value);" + suffix));
+		assertSuccess(compile(assembler, "T nestedValue = nested.get(\"first\").get(0);" + suffix));
+		assertSuccess(compile(assembler, "String arrayValue = stringLists[0].get(0);" + suffix));
+		assertSuccess(compile(assembler, "T inheritedValue = get(0);" + suffix));
+		assertSuccess(compile(assembler, "String parameterValue = strings.get(0);" + suffix));
+		assertSuccess(compile(assembler, "U copied = generic;" + suffix));
+		assertSuccess(compile(assembler, "String localValue = local.get(0);" + suffix));
+		assertSuccess(compile(assembler, "String inferred = identity(\"text\");" + suffix));
+	}
+
+	@Test
+	void nestedClassContextUsesEnclosingTypeVariables() {
+		compileFull("GenericOuter", """
+				class GenericOuter<T extends CharSequence> {
+					class Inner {
+						T value;
+				
+						void context(T parameter) {}
+					}
+				}
+				""");
+		JvmClassInfo innerClass = get("GenericOuter$Inner");
+		ExpressionCompiler assembler = recaf.get(ExpressionCompiler.class);
+
+		// Both the parameter T and field T should be inferrable from the enclosing generic type variable.
+		assembler.setClassContext(innerClass);
+		assembler.setMethodContext(innerClass.getFirstDeclaredMethodByName("context"));
+		assertSuccess(compile(assembler, "T fieldCopy = value; T parameterCopy = parameter;"));
+	}
+
+	@Test
+	void genericInnerConstructorContextHandlesSyntheticOuterParameter() {
+		compileFull("GenericConstructorOuter", """
+				class GenericConstructorOuter<T extends CharSequence> {
+					class Inner {
+						<U extends CharSequence> Inner(U value) {}
+				
+						void factoryContext() {}
+					}
+				}
+				""");
+		JvmClassInfo innerClass = get("GenericConstructorOuter$Inner");
+		ExpressionCompiler assembler = recaf.get(ExpressionCompiler.class);
+
+		// The constructor should allow us to reference the method-level generic U, and the enclosing class-level generic T.
+		assembler.setClassContext(innerClass);
+		assembler.setMethodContext(innerClass.getFirstDeclaredMethodByName("<init>"));
+		assertSuccess(compile(assembler, "U copy = value;"));
+
+		// In a different context, we should still be able to reference the enclosing class-level generic T.
+		assembler.setMethodContext(innerClass.getFirstDeclaredMethodByName("factoryContext"));
+		assertSuccess(compile(assembler, "T copy = (T) \"String\";"));
+	}
+
+	@Test
+	void detachedContextPreservesConcreteOuterGenerics() {
+		compileFull("GenericDetachedOuter", """
+				import java.util.List;
+				
+				class GenericDetachedOuter {
+					List<String> strings = List.of("value");
+				
+					<T extends CharSequence> T identity(T value) {
+						return value;
+					}
+				
+					Runnable create() {
+						return new Runnable() {
+							@Override
+							public void run() {
+								System.out.println(strings.size());
+							}
+						};
+					}
+				}
+				""");
+		JvmClassInfo anonymousClass = get("GenericDetachedOuter$1");
+
+		// From the 'run()' method of the anonymous class, we should be able to reference the outer generic method and the outer field.
+		ExpressionCompiler assembler = recaf.get(ExpressionCompiler.class);
+		assembler.setClassContext(anonymousClass);
+		assembler.setMethodContext(anonymousClass.getFirstDeclaredMethodByName("run"));
+		ExpressionResult result = compile(assembler, "String fromField = strings.get(0); String inferred = identity(\"text\");");
+		assertSuccess(result);
+
+		// The generated code should have a call to the outer generic method.
+		String assembly = result.getAssembly();
+		assertNotNull(assembly);
+		List<String> lines = assembly.lines().map(String::strip).toList();
+		int outerCallIndex = -1;
+		for (int i = 0; i < lines.size(); i++) {
+			if (lines.get(i).startsWith("invokevirtual GenericDetachedOuter.identity ")) {
+				outerCallIndex = i;
+				break;
+			}
+		}
+		assertTrue(outerCallIndex > 0, "Expected the detached method call to target the outer generic method");
+		assertTrue(lines.get(outerCallIndex - 1).startsWith("aload "), "The generic reference argument must be reloaded as a reference");
+	}
+
+	@Test
+	void malformedGenericSignaturesFallBackToDescriptors() {
+		JvmClassInfo classInfo = asmClass("MalformedGenericContext", ACC_PUBLIC, "java/lang/Object", null, "<invalid",
+				cw -> {
+					cw.visitField(ACC_PUBLIC, "items", "Ljava/util/List;", "not-a-signature", null).visitEnd();
+					MethodVisitor context = cw.visitMethod(ACC_PUBLIC, "context", "()V", "not-a-signature", null);
+					context.visitCode();
+					context.visitInsn(RETURN);
+					context.visitMaxs(0, 1);
+					context.visitEnd();
+					MethodVisitor lookup = cw.visitMethod(ACC_PUBLIC, "invalidLookup", "()Ljava/util/List;", "not-a-signature", null);
+					lookup.visitCode();
+					lookup.visitInsn(ACONST_NULL);
+					lookup.visitInsn(ARETURN);
+					lookup.visitMaxs(1, 1);
+					lookup.visitEnd();
+				});
+
+		// The expression compiler should drop malformed/junk signatures and fall back to using descriptors for type resolution.
+		ExpressionCompiler assembler = recaf.get(ExpressionCompiler.class);
+		assembler.setClassContext(classInfo);
+		assembler.setMethodContext(classInfo.getFirstDeclaredMethodByName("context"));
+		assertSuccess(compile(assembler, "java.util.List<?> value = invalidLookup(); value = items;"));
+	}
+
+	@Test
 	void classContextWithRequiredCtor() {
 		ExpressionCompiler assembler = recaf.get(ExpressionCompiler.class);
 		assembler.setClassContext(targetCtorClass);

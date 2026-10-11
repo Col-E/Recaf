@@ -97,6 +97,16 @@ public class Types {
 		if (desc == null || desc.length() != 1)
 			return false;
 		char c = desc.charAt(0);
+		return isPrimitive(c);
+	}
+
+	/**
+	 * @param c
+	 * 		Some single-char descriptor to check.
+	 *
+	 * @return {@code true} if it matches one of the primitive type chars.
+	 */
+	public static boolean isPrimitive(char c) {
 		return switch (c) {
 			case 'V', 'Z', 'C', 'B', 'S', 'I', 'F', 'J', 'D' -> true;
 			default -> false;

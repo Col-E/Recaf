@@ -67,6 +67,7 @@ public class ExpressionCompiler {
 	private List<InnerClassInfo> innerClasses;
 	private String methodName;
 	private Type methodType;
+	private String methodSignature;
 	private int methodFlags;
 	private List<LocalVariable> methodVariables;
 
@@ -97,6 +98,7 @@ public class ExpressionCompiler {
 		innerClasses = Collections.emptyList();
 		methodName = "generated";
 		methodType = Type.getMethodType("()V");
+		methodSignature = null;
 		methodFlags = Opcodes.ACC_STATIC | Opcodes.ACC_BRIDGE; // Bridge used to denote default state.
 		methodVariables = Collections.emptyList();
 	}
@@ -110,7 +112,6 @@ public class ExpressionCompiler {
 	 */
 	public void setClassContext(@Nonnull JvmClassInfo classInfo) {
 		String type = classInfo.getName();
-		String superType = classInfo.getSuperName();
 		className = type;
 		classSignature = classInfo.getSignature();
 		classAccess = classInfo.getAccess();
@@ -127,9 +128,6 @@ public class ExpressionCompiler {
 		if (AccessFlag.isBridge(methodFlags))
 			methodFlags = 0;
 
-		// TODO: Support for generics (For example, if we implement Supplier<String> and we have a method "String get()")
-		//  - Also will want per-method signatures for things like 'List<String> strings' as a parameter
-		//  - https://docs.oracle.com/javase/specs/jvms/se9/html/jvms-4.html#jvms-4.7.9.1
 	}
 
 	/**
@@ -142,6 +140,7 @@ public class ExpressionCompiler {
 	public void setMethodContext(@Nonnull MethodMember method) {
 		methodName = method.getName();
 		methodType = Type.getMethodType(method.getDescriptor());
+		methodSignature = method.getSignature();
 		methodFlags = method.getAccess();
 		methodVariables = method.getLocalVariables();
 	}
@@ -177,7 +176,7 @@ public class ExpressionCompiler {
 		String code;
 		try {
 			stubber = new ExpressionHostingClassStubGenerator(workspace, inheritanceGraph, classAccess, className, superName, implementing,
-					fields, methods, innerClasses, methodFlags, methodName, methodType, methodVariables, expression, classSignature);
+					fields, methods, innerClasses, methodFlags, methodName, methodType, methodSignature, methodVariables, expression, classSignature);
 			code = stubber.generate();
 		} catch (ExpressionCompileException ex) {
 			return new ExpressionResult(ex);

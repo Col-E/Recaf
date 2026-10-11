@@ -41,6 +41,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -60,6 +61,7 @@ public class ExpressionHostingClassStubGenerator extends ClassStubGenerator {
 	private final String originalMethodName;
 	private final String methodName;
 	private final Type methodType;
+	private final String methodSignature;
 	private final List<LocalVariable> methodVariables;
 	private final String expression;
 	private final List<DetachedOuterMethod> detachedOuterMethods = new ArrayList<>();
@@ -90,6 +92,8 @@ public class ExpressionHostingClassStubGenerator extends ClassStubGenerator {
 	 * 		Expression hosting method's name.
 	 * @param methodType
 	 * 		Expression hosting method arguments + return type.
+	 * @param methodSignature
+	 * 		Expression hosting method generic signature, if any.
 	 * @param methodVariables
 	 * 		Expression hosting method's local variables.
 	 * @param expression
@@ -109,6 +113,7 @@ public class ExpressionHostingClassStubGenerator extends ClassStubGenerator {
 	                                           int methodFlags,
 	                                           @Nonnull String methodName,
 	                                           @Nonnull Type methodType,
+	                                           @Nullable String methodSignature,
 	                                           @Nonnull List<LocalVariable> methodVariables,
 	                                           @Nonnull String expression,
 	                                           @Nullable String classSignature) {
@@ -131,6 +136,7 @@ public class ExpressionHostingClassStubGenerator extends ClassStubGenerator {
 		this.methodFlags = methodFlags;
 		this.methodName = methodName;
 		this.methodType = methodType;
+		this.methodSignature = methodSignature;
 		this.methodVariables = methodVariables;
 		this.expression = expression;
 	}
@@ -143,6 +149,7 @@ public class ExpressionHostingClassStubGenerator extends ClassStubGenerator {
 		appendPackage(code);
 		localExpression = appendExpressionImports(code, localExpression);
 		if (hasEnclosingSource()) {
+			setEnclosingTypeVariableErasures(enclosingTypeVariableErasuresFor(className));
 			appendNestedSource(code, localExpression);
 		} else {
 			if (hasEnclosingDeclarations()) {
@@ -308,7 +315,7 @@ public class ExpressionHostingClassStubGenerator extends ClassStubGenerator {
 				for (int i = argumentTypes.length - 1; i >= 0; i--) {
 					Type argumentType = argumentTypes[i];
 					argumentLocals[i] = local;
-					replacement.add(AsmInsnUtil.createVarLoad(local, argumentType));
+					replacement.add(AsmInsnUtil.createVarStore(local, argumentType));
 					local += argumentType.getSize();
 				}
 				nextLocal = local;
@@ -333,7 +340,7 @@ public class ExpressionHostingClassStubGenerator extends ClassStubGenerator {
 
 				// Load the arguments.
 				for (int i = 0; i < argumentTypes.length; i++)
-					replacement.add(AsmInsnUtil.createVarLoad(local, argumentLocals[i]));
+					replacement.add(AsmInsnUtil.createVarLoad(argumentLocals[i], argumentTypes[i]));
 
 				// Emit the appropriate invocation instruction for the outer method.
 				int opcode = outerMethod.isStatic() ? Opcodes.INVOKESTATIC :
@@ -677,6 +684,61 @@ public class ExpressionHostingClassStubGenerator extends ClassStubGenerator {
 	}
 
 	/**
+	 * @return Map of type variable erasures for the enclosing chain of the given nested name.
+	 */
+	@Nonnull
+	private Map<String, String> enclosingTypeVariableErasuresFor(@Nonnull String nestedName) {
+		// Collect the enclosing class names in order from outermost to innermost.
+		List<String> enclosingNames = new ArrayList<>();
+		String current = nestedName;
+		int split;
+		while ((split = current.lastIndexOf('$')) >= 0) {
+			current = current.substring(0, split);
+			enclosingNames.add(current);
+		}
+		Collections.reverse(enclosingNames);
+
+		// Gather the type variable erasures for each enclosing class, stopping when we reach a static nested class.
+		Map<String, String> erasures = Collections.emptyMap();
+		ClassInfo parentInfo = null;
+		for (String enclosingName : enclosingNames) {
+			// If the parent is a static nested class, then we stop collecting type variable erasures.
+			// This is because static nested classes do not have access to the type variables of their enclosing classes.
+			if (parentInfo != null && isStaticNestedClass(parentInfo, enclosingName))
+				erasures = Collections.emptyMap();
+
+			// Get class from workspace.
+			ClassPathNode path = workspace.findClass(enclosingName);
+			if (path == null)
+				return Collections.emptyMap();
+			parentInfo = path.getValue();
+
+			// If the parent has a generic signature, then we collect its type variable erasures.
+			GenericSignatureRenderer.ClassSignature signature = GenericSignatureRenderer.renderClass(parentInfo.getSignature(), erasures);
+			if (signature != null)
+				erasures = signature.typeVariableErasures();
+		}
+		if (parentInfo != null && isStaticNestedClass(parentInfo, nestedName))
+			return Collections.emptyMap();
+
+		return erasures;
+	}
+
+	/**
+	 * @param parentInfo
+	 * 		Parent class info.
+	 * @param childName
+	 * 		Name of the child class to check.
+	 *
+	 * @return {@code true} when the child is a static nested class of the parent, {@code false} otherwise.
+	 */
+	private static boolean isStaticNestedClass(@Nonnull ClassInfo parentInfo, @Nonnull String childName) {
+		return parentInfo.getInnerClasses().stream()
+				.filter(inner -> childName.equals(inner.getInnerClassName()))
+				.anyMatch(inner -> (inner.getInnerAccess() & Opcodes.ACC_STATIC) != 0);
+	}
+
+	/**
 	 * @return {@code true} when every enclosing declaration exists in the workspace.
 	 */
 	private boolean hasEnclosingDeclarations() {
@@ -789,6 +851,7 @@ public class ExpressionHostingClassStubGenerator extends ClassStubGenerator {
 			InnerClassStubGenerator generator = new InnerClassStubGenerator(workspace, inheritanceGraph, access,
 					info.getName(), info.getSuperName(), info.getInterfaces(), info.getFields(), info.getMethods(), info.getInnerClasses(),
 					info.getSignature());
+			generator.setEnclosingTypeVariableErasures(enclosingTypeVariableErasuresFor(name));
 			generator.appendClassStructure(code);
 			generator.appendEnumConsts(code);
 			generator.appendClassMembers(code, false);
@@ -914,6 +977,7 @@ public class ExpressionHostingClassStubGenerator extends ClassStubGenerator {
 
 			// Skip methods that have parameter types that cannot be declared in source.
 			Type[] parameterTypes = methodType.getArgumentTypes();
+			GenericSignatureRenderer.MethodSignature genericMethodSignature = renderMethodSignature(method.getSignature(), methodType, Collections.emptyMap());
 			boolean validParameters = true;
 			for (Type parameterType : parameterTypes) {
 				if (!isSafeClassName(getInfo("p", parameterType.getDescriptor()).className())) {
@@ -925,12 +989,19 @@ public class ExpressionHostingClassStubGenerator extends ClassStubGenerator {
 				continue;
 
 			// Emit the method signature and body.
-			code.append(returnInfo.className()).append(' ').append(name).append('(');
+			if (genericMethodSignature != null && !genericMethodSignature.typeParameters().isEmpty())
+				code.append(genericMethodSignature.typeParameters()).append(' ');
+			String sourceReturnType = genericMethodSignature == null
+					? returnInfo.className()
+					: genericMethodSignature.returnType().sourceType();
+			code.append(sourceReturnType).append(' ').append(name).append('(');
 			for (int i = 0; i < parameterTypes.length; i++) {
 				if (i > 0)
 					code.append(", ");
-				code.append(getInfo("p" + i, parameterTypes[i].getDescriptor()).className())
-						.append(" p").append(i);
+				String sourceParameterType = genericMethodSignature == null
+						? getInfo("p" + i, parameterTypes[i].getDescriptor()).className()
+						: genericMethodSignature.parameterTypes().get(i).sourceType();
+				code.append(sourceParameterType).append(" p").append(i);
 			}
 			code.append(')');
 			List<String> thrownTypes = method.getThrownTypes();
@@ -1027,9 +1098,10 @@ public class ExpressionHostingClassStubGenerator extends ClassStubGenerator {
 				initializerName = "detachedOuterFieldDefault$" + detachedOuterFields.size();
 
 			// Emit 'field = initializer();' for final fields, or just 'field;' for non-final fields.
+			String sourceFieldType = sourceType(field.getSignature(), type, Collections.emptyMap());
 			code.append(isStatic ? "static " : "")
 					.append(field.hasFinalModifier() ? "final " : "")
-					.append(getInfo(name, field.getDescriptor()).className()).append(' ').append(name);
+					.append(sourceFieldType).append(' ').append(name);
 			if (field.hasFinalModifier())
 				code.append(" = ").append(initializerName).append("()");
 			code.append(";\n");
@@ -1158,6 +1230,7 @@ public class ExpressionHostingClassStubGenerator extends ClassStubGenerator {
 			InnerClassStubGenerator generator = new InnerClassStubGenerator(workspace, inheritanceGraph, access,
 					info.getName(), info.getSuperName(), info.getInterfaces(), info.getFields(), info.getMethods(), info.getInnerClasses(),
 					info.getSignature());
+			generator.setEnclosingTypeVariableErasures(enclosingTypeVariableErasuresFor(name));
 			generator.appendClassStructure(code);
 			generator.appendEnumConsts(code);
 			generator.appendClassMembers(code, false);
@@ -1291,6 +1364,30 @@ public class ExpressionHostingClassStubGenerator extends ClassStubGenerator {
 		if (!AccessFlag.isStatic(methodFlags))
 			parameterVarIndex = 1;
 
+		// Next up we'll need generic type parameters.
+		// These rely on quite a few things, which also get used further down below.
+		Type[] parameterTypes = methodType.getArgumentTypes();
+		int parameterCount = parameterTypes.length;
+		int enumConstructorParameters = constructorContext && AccessFlag.isEnum(classAccess) ? 2 : 0;
+		boolean syntheticOuterParameter = constructorContext
+				&& enumConstructorParameters == 0
+				&& parameterCount > 0
+				&& isNonStaticInnerClass()
+				&& parameterTypes[0].getSort() == Type.OBJECT
+				&& className.startsWith(parameterTypes[0].getInternalName() + '$');
+		int leadingSyntheticParameters = enumConstructorParameters + (syntheticOuterParameter ? 1 : 0);
+		GenericSignatureRenderer.MethodSignature genericMethodSignature = renderMethodSignature(methodSignature, methodType, typeVariableErasures(), leadingSyntheticParameters);
+		int genericParameterOffset = genericMethodSignature == null
+				? 0
+				: parameterCount - genericMethodSignature.parameterTypes().size();
+		Map<String, String> methodTypeVariableErasures = genericMethodSignature == null
+				? typeVariableErasures()
+				: genericMethodSignature.typeVariableErasures();
+
+		// Alright, now that those are out of the way, we write the type parameters.
+		if (genericMethodSignature != null && !genericMethodSignature.typeParameters().isEmpty())
+			code.append(genericMethodSignature.typeParameters()).append(' ');
+
 		if (constructorContext) {
 			// Constructor contexts must be emitted as real constructors so an
 			// expression can contain an explicit super(...) invocation.
@@ -1298,28 +1395,14 @@ public class ExpressionHostingClassStubGenerator extends ClassStubGenerator {
 		} else {
 			// Add the return type.
 			Type returnType = methodType.getReturnType();
-			if (Types.isPrimitive(returnType)) {
-				code.append(returnType.getClassName()).append(' ');
-			} else if (returnType.getSort() == Type.OBJECT) {
-				code.append(cleanType(returnType.getInternalName())).append(' ');
-			} else if (returnType.getSort() == Type.ARRAY) {
-				Type componentReturnType = returnType.getElementType();
-				if (Types.isPrimitive(componentReturnType)) {
-					code.append(componentReturnType.getClassName());
-				} else {
-					code.append(cleanType(componentReturnType.getInternalName()));
-				}
-				code.append("[]".repeat(returnType.getDimensions()));
-			}
+			String sourceReturnType = genericMethodSignature == null ? sourceType(returnType) : genericMethodSignature.returnType().sourceType();
+			code.append(sourceReturnType).append(' ');
 
 			// Now the method name.
 			code.append(' ').append(methodName).append('(');
 		}
 
 		// And now the parameters.
-		int parameterCount = methodType.getArgumentCount();
-		Type[] parameterTypes = methodType.getArgumentTypes();
-		int enumConstructorParameters = constructorContext && AccessFlag.isEnum(classAccess) ? 2 : 0;
 		Set<String> usedVariables = new HashSet<>();
 		int emittedParameters = 0;
 		for (int i = 0; i < parameterCount; i++) {
@@ -1332,9 +1415,7 @@ public class ExpressionHostingClassStubGenerator extends ClassStubGenerator {
 
 			// Skip the parameter if it is a synthetic outer class reference for a non-static inner class.
 			boolean syntheticEnumParameter = i < enumConstructorParameters;
-			boolean syntheticOuter = constructorContext && enumConstructorParameters == 0 && isNonStaticInnerClass() && i == 0
-					&& parameterTypes[i].getSort() == Type.OBJECT
-					&& className.startsWith(parameterTypes[i].getInternalName() + '$');
+			boolean syntheticOuter = syntheticOuterParameter && i == 0;
 			parameterVarIndex += parameterTypes[i].getSize();
 			if (syntheticEnumParameter || syntheticOuter)
 				continue;
@@ -1343,12 +1424,16 @@ public class ExpressionHostingClassStubGenerator extends ClassStubGenerator {
 			if (!isSafeName(parameterName))
 				continue;
 
-			// Append the parameter.
+			// Append the parameter, using the generic signature if available.
 			String descriptor = parameterVariable.getDescriptor();
 			NameType varInfo = getInfo(parameterName, descriptor);
+			String sourceParameterType = sourceType(parameterVariable.getSignature(), Type.getType(descriptor), methodTypeVariableErasures);
+			int signatureIndex = i - genericParameterOffset;
+			if (genericMethodSignature != null && signatureIndex >= 0 && descriptor.equals(parameterTypes[i].getDescriptor()))
+				sourceParameterType = genericMethodSignature.parameterTypes().get(signatureIndex).sourceType();
 			if (emittedParameters++ > 0)
 				code.append(", ");
-			code.append(varInfo.className()).append(' ').append(varInfo.name());
+			code.append(sourceParameterType).append(' ').append(varInfo.name());
 		}
 		for (LocalVariable variable : methodVariables) {
 			String name = variable.getName();
@@ -1361,12 +1446,13 @@ public class ExpressionHostingClassStubGenerator extends ClassStubGenerator {
 			if (!usedVariables.add(name))
 				continue;
 
-			// Append the parameter.
+			// Append the parameter, using the generic signature if available.
 			String descriptor = variable.getDescriptor();
 			NameType varInfo = getInfo(name, descriptor);
+			String sourceVariableType = sourceType(variable.getSignature(), Type.getType(descriptor), methodTypeVariableErasures);
 			if (emittedParameters++ > 0)
 				code.append(", ");
-			code.append(varInfo.className()).append(' ').append(varInfo.name());
+			code.append(sourceVariableType).append(' ').append(varInfo.name());
 		}
 
 		// If we skipped the last parameter for some reason we need to remove the trailing ', ' before closing

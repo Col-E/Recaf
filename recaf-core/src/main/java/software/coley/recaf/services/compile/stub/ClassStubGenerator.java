@@ -22,9 +22,11 @@ import software.coley.recaf.workspace.model.Workspace;
 
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -45,6 +47,8 @@ public abstract class ClassStubGenerator {
 	protected final List<MethodMember> methods;
 	protected final List<InnerClassInfo> innerClasses;
 	protected final String classSignature;
+	protected Map<String, String> enclosingTypeVariableErasures = Collections.emptyMap();
+	protected GenericSignatureRenderer.ClassSignature renderedClassSignature;
 
 	/**
 	 * @param workspace
@@ -90,6 +94,7 @@ public abstract class ClassStubGenerator {
 		this.methods = methods;
 		this.innerClasses = innerClasses;
 		this.classSignature = classSignature;
+		this.renderedClassSignature = GenericSignatureRenderer.renderClass(classSignature);
 	}
 
 	/**
@@ -133,9 +138,11 @@ public abstract class ClassStubGenerator {
 			if (!modifier.isBlank())
 				code.append(modifier).append(' ');
 			code.append(isInterface ? "interface " : "class ").append(getLocalName());
+			if (renderedClassSignature != null)
+				code.append(renderedClassSignature.typeParameters());
 		}
 		if (!isInterface && superName != null && !superName.equals("java/lang/Object") && !superName.equals("java/lang/Enum"))
-			code.append(" extends ").append(cleanType(superName));
+			code.append(" extends ").append(sourceSuperclassType());
 		if (implementing != null && !implementing.isEmpty()) {
 			code.append(isInterface ? " extends " : " implements ");
 			for (int i = 0; i < implementing.size(); i++) {
@@ -192,14 +199,16 @@ public abstract class ClassStubGenerator {
 			String name = field.getName();
 			if (!isSafeName(name))
 				continue;
+			Type fieldType = Type.getType(field.getDescriptor());
 			NameType fieldNameType = getInfo(name, field.getDescriptor());
 			if (!isSafeClassName(fieldNameType.className))
 				continue;
+			String sourceFieldType = sourceType(field.getSignature(), fieldType);
 
 			// Append the field. The only modifier that we care about here is if it is static or not.
 			if (field.hasStaticModifier())
 				code.append("static ");
-			code.append(fieldNameType.className).append(' ').append(fieldNameType.name);
+			code.append(sourceFieldType).append(' ').append(fieldNameType.name);
 			if (isInterface) {
 				code.append(" = ");
 				appendSourceDefaultValue(code, Type.getType(field.getDescriptor()));
@@ -262,6 +271,10 @@ public abstract class ClassStubGenerator {
 			if (!isSafeClassName(returnInfo.className))
 				continue;
 			Type[] parameterTypes = localMethodType.getArgumentTypes();
+			boolean nonStaticInner = isNonStaticInnerClass();
+			boolean syntheticOuterParameter = isCtor && nonStaticInner && parameterTypes.length > 0
+					&& parameterTypes[0].getSort() == Type.OBJECT
+					&& className.startsWith(parameterTypes[0].getInternalName() + '$');
 			boolean validParameters = true;
 			for (Type parameterType : parameterTypes) {
 				if (!isSafeClassName(getInfo("p", parameterType.getDescriptor()).className)) {
@@ -271,6 +284,12 @@ public abstract class ClassStubGenerator {
 			}
 			if (!validParameters)
 				continue;
+			int leadingSyntheticParameters = syntheticOuterParameter ? 1 : 0;
+			GenericSignatureRenderer.MethodSignature genericMethodSignature =
+					renderMethodSignature(method, localMethodType, leadingSyntheticParameters);
+			int genericParameterOffset = genericMethodSignature == null
+					? 0
+					: parameterTypes.length - genericMethodSignature.parameterTypes().size();
 
 			// Stub the method. Start with the access modifiers.
 			if (method.hasPublicModifier())
@@ -283,31 +302,38 @@ public abstract class ClassStubGenerator {
 				code.append("static ");
 			else if (isInterface && !method.hasAbstractModifier() && !method.hasPrivateModifier())
 				code.append("default ");
+			if (genericMethodSignature != null && !genericMethodSignature.typeParameters().isEmpty())
+				code.append(genericMethodSignature.typeParameters()).append(' ');
 
 			// Method name. Consider edge case for constructors.
 			if (isCtor)
 				code.append(getLocalName()).append('(');
-			else
-				code.append(returnInfo.className()).append(' ').append(returnInfo.name).append('(');
+			else {
+				String returnType = genericMethodSignature == null
+						? sourceType(localMethodType.getReturnType())
+						: genericMethodSignature.returnType().sourceType();
+				code.append(returnType).append(' ').append(returnInfo.name).append('(');
+			}
 
 			// Add the parameters. We only care about the types, names don't really matter.
 			Type[] methodParameterTypes = Arrays.copyOf(parameterTypes, parameterTypes.length);
 			int parameterCount = methodParameterTypes.length;
 			int emittedParameters = 0;
-			boolean nonStaticInner = isNonStaticInnerClass();
 			for (int i = 0; i < parameterCount; i++) {
 				Type paramType = methodParameterTypes[i];
 
-				// Skip this parameter if it is an inner class's outer "this" reference
-				if (isCtor && nonStaticInner
-						&& paramType.getSort() == Type.OBJECT
-						&& className.startsWith(paramType.getInternalName() + '$'))
+				// Skip this parameter if it is an inner class's outer "this" reference.
+				if (syntheticOuterParameter && i == 0)
 					continue;
 
 				NameType paramInfo = getInfo("p" + i, paramType.getDescriptor());
+				int signatureIndex = i - genericParameterOffset;
+				String sourceParameterType = genericMethodSignature == null || signatureIndex < 0
+						? sourceType(paramType)
+						: genericMethodSignature.parameterTypes().get(signatureIndex).sourceType();
 				if (emittedParameters++ > 0)
 					code.append(", ");
-				code.append(paramInfo.className).append(' ').append(paramInfo.name);
+				code.append(sourceParameterType).append(' ').append(paramInfo.name);
 			}
 			code.append(')');
 			if (isCtor)
@@ -516,6 +542,9 @@ public abstract class ClassStubGenerator {
 						innerClassInfo.getInnerClasses(),
 						innerClassInfo.getSignature()
 				);
+				generator.setEnclosingTypeVariableErasures((innerClass.getInnerAccess() & Modifier.STATIC) == 0
+						? typeVariableErasures()
+						: Collections.emptyMap());
 				String inner = generator.generate();
 				code.append('\n').append(inner).append('\n');
 			}
@@ -614,6 +643,20 @@ public abstract class ClassStubGenerator {
 	}
 
 	/**
+	 * @return Superclass type for source output.
+	 */
+	@Nonnull
+	protected String sourceSuperclassType() {
+		String erasedType = superName == null ? null : 'L' + superName + ';';
+		if (renderedClassSignature != null && erasedType != null) {
+			GenericSignatureRenderer.TypeSignature genericType = renderedClassSignature.superclass();
+			if (erasedType.equals(genericType.erasedDescriptor()))
+				return genericType.sourceType();
+		}
+		return superName == null ? "java.lang.Object" : cleanType(superName);
+	}
+
+	/**
 	 * @param index
 	 * 		Interface index.
 	 * @param internalName
@@ -623,18 +666,164 @@ public abstract class ClassStubGenerator {
 	 */
 	@Nonnull
 	protected String sourceInterfaceType(int index, @Nonnull String internalName) {
-		// If we have a generic signature, use it to get the interface type.
-		List<String> genericTypes = GenericSignatureRenderer.renderInterfaces(classSignature);
-		if (index < genericTypes.size()) {
-			String candidate = genericTypes.get(index);
-			int genericStart = candidate.indexOf('<');
-			if (genericStart > 0 && candidate.substring(0, genericStart).equals(cleanType(internalName)))
-				return candidate;
+		if (renderedClassSignature != null && index < renderedClassSignature.interfaces().size()) {
+			GenericSignatureRenderer.TypeSignature genericType = renderedClassSignature.interfaces().get(index);
+			if (('L' + internalName + ';').equals(genericType.erasedDescriptor()))
+				return genericType.sourceType();
 		}
 
-		// If we don't have a generic signature, or the generic signature doesn't match the interface type,
-		// just return the cleaned type.
+		// If the generic signature is absent or does not match the class-file interface, emit its erased type.
 		return cleanType(internalName);
+	}
+
+	/**
+	 * Supplies type variables visible from an enclosing class source declaration.
+	 *
+	 * @param typeVariableErasures
+	 * 		Enclosing type variables and their erased descriptors.
+	 */
+	protected final void setEnclosingTypeVariableErasures(@Nonnull Map<String, String> typeVariableErasures) {
+		enclosingTypeVariableErasures = Map.copyOf(typeVariableErasures);
+		renderedClassSignature = GenericSignatureRenderer.renderClass(classSignature, enclosingTypeVariableErasures);
+	}
+
+	/**
+	 * @return Type variables visible from an enclosing class source declaration.
+	 */
+	@Nonnull
+	protected Map<String, String> typeVariableErasures() {
+		return renderedClassSignature == null ? enclosingTypeVariableErasures : renderedClassSignature.typeVariableErasures();
+	}
+
+	/**
+	 * @param signature
+	 * 		Generic signature of the type, if any.
+	 * @param erasedType
+	 * 		Erased type of the type.
+	 *
+	 * @return Java source spelling of the type.
+	 */
+	@Nonnull
+	protected String sourceType(@Nullable String signature, @Nonnull Type erasedType) {
+		return sourceType(signature, erasedType, typeVariableErasures());
+	}
+
+	/**
+	 * @param signature
+	 * 		Generic signature of the type, if any.
+	 * @param erasedType
+	 * 		Erased type of the type.
+	 * @param variableErasures
+	 * 		Type variables visible from an enclosing class source declaration.
+	 *
+	 * @return Java source spelling of the type.
+	 */
+	@Nonnull
+	protected String sourceType(@Nullable String signature, @Nonnull Type erasedType,
+	                            @Nonnull Map<String, String> variableErasures) {
+		GenericSignatureRenderer.TypeSignature genericType = GenericSignatureRenderer.renderType(signature, variableErasures);
+		if (genericType != null && erasedType.getDescriptor().equals(genericType.erasedDescriptor()))
+			return genericType.sourceType();
+		return sourceType(erasedType);
+	}
+
+	/**
+	 * @param method
+	 * 		Method to render the signature of.
+	 * @param methodType
+	 * 		Method type.
+	 *
+	 * @return Rendered method signature, or {@code null} if the signature is incompatible with the method type.
+	 */
+	@Nullable
+	protected GenericSignatureRenderer.MethodSignature renderMethodSignature(@Nonnull MethodMember method,
+	                                                                         @Nonnull Type methodType) {
+		return renderMethodSignature(method.getSignature(), methodType);
+	}
+
+	/**
+	 * @param method
+	 * 		Method to render the signature of.
+	 * @param methodType
+	 * 		Method type.
+	 * @param leadingSyntheticParameters
+	 * 		Number of leading parameters that are synthetic and should be ignored when matching the signature.
+	 *
+	 * @return Rendered method signature, or {@code null} if the signature is incompatible with the method type.
+	 */
+	@Nullable
+	protected GenericSignatureRenderer.MethodSignature renderMethodSignature(@Nonnull MethodMember method,
+	                                                                         @Nonnull Type methodType,
+	                                                                         int leadingSyntheticParameters) {
+		return renderMethodSignature(method.getSignature(), methodType, typeVariableErasures(), leadingSyntheticParameters);
+	}
+
+	/**
+	 * @param methodSignature
+	 * 		Method signature to render.
+	 * @param methodType
+	 * 		Method type.
+	 *
+	 * @return Rendered method signature, or {@code null} if the signature is incompatible with the method type.
+	 */
+	@Nullable
+	protected GenericSignatureRenderer.MethodSignature renderMethodSignature(@Nullable String methodSignature,
+	                                                                         @Nonnull Type methodType) {
+		return renderMethodSignature(methodSignature, methodType, typeVariableErasures(), 0);
+	}
+
+	/**
+	 * @param methodSignature
+	 * 		Method signature to render.
+	 * @param methodType
+	 * 		Method type.
+	 * @param variableErasures
+	 * 		Type variables visible from an enclosing class source declaration.
+	 *
+	 * @return Rendered method signature, or {@code null} if the signature is incompatible with the method type.
+	 */
+	@Nullable
+	protected GenericSignatureRenderer.MethodSignature renderMethodSignature(@Nullable String methodSignature,
+	                                                                         @Nonnull Type methodType,
+	                                                                         @Nonnull Map<String, String> variableErasures) {
+		return renderMethodSignature(methodSignature, methodType, variableErasures, 0);
+	}
+
+	/**
+	 * @param methodSignature
+	 * 		Method signature to render.
+	 * @param methodType
+	 * 		Method type.
+	 * @param variableErasures
+	 * 		Type variables visible from an enclosing class source declaration.
+	 * @param leadingSyntheticParameters
+	 * 		Number of leading parameters that are synthetic and should be ignored when matching the signature.
+	 *
+	 * @return Rendered method signature, or {@code null} if the signature is incompatible with the method type.
+	 */
+	@Nullable
+	protected GenericSignatureRenderer.MethodSignature renderMethodSignature(@Nullable String methodSignature,
+	                                                                         @Nonnull Type methodType,
+	                                                                         @Nonnull Map<String, String> variableErasures,
+	                                                                         int leadingSyntheticParameters) {
+		// Attempt to render the method signature.
+		GenericSignatureRenderer.MethodSignature signature = GenericSignatureRenderer.renderMethod(methodSignature, variableErasures);
+		if (signature == null || leadingSyntheticParameters < 0
+				|| !methodType.getReturnType().getDescriptor().equals(signature.returnType().erasedDescriptor()))
+			return null;
+
+		// Check that the method signature parameters match the method type parameters, ignoring leading synthetic parameters.
+		Type[] argumentTypes = methodType.getArgumentTypes();
+		List<GenericSignatureRenderer.TypeSignature> genericArgumentTypes = signature.parameterTypes();
+		int parameterOffset = argumentTypes.length - genericArgumentTypes.size();
+		if (parameterOffset < 0 || parameterOffset > leadingSyntheticParameters)
+			return null;
+
+		// Check that the parameter types match the signature parameter types.
+		for (int i = 0; i < genericArgumentTypes.size(); i++)
+			if (!argumentTypes[i + parameterOffset].getDescriptor().equals(genericArgumentTypes.get(i).erasedDescriptor()))
+				return null;
+		return signature;
 	}
 
 	/**
