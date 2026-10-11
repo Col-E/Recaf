@@ -20,7 +20,7 @@ public interface JvmDecompiler extends Decompiler {
 	 * @return {@code true} on successful addition.
 	 * {@code false} if the filter has already been added.
 	 */
-	boolean addJvmBytecodeFilter(@Nonnull JvmBytecodeFilter filter); // TODO: Make config for common defaults (debug stripping, virtual mapping?)
+	boolean addJvmBytecodeFilter(@Nonnull JvmBytecodeFilter filter);
 
 	/**
 	 * Removes a filter which operates on the bytecode of classes before passing it along to the decompiler.
