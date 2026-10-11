@@ -5,7 +5,16 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import software.coley.recaf.plugin.Plugin;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Stream;
 
 /**
@@ -15,13 +24,13 @@ import java.util.stream.Stream;
  */
 final class PluginGraph {
 	final Map<String, LoadedPlugin> plugins = HashMap.newHashMap(16);
-	private final ClassAllocator classAllocator;
+	private final CdiClassAllocator classAllocator;
 
 	/**
 	 * @param classAllocator
 	 * 		Allocator to construct plugin instances with.
 	 */
-	PluginGraph(@Nonnull ClassAllocator classAllocator) {
+	PluginGraph(@Nonnull CdiClassAllocator classAllocator) {
 		this.classAllocator = classAllocator;
 	}
 
@@ -208,10 +217,13 @@ final class PluginGraph {
 		if (!unloaded.add(plugin)) {
 			return null;
 		}
+
 		String id = plugin.getContainer().info().id();
 		if (!plugins.remove(id, plugin)) {
 			throw new IllegalStateException("Plugin %s was already removed, recursion?".formatted(id));
 		}
+
+		// Unload dependants first, so that the plugin can be safely unloaded.
 		PluginException exception = null;
 		for (LoadedPlugin dependant : dependants.getOrDefault(plugin, Collections.emptySet())) {
 			PluginException inner = unload(dependant, dependants, unloaded);
@@ -223,17 +235,42 @@ final class PluginGraph {
 				}
 			}
 		}
+
+		// Disable the plugin and cleanup its resources.
+		PluginContainerImpl<?> container = plugin.getContainer();
+		Plugin pluginInstance = container.plugin;
+		Throwable cleanupFailure = null;
 		try {
-			PluginContainerImpl<?> container = plugin.getContainer();
-			try {
-				container.plugin().onDisable();
-			} finally {
-				if (container.classLoader instanceof AutoCloseable ac) {
-					ac.close();
+			if (pluginInstance != null)
+				pluginInstance.onDisable();
+		} catch (Throwable ex) {
+			cleanupFailure = ex;
+		} finally {
+			// Cleanup plugin instance and classloader, even if onDisable failed.
+			if (pluginInstance != null) {
+				try {
+					classAllocator.release(pluginInstance);
+				} catch (Throwable ex) {
+					cleanupFailure = appendFailure(cleanupFailure, ex);
 				}
 			}
-		} catch (Exception ex) {
-			PluginException pex = new PluginException(ex);
+			container.plugin = null;
+			if (container.classLoader instanceof AutoCloseable ac) {
+				try {
+					ac.close();
+				} catch (Throwable ex) {
+					cleanupFailure = appendFailure(cleanupFailure, ex);
+				}
+			}
+		}
+
+		// A serious problem will be rethrown immediately.
+		if (cleanupFailure instanceof Error error)
+			throw error;
+
+		// Other exceptions will be wrapped in a PluginException and returned to the caller.
+		if (cleanupFailure != null) {
+			PluginException pex = new PluginException(cleanupFailure);
 			if (exception == null) {
 				exception = pex;
 			} else {
@@ -346,6 +383,7 @@ final class PluginGraph {
 		if (!visiting.add(loadedPlugin)) {
 			throw new PluginException("Circular dependency detected during enablement at: %s".formatted(container.info().id()));
 		}
+
 		// Initialize and enable the plugin.
 		try {
 			// Enable dependent plugins
@@ -373,21 +411,28 @@ final class PluginGraph {
 	 * @param failure
 	 * 		Failure to attach rollback errors to.
 	 */
-	private static void rollbackFailedApply(@Nonnull Map<String, LoadedPlugin> temp, @Nonnull List<LoadedPlugin> initializedPlugins, @Nonnull PluginException failure) {
+	private void rollbackFailedApply(@Nonnull Map<String, LoadedPlugin> temp, @Nonnull List<LoadedPlugin> initializedPlugins, @Nonnull PluginException failure) {
 		for (int i = initializedPlugins.size() - 1; i >= 0; i--) {
 			LoadedPlugin loadedPlugin = initializedPlugins.get(i);
 			PluginContainerImpl<?> container = loadedPlugin.getContainer();
 
+			// Disable the plugin and cleanup its resources.
+			Plugin plugin = container.plugin;
 			try {
-				Plugin plugin = container.plugin;
-				if (plugin != null) {
+				if (plugin != null)
 					plugin.onDisable();
-				}
 			} catch (Exception ex) {
 				failure.addSuppressed(ex);
 			} finally {
+				// Cleanup plugin instance and classloader, even if onDisable failed.
+				if (plugin != null) {
+					try {
+						classAllocator.release(plugin);
+					} catch (Exception ex) {
+						failure.addSuppressed(ex);
+					}
+				}
 				container.plugin = null;
-
 				if (container.classLoader instanceof AutoCloseable closeable) {
 					try {
 						closeable.close();
@@ -405,6 +450,23 @@ final class PluginGraph {
 				failure.addSuppressed(ex);
 			}
 		}
+	}
+
+	/**
+	 * @param failure
+	 * 		Failure to append to.
+	 * @param additionalFailure
+	 * 		Failure to append.
+	 *
+	 * @return Failure with the additional failure appended, or the additional failure if the first was null.
+	 */
+	@Nonnull
+	private static Throwable appendFailure(@Nullable Throwable failure, @Nonnull Throwable additionalFailure) {
+		if (failure == null)
+			return additionalFailure;
+		if (failure != additionalFailure)
+			failure.addSuppressed(additionalFailure);
+		return failure;
 	}
 
 	/**

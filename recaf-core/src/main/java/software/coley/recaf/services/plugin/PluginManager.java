@@ -22,7 +22,7 @@ public interface PluginManager extends Service {
 	 * @return Allocator to use for creating plugin instances.
 	 */
 	@Nonnull
-	ClassAllocator getAllocator();
+	CdiClassAllocator getAllocator();
 
 	/**
 	 * @param id

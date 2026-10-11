@@ -4,6 +4,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import software.coley.recaf.info.builder.JvmClassInfoBuilder;
+import software.coley.recaf.plugin.Plugin;
 import software.coley.recaf.services.compile.CompileMap;
 import software.coley.recaf.services.compile.CompilerDiagnostic;
 import software.coley.recaf.services.compile.CompilerResult;
@@ -15,9 +16,9 @@ import software.coley.recaf.services.plugin.discovery.PluginDiscoverer;
 import software.coley.recaf.services.plugin.zip.ZipPluginLoader;
 import software.coley.recaf.test.TestBase;
 import software.coley.recaf.test.TestClassUtils;
-import software.coley.recaf.util.io.ZipCreationUtils;
 import software.coley.recaf.util.io.ByteSource;
 import software.coley.recaf.util.io.ByteSources;
+import software.coley.recaf.util.io.ZipCreationUtils;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.BasicJvmClassBundle;
 
@@ -112,6 +113,90 @@ public class PluginManagerTest extends TestBase {
 			assertNull(pluginManager.getPlugin(implId));
 		} catch (PluginException ex) {
 			fail("Failed to load plugins with same-batch dependency class visibility", ex);
+		}
+	}
+
+	@Test
+	void testPluginsWithSameClassNameUseSeparateLoaders() throws IOException, PluginException {
+		// Create two plugins with the same class name, but different plugin IDs.
+		String className = "test/DuplicateNamePlugin";
+		String firstId = "duplicate-name-first";
+		String secondId = "duplicate-name-second";
+		byte[] firstZip = createPluginZip(className, pluginSource(className, firstId, new String[0], "", ""), Map.of());
+		byte[] secondZip = createPluginZip(className, pluginSource(className, secondId, new String[0], "", ""), Map.of());
+		PluginDiscoverer discoverer = () -> List.of(
+				() -> ByteSources.wrap(firstZip),
+				() -> ByteSources.wrap(secondZip)
+		);
+
+		// Load both plugins in the same batch, which should succeed.
+		// Each should have its own classloader, and the classes should not be the same reference.
+		try {
+			assertEquals(2, pluginManager.loadPlugins(discoverer).size());
+			Plugin firstPlugin = pluginManager.getPlugin(firstId).plugin();
+			Plugin secondPlugin = pluginManager.getPlugin(secondId).plugin();
+			assertNotSame(firstPlugin.getClass(), secondPlugin.getClass());
+			assertNotSame(firstPlugin.getClass().getClassLoader(), secondPlugin.getClass().getClassLoader());
+		} finally {
+			if (pluginManager.isPluginLoaded(firstId))
+				pluginManager.unloaderFor(firstId).commit();
+			if (pluginManager.isPluginLoaded(secondId))
+				pluginManager.unloaderFor(secondId).commit();
+		}
+	}
+
+	@Test
+	void testPluginUnloadReleasesCdiInstance() throws IOException, PluginException {
+		// Create a plugin that sets a property during its @PreDestroy method,
+		// which should be called when the plugin is unloaded.
+		String id = "release-plugin";
+		String lifecycleKey = "recaf.test.plugin.release.unload";
+		String className = "test/ReleasePlugin";
+		System.clearProperty(lifecycleKey);
+		byte[] zip = createLifecyclePluginZip(className, id, lifecycleKey, "");
+
+		// Load the plugin, then unload it.
+		// The property should be unset at first, then set after deconstruction.
+		try {
+			PluginDiscoverer discoverer = () -> List.of(() -> ByteSources.wrap(zip));
+			pluginManager.loadPlugins(discoverer);
+			assertNull(System.getProperty(lifecycleKey));
+			pluginManager.unloaderFor(id).commit();
+			assertEquals("released", System.getProperty(lifecycleKey));
+		} finally {
+			try {
+				if (pluginManager.isPluginLoaded(id))
+					pluginManager.unloaderFor(id).commit();
+			} finally {
+				System.clearProperty(lifecycleKey);
+			}
+		}
+	}
+
+	@Test
+	void testFailedEnableReleasesCdiInstance() throws IOException, PluginException {
+		// Same test as above, but the plugin will throw an exception during onEnable,
+		// which should trigger a rollback that calls @PreDestroy.
+		String id = "release-failed-plugin";
+		String lifecycleKey = "recaf.test.plugin.release.rollback";
+		String className = "test/ReleaseFailedPlugin";
+		System.clearProperty(lifecycleKey);
+		byte[] zip = createLifecyclePluginZip(className, id, lifecycleKey, "throw new IllegalStateException(\"intentional enable failure\");");
+
+		// Loading the plugin fails, same before/after test as above.
+		try {
+			PluginDiscoverer discoverer = () -> List.of(() -> ByteSources.wrap(zip));
+			assertNull(System.getProperty(lifecycleKey));
+			assertThrows(PluginException.class, () -> pluginManager.loadPlugins(discoverer));
+			assertEquals("released", System.getProperty(lifecycleKey));
+			assertEquals(0, pluginManager.getPlugins().size());
+		} finally {
+			try {
+				if (pluginManager.isPluginLoaded(id))
+					pluginManager.unloaderFor(id).commit();
+			} finally {
+				System.clearProperty(lifecycleKey);
+			}
 		}
 	}
 
@@ -443,6 +528,32 @@ public class PluginManagerTest extends TestBase {
 
 	private static int countOf(String prefix, String id) {
 		return Integer.parseInt(System.getProperty(prefix + id, "0"));
+	}
+
+	private static byte[] createLifecyclePluginZip(String internalName, String id, String lifecycleKey, String onEnableBody) throws IOException {
+		String annotation = pluginInformationAnnotation(id, id, "1.0", "", "", new String[0]);
+		String source = javaSource(internalName, """
+				import jakarta.annotation.PreDestroy;
+				import software.coley.recaf.plugin.Plugin;
+				import software.coley.recaf.plugin.PluginInformation;
+				
+				%s
+				public class %s implements Plugin {
+					@Override
+					public void onEnable() {
+				%s
+					}
+				
+					@Override
+					public void onDisable() {}
+				
+					@PreDestroy
+					public void release() {
+						System.setProperty("%s", "released");
+					}
+				}
+				""".formatted(annotation, simpleName(internalName), methodBody(onEnableBody), lifecycleKey));
+		return createPluginZip(internalName, source, Map.of());
 	}
 
 	private static byte[] createPluginZip(String pluginInternalName, String pluginSource, Map<String, byte[]> additionalEntries) throws IOException {

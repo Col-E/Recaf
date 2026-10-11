@@ -24,7 +24,7 @@ import java.util.List;
 public class BasicPluginManager implements PluginManager {
 	private final List<PluginLoader> loaders = new ArrayList<>();
 	private final PluginGraph mainGraph;
-	private final ClassAllocator classAllocator;
+	private final CdiClassAllocator classAllocator;
 	private final PluginManagerConfig config;
 
 	@Inject
@@ -39,7 +39,7 @@ public class BasicPluginManager implements PluginManager {
 
 	@Nonnull
 	@Override
-	public ClassAllocator getAllocator() {
+	public CdiClassAllocator getAllocator() {
 		return classAllocator;
 	}
 

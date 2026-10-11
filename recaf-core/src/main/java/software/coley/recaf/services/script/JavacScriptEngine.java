@@ -13,7 +13,8 @@ import software.coley.recaf.services.compile.CompilerResult;
 import software.coley.recaf.services.compile.JavacArguments;
 import software.coley.recaf.services.compile.JavacArgumentsBuilder;
 import software.coley.recaf.services.compile.JavacCompiler;
-import software.coley.recaf.services.plugin.CdiClassAllocator;
+import software.coley.recaf.services.plugin.AllocationException;
+import software.coley.recaf.services.plugin.SharedCdiClassAllocator;
 import software.coley.recaf.util.CancelSignal;
 import software.coley.recaf.util.ClassDefiner;
 import software.coley.recaf.util.ReflectUtil;
@@ -43,11 +44,11 @@ public class JavacScriptEngine implements ScriptEngine {
 	private final ExecutorService compilePool = ThreadPoolFactory.newSingleThreadExecutor("script-compiler");
 	private final ExecutorService runPool = ThreadPoolFactory.newCachedThreadPool("script-runner");
 	private final JavacCompiler compiler;
-	private final CdiClassAllocator allocator;
+	private final SharedCdiClassAllocator allocator;
 	private final ScriptEngineConfig config;
 
 	@Inject
-	public JavacScriptEngine(JavacCompiler compiler, CdiClassAllocator allocator, ScriptEngineConfig config) {
+	public JavacScriptEngine(JavacCompiler compiler, SharedCdiClassAllocator allocator, ScriptEngineConfig config) {
 		this.compiler = compiler;
 		this.allocator = allocator;
 		this.config = config;
@@ -94,9 +95,10 @@ public class JavacScriptEngine implements ScriptEngine {
 	@Nonnull
 	private ScriptResult handleExecute(@Nonnull GenerateResult result) {
 		if (result.cls() != null) {
+			Object instance = null;
 			try {
 				logger.debugging(l -> l.info("Allocating script instance"));
-				Object instance = allocator.instance(result.cls());
+				instance = allocator.instance(result.cls());
 				Method run = ReflectUtil.getDeclaredMethod(instance.getClass(), "run");
 				run.setAccessible(true);
 				run.invoke(instance);
@@ -114,6 +116,13 @@ public class JavacScriptEngine implements ScriptEngine {
 				logger.error("Failed to execute script", ex);
 				return new ScriptResult(result.diagnostics(), ex);
 			} finally {
+				if (instance != null) {
+					try {
+						allocator.release(instance);
+					} catch (AllocationException ex) {
+						logger.error("Failed to release script instance", ex);
+					}
+				}
 				try {
 					result.resetStop();
 				} catch (IllegalStateException ex) {
