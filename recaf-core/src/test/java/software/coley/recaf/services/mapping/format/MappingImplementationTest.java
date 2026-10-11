@@ -187,6 +187,74 @@ public class MappingImplementationTest {
 	}
 
 	@Test
+	void testEnigmaInnerClassExport() {
+		IntermediateMappings mappings = new IntermediateMappings();
+		mappings.addClass("example/Outer", "example/RenamedOuter");
+		mappings.addClass("example/Outer$1", "example/RenamedOuter$1");
+		mappings.addClass("example/Outer$Inner", "example/RenamedOuter$RenamedInner");
+		mappings.addField("example/Outer$1", "Z", "field_1", "closed");
+		mappings.addField("example/Outer$2", "Z", "field_2", "open");
+		mappings.addMethod("example/Outer$1", "(I)V", "method_1", "run");
+		mappings.addVariable("example/Outer$1", "method_1", "(I)V", "I", "value", 1, "renamedValue");
+
+		MappingFileFormat format = new EnigmaMappings();
+		String mappingsText = assertDoesNotThrow(() -> format.exportText(mappings));
+		assertEquals("""
+				CLASS example/Outer example/RenamedOuter
+				\tCLASS 1 1
+				\t\tFIELD field_1 closed Z
+				\t\tMETHOD method_1 run (I)V
+				\t\t\tARG 1 renamedValue
+				\t\t\tVAR I value renamedValue
+				\tCLASS 2
+				\t\tFIELD field_2 open Z
+				\tCLASS Inner RenamedInner
+				""", mappingsText);
+
+		IntermediateMappings parsed = assertDoesNotThrow(() -> format.parse(mappingsText));
+		assertEquals("example/RenamedOuter$1", parsed.getMappedClassName("example/Outer$1"));
+		assertEquals("example/RenamedOuter$RenamedInner", parsed.getMappedClassName("example/Outer$Inner"));
+		assertEquals("closed", parsed.getMappedFieldName("example/Outer$1", "field_1", "Z"));
+		assertEquals("open", parsed.getMappedFieldName("example/Outer$2", "field_2", "Z"));
+		assertEquals("run", parsed.getMappedMethodName("example/Outer$1", "method_1", "(I)V"));
+		assertEquals("renamedValue", parsed.getMappedVariableName("example/Outer$1", "method_1",
+				"(I)V", "value", "I", 1));
+	}
+
+	@Test
+	void testEnigmaInnerClassExportWithoutMappedOuter() {
+		IntermediateMappings mappings = new IntermediateMappings();
+		mappings.addClass("test/Outer$Inner", "test/Outer$RenamedInner");
+
+		MappingFileFormat format = new EnigmaMappings();
+		String mappingsText = assertDoesNotThrow(() -> format.exportText(mappings));
+		assertEquals("""
+				CLASS test/Outer
+				\tCLASS Inner RenamedInner
+				""", mappingsText);
+
+		IntermediateMappings parsed = assertDoesNotThrow(() -> format.parse(mappingsText));
+		assertEquals("test/Outer$RenamedInner", parsed.getMappedClassName("test/Outer$Inner"));
+	}
+
+	@Test
+	void testEnigmaInnerClassWithUnrepresentableOuterMapping() {
+		IntermediateMappings mappings = new IntermediateMappings();
+		mappings.addClass("test/Outer", "mapped/Outer");
+		mappings.addClass("test/Outer$Inner", "unrelated/Inner");
+
+		MappingFileFormat format = new EnigmaMappings();
+		String mappingsText = assertDoesNotThrow(() -> format.exportText(mappings));
+		assertEquals("""
+				CLASS test/Outer mapped/Outer
+				CLASS test/Outer$Inner unrelated/Inner
+				""", mappingsText);
+
+		IntermediateMappings parsed = assertDoesNotThrow(() -> format.parse(mappingsText));
+		assertEquals("unrelated/Inner", parsed.getMappedClassName("test/Outer$Inner"));
+	}
+
+	@Test
 	void testEnigmaVariables() {
 		String mappingsText = """
 				CLASS test/Greetings rename/Hello

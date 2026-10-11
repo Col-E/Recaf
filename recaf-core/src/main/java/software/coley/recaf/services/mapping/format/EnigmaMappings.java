@@ -8,6 +8,7 @@ import org.objectweb.asm.Type;
 import org.slf4j.Logger;
 import software.coley.collections.tuple.Pair;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.path.ClassMemberPathNode;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.services.mapping.IntermediateMappings;
@@ -119,6 +120,11 @@ public class EnigmaMappings extends AbstractMappingFileFormat {
 	@Override
 	public IntermediateMappings parse(@Nonnull String mappingsText) throws InvalidMappingException {
 		return parseEnigma(mappingsText);
+	}
+
+	@Override
+	public String exportText(@Nonnull Mappings mappings) throws InvalidMappingException {
+		return exportHierarchy(mappings.exportIntermediate(), getWorkspace());
 	}
 
 	/**
@@ -486,72 +492,173 @@ public class EnigmaMappings extends AbstractMappingFileFormat {
 		return i;
 	}
 
-	@Override
-	public String exportText(@Nonnull Mappings mappings) {
-		//TODO: Fix inner class handling
-		// - Currently we export inner classes as top-level classes
-		// - We should match the spec and have inner-classes indented beneath their outer classes
-		Workspace workspace = getWorkspace();
-		StringBuilder sb = new StringBuilder();
-		IntermediateMappings intermediate = mappings.exportIntermediate();
-		for (String oldClassName : intermediate.getClassesWithMappings()) {
-			ClassPathNode classPath = workspace == null ? null : workspace.findClass(oldClassName);
-			ClassMapping classMapping = intermediate.getClassMapping(oldClassName);
-			if (classMapping != null) {
-				String newClassName = classMapping.getNewName();
-				// CLASS BaseClass TargetClass
-				sb.append("CLASS ")
-						.append(oldClassName).append(' ')
-						.append(newClassName).append("\n");
-			} else {
-				// Not mapped, but need to include for context for following members
-				sb.append("CLASS ")
-						.append(oldClassName).append("\n");
-			}
-			for (FieldMapping fieldMapping : intermediate.getClassFieldMappings(oldClassName)) {
-				String oldFieldName = fieldMapping.getOldName();
-				String newFieldName = fieldMapping.getNewName();
-				String fieldDesc = fieldMapping.getDesc();
-				// FIELD baseField targetField baseDesc
-				sb.append("\tFIELD ")
-						.append(oldFieldName).append(' ')
-						.append(newFieldName).append(' ')
-						.append(fieldDesc).append("\n");
-			}
-			Map<String, List<VariableMapping>> variablesByMethod = getClassVariablesByMethod(intermediate, oldClassName);
-			for (MethodMapping methodMapping : intermediate.getClassMethodMappings(oldClassName)) {
-				String oldMethodName = methodMapping.getOldName();
-				String newMethodName = methodMapping.getNewName();
-				String methodDesc = methodMapping.getDesc();
-				// METHOD baseMethod targetMethod baseMethodDesc
-				sb.append("\tMETHOD ")
-						.append(oldMethodName).append(' ')
-						.append(newMethodName).append(' ')
-						.append(methodDesc).append("\n");
-
-				// When we emit these variables also remove them from the map.
-				// Any remaining items will be from methods that were not mapped, but we still want to emit their variables.
-				appendVariables(sb, classPath, oldMethodName, methodDesc, variablesByMethod.remove(methodKey(oldMethodName, methodDesc)));
-			}
-			for (List<VariableMapping> variables : variablesByMethod.values()) {
-				if (variables.isEmpty())
-					continue;
-				VariableMapping firstVariable = variables.getFirst();
-				String oldMethodName = firstVariable.getMethodName();
-				String methodDesc = firstVariable.getMethodDesc();
-				// METHOD baseMethod baseMethodDesc
-				sb.append("\tMETHOD ")
-						.append(oldMethodName).append(' ')
-						.append(methodDesc).append("\n");
-				appendVariables(sb, classPath, oldMethodName, methodDesc, variables);
+	private static int getMaxParameterIndex(@Nullable ClassPathNode classPath,
+	                                        @Nonnull String methodName, @Nonnull String methodDesc) {
+		int maxParam = 100; // Ain't no way you have a legit method with more than 100 parameters.
+		if (classPath != null) {
+			ClassMemberPathNode memberPath = classPath.child(methodName, methodDesc);
+			if (memberPath != null) {
+				maxParam = memberPath.getValueAsMethod().hasStaticModifier() ? 0 : 1;
+				for (Type argumentType : Type.getMethodType(methodDesc).getArgumentTypes())
+					maxParam += argumentType.getSize();
 			}
 		}
+		return maxParam;
+	}
+
+	@Nonnull
+	private static String exportHierarchy(@Nonnull IntermediateMappings intermediate, @Nullable Workspace workspace) {
+		// Build map of root classes to emit.
+		// This way we won't naively emit inner classes as roots and instead show them as children of their outer classes.
+		TreeMap<String, ExportClass> classes = new TreeMap<>();
+		TreeMap<String, ExportClass> roots = new TreeMap<>();
+		for (String oldClassName : intermediate.getClassesWithMappings())
+			getExportClass(oldClassName, workspace, intermediate, classes, roots);
+
+		StringBuilder sb = new StringBuilder();
+		for (ExportClass root : roots.values())
+			appendClass(sb, root, intermediate, 0);
 		return sb.toString();
+	}
+
+	@Nonnull
+	private static ExportClass getExportClass(@Nonnull String oldClassName, @Nullable Workspace workspace,
+	                                          @Nonnull IntermediateMappings intermediate,
+	                                          @Nonnull Map<String, ExportClass> classes,
+	                                          @Nonnull Map<String, ExportClass> roots) {
+		// Get existing class if created.
+		ExportClass exportClass = classes.get(oldClassName);
+		if (exportClass != null)
+			return exportClass;
+
+		// Create new class and add to the map.
+		ClassPathNode classPath = workspace == null ? null : workspace.findClass(oldClassName);
+		exportClass = new ExportClass(oldClassName, classPath);
+		classes.put(oldClassName, exportClass);
+
+		// If this is an inner class of another, try to find the outer class and add this as a child.
+		ClassMapping classMapping = intermediate.getClassMapping(oldClassName);
+		String outerClassName = getOuterClassName(oldClassName, classPath);
+		if (outerClassName != null && oldClassName.startsWith(outerClassName + '$')) {
+			ExportClass outerClass = getExportClass(outerClassName, workspace, intermediate, classes, roots);
+			String childPrefix = outerClass.newName + '$';
+			if (classMapping == null || classMapping.getNewName().startsWith(childPrefix)) {
+				exportClass.parent = outerClass;
+				exportClass.newName = classMapping == null
+						? childPrefix + oldClassName.substring(outerClassName.length() + 1)
+						: classMapping.getNewName();
+				outerClass.children.put(oldClassName, exportClass);
+				return exportClass;
+			}
+		}
+		exportClass.newName = classMapping == null ? oldClassName : classMapping.getNewName();
+
+		// If this is a root class (not an inner class) then add it to the root map.
+		roots.put(oldClassName, exportClass);
+		return exportClass;
+	}
+
+	@Nullable
+	private static String getOuterClassName(@Nonnull String className, @Nullable ClassPathNode classPath) {
+		// Try to get the outer class name from the class metadata, if available.
+		if (classPath != null) {
+			ClassInfo info = classPath.getValue();
+			String outerClassName = info.getOuterClassName();
+			if (outerClassName != null)
+				return outerClassName;
+			if (!info.isInnerClass())
+				return null;
+			List<String> outerClassBreadcrumbs = info.getOuterClassBreadcrumbs();
+			if (!outerClassBreadcrumbs.isEmpty())
+				return outerClassBreadcrumbs.getLast();
+		}
+
+		// Without class metadata, '$' is the only way to distinguish nested class names in mapping data.
+		// This isn't guaranteed to be correct, but it's the best we can do at this point.
+		int separator = className.lastIndexOf('$');
+		if (separator > className.lastIndexOf('/'))
+			return className.substring(0, separator);
+		return null;
+	}
+
+	private static void appendClass(@Nonnull StringBuilder sb, @Nonnull ExportClass exportClass,
+	                                @Nonnull IntermediateMappings intermediate, int indent) {
+		String oldClassName = exportClass.oldName;
+		ClassMapping classMapping = intermediate.getClassMapping(oldClassName);
+		appendIndent(sb, indent);
+
+		// CLASS BaseClass TargetClass
+		sb.append("CLASS ");
+		if (exportClass.parent == null) {
+			sb.append(oldClassName);
+
+			// Not all Enigma mappings have new names for classes.
+			// These lines exist to give context to following member lines.
+			if (classMapping != null)
+				sb.append(' ').append(classMapping.getNewName());
+		} else {
+			String oldSimpleName = oldClassName.substring(exportClass.parent.oldName.length() + 1);
+			sb.append(oldSimpleName);
+			if (classMapping != null) {
+				String newSimpleName = exportClass.newName.substring(exportClass.parent.newName.length() + 1);
+				sb.append(' ').append(newSimpleName);
+			}
+		}
+		sb.append('\n');
+
+		// Members
+		ClassPathNode classPath = exportClass.classPath;
+		for (FieldMapping fieldMapping : intermediate.getClassFieldMappings(oldClassName)) {
+			appendIndent(sb, indent + 1);
+
+			// FIELD baseField targetField baseDesc
+			sb.append("FIELD ")
+					.append(fieldMapping.getOldName()).append(' ')
+					.append(fieldMapping.getNewName()).append(' ')
+					.append(fieldMapping.getDesc()).append('\n');
+		}
+		Map<String, List<VariableMapping>> variablesByMethod = getClassVariablesByMethod(intermediate, oldClassName);
+		for (MethodMapping methodMapping : intermediate.getClassMethodMappings(oldClassName)) {
+			String oldMethodName = methodMapping.getOldName();
+			String methodDesc = methodMapping.getDesc();
+			appendIndent(sb, indent + 1);
+
+			// METHOD baseMethod targetMethod baseMethodDesc
+			sb.append("METHOD ")
+					.append(oldMethodName).append(' ')
+					.append(methodMapping.getNewName()).append(' ')
+					.append(methodDesc).append('\n');
+
+			// When we emit these variables also remove them from the map.
+			// Any remaining items will be from methods that were not mapped, but we still want to emit their variables.
+			appendVariables(sb, classPath, oldMethodName, methodDesc,
+					variablesByMethod.remove(methodKey(oldMethodName, methodDesc)), indent + 2);
+		}
+		for (List<VariableMapping> variables : variablesByMethod.values()) {
+			if (variables.isEmpty())
+				continue;
+			VariableMapping firstVariable = variables.getFirst();
+			String oldMethodName = firstVariable.getMethodName();
+			String methodDesc = firstVariable.getMethodDesc();
+			appendIndent(sb, indent + 1);
+			sb.append("METHOD ")
+					.append(oldMethodName).append(' ')
+					.append(methodDesc).append('\n');
+			appendVariables(sb, classPath, oldMethodName, methodDesc, variables, indent + 2);
+		}
+
+		// Inner classes
+		for (ExportClass child : exportClass.children.values())
+			appendClass(sb, child, intermediate, indent + 1);
+	}
+
+	private static void appendIndent(@Nonnull StringBuilder sb, int indent) {
+		sb.append("\t".repeat(Math.max(0, indent)));
 	}
 
 	private static void appendVariables(@Nonnull StringBuilder sb, @Nullable ClassPathNode classPath,
 	                                    @Nonnull String oldMethodName, @Nonnull String methodDesc,
-	                                    @Nullable List<VariableMapping> variables) {
+	                                    @Nullable List<VariableMapping> variables, int indent) {
 		if (variables == null || variables.isEmpty())
 			return;
 
@@ -559,34 +666,25 @@ public class EnigmaMappings extends AbstractMappingFileFormat {
 		// - ARG index newName
 		// We can add our own special prefix (that gets ignored by the mainstream enigma tool) that allows us to export more detailed variable mappings.
 		//  - VAR desc oldName newName
-		Type methodType = Type.getMethodType(methodDesc);
-		Type[] argumentTypes = methodType.getArgumentTypes();
-		int maxParam = Integer.MAX_VALUE;
-		if (classPath != null) {
-			ClassMemberPathNode memberPath = classPath.child(oldMethodName, methodDesc);
-			if (memberPath != null) {
-				maxParam = memberPath.getValueAsMethod().hasStaticModifier() ? 0 : 1;
-				for (Type argumentType : argumentTypes) {
-					maxParam += argumentType.getSize();
-				}
-			}
-		}
+		int maxParam = getMaxParameterIndex(classPath, oldMethodName, methodDesc);
 		for (VariableMapping variable : variables) {
 			// First add args for method parameter locals.
 			// These are the only locals that enigma officially supports.
 			if (variable.getIndex() >= 0 && variable.getIndex() < maxParam) {
-				sb.append("\t\tARG ")
+				appendIndent(sb, indent);
+				sb.append("ARG ")
 						.append(variable.getIndex()).append(' ')
-						.append(variable.getNewName()).append("\n");
+						.append(variable.getNewName()).append('\n');
 			}
 
 			// Then add all locals for method body variables.
 			// These are not officially supported by enigma,
 			// but we can add our own special prefix that gets ignored by the mainstream enigma tool.
-			sb.append("\t\tVAR ")
+			appendIndent(sb, indent);
+			sb.append("VAR ")
 					.append(variable.getDesc()).append(' ')
 					.append(variable.getOldName()).append(' ')
-					.append(variable.getNewName()).append("\n");
+					.append(variable.getNewName()).append('\n');
 		}
 	}
 
@@ -647,7 +745,10 @@ public class EnigmaMappings extends AbstractMappingFileFormat {
 		private final String desc;
 
 		private MemberMappingInfo(int offset) {
-			this(offset, null, null, null);
+			this.offset = offset;
+			this.ownerName = null;
+			this.oldName = null;
+			this.desc = null;
 		}
 
 		private MemberMappingInfo(int offset, @Nonnull String ownerName, @Nonnull String oldName, @Nonnull String desc) {
@@ -659,6 +760,19 @@ public class EnigmaMappings extends AbstractMappingFileFormat {
 
 		private boolean isValid() {
 			return ownerName != null;
+		}
+	}
+
+	private static class ExportClass {
+		private final Map<String, ExportClass> children = new TreeMap<>();
+		private final String oldName;
+		private final ClassPathNode classPath;
+		private ExportClass parent;
+		private String newName;
+
+		private ExportClass(@Nonnull String oldName, @Nullable ClassPathNode classPath) {
+			this.oldName = oldName;
+			this.classPath = classPath;
 		}
 	}
 }

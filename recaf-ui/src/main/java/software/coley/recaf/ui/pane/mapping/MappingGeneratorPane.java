@@ -58,6 +58,7 @@ import software.coley.recaf.services.mapping.Mappings;
 import software.coley.recaf.services.mapping.aggregate.AggregateMappingManager;
 import software.coley.recaf.services.mapping.aggregate.AggregatedMappings;
 import software.coley.recaf.services.mapping.format.EnigmaMappings;
+import software.coley.recaf.services.mapping.format.InvalidMappingException;
 import software.coley.recaf.services.mapping.gen.MappingGenerator;
 import software.coley.recaf.services.mapping.gen.filter.ExcludeClassesFilter;
 import software.coley.recaf.services.mapping.gen.filter.ExcludeExistingMappedFilter;
@@ -333,8 +334,14 @@ public class MappingGeneratorPane extends StackPane {
 				stats.setText(formatted);
 
 				// Also update editor preview
-				String mappingText = new EnigmaMappings().exportText(mappings).replace("\0", "");
-				FxThreadUtil.run(() -> editor.setText(mappingText));
+				try {
+					String exportedMappings = new EnigmaMappings().exportText(mappings);
+					String sanitizedMappings = exportedMappings == null ? "" : exportedMappings.replace("\0", "");
+					FxThreadUtil.run(() -> editor.setText(sanitizedMappings));
+				} catch (InvalidMappingException t) {
+					logger.error("Failed to generate mapping preview", t);
+					FxThreadUtil.run(() -> editor.setText("# Failed to generate mapping preview"));
+				}
 			}
 		});
 
