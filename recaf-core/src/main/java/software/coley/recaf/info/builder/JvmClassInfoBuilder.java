@@ -711,11 +711,23 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 		}
 
 		@Override
-		public void visitEnum(String name, String descriptor, String value) {
-			name = KEY;
+		public void visit(String name, Object value) {
+			super.visit(KEY, value);
+		}
 
-			BasicAnnotationEnumReference enumRef = new BasicAnnotationEnumReference(descriptor, value);
-			elements.put(name, new BasicAnnotationElement(name, enumRef));
+		@Override
+		public void visitEnum(String name, String descriptor, String value) {
+			super.visitEnum(KEY, descriptor, value);
+		}
+
+		@Override
+		public AnnotationVisitor visitAnnotation(String name, String descriptor) {
+			return super.visitAnnotation(KEY, descriptor);
+		}
+
+		@Override
+		public AnnotationVisitor visitArray(String name) {
+			return super.visitArray(KEY);
 		}
 	}
 }
