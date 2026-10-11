@@ -4158,6 +4158,15 @@ Add support for NO_HEADER tweak in tables .table-view.no-header > .column-header
   -fx-opacity: 0.4;
 }
 
+.progress-bar.process-memory-overlay {
+  -fx-background-color: transparent;
+  -color-progress-bar-track: transparent;
+  -color-progress-bar-fill: -color-chart-3;
+}
+.progress-bar.process-memory-overlay > .track {
+  -fx-background-color: transparent;
+}
+
 .progress-indicator {
   -fx-indeterminate-segment-count: 12;
   -fx-spin-enabled: true;
