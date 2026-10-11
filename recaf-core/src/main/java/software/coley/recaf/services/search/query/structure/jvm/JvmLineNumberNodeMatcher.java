@@ -1,6 +1,7 @@
 package software.coley.recaf.services.search.query.structure.jvm;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.LineNumberNode;
@@ -18,7 +19,7 @@ import software.coley.recaf.services.search.match.Matchers;
  * @author Matt Coley
  */
 public record JvmLineNumberNodeMatcher(@Nonnull Matcher<Integer> line,
-                                       @Nonnull Matcher<Label> start) implements JvmInsnMatcher {
+                                       @Nonnull Matcher<Label> start) implements JvmInsnMatcher, Matcher<LineNumberNode> {
 	/**
 	 * @param line
 	 * 		Line number to match.
@@ -31,9 +32,14 @@ public record JvmLineNumberNodeMatcher(@Nonnull Matcher<Integer> line,
 	}
 
 	@Override
-	public boolean matchesJvm(@Nonnull AbstractInsnNode node) {
-		return node instanceof LineNumberNode value
+	public boolean matches(@Nullable LineNumberNode value) {
+		return value != null && value.start != null
 				&& line.matches(value.line)
 				&& start.matches(value.start.getLabel());
+	}
+
+	@Override
+	public boolean matchesJvm(@Nonnull AbstractInsnNode node) {
+		return node instanceof LineNumberNode value && matches(value);
 	}
 }

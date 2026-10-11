@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Matches method metadata and backend code constraints.
+ * Matches method metadata and backend code/debug constraints.
  *
  * @param name
  * 		Method name matcher.
@@ -29,6 +29,8 @@ import java.util.List;
  * 		Try/catch constraint.
  * @param instructions
  * 		Instruction constraint.
+ * @param debugInfo
+ * 		Backend-specific method debug-information constraint.
  *
  * @author Matt Coley
  * @see FieldMatcher
@@ -41,7 +43,8 @@ public record MethodMatcher(@Nonnull Matcher<String> name,
                             @Nonnull ListMatcher<AnnotationMatcher> annotations,
                             @Nonnull ListMatcher<Matcher<Type>> exceptions,
                             @Nonnull ListMatcher<TryCatchBlockMatcher> tryCatchBlocks,
-                            @Nonnull ListMatcher<InsnMatcher> instructions) implements Matcher<MethodMember> {
+                            @Nonnull ListMatcher<InsnMatcher> instructions,
+                            @Nonnull MethodDebugInfoMatcher debugInfo) implements Matcher<MethodMember> {
 	@Override
 	public boolean matches(@Nullable MethodMember method) {
 		return matchesMetadata(method);

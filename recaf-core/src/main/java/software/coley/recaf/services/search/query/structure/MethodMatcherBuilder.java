@@ -23,6 +23,7 @@ public final class MethodMatcherBuilder {
 	private ListMatcher<Matcher<Type>> exceptions = ListMatcher.any();
 	private ListMatcher<TryCatchBlockMatcher> tryCatchBlocks = ListMatcher.any();
 	private ListMatcher<InsnMatcher> instructions = ListMatcher.any();
+	private MethodDebugInfoMatcher debugInfo = MethodDebugInfoMatcher.ANY;
 
 	/**
 	 * @param name
@@ -162,6 +163,18 @@ public final class MethodMatcherBuilder {
 	}
 
 	/**
+	 * @param debugInfo
+	 * 		Backend-specific method debug-information constraint.
+	 *
+	 * @return Builder.
+	 */
+	@Nonnull
+	public MethodMatcherBuilder debugInfo(@Nonnull MethodDebugInfoMatcher debugInfo) {
+		this.debugInfo = debugInfo;
+		return this;
+	}
+
+	/**
 	 * @param instructions
 	 * 		Instruction matchers in declaration order.
 	 * @param count
@@ -192,6 +205,6 @@ public final class MethodMatcherBuilder {
 	 */
 	@Nonnull
 	public MethodMatcher build() {
-		return new MethodMatcher(name, returnType, accessFlags, parameterTypes, annotations, exceptions, tryCatchBlocks, instructions);
+		return new MethodMatcher(name, returnType, accessFlags, parameterTypes, annotations, exceptions, tryCatchBlocks, instructions, debugInfo);
 	}
 }

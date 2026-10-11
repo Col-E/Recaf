@@ -43,17 +43,21 @@ public final class AndroidClassStructureMatcher {
 
 			// Read methods into a list of candidates for matching.
 			List<DexMethodCandidate> methods = new ArrayList<>();
+			boolean[] missingMethodMetadata = {false};
 			DexTreeWalker.accept(classInfo.getBackingDefinition(), new DexClassVisitor() {
 				/**
 				 * @param method
 				 * 		Native DEX method.
 				 *
-				 * @return Visitor for the method, or {@code null} when metadata is unavailable.
+					 * @return Visitor for the method, or {@code null} when metadata is unavailable and the class must be rejected.
 				 */
 				@Override
 				public DexMethodVisitor visitMethod(@Nonnull me.darknet.dex.tree.definitions.MethodMember method) {
 					MethodMember member = classInfo.getDeclaredMethod(method.getName(), method.getType().descriptor());
-					if (member == null) return null;
+					if (member == null) {
+						missingMethodMetadata[0] = true;
+						return null;
+					}
 					methods.add(new DexMethodCandidate(method, member));
 					return new DexMethodVisitor() {
 						/**
@@ -68,6 +72,8 @@ public final class AndroidClassStructureMatcher {
 				}
 			});
 
+			if (missingMethodMetadata[0])
+				return false;
 			return matchList(query.methods(), methods, AndroidClassStructureMatcher::matchesMethod);
 		} catch (Throwable ignored) {
 			// A malformed DEX candidate must not cancel the workspace search.
@@ -76,7 +82,7 @@ public final class AndroidClassStructureMatcher {
 	}
 
 	/**
-	 * Matches shared method metadata, native instructions, and handlers.
+	 * Matches shared method metadata, DEX debug information, native instructions, and handlers.
 	 *
 	 * @param matcher
 	 * 		Method constraint.
@@ -89,8 +95,11 @@ public final class AndroidClassStructureMatcher {
 		if (!matcher.matchesMetadata(candidate.member()))
 			return false;
 
-		// Read instructions into a list for matching.
 		Code code = candidate.nativeMethod().getCode();
+		if (!matcher.debugInfo().matchesAndroid(code == null ? null : code.getDebugInfo()))
+			return false;
+
+		// Read instructions into a list for matching.
 		List<Instruction> instructions = code == null ? List.of() : code.getInstructions();
 
 		// Check for instruction matches.

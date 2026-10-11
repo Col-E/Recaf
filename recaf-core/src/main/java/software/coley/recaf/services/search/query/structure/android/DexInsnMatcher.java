@@ -10,9 +10,20 @@ import software.coley.recaf.services.search.query.structure.InsnMatcher;
  *
  * @author Matt Coley
  */
-public interface DexInsnMatcher extends InsnMatcher {
-	// TODO: Once Android support is more fleshed out, implement the remainder of all instruction types,
-	//  and make this interface sealed.
+public sealed interface DexInsnMatcher extends InsnMatcher permits AnyDexInsnMatcher,
+		DexArrayInstructionMatcher, DexArrayLengthInstructionMatcher, DexBinary2AddrInstructionMatcher,
+		DexBinaryInstructionMatcher, DexBinaryLiteralInstructionMatcher, DexBranchInstructionMatcher,
+		DexBranchZeroInstructionMatcher, DexCheckCastInstructionMatcher, DexCompareInstructionMatcher,
+		DexConstInstructionMatcher, DexConstMethodHandleInstructionMatcher, DexConstMethodTypeInstructionMatcher,
+		DexConstStringInstructionMatcher, DexConstTypeInstructionMatcher, DexConstWideInstructionMatcher,
+		DexFillArrayDataInstructionMatcher, DexFilledNewArrayInstructionMatcher, DexGotoInstructionMatcher,
+		DexInstanceFieldInstructionMatcher, DexInstanceOfInstructionMatcher, DexInvokeCustomInstructionMatcher,
+		DexInvokeInstructionMatcher, DexLabelMatcher, DexMonitorInstructionMatcher, DexMoveExceptionInstructionMatcher,
+		DexMoveInstructionMatcher, DexMoveObjectInstructionMatcher, DexMoveResultInstructionMatcher,
+		DexMoveWideInstructionMatcher, DexNewArrayInstructionMatcher, DexNewInstanceInstructionMatcher,
+		DexNopInstructionMatcher, DexOpcodeInsnMatcher, DexPackedSwitchInstructionMatcher,
+		DexReturnInstructionMatcher, DexSparseSwitchInstructionMatcher, DexStaticFieldInstructionMatcher,
+		DexThrowInstructionMatcher, DexUnaryInstructionMatcher {
 
 	@Override
 	default boolean matchesJvm(@Nonnull AbstractInsnNode node) {

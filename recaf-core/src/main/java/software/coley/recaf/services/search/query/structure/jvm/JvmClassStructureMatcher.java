@@ -59,7 +59,7 @@ public final class JvmClassStructureMatcher {
 	}
 
 	/**
-	 * Matches shared method metadata, JVM instructions, and handlers.
+	 * Matches shared method metadata, JVM debug information, instructions, and handlers.
 	 *
 	 * @param matcher
 	 * 		Method constraint.
@@ -72,8 +72,11 @@ public final class JvmClassStructureMatcher {
 		if (!matcher.matchesMetadata(candidate.member()))
 			return false;
 
-		// Read instructions into a list for matching.
 		MethodNode method = candidate.node();
+		if (!matcher.debugInfo().matchesJvm(method))
+			return false;
+
+		// Read instructions into a list for matching.
 		List<AbstractInsnNode> instructions = new ArrayList<>();
 		if (method.instructions != null)
 			for (AbstractInsnNode instruction : method.instructions)
