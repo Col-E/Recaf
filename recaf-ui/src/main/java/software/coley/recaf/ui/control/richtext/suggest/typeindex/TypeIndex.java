@@ -41,6 +41,8 @@ public final class TypeIndex {
 	private final Workspace workspace;
 	private final Map<String, NavigableSet<IndexedEntry>> contributorsByInternalName = new HashMap<>();
 	private final NavigableMap<String, IndexedEntry> activeEntriesByInternalName = new TreeMap<>();
+	private final NavigableMap<String, NavigableSet<IndexedEntry>> activeEntriesBySimpleName = new TreeMap<>();
+	private final NavigableMap<String, NavigableSet<IndexedEntry>> activeEntriesByInitials = new TreeMap<>();
 	private final Map<String, NavigableSet<IndexedEntry>> activeWinnersByQualifiedName = new HashMap<>();
 	private final Map<String, NavigableSet<IndexedEntry>> activeTypesByPackage = new HashMap<>();
 	private final Map<String, Integer> activeTypeCountsByPackage = new HashMap<>();
@@ -178,6 +180,48 @@ public final class TypeIndex {
 	}
 
 	/**
+	 * @param prefix
+	 * 		Prefix of simple type names, such as {@code Str}.
+	 *
+	 * @return Active types whose simple name starts with the prefix, ordered by simple name and then entry order.
+	 */
+	@Nonnull
+	public List<TypeCandidate> typesWithSimpleNamePrefix(@Nonnull String prefix) {
+		List<TypeCandidate> candidates = new ArrayList<>();
+		for (Map.Entry<String, NavigableSet<IndexedEntry>> entry : activeEntriesBySimpleName.tailMap(prefix, true).entrySet()) {
+			if (!entry.getKey().startsWith(prefix))
+				break;
+			for (IndexedEntry indexedEntry : entry.getValue())
+				candidates.add(indexedEntry.candidate());
+		}
+		return List.copyOf(candidates);
+	}
+
+	/**
+	 * @param prefix
+	 * 		Camel-hump prefix, such as {@code StrB}.
+	 *
+	 * @return Active types whose simple names match the typed hump fragments.
+	 */
+	@Nonnull
+	public List<TypeCandidate> typesWithCamelHumpPrefix(@Nonnull String prefix) {
+		List<String> queryParts = TypeNameMatcher.splitQuery(prefix);
+		if (queryParts.size() < 2)
+			return List.of();
+
+		String initials = TypeNameMatcher.initials(queryParts);
+		List<TypeCandidate> candidates = new ArrayList<>();
+		for (Map.Entry<String, NavigableSet<IndexedEntry>> entry : activeEntriesByInitials.tailMap(initials, true).entrySet()) {
+			if (!entry.getKey().startsWith(initials))
+				break;
+			for (IndexedEntry indexedEntry : entry.getValue())
+				if (indexedEntry.name().matches(queryParts))
+					candidates.add(indexedEntry.candidate());
+		}
+		return List.copyOf(candidates);
+	}
+
+	/**
 	 * @param packageName
 	 * 		Dot-separated package name.
 	 *
@@ -224,7 +268,7 @@ public final class TypeIndex {
 	 * 		Type candidate represented by the entry.
 	 */
 	private void addEntry(@Nonnull EntryKey key, long sequence, @Nonnull TypeCandidate candidate) {
-		IndexedEntry entry = new IndexedEntry(key, sequence, candidate);
+		IndexedEntry entry = new IndexedEntry(key, sequence, candidate, TypeNameMatcher.index(candidate.simpleName()));
 		entriesByKey.put(key, entry);
 
 		String internalName = candidate.internalName();
@@ -279,6 +323,8 @@ public final class TypeIndex {
 	private void addActiveEntry(@Nonnull IndexedEntry entry) {
 		TypeCandidate candidate = entry.candidate();
 		activeEntriesByInternalName.put(candidate.internalName(), entry);
+		activeEntriesBySimpleName.computeIfAbsent(candidate.simpleName(), ignored -> new TreeSet<>(ENTRY_ORDER)).add(entry);
+		activeEntriesByInitials.computeIfAbsent(entry.name().initials(), ignored -> new TreeSet<>(ENTRY_ORDER)).add(entry);
 		activeWinnersByQualifiedName.computeIfAbsent(candidate.qualifiedName(), ignored -> new TreeSet<>(ENTRY_ORDER)).add(entry);
 		activeTypesByPackage.computeIfAbsent(candidate.packageName(), ignored -> new TreeSet<>(ENTRY_ORDER)).add(entry);
 
@@ -296,6 +342,21 @@ public final class TypeIndex {
 	private void removeActiveEntry(@Nonnull IndexedEntry entry) {
 		TypeCandidate candidate = entry.candidate();
 		activeEntriesByInternalName.remove(candidate.internalName());
+
+		// Remove the entry from the simple-name lookup, cleaning up empty buckets.
+		NavigableSet<IndexedEntry> simpleNameEntries = activeEntriesBySimpleName.get(candidate.simpleName());
+		if (simpleNameEntries == null || !simpleNameEntries.remove(entry))
+			throw new IllegalStateException("Missing active simple name entry for " + candidate.internalName());
+		if (simpleNameEntries.isEmpty())
+			activeEntriesBySimpleName.remove(candidate.simpleName());
+
+		// Remove the entry from the camel-hump initials lookup, cleaning up empty buckets.
+		String initials = entry.name().initials();
+		NavigableSet<IndexedEntry> initialEntries = activeEntriesByInitials.get(initials);
+		if (initialEntries == null || !initialEntries.remove(entry))
+			throw new IllegalStateException("Missing active initials entry for " + candidate.internalName());
+		if (initialEntries.isEmpty())
+			activeEntriesByInitials.remove(initials);
 
 		// Remove the entry from the qualified name and package lookups.
 		// If the sets are empty after removal, remove the set entirely.
@@ -546,6 +607,9 @@ public final class TypeIndex {
 	 * 		Sequence number for the entry, used to preserve relative ordering.
 	 * @param candidate
 	 * 		Type candidate represented by the entry.
+	 * @param name
+	 * 		Name metadata for the type candidate.
 	 */
-	private record IndexedEntry(@Nonnull EntryKey key, long sequence, @Nonnull TypeCandidate candidate) {}
+	private record IndexedEntry(@Nonnull EntryKey key, long sequence, @Nonnull TypeCandidate candidate,
+	                            @Nonnull TypeNameMatcher.IndexedName name) {}
 }

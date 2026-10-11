@@ -535,6 +535,65 @@ class AssemblerTabCompleterTest extends TestBase {
 	}
 
 	@Test
+	void simpleTypePrefixesCompleteToFullInternalNames() {
+		Workspace workspace = new BasicWorkspace(new WorkspaceResourceBuilder().build());
+		AssemblerCompletionEngine engine = newEngine(workspace, JvmTargetContext.INSTANCE);
+
+		// In both cases we want to complete the full type name from the simple name prefix.
+		//  - new Stri
+		//  - invokevirtual Stri
+		for (String instruction : List.of("new ", "invokevirtual ")) {
+			String source = "code: {\n    " + instruction + "Stri";
+			List<AssemblerCompletion> completions = engine.resolve(source, source.length(), List.of(), null).complete();
+			AssemblerCompletion.Type stringType = completions.stream()
+					.filter(AssemblerCompletion.Type.class::isInstance)
+					.map(AssemblerCompletion.Type.class::cast)
+					.filter(type -> type.text().equals("java/lang/String"))
+					.findFirst()
+					.orElse(null);
+
+			assertNotNull(stringType, instruction);
+			assertTrue(stringType.replacePartialText(), instruction);
+		}
+	}
+
+	@Test
+	void camelHumpTypePrefixesCompleteAtTheCaret() {
+		Workspace workspace = new BasicWorkspace(new WorkspaceResourceBuilder().build());
+		AssemblerCompletionEngine engine = newEngine(workspace, JvmTargetContext.INSTANCE);
+
+		// In both cases we want to complete the full type name from camel-hump prefix.
+		//  - new StrB
+		//  - invokevirtual StriB
+		for (String instruction : List.of("new ", "invokevirtual ")) {
+			String source = "code: {\n    " + instruction + "StrB";
+			List<AssemblerCompletion> completions = engine.resolve(source, source.length(), List.of(), null).complete();
+			AssemblerCompletion.Type stringBuilder = completions.stream()
+					.filter(AssemblerCompletion.Type.class::isInstance)
+					.map(AssemblerCompletion.Type.class::cast)
+					.filter(type -> type.text().equals("java/lang/StringBuilder"))
+					.findFirst()
+					.orElse(null);
+
+			assertNotNull(stringBuilder, instruction);
+			assertTrue(stringBuilder.replacePartialText(), instruction);
+			assertEquals(2, stringBuilder.matchRank(), instruction);
+		}
+
+		// In both cases we want to complete the full type name from the acronym prefix.
+		//  - new SB
+		//  - invokevirtual SB
+		List<AssemblerCompletion> acronymCompletions = engine.resolve("code: {\n    new SB", "code: {\n    new SB".length(), List.of(), null).complete();
+		assertTrue(hasTypeCompletion(acronymCompletions, "java/lang/StringBuilder"));
+		assertTrue(hasTypeCompletion(acronymCompletions, "java/lang/StringBuffer"));
+		assertEquals(3, acronymCompletions.stream()
+				.filter(AssemblerCompletion.Type.class::isInstance)
+				.map(AssemblerCompletion.Type.class::cast)
+				.filter(type -> type.text().equals("java/lang/StringBuilder"))
+				.findFirst().orElseThrow().matchRank());
+	}
+
+	@Test
 	void incompleteJvmHandleOperandsUseTheCursorScannerWithoutMethodAst() {
 		String astSource = """
 				.method public static sample ()V {

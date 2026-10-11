@@ -28,10 +28,24 @@ public sealed interface AssemblerCompletion {
 	 * 		Path to the class to complete.
 	 * @param text
 	 * 		Escaped text to insert, either an internal name or a descriptor.
+	 * @param replacePartialText
+	 *        {@code true} if the completion should replace the text that is already present in the editor.
+	 *        {@code false} if the completion should be inserted at the cursor position without replacing any text (appending).
+	 * @param matchRank
+	 * 		Structural type-match rank. Lower values indicate a stronger match.
 	 */
-	record Type(@Nonnull ClassPathNode path, @Nonnull String text) implements AssemblerCompletion {
+	record Type(@Nonnull ClassPathNode path, @Nonnull String text,
+	            boolean replacePartialText, int matchRank) implements AssemblerCompletion {
+		public Type(@Nonnull ClassPathNode path, @Nonnull String text, boolean replacePartialText) {
+			this(path, text, replacePartialText, 0);
+		}
+
+		public Type(@Nonnull ClassPathNode path, @Nonnull String text) {
+			this(path, text, false, 0);
+		}
+
 		public Type(@Nonnull ClassPathNode path) {
-			this(path, EscapeUtil.escapeLiteral(path.getValue().getName()));
+			this(path, EscapeUtil.escapeLiteral(path.getValue().getName()), false, 0);
 		}
 	}
 

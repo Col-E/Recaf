@@ -261,6 +261,14 @@ public class AssemblerTabCompleter implements TabCompleter<AssemblerCompletion>,
 		}
 
 		@Override
+		protected boolean complete(@Nonnull String partialText, @Nonnull AssemblerCompletion selected,
+		                           @Nonnull String fullText) {
+			if (selected instanceof AssemblerCompletion.Type type && type.replacePartialText())
+				return completeByReplacingPartialText(partialText, fullText);
+			return super.complete(partialText, selected, fullText);
+		}
+
+		@Override
 		public boolean doComplete(@Nonnull String partialText) {
 			AssemblerCompletion selected = getSelected();
 			boolean completed = super.doComplete(partialText);

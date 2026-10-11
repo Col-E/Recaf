@@ -3,6 +3,7 @@ package software.coley.recaf.ui.control.richtext.suggest.assembler;
 import jakarta.annotation.Nonnull;
 import me.darknet.assembler.util.EscapeUtil;
 import software.coley.recaf.ui.control.richtext.suggest.lookups.TypeVisibility;
+import software.coley.recaf.ui.control.richtext.suggest.typeindex.TypeCandidate;
 
 import java.util.List;
 import java.util.Objects;
@@ -12,7 +13,7 @@ import java.util.Objects;
  *
  * @author Matt Coley
  */
-final class AssemblerTypeCompletions {
+public final class AssemblerTypeCompletions {
 	private AssemblerTypeCompletions() {}
 
 	/**
@@ -28,17 +29,17 @@ final class AssemblerTypeCompletions {
 	 * @return Class completions whose text extends the prefix, limited to types accessible from the edited class.
 	 */
 	@Nonnull
-	static List<AssemblerCompletion> complete(@Nonnull AssemblerCompletionScope scope, @Nonnull String prefix,
-	                                          boolean descriptorByDefault, boolean requireArray) {
+	public static List<AssemblerCompletion> complete(@Nonnull AssemblerCompletionScope scope, @Nonnull String prefix,
+	                                                 boolean descriptorByDefault, boolean requireArray) {
 		String internalPrefix = classNamePrefix(prefix);
-		return scope.typesWithPrefix(internalPrefix).stream()
-				.filter(candidate -> TypeVisibility.isAccessibleType(candidate, scope.currentPackage()))
-				.map(candidate -> {
-					String text = classTypeText(candidate.internalName(), prefix, descriptorByDefault, requireArray);
-					return new AssemblerCompletion.Type(Objects.requireNonNull(candidate.path()),
-							EscapeUtil.escapeLiteral(text));
+		return scope.typesMatchingPrefix(internalPrefix).stream()
+				.filter(match -> TypeVisibility.isAccessibleType(match.candidate(), scope.currentPackage()))
+				.map(match -> {
+					TypeCandidate candidate = match.candidate();
+					String text = EscapeUtil.escapeLiteral(classTypeText(candidate.internalName(), prefix, descriptorByDefault, requireArray));
+					return new AssemblerCompletion.Type(Objects.requireNonNull(candidate.path()), text, !text.startsWith(prefix), match.kind().rank());
 				})
-				.filter(type -> type.text().startsWith(prefix) && !type.text().equals(prefix))
+				.filter(type -> !type.text().equals(prefix) && (type.replacePartialText() || type.text().startsWith(prefix)))
 				.map(AssemblerCompletion.class::cast)
 				.toList();
 	}
@@ -50,7 +51,7 @@ final class AssemblerTypeCompletions {
 	 * @return The internal class name the prefix refers to, with descriptor syntax removed.
 	 */
 	@Nonnull
-	static String classNamePrefix(@Nonnull String prefix) {
+	public static String classNamePrefix(@Nonnull String prefix) {
 		int index = 0;
 		while (index < prefix.length() && prefix.charAt(index) == '[')
 			index++;
@@ -73,8 +74,8 @@ final class AssemblerTypeCompletions {
 	 * @return The class name in the form the user is typing.
 	 */
 	@Nonnull
-	static String classTypeText(@Nonnull String name, @Nonnull String typedPrefix,
-	                            boolean descriptorByDefault, boolean requireArray) {
+	public static String classTypeText(@Nonnull String name, @Nonnull String typedPrefix,
+	                                   boolean descriptorByDefault, boolean requireArray) {
 		int arrayDimensions = 0;
 		while (arrayDimensions < typedPrefix.length() && typedPrefix.charAt(arrayDimensions) == '[')
 			arrayDimensions++;

@@ -360,22 +360,19 @@ final class AssemblerReferenceCompletions {
 				return Collections.emptyList();
 
 			if (name == null && desc == null) {
-				// TODO: startsWith is nice, but mirroring IntelliJ would be nicer
-				//  - Should be able to complete "new Strin" to "new java/lang/String"
-				//    - But out completion system just appends text so we'd need to do some more work there.
-				//  - Also like IntelliJ we should prioritize common completions over niche ones
-				//    - Also not something that happens right here
 				if (partialInput.endsWith(".")) {
 					ClassPathNode ownerPath = scope.workspace().findClass(owner);
 					if (ownerPath != null)
 						return memberCompletions(ownerPath, classMemberLookup, member -> true);
 				} else {
 					// No separator, user is still typing out a class name.
-					return scope.typesWithPrefix(owner).stream()
-							.filter(c -> TypeVisibility.isAccessibleType(c, scope.currentPackage()))
-							.map(c -> new AssemblerCompletion.Type(Objects.requireNonNull(c.path()), EscapeUtil.escapeLiteral(
-									AssemblerTypeCompletions.classTypeText(c.internalName(), owner, false, false))))
-							.filter(type -> type.text().startsWith(matchedText) && !type.text().equals(matchedText))
+					return scope.typesMatchingPrefix(owner).stream()
+							.filter(match -> TypeVisibility.isAccessibleType(match.candidate(), scope.currentPackage()))
+							.map(match -> {
+								String text = EscapeUtil.escapeLiteral(AssemblerTypeCompletions.classTypeText(match.candidate().internalName(), owner, false, false));
+								return new AssemblerCompletion.Type(Objects.requireNonNull(match.candidate().path()), text, !text.startsWith(matchedText), match.kind().rank());
+							})
+							.filter(type -> !type.text().equals(matchedText) && (type.replacePartialText() || type.text().startsWith(matchedText)))
 							.map(AssemblerCompletion.class::cast)
 							.toList();
 				}

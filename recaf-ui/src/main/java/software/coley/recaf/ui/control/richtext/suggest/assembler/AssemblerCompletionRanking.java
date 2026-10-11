@@ -15,7 +15,7 @@ import java.util.TreeMap;
  *
  * @author Matt Coley
  */
-final class AssemblerCompletionRanking {
+public final class AssemblerCompletionRanking {
 	private static final Map<String, Integer> TYPE_BASELINES = new TreeMap<>();
 	private static final Map<String, Integer> MEMBER_BASELINES = new TreeMap<>();
 
@@ -66,9 +66,9 @@ final class AssemblerCompletionRanking {
 	 * @return Ranker for assembler completions.
 	 */
 	@Nonnull
-	static CompletionRanker<AssemblerCompletion> create(@Nonnull TabCompletionConfig config) {
+	public static CompletionRanker<AssemblerCompletion> create(@Nonnull TabCompletionConfig config) {
 		RankingKeys<AssemblerCompletion> keys = new RankingKeys<>(
-				completion -> 0,
+				completion -> completion instanceof AssemblerCompletion.Type type ? type.matchRank() : 0,
 				AssemblerCompletion::text,
 				AssemblerCompletion::text,
 				AssemblerCompletionRanking::learningKey,

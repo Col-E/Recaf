@@ -8,7 +8,6 @@ import software.coley.recaf.info.StubClassInfo;
 import software.coley.recaf.info.StubFileInfo;
 import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.ui.control.richtext.suggest.lookups.TypeVisibility;
-import software.coley.recaf.ui.control.richtext.suggest.typeindex.TypeCandidate;
 import software.coley.recaf.workspace.model.BasicWorkspace;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.BasicJvmClassBundle;
@@ -26,6 +25,7 @@ import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
@@ -168,21 +168,84 @@ class TypeIndexServiceTest {
 
 	@Test
 	void typesWithInternalNamePrefixKeepsNestedAndPackagedNamesDistinct() {
+		// Make a workspace with two classes that have unique internal names, but the same simple name and package.
 		WorkspaceManager workspaceManager = mock(WorkspaceManager.class);
 		TypeIndexService service = new TypeIndexService(workspaceManager);
 		Workspace workspace = workspaceWith("a/b$c", "a/b/c");
 		TypeIndex index = service.getIndex(workspace);
 
+		// Both the nested and packaged types should be present, and distinct.
 		Set<String> internalNames = index.typesWithInternalNamePrefix("a/b").stream()
 				.map(TypeCandidate::internalName)
-				.collect(java.util.stream.Collectors.toSet());
+				.collect(Collectors.toSet());
 		assertEquals(Set.of("a/b$c", "a/b/c"), internalNames);
 
+		// If we look for the same type twice, we should get the same candidate back (no duplicates).
 		TypeCandidate first = index.findType("a.b.c");
 		TypeCandidate second = index.findType("a.b.c");
 		assertNotNull(first);
-		assertEquals(first, second);
+		assertSame(first, second);
 		assertTrue(Set.of("a/b$c", "a/b/c").contains(first.internalName()));
+	}
+
+	@Test
+	void typesWithSimpleNamePrefixTracksDistinctAndUpdatedCandidates() {
+		// Make a workspace with two classes that have the same simple name, but different internal names.
+		WorkspaceManager workspaceManager = mock(WorkspaceManager.class);
+		TypeIndexService service = new TypeIndexService(workspaceManager);
+		Workspace workspace = workspaceWith("a/Shared", "b/Shared", "a/SharedType");
+		TypeIndex index = service.getIndex(workspace);
+
+		// All three types should be present, and distinct.
+		Set<String> initial = index.typesWithSimpleNamePrefix("Share").stream()
+				.map(TypeCandidate::internalName)
+				.collect(Collectors.toSet());
+		assertEquals(Set.of("a/Shared", "b/Shared", "a/SharedType"), initial);
+
+		// Adding a new class with the same prefix but a distinct suffix will update the index.
+		workspace.getPrimaryResource().getJvmClassBundle().put(new StubClassInfo("c/SharedNew").asJvmClass());
+		assertTrue(service.getIndex(workspace).typesWithSimpleNamePrefix("Share").stream()
+				.map(TypeCandidate::internalName).collect(Collectors.toSet())
+				.contains("c/SharedNew"));
+		assertEquals(Set.of("c/SharedNew"), service.getIndex(workspace).typesWithCamelHumpPrefix("ShN").stream()
+				.map(TypeCandidate::internalName).collect(Collectors.toSet()));
+
+		// Removing a class also removes its indexed camel-hump entry.
+		workspace.getPrimaryResource().getJvmClassBundle().remove("c/SharedNew");
+		assertTrue(service.getIndex(workspace).typesWithCamelHumpPrefix("ShN").isEmpty());
+
+		// Removing one of the original classes will also update the simple-name index.
+		workspace.getPrimaryResource().getJvmClassBundle().remove("a/Shared");
+		Set<String> afterRemoval = service.getIndex(workspace).typesWithSimpleNamePrefix("Share").stream()
+				.map(TypeCandidate::internalName)
+				.collect(Collectors.toSet());
+		assertEquals(Set.of("b/Shared", "a/SharedType"), afterRemoval);
+	}
+
+	@Test
+	void typesWithCamelHumpPrefixMatchesFragmentsAndInitials() {
+		WorkspaceManager workspaceManager = mock(WorkspaceManager.class);
+		TypeIndexService service = new TypeIndexService(workspaceManager);
+		TypeIndex index = service.getIndex(workspaceWith(
+				"java/lang/StringBuilder",
+				"java/lang/StringBuffer",
+				"java/util/concurrent/ConcurrentHashMap",
+				"example/YouAreNotGoingToMatchThis"));
+
+		// StrB is a camel-hump match for both StringBuilder and StringBuffer.
+		assertEquals(Set.of("java/lang/StringBuilder", "java/lang/StringBuffer"),
+				index.typesWithCamelHumpPrefix("StrB").stream()
+						.map(TypeCandidate::internalName).collect(Collectors.toSet()));
+
+		// SB is also a match for both.
+		assertEquals(Set.of("java/lang/StringBuilder", "java/lang/StringBuffer"),
+				index.typesWithCamelHumpPrefix("SB").stream()
+						.map(TypeCandidate::internalName).collect(Collectors.toSet()));
+
+		// CHM is a match for ConcurrentHashMap.
+		assertEquals(Set.of("java/util/concurrent/ConcurrentHashMap"),
+				index.typesWithCamelHumpPrefix("CHM").stream()
+						.map(TypeCandidate::internalName).collect(Collectors.toSet()));
 	}
 
 	@Test
