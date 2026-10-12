@@ -15,7 +15,14 @@ final class PluginContainerImpl<P extends Plugin> implements PluginContainer<P> 
 	final PreparedPlugin preparedPlugin;
 	final PluginClassLoader classLoader;
 	P plugin;
+	PluginCdiContainer container;
 
+	/**
+	 * @param preparedPlugin
+	 * 		Plugin that has been prepared for loading.
+	 * @param classLoader
+	 * 		Class loader to load the plugin with.
+	 */
 	PluginContainerImpl(@Nonnull PreparedPlugin preparedPlugin, @Nonnull PluginClassLoader classLoader) {
 		this.preparedPlugin = preparedPlugin;
 		this.classLoader = classLoader;
@@ -31,9 +38,26 @@ final class PluginContainerImpl<P extends Plugin> implements PluginContainer<P> 
 	@Override
 	public P plugin() {
 		P plugin = this.plugin;
-		if (plugin == null) {
+
+		if (plugin == null)
 			throw new IllegalStateException("Uninitialized plugin");
-		}
+
 		return plugin;
+	}
+
+	/**
+	 * Fires an event to the plugin's CDI container.
+	 *
+	 * @param eventType
+	 * 		Event type.
+	 * @param event
+	 * 		Event instance.
+	 * @param <T>
+	 * 		Event type.
+	 */
+	<T> void fireEvent(@Nonnull Class<T> eventType, @Nonnull T event) {
+		PluginCdiContainer runtime = container;
+		if (runtime != null)
+			runtime.fireEvent(eventType, event);
 	}
 }

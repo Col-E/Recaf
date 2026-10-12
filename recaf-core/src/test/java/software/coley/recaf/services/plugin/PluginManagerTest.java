@@ -1,547 +1,526 @@
 package software.coley.recaf.services.plugin;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
+import jakarta.annotation.Nonnull;
 import org.junit.jupiter.api.Test;
-import software.coley.recaf.info.builder.JvmClassInfoBuilder;
+import software.coley.recaf.cdi.InitializationEvent;
+import software.coley.recaf.cdi.UiInitializationEvent;
 import software.coley.recaf.plugin.Plugin;
 import software.coley.recaf.services.compile.CompileMap;
-import software.coley.recaf.services.compile.CompilerDiagnostic;
-import software.coley.recaf.services.compile.CompilerResult;
-import software.coley.recaf.services.compile.JavacArguments;
-import software.coley.recaf.services.compile.JavacArgumentsBuilder;
-import software.coley.recaf.services.compile.JavacCompiler;
-import software.coley.recaf.services.plugin.discovery.DiscoveredPluginSource;
-import software.coley.recaf.services.plugin.discovery.PluginDiscoverer;
-import software.coley.recaf.services.plugin.zip.ZipPluginLoader;
-import software.coley.recaf.test.TestBase;
-import software.coley.recaf.test.TestClassUtils;
-import software.coley.recaf.util.io.ByteSource;
-import software.coley.recaf.util.io.ByteSources;
-import software.coley.recaf.util.io.ZipCreationUtils;
-import software.coley.recaf.workspace.model.Workspace;
-import software.coley.recaf.workspace.model.bundle.BasicJvmClassBundle;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.StringJoiner;
-import java.util.stream.Collectors;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Tests for {@link PluginManager}
+ * Tests for {@link PluginManager}.
  */
-public class PluginManagerTest extends TestBase {
-	private static final String ENABLE_COUNT_PREFIX = "recaf.test.plugin.enable.";
-	private static final String DISABLE_COUNT_PREFIX = "recaf.test.plugin.disable.";
+public class PluginManagerTest extends PluginTestBase {
+	@Test
+	void testLoadedPluginExposesInformationAndUnloads() throws Exception {
+		String className = "test/PluginTest";
+		PluginInfo expected = new PluginInfo("test-plugin", "test plugin", "test-version", "test-author", "test-description", Set.of(), Set.of());
+		byte[] zip = pluginArchive(className, pluginSource(className, expected, "", ""));
 
-	private static PluginManager pluginManager;
-	private static JavacCompiler javac;
+		// Load the plugin and verify that it is registered and exposes the expected information.
+		PluginContainer<?> container = pluginManager.loadPlugins(discoverArchives(zip)).iterator().next();
+		assertEquals(expected, container.info());
+		assertSame(container, pluginManager.getPlugin(expected.id()));
+		assertEquals(1, pluginManager.getPlugins().size());
 
-	@BeforeAll
-	static void setup() {
-		pluginManager = recaf.get(PluginManager.class);
-		javac = recaf.get(JavacCompiler.class);
-	}
-
-	@AfterEach
-	void verifyCleanSlate() {
-		assertEquals(0, pluginManager.getPlugins().size(), "Plugins still loaded after test case");
+		// Unload the plugin and verify that it is no longer registered.
+		pluginManager.unloaderFor(expected.id()).commit();
+		assertNull(pluginManager.getPlugin(expected.id()));
+		assertTrue(pluginManager.getPlugins().isEmpty());
 	}
 
 	@Test
-	void testBatchLoadedPluginCanReferenceDependencyClasses() throws IOException {
-		// Setup two plugins, one of which depends on the other.
-		// The dependent plugin will call a static method on a class in the dependency plugin.
-		String apiId = "api-plugin";
-		String implId = "impl-plugin";
-		String apiPluginClass = "test/ApiPlugin";
-		String apiTypeClass = "test/ApiType";
-		String implPluginClass = "test/ImplPlugin";
-		Map<String, String> apiSources = new HashMap<>();
-		apiSources.put(apiPluginClass, pluginSource(apiPluginClass, apiId, new String[0], "", ""));
-		apiSources.put(apiTypeClass, javaSource(apiTypeClass, """
-				public class ApiType {
-					public static String message() {
-						return "dependency-ok";
-					}
-				}
-				"""));
+	void testLoadingAlreadyLoadedPluginIsRejected() throws Exception {
+		String id = "duplicate-load-plugin";
+		String className = "test/DuplicateLoadPlugin";
+		byte[] zip = pluginArchive(className, pluginSource(className, pluginInfo(id), "", ""));
+		PluginContainer<?> loaded = pluginManager.loadPlugins(discoverArchives(zip)).iterator().next();
 
-		CompilerResult apiCompilation = compilePluginSources(apiPluginClass, apiSources, Map.of());
-		byte[] apiZip = createPluginZip(apiPluginClass, apiCompilation.getCompilations(), Map.of());
-		byte[] implZip = createPluginZip(
-				implPluginClass,
-				Map.of(implPluginClass, pluginSource(
-						implPluginClass,
-						implId,
-						new String[]{apiId},
-						"""
-								if (!java.util.Objects.equals("dependency-ok", ApiType.message())) {
-									throw new IllegalStateException("Expected dependency-ok from ApiType.message()");
-								}
-								""",
-						""
-				)),
-				apiCompilation.getCompilations(),
-				Map.of()
-		);
+		// Attempting to load the same plugin again should fail, and the original plugin should remain loaded.
+		assertThrows(PluginException.class, () -> pluginManager.loadPlugins(discoverArchives(zip)), "Loading an already loaded plugin should fail");
+		assertSame(loaded, pluginManager.getPlugin(id), "A rejected load should keep the original plugin");
+		assertEquals(1, pluginManager.getPlugins().size());
 
-		try {
-			// We should be able to load both plugins in the same batch.
-			PluginDiscoverer discoverer = () -> List.of(
-					() -> ByteSources.wrap(apiZip),
-					() -> ByteSources.wrap(implZip)
-			);
-			Collection<PluginContainer<?>> containers = pluginManager.loadPlugins(discoverer);
+		pluginManager.unloaderFor(id).commit();
+	}
 
-			// Validate both are loaded and accessible.
-			// That implies that the dependent plugin was able to see the API plugin's classes during its onEnable().
-			assertEquals(2, containers.size());
-			assertNotNull(pluginManager.getPlugin(apiId));
-			assertNotNull(pluginManager.getPlugin(implId));
+	@Test
+	void testUnloadingRootUnloadsWholeChain() throws Exception {
+		// Each plugin depends on the previous one: 0 <- 1 <- 2
+		byte[] zip0 = pluginArchive("test/PluginTest0",
+				pluginSource("test/PluginTest0", pluginInfo("test-plugin-0"), "", ""));
+		byte[] zip1 = pluginArchive("test/PluginTest1",
+				pluginSource("test/PluginTest1", pluginInfo("test-plugin-1", "test-plugin-0"), "", ""));
+		byte[] zip2 = pluginArchive("test/PluginTest2",
+				pluginSource("test/PluginTest2", pluginInfo("test-plugin-2", "test-plugin-1"), "", ""));
 
-			// Unload the API plugin, which should also unload the dependent plugin.
-			pluginManager.unloaderFor(apiId).commit();
-			assertNull(pluginManager.getPlugin(apiId));
-			assertNull(pluginManager.getPlugin(implId));
-		} catch (PluginException ex) {
-			fail("Failed to load plugins with same-batch dependency class visibility", ex);
+		// Load all three plugins and verify that they are registered.
+		pluginManager.loadPlugins(discoverArchives(zip0, zip1, zip2));
+		assertEquals(3, pluginManager.getPlugins().size());
+
+		// Unloading the root plugin should unload all dependants.
+		pluginManager.unloaderFor("test-plugin-0").commit();
+		assertTrue(pluginManager.getPlugins().isEmpty(), "Dependants should unload along with their dependency");
+	}
+
+	@Test
+	void testDiamondDependencyUnloadsEachPluginOnce() throws Exception {
+		// A is shared by B and C, and D depends on both B and C.
+		byte[] zipA = countingPluginArchive("test/DiamondA", "diamond-a");
+		byte[] zipB = countingPluginArchive("test/DiamondB", "diamond-b", "diamond-a");
+		byte[] zipC = countingPluginArchive("test/DiamondC", "diamond-c", "diamond-a");
+		byte[] zipD = countingPluginArchive("test/DiamondD", "diamond-d", "diamond-b", "diamond-c");
+		pluginManager.loadPlugins(discoverArchives(zipA, zipB, zipC, zipD));
+		assertEquals(4, pluginManager.getPlugins().size());
+
+		// Unloading the shared root must unload every dependant, and must not run any lifecycle method twice.
+		pluginManager.unloaderFor("diamond-a").commit();
+		assertTrue(pluginManager.getPlugins().isEmpty());
+		for (String id : List.of("diamond-a", "diamond-b", "diamond-c", "diamond-d")) {
+			assertEquals(1, counterValue(enableKey(id)), id + " should be enabled once");
+			assertEquals(1, counterValue(disableKey(id)), id + " should be disabled once");
 		}
 	}
 
 	@Test
-	void testPluginsWithSameClassNameUseSeparateLoaders() throws IOException, PluginException {
-		// Create two plugins with the same class name, but different plugin IDs.
+	void testCircularDependencyFailsDuringEnable() throws Exception {
+		byte[] zipA = pluginArchive("test/CircularA",
+				pluginSource("test/CircularA", pluginInfo("circular-a", "circular-b"), "", ""));
+		byte[] zipB = pluginArchive("test/CircularB",
+				pluginSource("test/CircularB", pluginInfo("circular-b", "circular-a"), "", ""));
+
+		// The circular dependency should be detected during enablement, and the plugin manager should roll back the load.
+		assertThrows(PluginException.class, () -> pluginManager.loadPlugins(discoverArchives(zipA, zipB)),
+				"Circular plugin dependencies should fail during enablement");
+		assertTrue(pluginManager.getPlugins().isEmpty(),
+				"A failed circular load should not leave plugins loaded");
+	}
+
+	@Test
+	void testBatchLoadedPluginCanReferenceDependencyClasses() throws Exception {
+		String apiId = "api-plugin";
+		String implId = "impl-plugin";
+		String apiEntry = "test/ApiPlugin";
+		String implEntry = "test/ImplPlugin";
+		String key = property("batch.dependency");
+
+		// The impl archive only contains its own entry point. It is compiled against the API classes, so it can only
+		// enable if the API archive's classes are visible to it when both are loaded in the same batch.
+		CompileMap apiClasses = compile(apiEntry, Map.of(
+				apiEntry, pluginSource(apiEntry, pluginInfo(apiId), "", ""),
+				"test/ApiType", javaSource("test/ApiType", """
+						public class ApiType {
+							public static String message() {
+								return "dependency-ok";
+							}
+						}
+						""")), Map.of());
+
+		// The plugin writes to the key when it is enabled.
+		String implSource = pluginSource(implEntry, pluginInfo(implId, apiId),
+				"System.setProperty(\"" + key + "\", ApiType.message());", "");
+		byte[] apiZip = archive(apiEntry, apiClasses, Map.of());
+		byte[] implZip = archive(implEntry, compile(implEntry, Map.of(implEntry, implSource), apiClasses), Map.of());
+
+		// Load both plugins in the same batch and verify that the impl plugin can see the API classes during enablement.
+		Collection<PluginContainer<?>> containers = pluginManager.loadPlugins(discoverArchives(apiZip, implZip));
+		assertEquals(2, containers.size());
+		assertEquals("dependency-ok", System.getProperty(key), "Dependent plugin should see the API classes while enabling");
+
+		// Unloading the dependency also unloads its dependant.
+		pluginManager.unloaderFor(apiId).commit();
+		assertFalse(pluginManager.isPluginLoaded(apiId));
+		assertFalse(pluginManager.isPluginLoaded(implId));
+	}
+
+	@Test
+	void testPluginsWithSameClassNameUseSeparateLoaders() throws Exception {
 		String className = "test/DuplicateNamePlugin";
 		String firstId = "duplicate-name-first";
 		String secondId = "duplicate-name-second";
-		byte[] firstZip = createPluginZip(className, pluginSource(className, firstId, new String[0], "", ""), Map.of());
-		byte[] secondZip = createPluginZip(className, pluginSource(className, secondId, new String[0], "", ""), Map.of());
-		PluginDiscoverer discoverer = () -> List.of(
-				() -> ByteSources.wrap(firstZip),
-				() -> ByteSources.wrap(secondZip)
-		);
+		byte[] firstZip = pluginArchive(className, pluginSource(className, pluginInfo(firstId), "", ""));
+		byte[] secondZip = pluginArchive(className, pluginSource(className, pluginInfo(secondId), "", ""));
 
-		// Load both plugins in the same batch, which should succeed.
-		// Each should have its own classloader, and the classes should not be the same reference.
-		try {
-			assertEquals(2, pluginManager.loadPlugins(discoverer).size());
-			Plugin firstPlugin = pluginManager.getPlugin(firstId).plugin();
-			Plugin secondPlugin = pluginManager.getPlugin(secondId).plugin();
-			assertNotSame(firstPlugin.getClass(), secondPlugin.getClass());
-			assertNotSame(firstPlugin.getClass().getClassLoader(), secondPlugin.getClass().getClassLoader());
-		} finally {
-			if (pluginManager.isPluginLoaded(firstId))
-				pluginManager.unloaderFor(firstId).commit();
-			if (pluginManager.isPluginLoaded(secondId))
-				pluginManager.unloaderFor(secondId).commit();
-		}
+		// Both plugins define the same class name,
+		// but they are loaded in the same batch so they must be isolated from each other.
+		assertEquals(2, pluginManager.loadPlugins(discoverArchives(firstZip, secondZip)).size());
+		Plugin first = pluginManager.getPlugin(firstId).plugin();
+		Plugin second = pluginManager.getPlugin(secondId).plugin();
+		assertEquals(first.getClass().getName(), second.getClass().getName(), "Both plugins should define the same class");
+		assertNotSame(first.getClass().getClassLoader(), second.getClass().getClassLoader(),
+				"Same-named plugin classes should come from separate class loaders");
+
+		pluginManager.unloaderFor(firstId).commit();
+		pluginManager.unloaderFor(secondId).commit();
 	}
 
 	@Test
-	void testPluginUnloadReleasesCdiInstance() throws IOException, PluginException {
-		// Create a plugin that sets a property during its @PreDestroy method,
-		// which should be called when the plugin is unloaded.
+	void testPluginsWithSameLocalBeanNameUseIndependentContainers() throws Exception {
+		String firstId = "local-bean-first";
+		String secondId = "local-bean-second";
+		String firstEntry = "test/FirstLocalBeanPlugin";
+		String secondEntry = "test/SecondLocalBeanPlugin";
+		String firstKey = property("local.first");
+		String secondKey = property("local.second");
+		byte[] firstZip = pluginArchive(firstEntry, Map.of(
+				firstEntry, injectedValuePlugin(firstEntry, pluginInfo(firstId), firstKey),
+				"shared/LocalValue", localValueSource("first")), Map.of());
+		byte[] secondZip = pluginArchive(secondEntry, Map.of(
+				secondEntry, injectedValuePlugin(secondEntry, pluginInfo(secondId), secondKey),
+				"shared/LocalValue", localValueSource("second")), Map.of());
+
+		// Discovery order is reversed so the result cannot depend on which plugin happens to be constructed first.
+		pluginManager.loadPlugins(discoverArchives(secondZip, firstZip));
+		assertEquals("first", System.getProperty(firstKey));
+		assertEquals("second", System.getProperty(secondKey));
+
+		pluginManager.unloaderFor(firstId).commit();
+		pluginManager.unloaderFor(secondId).commit();
+	}
+
+	@Test
+	void testUndefinableArchiveClassFailsLoadAndReleasesRuntime() throws Exception {
+		String id = "plugin-cdi-missing-class";
+		String className = "test/MissingClassPlugin";
+
+		// The zero-length class is listed for CDI discovery but cannot be defined.
+		// The partially built CDI container must be shut down, which the base class verifies after this test.
+		byte[] zip = pluginArchive(className, Map.of(className, pluginSource(className, pluginInfo(id), "", "")),
+				Map.of("broken/Missing.class", new byte[0]));
+
+		// Loading the junk class should fail.
+		PluginException failure = assertThrows(PluginException.class,
+				() -> pluginManager.loadPlugins(discoverArchives(zip)));
+		assertTrue(failure.getMessage().contains("broken.Missing"),
+				() -> "Failure should name the class that could not be defined: " + failure.getMessage());
+	}
+
+	@Test
+	void testPluginCdiInjectionBridgesRecafAndDiscoversLocalProducer() throws Exception {
+		// This test looks scary because there's a lot of plugin code defined here but the gist is:
+		// - The plugin has a local bean and a local producer.
+		// - The plugin injects Recaf's workspace manager and current workspace.
+		// - The plugin injects the local bean and the local producer's bean.
+		// - The plugin writes to system properties to verify that all of the above injections worked.
+		String id = "plugin-cdi-injection";
+		String entry = "test/RecafBridgePlugin";
+		String key = property("cdi.injection");
+		Map<String, String> sources = Map.of(
+				entry, javaSource(entry, """
+						import jakarta.enterprise.inject.spi.BeanManager;
+						import jakarta.inject.Inject;
+						import software.coley.recaf.plugin.Plugin;
+						import software.coley.recaf.plugin.PluginInformation;
+						import software.coley.recaf.services.workspace.WorkspaceManager;
+						import software.coley.recaf.workspace.model.Workspace;
+						%s
+						public class RecafBridgePlugin implements Plugin {
+							private final LocalService service;
+							private final LocalProduct product;
+							private final WorkspaceManager workspaceManager;
+							private final Workspace workspace;
+							private final BeanManager beanManager;
+						
+							@Inject
+							public RecafBridgePlugin(LocalService service, LocalProduct product,
+							                         WorkspaceManager workspaceManager, Workspace workspace,
+							                         BeanManager beanManager) {
+								this.service = service;
+								this.product = product;
+								this.workspaceManager = workspaceManager;
+								this.workspace = workspace;
+								this.beanManager = beanManager;
+							}
+						
+							@Override
+							public void onEnable() {
+								System.setProperty("%2$s.service", service.value());
+								System.setProperty("%2$s.product", product.value());
+								System.setProperty("%2$s.workspace", String.valueOf(
+										workspace != null && workspaceManager != null && workspaceManager.getCurrent() == workspace));
+								System.setProperty("%2$s.localBeans", String.valueOf(
+										beanManager.getBeans(LocalService.class).size() == 1));
+							}
+						
+							@Override
+							public void onDisable() {}
+						}
+						""".formatted(informationAnnotation(pluginInfo(id)), key)),
+				"test/LocalService", javaSource("test/LocalService", """
+						import jakarta.enterprise.context.ApplicationScoped;
+						@ApplicationScoped
+						public class LocalService {
+							public String value() {
+								return "local";
+							}
+						}
+						"""),
+				"test/LocalProduct", javaSource("test/LocalProduct", """
+						public class LocalProduct {
+							private final String value;
+						
+							public LocalProduct(String value) {
+								this.value = value;
+							}
+						
+							public String value() {
+								return value;
+							}
+						}
+						"""),
+				"test/LocalProductFactory", javaSource("test/LocalProductFactory", """
+						import jakarta.enterprise.context.ApplicationScoped;
+						import jakarta.enterprise.context.Dependent;
+						import jakarta.enterprise.inject.Produces;
+						@ApplicationScoped
+						public class LocalProductFactory {
+							@Produces
+							@Dependent
+							public LocalProduct create() {
+								return new LocalProduct("produced");
+							}
+						}
+						"""));
+
+		// All properties should be written to, verifying that the plugin can inject core container beans and its own local beans.
+		pluginManager.loadPlugins(discoverArchives(pluginArchive(entry, sources, Map.of())));
+		assertEquals("local", System.getProperty(key + ".service"), "Plugin should inject its own local bean");
+		assertEquals("produced", System.getProperty(key + ".product"), "Plugin should inject a local producer's bean");
+		assertEquals("true", System.getProperty(key + ".workspace"), "Plugin should inject Recaf's current workspace");
+		assertEquals("true", System.getProperty(key + ".localBeans"), "Plugin container should discover its own local bean");
+
+		pluginManager.unloaderFor(id).commit();
+	}
+
+	@Test
+	void testPluginLocalScopedBeansAreDestroyedOnUnload() throws Exception {
+		String id = "plugin-local-scope-unload";
+		String appKey = property("scoped.app.unload");
+		String dependentKey = property("scoped.dependent.unload");
+		byte[] zip = scopedLifecycleArchive("test/ScopedUnloadPlugin", id, appKey, dependentKey, false);
+
+		// Load the plugin and verify that the application-scoped
+		// and dependent-scoped beans are not destroyed while the plugin is loaded.
+		pluginManager.loadPlugins(discoverArchives(zip));
+		assertNull(System.getProperty(appKey), "Application-scoped bean should not be destroyed while loaded");
+		assertNull(System.getProperty(dependentKey), "Dependent bean should not be destroyed while loaded");
+
+		// Unload the plugin and verify that the application-scoped and dependent-scoped beans are destroyed.
+		// The property values are written to by the @PreDestroy methods of the beans.
+		pluginManager.unloaderFor(id).commit();
+		assertEquals("app-released", System.getProperty(appKey));
+		assertEquals("dependent-released", System.getProperty(dependentKey));
+	}
+
+	@Test
+	void testPluginLocalScopedBeansAreDestroyedOnFailedEnableRollback() throws Exception {
+		String id = "plugin-local-scope-rollback";
+		String appKey = property("scoped.app.rollback");
+		String dependentKey = property("scoped.dependent.rollback");
+		byte[] zip = scopedLifecycleArchive("test/ScopedRollbackPlugin", id, appKey, dependentKey, true);
+
+		// The plugin fails to enable, which should roll back the load and destroy the application-scoped and dependent-scoped beans.
+		assertThrows(PluginException.class, () -> pluginManager.loadPlugins(discoverArchives(zip)));
+		assertEquals("app-released", System.getProperty(appKey));
+		assertEquals("dependent-released", System.getProperty(dependentKey));
+		assertTrue(pluginManager.getPlugins().isEmpty());
+	}
+
+	@Test
+	void testPluginUnloadReleasesCdiInstance() throws Exception {
 		String id = "release-plugin";
-		String lifecycleKey = "recaf.test.plugin.release.unload";
-		String className = "test/ReleasePlugin";
-		System.clearProperty(lifecycleKey);
-		byte[] zip = createLifecyclePluginZip(className, id, lifecycleKey, "");
+		String key = property("release.unload");
+		byte[] zip = lifecyclePluginArchive("test/ReleasePlugin", id, key, "");
 
-		// Load the plugin, then unload it.
-		// The property should be unset at first, then set after deconstruction.
-		try {
-			PluginDiscoverer discoverer = () -> List.of(() -> ByteSources.wrap(zip));
-			pluginManager.loadPlugins(discoverer);
-			assertNull(System.getProperty(lifecycleKey));
-			pluginManager.unloaderFor(id).commit();
-			assertEquals("released", System.getProperty(lifecycleKey));
-		} finally {
-			try {
-				if (pluginManager.isPluginLoaded(id))
-					pluginManager.unloaderFor(id).commit();
-			} finally {
-				System.clearProperty(lifecycleKey);
-			}
-		}
+		// Load the plugin, unload it, and verify that the @PreDestroy method is called on unload.
+		pluginManager.loadPlugins(discoverArchives(zip));
+		assertNull(System.getProperty(key), "@PreDestroy should not run before unload");
+		pluginManager.unloaderFor(id).commit();
+		assertEquals("released", System.getProperty(key), "@PreDestroy should run on unload");
 	}
 
 	@Test
-	void testFailedEnableReleasesCdiInstance() throws IOException, PluginException {
-		// Same test as above, but the plugin will throw an exception during onEnable,
-		// which should trigger a rollback that calls @PreDestroy.
+	void testFailedEnableReleasesCdiInstance() throws Exception {
 		String id = "release-failed-plugin";
-		String lifecycleKey = "recaf.test.plugin.release.rollback";
-		String className = "test/ReleaseFailedPlugin";
-		System.clearProperty(lifecycleKey);
-		byte[] zip = createLifecyclePluginZip(className, id, lifecycleKey, "throw new IllegalStateException(\"intentional enable failure\");");
+		String key = property("release.rollback");
+		byte[] zip = lifecyclePluginArchive("test/ReleaseFailedPlugin", id, key,
+				"throw new IllegalStateException(\"Intentional enable failure\");");
 
-		// Loading the plugin fails, same before/after test as above.
-		try {
-			PluginDiscoverer discoverer = () -> List.of(() -> ByteSources.wrap(zip));
-			assertNull(System.getProperty(lifecycleKey));
-			assertThrows(PluginException.class, () -> pluginManager.loadPlugins(discoverer));
-			assertEquals("released", System.getProperty(lifecycleKey));
-			assertEquals(0, pluginManager.getPlugins().size());
-		} finally {
-			try {
-				if (pluginManager.isPluginLoaded(id))
-					pluginManager.unloaderFor(id).commit();
-			} finally {
-				System.clearProperty(lifecycleKey);
-			}
-		}
+		// Plugin throws on enable, which should roll back the load and call @PreDestroy on the plugin instance.
+		assertNull(System.getProperty(key));
+		assertThrows(PluginException.class, () -> pluginManager.loadPlugins(discoverArchives(zip)));
+		assertEquals("released", System.getProperty(key), "@PreDestroy should run when enabling rolls back");
+		assertTrue(pluginManager.getPlugins().isEmpty());
 	}
 
 	@Test
-	void testPluginResourcesAreVisibleThroughGetResources() throws IOException {
-		String id = "resource-enumeration-plugin";
-		String pluginClass = "test/ResourceEnumerationPlugin";
-		String resourceName = "META-INF/services/example.Service";
-		String resourceContent = "example.Implementation";
+	void testFailedEnableCallsDisableDuringRollback() throws Exception {
+		String id = "failing-enable-plugin";
+		String className = "test/FailingEnablePlugin";
+		byte[] zip = pluginArchive(className, pluginSource(className, pluginInfo(id),
+				counterIncrement(enableKey(id)) + "\nthrow new IllegalStateException(\"Intentional enable failure\");",
+				counterIncrement(disableKey(id))));
 
+		// Plugin throws on enable, which should roll back the load and call onDisable on the plugin instance.
+		assertThrows(PluginException.class, () -> pluginManager.loadPlugins(discoverArchives(zip)), "Plugin loading should fail when onEnable throws");
+		assertEquals(1, counterValue(enableKey(id)), "onEnable should run once");
+		assertEquals(1, counterValue(disableKey(id)), "onDisable should run once during rollback");
+		assertTrue(pluginManager.getPlugins().isEmpty(), "Failed plugin should not remain loaded");
+	}
+
+	@Test
+	void testStartupEventsForwardAndIsolatePluginObserverFailures() throws Exception {
+		String initOrder = property("startup.init.order");
+		String uiOrder = property("startup.ui.order");
+
+		// Plugin 'b' is discovered first, but events are forwarded in plugin ID order, so 'a' is always notified first.
+		byte[] firstZip = startupObserverArchive("test/FirstStartupPlugin", "a-startup-observer", "a", true);
+		byte[] secondZip = startupObserverArchive("test/SecondStartupPlugin", "b-startup-observer", "b", false);
+		pluginManager.loadPlugins(discoverArchives(secondZip, firstZip));
+
+		recaf.getContainer().getBeanContainer().getEvent().fire(new InitializationEvent());
+		recaf.getContainer().getBeanContainer().getEvent().fire(new UiInitializationEvent());
+
+		// Plugin 'a' throws from its init observer, which must not stop plugin 'b' from being notified.
+		assertEquals("ab", System.getProperty(initOrder));
+		assertEquals("ab", System.getProperty(uiOrder));
+
+		pluginManager.unloaderFor("a-startup-observer").commit();
+		pluginManager.unloaderFor("b-startup-observer").commit();
+	}
+
+	@Test
+	void testPluginResourcesAreVisibleThroughGetResources() throws Exception {
 		// The plugin will attempt to enumerate the resource through ClassLoader#getResources,
 		// and validate that it can see the resource and that the content is as expected.
-		byte[] zip = createPluginZip(pluginClass, pluginSource(
-				pluginClass,
-				id,
-				new String[0],
-				"""
-						try {
-							var resources = getClass().getClassLoader().getResources("META-INF/services/example.Service");
-							if (!resources.hasMoreElements()) {
-								throw new IllegalStateException("Expected resource to be visible through ClassLoader#getResources");
-							}
-							var resource = resources.nextElement();
-							try (var inputStream = resource.openStream()) {
-								String content = new String(inputStream.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
-								if (!java.util.Objects.equals("example.Implementation", content)) {
-									throw new IllegalStateException("Unexpected resource content: " + content);
-								}
-							}
-						} catch (java.io.IOException ex) {
-							throw new java.io.UncheckedIOException(ex);
+		String id = "resource-enumeration-plugin";
+		String className = "test/ResourceEnumerationPlugin";
+		String resourceName = "META-INF/services/example.Service";
+		String resourceContent = "example.Implementation";
+		String key = property("resources.content");
+		String onEnable = """
+				try {
+					java.util.Enumeration<java.net.URL> resources = getClass().getClassLoader().getResources("%s");
+					StringBuilder content = new StringBuilder();
+					while (resources.hasMoreElements()) {
+						try (var in = resources.nextElement().openStream()) {
+							content.append(new String(in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8));
 						}
-						""",
-				""
-		), Map.of(
-				resourceName, resourceContent.getBytes(StandardCharsets.UTF_8)
-		));
+					}
+					System.setProperty("%s", content.toString());
+				} catch (java.io.IOException ex) {
+					throw new java.io.UncheckedIOException(ex);
+				}
+				""".formatted(resourceName, key);
+		byte[] zip = pluginArchive(className, Map.of(className, pluginSource(className, pluginInfo(id), onEnable, "")),
+				Map.of(resourceName, resourceContent.getBytes(StandardCharsets.UTF_8)));
 
 		// It should load/run without issue.
-		try {
-			PluginDiscoverer discoverer = () -> List.of(() -> ByteSources.wrap(zip));
-			pluginManager.loadPlugins(discoverer);
-			pluginManager.unloaderFor(id).commit();
-		} catch (PluginException ex) {
-			fail("Failed to enumerate plugin resources", ex);
-		}
+		pluginManager.loadPlugins(discoverArchives(zip));
+		assertEquals(resourceContent, System.getProperty(key), "Plugin should see exactly its own resource through ClassLoader#getResources");
+		pluginManager.unloaderFor(id).commit();
 	}
 
 	@Test
-	void testPluginResourceUrlsIncludePluginId() throws IOException {
-		String id = "scoped-resource-plugin";
-		String pluginClass = "test/ScopedResourcePlugin";
-		String resourceName = "plugin-resource.txt";
-
+	void testPluginResourceUrlsIncludePluginId() throws Exception {
 		// The plugin will attempt to get the resource through ClassLoader#getResource,
-		// and validate that the URL contains the plugin ID, which indicates that the resource is scoped to the plugin's classloader.
-		byte[] zip = createPluginZip(pluginClass, pluginSource(
-				pluginClass,
-				id,
-				new String[0],
-				"""
-						var resource = getClass().getClassLoader().getResource("plugin-resource.txt");
-						if (resource == null) {
-							throw new IllegalStateException("Expected resource URL: plugin-resource.txt");
-						}
-						if (!resource.toExternalForm().contains("scoped-resource-plugin")) {
-							throw new IllegalStateException("Expected resource URL to contain scoped-resource-plugin, got: " + resource);
-						}
-						""",
-				""
-		), Map.of(
-				resourceName, "scoped".getBytes(StandardCharsets.UTF_8)
-		));
+		// and validate that the URL contains the plugin ID,
+		// which indicates that the resource is scoped to the plugin's classloader.
+		String id = "scoped-resource-plugin";
+		String className = "test/ScopedResourcePlugin";
+		String resourceName = "plugin-resource.txt";
+		String key = property("resources.url");
+		String onEnable = "System.setProperty(\"%s\", String.valueOf(getClass().getClassLoader().getResource(\"%s\")));"
+				.formatted(key, resourceName);
+		byte[] zip = pluginArchive(className, Map.of(className, pluginSource(className, pluginInfo(id), onEnable, "")),
+				Map.of(resourceName, "scoped".getBytes(StandardCharsets.UTF_8)));
 
-		// It should load/run without issue.
-		try {
-			PluginDiscoverer discoverer = () -> List.of(() -> ByteSources.wrap(zip));
-			pluginManager.loadPlugins(discoverer);
-			pluginManager.unloaderFor(id).commit();
-		} catch (PluginException ex) {
-			fail("Failed to validate plugin resource URL scope", ex);
-		}
+		pluginManager.loadPlugins(discoverArchives(zip));
+		String url = System.getProperty(key);
+		assertTrue(url.contains(id), () -> "Resource URL should be scoped to the plugin ID, but was: " + url);
+		pluginManager.unloaderFor(id).commit();
 	}
 
-	@Test
-	void testFailedEnableCallsDisableDuringRollback() throws IOException {
-		String id = "failing-enable-plugin";
-		String pluginClass = "test/FailingEnablePlugin";
-
-		clearCount(ENABLE_COUNT_PREFIX, id);
-		clearCount(DISABLE_COUNT_PREFIX, id);
-
-		// The plugin will throw an exception during onEnable, which should trigger a rollback that calls onDisable.
-		byte[] zip = createPluginZip(pluginClass, pluginSource(
-				pluginClass,
-				id,
-				new String[0],
-				// onEnable will throw an exception, which should trigger a rollback that calls onDisable.
-				"""
-						String key = "recaf.test.plugin.enable.failing-enable-plugin";
-						int count = Integer.parseInt(System.getProperty(key, "0"));
-						System.setProperty(key, Integer.toString(count + 1));
-						throw new IllegalStateException("Intentional enable failure for test plugin: failing-enable-plugin");
-						""",
-				// onDisable will increment a counter to verify that it was called during rollback.
-				"""
-						String key = "recaf.test.plugin.disable.failing-enable-plugin";
-						int count = Integer.parseInt(System.getProperty(key, "0"));
-						System.setProperty(key, Integer.toString(count + 1));
-						"""
-		), Map.of());
-
-		// Loading the plugin should fail.
-		// We should see that onEnable was called once, and onDisable was called once during rollback.
-		PluginDiscoverer discoverer = () -> List.of(() -> ByteSources.wrap(zip));
-		assertThrows(PluginException.class, () -> pluginManager.loadPlugins(discoverer),
-				"Plugin loading should fail when onEnable throws");
-
-		// Verify that onEnable was called once, and onDisable was called once during rollback.
-		assertEquals(1, countOf(ENABLE_COUNT_PREFIX, id), "onEnable should have been called once");
-		assertEquals(1, countOf(DISABLE_COUNT_PREFIX, id), "onDisable should have been called during rollback");
-		assertEquals(0, pluginManager.getPlugins().size(), "Failed plugin should not remain loaded");
+	@Nonnull
+	private static byte[] countingPluginArchive(@Nonnull String className, @Nonnull String id,
+	                                            @Nonnull String... dependencies) throws IOException {
+		return pluginArchive(className, pluginSource(className, pluginInfo(id, dependencies),
+				counterIncrement(enableKey(id)), counterIncrement(disableKey(id))));
 	}
 
-	@Test
-	void testDiamondDependencyUnloadDoesNotUnloadSamePluginTwice() throws IOException {
-		String pluginA = "diamond-a";
-		String pluginB = "diamond-b";
-		String pluginC = "diamond-c";
-		String pluginD = "diamond-d";
-
-		String classA = "test/DiamondA";
-		String classB = "test/DiamondB";
-		String classC = "test/DiamondC";
-		String classD = "test/DiamondD";
-
-		clearCount(ENABLE_COUNT_PREFIX, pluginA);
-		clearCount(ENABLE_COUNT_PREFIX, pluginB);
-		clearCount(ENABLE_COUNT_PREFIX, pluginC);
-		clearCount(ENABLE_COUNT_PREFIX, pluginD);
-		clearCount(DISABLE_COUNT_PREFIX, pluginA);
-		clearCount(DISABLE_COUNT_PREFIX, pluginB);
-		clearCount(DISABLE_COUNT_PREFIX, pluginC);
-		clearCount(DISABLE_COUNT_PREFIX, pluginD);
-
-		byte[] zipA = createPluginZip(classA, pluginSource(
-				classA, pluginA, new String[0],
-				"""
-						String key = "recaf.test.plugin.enable.diamond-a";
-						int count = Integer.parseInt(System.getProperty(key, "0"));
-						System.setProperty(key, Integer.toString(count + 1));
-						""",
-				"""
-						String key = "recaf.test.plugin.disable.diamond-a";
-						int count = Integer.parseInt(System.getProperty(key, "0"));
-						System.setProperty(key, Integer.toString(count + 1));
-						"""
-		), Map.of());
-		byte[] zipB = createPluginZip(classB, pluginSource(
-				classB, pluginB, new String[]{pluginA},
-				"""
-						String key = "recaf.test.plugin.enable.diamond-b";
-						int count = Integer.parseInt(System.getProperty(key, "0"));
-						System.setProperty(key, Integer.toString(count + 1));
-						""",
-				"""
-						String key = "recaf.test.plugin.disable.diamond-b";
-						int count = Integer.parseInt(System.getProperty(key, "0"));
-						System.setProperty(key, Integer.toString(count + 1));
-						"""
-		), Map.of());
-		byte[] zipC = createPluginZip(classC, pluginSource(
-				classC, pluginC, new String[]{pluginA},
-				"""
-						String key = "recaf.test.plugin.enable.diamond-c";
-						int count = Integer.parseInt(System.getProperty(key, "0"));
-						System.setProperty(key, Integer.toString(count + 1));
-						""",
-				"""
-						String key = "recaf.test.plugin.disable.diamond-c";
-						int count = Integer.parseInt(System.getProperty(key, "0"));
-						System.setProperty(key, Integer.toString(count + 1));
-						"""
-		), Map.of());
-		byte[] zipD = createPluginZip(classD, pluginSource(
-				classD, pluginD, new String[]{pluginB, pluginC},
-				"""
-						String key = "recaf.test.plugin.enable.diamond-d";
-						int count = Integer.parseInt(System.getProperty(key, "0"));
-						System.setProperty(key, Integer.toString(count + 1));
-						""",
-				"""
-						String key = "recaf.test.plugin.disable.diamond-d";
-						int count = Integer.parseInt(System.getProperty(key, "0"));
-						System.setProperty(key, Integer.toString(count + 1));
-						"""
-		), Map.of());
-
-		try {
-			// Load all plugins in a single batch, which should succeed.
-			PluginDiscoverer discoverer = () -> List.of(
-					() -> ByteSources.wrap(zipA),
-					() -> ByteSources.wrap(zipB),
-					() -> ByteSources.wrap(zipC),
-					() -> ByteSources.wrap(zipD)
-			);
-			pluginManager.loadPlugins(discoverer);
-			assertEquals(4, pluginManager.getPlugins().size());
-
-			// Unload the root of the diamond dependency graph, which should unload all plugins.
-			pluginManager.unloaderFor(pluginA).commit();
-			assertEquals(0, pluginManager.getPlugins().size());
-
-			// Verify that each plugin's onEnable and onDisable were called exactly once.
-			assertEquals(1, countOf(ENABLE_COUNT_PREFIX, pluginA));
-			assertEquals(1, countOf(ENABLE_COUNT_PREFIX, pluginB));
-			assertEquals(1, countOf(ENABLE_COUNT_PREFIX, pluginC));
-			assertEquals(1, countOf(ENABLE_COUNT_PREFIX, pluginD));
-			assertEquals(1, countOf(DISABLE_COUNT_PREFIX, pluginA));
-			assertEquals(1, countOf(DISABLE_COUNT_PREFIX, pluginB));
-			assertEquals(1, countOf(DISABLE_COUNT_PREFIX, pluginC));
-			assertEquals(1, countOf(DISABLE_COUNT_PREFIX, pluginD));
-		} catch (PluginException ex) {
-			fail("Failed to unload diamond dependency graph", ex);
-		}
+	@Nonnull
+	private static String enableKey(@Nonnull String id) {
+		return property("enable." + id);
 	}
 
-	@Test
-	void testCircularDependencyFailsDuringEnable() throws IOException {
-		String pluginA = "circular-a";
-		String pluginB = "circular-b";
-		String classA = "test/CircularA";
-		String classB = "test/CircularB";
-		byte[] zipA = createPluginZip(classA, pluginSource(classA, pluginA, new String[]{pluginB}, "", ""), Map.of());
-		byte[] zipB = createPluginZip(classB, pluginSource(classB, pluginB, new String[]{pluginA}, "", ""), Map.of());
-
-		// If we have a circular dependency, the plugin manager should fail to load the plugins during enablement.
-		PluginDiscoverer discoverer = () -> List.of(
-				() -> ByteSources.wrap(zipA),
-				() -> ByteSources.wrap(zipB)
-		);
-		assertThrows(PluginException.class, () -> pluginManager.loadPlugins(discoverer),
-				"Circular plugin dependencies should fail during enablement");
-		assertEquals(0, pluginManager.getPlugins().size(), "Circular dependency failure should not leave plugins loaded");
+	@Nonnull
+	private static String disableKey(@Nonnull String id) {
+		return property("disable." + id);
 	}
 
-	@Test
-	void testSingleLoadAndUnload() throws IOException {
-		String id = "test-plugin";
-		String name = "test plugin";
-		String version = "test-version";
-		String author = "test-author";
-		String description = "test-description";
-		String className = "test/PluginTest";
-		byte[] zip = createPluginZip(className, pluginSource(
-				className, id, name, version, author, description, new String[0], "", ""
-		), Map.of());
-
-		try {
-			ByteSource pluginSource = ByteSources.wrap(zip);
-			PluginDiscoverer discoverer = () -> List.of(() -> pluginSource);
-			PluginContainer<?> container = pluginManager.loadPlugins(discoverer).iterator().next();
-
-			// Validate info matches expected values.
-			PluginInfo information = container.info();
-			assertEquals(id, information.id());
-			assertEquals(name, information.name());
-			assertEquals(version, information.version());
-			assertEquals(author, information.author());
-			assertEquals(description, information.description());
-
-			// Validate that the plugin is loaded and accessible.
-			assertEquals(1, pluginManager.getPlugins().size());
-			assertSame(container, pluginManager.getPlugin(id));
-
-			// Validate that attempting to load the same plugin again fails.
-			assertThrows(PluginException.class, () -> pluginManager.loadPlugins(discoverer), "Duplicate plugin loading should fail");
-			assertEquals(1, pluginManager.getPlugins().size());
-			assertSame(container, pluginManager.getPlugin(id));
-
-			// Unload the plugin and validate that it is no longer accessible.
-			pluginManager.unloaderFor(id).commit();
-			assertEquals(0, pluginManager.getPlugins().size());
-			assertNull(pluginManager.getPlugin(id));
-		} catch (PluginException ex) {
-			fail("Failed to load plugin", ex);
-		}
+	@Nonnull
+	private static String injectedValuePlugin(@Nonnull String className, @Nonnull PluginInfo info,
+	                                          @Nonnull String key) {
+		String name = simpleName(className);
+		return javaSource(className, """
+				import jakarta.inject.Inject;
+				import shared.LocalValue;
+				import software.coley.recaf.plugin.Plugin;
+				import software.coley.recaf.plugin.PluginInformation;
+				%s
+				public class %s implements Plugin {
+					private final LocalValue value;
+				
+					@Inject
+					public %s(LocalValue value) {
+						this.value = value;
+					}
+				
+					@Override
+					public void onEnable() {
+						System.setProperty("%s", value.value());
+					}
+				
+					@Override
+					public void onDisable() {}
+				}
+				""".formatted(informationAnnotation(info), name, name, key));
 	}
 
-	@Test
-	void testDependentChain() throws IOException {
-		// 1 <-- 2 <-- 3
-		List<DiscoveredPluginSource> sources = new ArrayList<>(3);
-		for (int i = 0; i < 3; i++) {
-			String id = "test-plugin-" + i;
-			String name = "test " + i;
-			String version = "test-version";
-			String author = "test-author";
-			String description = "test-description";
-			String className = "test/PluginTest" + i;
-			String[] dependencies = i > 0 ? new String[]{"test-plugin-" + (i - 1)} : new String[0];
-			byte[] zip = createPluginZip(className, pluginSource(
-					className, id, name, version, author, description, dependencies, "", ""
-			), Map.of());
-			sources.add(() -> ByteSources.wrap(zip));
-		}
-
-		try {
-			// Load all plugins in a single batch, which should succeed.
-			PluginDiscoverer discoverer = () -> sources;
-			pluginManager.loadPlugins(discoverer);
-			assertEquals(3, pluginManager.getPlugins().size());
-
-			// Unload the root of the dependency chain, which should unload all plugins.
-			pluginManager.unloaderFor("test-plugin-0").commit();
-			assertEquals(0, pluginManager.getPlugins().size());
-			for (int i = 0; i < 3; i++) {
-				String id = "test-plugin-" + i;
-				assertNull(pluginManager.getPlugin(id));
-			}
-		} catch (PluginException ex) {
-			fail("Failed to load plugins", ex);
-		}
+	@Nonnull
+	private static String localValueSource(@Nonnull String value) {
+		return javaSource("shared/LocalValue", """
+				import jakarta.enterprise.context.ApplicationScoped;
+				@ApplicationScoped
+				public class LocalValue {
+					public String value() {
+						return "%s";
+					}
+				}
+				""".formatted(value));
 	}
 
-	private static void clearCount(String prefix, String id) {
-		System.clearProperty(prefix + id);
-	}
-
-	private static int countOf(String prefix, String id) {
-		return Integer.parseInt(System.getProperty(prefix + id, "0"));
-	}
-
-	private static byte[] createLifecyclePluginZip(String internalName, String id, String lifecycleKey, String onEnableBody) throws IOException {
-		String annotation = pluginInformationAnnotation(id, id, "1.0", "", "", new String[0]);
-		String source = javaSource(internalName, """
+	@Nonnull
+	private static byte[] lifecyclePluginArchive(@Nonnull String className, @Nonnull String id,
+	                                             @Nonnull String key, @Nonnull String onEnable) throws IOException {
+		String source = javaSource(className, """
 				import jakarta.annotation.PreDestroy;
 				import software.coley.recaf.plugin.Plugin;
 				import software.coley.recaf.plugin.PluginInformation;
-				
 				%s
 				public class %s implements Plugin {
 					@Override
 					public void onEnable() {
-				%s
+						%s
 					}
 				
 					@Override
@@ -552,154 +531,108 @@ public class PluginManagerTest extends TestBase {
 						System.setProperty("%s", "released");
 					}
 				}
-				""".formatted(annotation, simpleName(internalName), methodBody(onEnableBody), lifecycleKey));
-		return createPluginZip(internalName, source, Map.of());
+				""".formatted(informationAnnotation(pluginInfo(id)), simpleName(className), onEnable, key));
+		return pluginArchive(className, source);
 	}
 
-	private static byte[] createPluginZip(String pluginInternalName, String pluginSource, Map<String, byte[]> additionalEntries) throws IOException {
-		return createPluginZip(pluginInternalName, Map.of(pluginInternalName, pluginSource), Map.of(), additionalEntries);
-	}
-
-	private static byte[] createPluginZip(String pluginInternalName, Map<String, String> classSources, Map<String, byte[]> additionalEntries) throws IOException {
-		return createPluginZip(pluginInternalName, classSources, Map.of(), additionalEntries);
-	}
-
-	private static byte[] createPluginZip(String pluginInternalName, Map<String, String> classSources,
-	                                      Map<String, byte[]> compileClasspathClasses, Map<String, byte[]> additionalEntries) throws IOException {
-		return createPluginZip(pluginInternalName, compilePluginSources(pluginInternalName, classSources, compileClasspathClasses).getCompilations(), additionalEntries);
-	}
-
-	private static byte[] createPluginZip(String pluginInternalName, CompileMap compilations, Map<String, byte[]> additionalEntries) throws IOException {
-		Map<String, byte[]> entries = new HashMap<>();
-		compilations.forEach((name, bytes) -> entries.put(name + ".class", bytes));
-		entries.put(ZipPluginLoader.SERVICE_PATH, pluginInternalName.replace('/', '.').getBytes(StandardCharsets.UTF_8));
-		entries.putAll(additionalEntries);
-		return ZipCreationUtils.createZip(entries);
-	}
-
-	private static CompilerResult compilePluginSources(String pluginInternalName, Map<String, String> classSources,
-	                                                   Map<String, byte[]> compileClasspathClasses) {
-		Workspace workspace = compileClasspathClasses.isEmpty() ? null : workspaceFromCompilations(compileClasspathClasses);
-		JavacArguments arguments = new JavacArgumentsBuilder()
-				.withClassName(pluginInternalName)
-				.withClassSources(classSources)
-				.build();
-		CompilerResult result = javac.compile(arguments, workspace, null);
-		if (!result.wasSuccess())
-			throw new AssertionError("Failed to compile plugin sources for '" + pluginInternalName + "':\n" + formatCompilationFailure(result));
-		return result;
-	}
-
-	private static Workspace workspaceFromCompilations(Map<String, byte[]> compileClasspathClasses) {
-		BasicJvmClassBundle bundle = new BasicJvmClassBundle();
-		compileClasspathClasses.values().forEach(bytes -> bundle.initialPut(new JvmClassInfoBuilder(bytes).build()));
-		return TestClassUtils.fromBundle(bundle);
-	}
-
-	private static String formatCompilationFailure(CompilerResult result) {
-		StringBuilder sb = new StringBuilder();
-		if (result.getException() != null)
-			sb.append(result.getException()).append('\n');
-		if (!result.getDiagnostics().isEmpty()) {
-			String diagnostics = result.getDiagnostics().stream()
-					.map(CompilerDiagnostic::toString)
-					.collect(Collectors.joining("\n"));
-			sb.append(diagnostics).append('\n');
-		}
-		if (sb.isEmpty())
-			sb.append("Unknown compilation failure");
-		return sb.toString().stripTrailing();
-	}
-
-	private static String pluginSource(String internalName, String id, String[] dependencies, String onEnableBody, String onDisableBody) {
-		return pluginSource(internalName, id, id, "1.0", "", "", dependencies, onEnableBody, onDisableBody);
-	}
-
-	private static String pluginSource(String internalName, String id, String name, String version, String author,
-	                                   String description, String[] dependencies, String onEnableBody, String onDisableBody) {
-		String simpleName = simpleName(internalName);
-		String annotation = pluginInformationAnnotation(id, name, version, author, description, dependencies);
-		String enableBody = methodBody(onEnableBody);
-		String disableBody = methodBody(onDisableBody);
-		return javaSource(internalName, """
+	@Nonnull
+	private static byte[] scopedLifecycleArchive(@Nonnull String pluginClass, @Nonnull String id,
+	                                             @Nonnull String appKey, @Nonnull String dependentKey,
+	                                             boolean failEnable) throws IOException {
+		String applicationBean = "test/ScopedApplicationBean";
+		String dependentBean = "test/ScopedDependentBean";
+		String failure = failEnable ? "throw new IllegalStateException(\"Intentional plugin enable failure\");" : "";
+		String name = simpleName(pluginClass);
+		String entrySource = javaSource(pluginClass, """
+				import jakarta.inject.Inject;
 				import software.coley.recaf.plugin.Plugin;
 				import software.coley.recaf.plugin.PluginInformation;
-				
 				%s
 				public class %s implements Plugin {
-					@Override
-					public void onEnable() {
-				%s
+					private final ScopedApplicationBean applicationBean;
+					private final ScopedDependentBean dependentBean;
+				
+					@Inject
+					public %s(ScopedApplicationBean applicationBean, ScopedDependentBean dependentBean) {
+						this.applicationBean = applicationBean;
+						this.dependentBean = dependentBean;
 					}
 				
 					@Override
-					public void onDisable() {
-				%s
+					public void onEnable() {
+						applicationBean.value();
+						dependentBean.value();
+						%s
+					}
+				
+					@Override
+					public void onDisable() {}
+				}
+				""".formatted(informationAnnotation(pluginInfo(id)), name, name, failure));
+		String applicationBeanSource = javaSource(applicationBean, """
+				import jakarta.annotation.PreDestroy;
+				import jakarta.enterprise.context.ApplicationScoped;
+				@ApplicationScoped
+				public class ScopedApplicationBean {
+					public String value() {
+						return "application";
+					}
+				
+					@PreDestroy
+					public void release() {
+						System.setProperty("%s", "app-released");
 					}
 				}
-				""".formatted(annotation, simpleName, enableBody, disableBody));
+				""".formatted(appKey));
+		String dependentBeanSource = javaSource(dependentBean, """
+				import jakarta.annotation.PreDestroy;
+				import jakarta.enterprise.context.Dependent;
+				@Dependent
+				public class ScopedDependentBean {
+					public String value() {
+						return "dependent";
+					}
+				
+					@PreDestroy
+					public void release() {
+						System.setProperty("%s", "dependent-released");
+					}
+				}
+				""".formatted(dependentKey));
+		return pluginArchive(pluginClass, Map.of(
+				pluginClass, entrySource,
+				applicationBean, applicationBeanSource,
+				dependentBean, dependentBeanSource), Map.of());
 	}
 
-	private static String javaSource(String internalName, String body) {
-		String packageDeclaration = packageDeclaration(internalName);
-		String sourceBody = body.stripIndent().strip();
-		if (packageDeclaration.isEmpty())
-			return sourceBody + '\n';
-		return packageDeclaration + "\n" + sourceBody + '\n';
-	}
-
-	private static String packageDeclaration(String internalName) {
-		int separatorIndex = internalName.lastIndexOf('/');
-		if (separatorIndex < 0)
-			return "";
-		return "package " + internalName.substring(0, separatorIndex).replace('/', '.') + ";";
-	}
-
-	private static String simpleName(String internalName) {
-		int separatorIndex = internalName.lastIndexOf('/');
-		return separatorIndex < 0 ? internalName : internalName.substring(separatorIndex + 1);
-	}
-
-	private static String methodBody(String body) {
-		String stripped = body.stripIndent().strip();
-		if (stripped.isEmpty())
-			return "";
-		return indent(stripped, 8);
-	}
-
-	private static String indent(String text, int spaces) {
-		String padding = " ".repeat(spaces);
-		return text.lines()
-				.map(line -> padding + line)
-				.collect(Collectors.joining("\n"));
-	}
-
-	private static String pluginInformationAnnotation(String id, String name, String version, String author,
-	                                                  String description, String[] dependencies) {
-		StringJoiner joiner = new StringJoiner(", ", "@PluginInformation(", ")");
-		joiner.add("id = " + stringLiteral(id));
-		joiner.add("name = " + stringLiteral(name));
-		joiner.add("version = " + stringLiteral(version));
-		if (!author.isEmpty())
-			joiner.add("author = " + stringLiteral(author));
-		if (!description.isEmpty())
-			joiner.add("description = " + stringLiteral(description));
-		if (dependencies.length > 0)
-			joiner.add("dependencies = " + stringArrayLiteral(dependencies));
-		return joiner.toString();
-	}
-
-	private static String stringArrayLiteral(String[] values) {
-		return values.length == 0 ? "{}" : "{ " + List.of(values).stream()
-				.map(PluginManagerTest::stringLiteral)
-				.collect(Collectors.joining(", ")) + " }";
-	}
-
-	private static String stringLiteral(String value) {
-		return "\"" + value
-				.replace("\\", "\\\\")
-				.replace("\"", "\\\"")
-				.replace("\r", "\\r")
-				.replace("\n", "\\n") + "\"";
+	@Nonnull
+	private static byte[] startupObserverArchive(@Nonnull String pluginClass, @Nonnull String id,
+	                                             @Nonnull String suffix, boolean throwOnInit) throws IOException {
+		String listenerClass = "test/StartupListener";
+		String failure = throwOnInit ? "throw new IllegalStateException(\"Intentional startup observer failure\");" : "";
+		String listenerSource = javaSource(listenerClass, """
+				import jakarta.enterprise.context.ApplicationScoped;
+				import jakarta.enterprise.event.Observes;
+				import software.coley.recaf.cdi.InitializationEvent;
+				import software.coley.recaf.cdi.UiInitializationEvent;
+				@ApplicationScoped
+				public class StartupListener {
+					private static void append(String key, String value) {
+						System.setProperty(key, System.getProperty(key, "") + value);
+					}
+				
+					public void onInit(@Observes InitializationEvent event) {
+						append("%1$s", "%3$s");
+						%2$s
+					}
+				
+					public void onUiInit(@Observes UiInitializationEvent event) {
+						append("%4$s", "%3$s");
+					}
+				}
+				""".formatted(property("startup.init.order"), failure, suffix, property("startup.ui.order")));
+		return pluginArchive(pluginClass, Map.of(
+				pluginClass, pluginSource(pluginClass, pluginInfo(id), "", ""),
+				listenerClass, listenerSource), Map.of());
 	}
 }

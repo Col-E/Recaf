@@ -19,12 +19,6 @@ public interface PluginManager extends Service {
 	String SERVICE_ID = "plugin-manager";
 
 	/**
-	 * @return Allocator to use for creating plugin instances.
-	 */
-	@Nonnull
-	CdiClassAllocator getAllocator();
-
-	/**
 	 * @param id
 	 * 		ID of the plugin.
 	 * @param <T>

@@ -3,9 +3,10 @@ package software.coley.recaf.services.plugin;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.spi.BeanManager;
 import jakarta.inject.Inject;
 import software.coley.recaf.cdi.EagerInitialization;
-import software.coley.recaf.plugin.*;
+import software.coley.recaf.plugin.Plugin;
 import software.coley.recaf.services.plugin.discovery.DiscoveredPluginSource;
 import software.coley.recaf.services.plugin.discovery.PluginDiscoverer;
 import software.coley.recaf.services.plugin.zip.ZipPluginLoader;
@@ -24,23 +25,16 @@ import java.util.List;
 public class BasicPluginManager implements PluginManager {
 	private final List<PluginLoader> loaders = new ArrayList<>();
 	private final PluginGraph mainGraph;
-	private final CdiClassAllocator classAllocator;
 	private final PluginManagerConfig config;
 
 	@Inject
-	public BasicPluginManager(PluginManagerConfig config, CdiClassAllocator classAllocator) {
-		this.classAllocator = classAllocator;
+	public BasicPluginManager(PluginManagerConfig config, BeanManager beanManager) {
 		this.config = config;
-		mainGraph = new PluginGraph(classAllocator);
+
+		mainGraph = new PluginGraph(beanManager);
 
 		// Add ZIP/JAR loading
 		registerLoader(new ZipPluginLoader());
-	}
-
-	@Nonnull
-	@Override
-	public CdiClassAllocator getAllocator() {
-		return classAllocator;
 	}
 
 	@Override
