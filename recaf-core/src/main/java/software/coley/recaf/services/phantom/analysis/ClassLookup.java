@@ -33,6 +33,8 @@ public class ClassLookup {
 	private final Map<String, JvmClassInfo> providedClasses;
 	private final Map<String, ClassInfo> knownClasses = new HashMap<>();
 	private final Set<String> missingClasses = new HashSet<>();
+	private final Map<String, Class<?>> platformTypes = new HashMap<>();
+	private final Set<String> unavailablePlatformTypes = new HashSet<>();
 	private final int targetVersion;
 	private final Map<String, PhantomClassConstraint> constraints;
 
@@ -63,7 +65,7 @@ public class ClassLookup {
 	 * @return {@code true} when the type is already known from the inputs, workspace, or runtime classes.
 	 */
 	public boolean isKnown(@Nullable String internalName) {
-		return isBootstrapType(internalName) || getKnownClassInfo(internalName) != null;
+		return isSystemType(internalName) || getKnownClassInfo(internalName) != null;
 	}
 
 	/**
@@ -123,8 +125,11 @@ public class ClassLookup {
 
 		// No phantom evidence, infer from known class info.
 		ClassInfo info = getKnownClassInfo(internalName);
-		if (info == null)
-			return isBootstrapType(internalName) ? bootstrapKind(internalName) : PhantomTypeKind.UNKNOWN;
+		if (info == null) {
+			if (!isSystemType(internalName))
+				return PhantomTypeKind.UNKNOWN;
+			return platformKind(getPlatformClass(internalName));
+		}
 		if (info.hasEnumModifier())
 			return PhantomTypeKind.ENUM;
 		if (info.hasAnnotationModifier())
@@ -298,26 +303,52 @@ public class ClassLookup {
 
 	/**
 	 * @param internalName
-	 * 		Name of a bootstrap <i>(Core java)</i> class.
+	 * 		Internal name of a type available from the platform class loader.
 	 *
-	 * @return Class kind for a bootstrap class, or {@link PhantomTypeKind#CLASS} when the type cannot be loaded.
+	 * @return Loaded platform type, or {@code null} if it is unavailable.
 	 */
-	@Nonnull
-	private static PhantomTypeKind bootstrapKind(@Nonnull String internalName) {
+	@Nullable
+	public Class<?> getPlatformClass(@Nonnull String internalName) {
+		Class<?> type = platformTypes.get(internalName);
+		if (type != null)
+			return type;
+		if (unavailablePlatformTypes.contains(internalName))
+			return null;
+
 		try {
-			Class<?> type = Class.forName(internalName.replace('/', '.'), false, null);
-			if (type.isAnnotation())
-				return PhantomTypeKind.ANNOTATION;
-			if (type.isEnum())
-				return PhantomTypeKind.ENUM;
-			return type.isInterface() ? PhantomTypeKind.INTERFACE : PhantomTypeKind.CLASS;
-		} catch (Throwable t) {
-			// Keep bootstrap names known even when the running JDK does not expose an optional module.
-			return PhantomTypeKind.CLASS;
+			type = Class.forName(internalName.replace('/', '.'), false, ClassLoader.getPlatformClassLoader());
+			platformTypes.put(internalName, type);
+			return type;
+		} catch (ClassNotFoundException | LinkageError | SecurityException | IllegalArgumentException ex) {
+			unavailablePlatformTypes.add(internalName);
+			return null;
 		}
 	}
 
-	private static boolean isBootstrapType(@Nullable String internalName) {
-		return internalName != null && internalName.startsWith("java/");
+	/**
+	 * @param type
+	 * 		Platform type.
+	 *
+	 * @return Kind of the platform type.
+	 */
+	@Nonnull
+	private static PhantomTypeKind platformKind(@Nullable Class<?> type) {
+		if (type == null)
+			return PhantomTypeKind.CLASS;
+		if (type.isAnnotation())
+			return PhantomTypeKind.ANNOTATION;
+		if (type.isEnum())
+			return PhantomTypeKind.ENUM;
+		return type.isInterface() ? PhantomTypeKind.INTERFACE : PhantomTypeKind.CLASS;
+	}
+
+	/**
+	 * @param internalName
+	 * 		Internal class name.
+	 *
+	 * @return {@code true} when the type is a system type (from the JDK or platform class loader).
+	 */
+	private boolean isSystemType(@Nullable String internalName) {
+		return internalName != null && (internalName.startsWith("java/") || getPlatformClass(internalName) != null);
 	}
 }

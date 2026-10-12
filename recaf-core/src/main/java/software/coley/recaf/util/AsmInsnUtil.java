@@ -5,7 +5,6 @@ import jakarta.annotation.Nullable;
 import me.darknet.assembler.backend.jvm.printer.JvmPrinterUtil;
 import me.darknet.assembler.backend.jvm.util.JvmOpcodes;
 import me.darknet.dex.tree.definitions.code.Code;
-import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -770,6 +769,12 @@ public class AsmInsnUtil implements Opcodes {
 		if (op == NEW || op == ANEWARRAY || op == NEWARRAY || op == MULTIANEWARRAY ||
 				op == CHECKCAST || op == INSTANCEOF)
 			return true;
+
+		// TODO: Additional cases?
+		//   - Field access triggering class resolution, <clinit> fails, etc.
+		//   - Ldc of type/handle triggering class resolution
+		//   - Question is if this would be too broad of a check and cause transformers to become overly aggressive/convservative (depending on use case).
+		//     - See: canThrowForPhantomAnalysis (and update its comments) if we come back to this.
 
 		// NullPointerException
 		return op == GETFIELD || op == PUTFIELD || op == ARRAYLENGTH ||

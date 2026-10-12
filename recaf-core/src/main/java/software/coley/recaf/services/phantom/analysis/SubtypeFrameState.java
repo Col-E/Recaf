@@ -56,27 +56,40 @@ public class SubtypeFrameState {
 
 	/**
 	 * @param other
+	 * 		Other state to compare against.
+	 *
+	 * @return {@code true} when both states carry operand stacks of different, non-empty heights.
+	 * Such states cannot be merged, see {@link #merge(SubtypeFrameState)}.
+	 */
+	public boolean stackHeightsConflict(@Nonnull SubtypeFrameState other) {
+		return !stack.isEmpty() && !other.stack.isEmpty() && stack.size() != other.stack.size();
+	}
+
+	/**
+	 * @param other
 	 * 		Incoming state to merge.
+	 * 		Must not {@link #stackHeightsConflict(SubtypeFrameState) conflict} with this state.
 	 *
 	 * @return Merged state.
 	 */
 	@Nonnull
 	public SubtypeFrameState merge(@Nonnull SubtypeFrameState other) {
+		if (stackHeightsConflict(other))
+			throw new IllegalStateException("Cannot merge operand stacks of different heights");
+
 		Map<Integer, SubtypeValue> mergedLocals = new HashMap<>(locals);
 		for (Map.Entry<Integer, SubtypeValue> entry : other.locals.entrySet())
 			mergedLocals.merge(entry.getKey(), entry.getValue(), SubtypeValue::merge);
 
 		List<SubtypeValue> mergedStack;
-		if (stack.size() == other.stack.size()) {
-			mergedStack = new ArrayList<>(stack.size());
-			for (int i = 0; i < stack.size(); i++)
-				mergedStack.add(SubtypeValue.merge(stack.get(i), other.stack.get(i)));
-		} else if (stack.isEmpty()) {
+		if (stack.isEmpty()) {
 			mergedStack = new ArrayList<>(other.stack);
 		} else if (other.stack.isEmpty()) {
 			mergedStack = new ArrayList<>(stack);
 		} else {
-			mergedStack = new ArrayList<>();
+			mergedStack = new ArrayList<>(stack.size());
+			for (int i = 0; i < stack.size(); i++)
+				mergedStack.add(SubtypeValue.merge(stack.get(i), other.stack.get(i)));
 		}
 
 		return new SubtypeFrameState(mergedLocals, mergedStack);

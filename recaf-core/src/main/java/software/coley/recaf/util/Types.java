@@ -232,6 +232,18 @@ public class Types {
 	/**
 	 * @param isStatic
 	 * 		Whether the method is static.
+	 * @param desc
+	 * 		Method descriptor.
+	 *
+	 * @return Number of variable slots occupied by the parameters, including {@code this} if non-static.
+	 */
+	public static int parameterEndSlot(boolean isStatic, @Nonnull String desc) {
+		return parameterEndSlot(isStatic, Type.getType(desc));
+	}
+
+	/**
+	 * @param isStatic
+	 * 		Whether the method is static.
 	 * @param methodType
 	 * 		Parsed method descriptor type.
 	 *

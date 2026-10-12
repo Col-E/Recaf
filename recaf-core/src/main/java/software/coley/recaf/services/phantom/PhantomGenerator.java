@@ -60,16 +60,35 @@ public class PhantomGenerator implements Service {
 				// - No resource was generated
 				// - The generated resource has no classes
 				// - The workspace is no longer the current workspace
-				// - The workspace already has a phantom resource
 				if (generatedResource == null
 						|| generatedResource.getJvmClassBundle().isEmpty()
 						|| !workspaceManager.hasCurrentWorkspace()
-						|| workspaceManager.getCurrent() != workspace
-						|| workspace.getSupportingResources().stream().anyMatch(resource -> resource instanceof GeneratedPhantomWorkspaceResource))
+						|| workspaceManager.getCurrent() != workspace)
 					return;
-				workspace.addSupportingResource(generatedResource);
+				installGeneratedResourceIfAbsent(workspace, generatedResource);
 			});
 		});
+	}
+
+	/**
+	 * Installs the given generated phantom resource into the workspace if it is not already present.
+	 *
+	 * @param workspace
+	 * 		Workspace to install the resource into.
+	 * @param generatedResource
+	 * 		Resource to install.
+	 */
+	@SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
+	public static void installGeneratedResourceIfAbsent(@Nonnull Workspace workspace,
+	                                                    @Nonnull GeneratedPhantomWorkspaceResource generatedResource) {
+		// Workspace-open completions can possibly race on more complex workspaces.
+		// Ensure we only add the generated resource once.
+		synchronized (workspace) {
+			boolean alreadyInstalled = workspace.getSupportingResources().stream()
+					.anyMatch(resource -> resource instanceof GeneratedPhantomWorkspaceResource);
+			if (!alreadyInstalled)
+				workspace.addSupportingResource(generatedResource);
+		}
 	}
 
 	/**
@@ -77,7 +96,7 @@ public class PhantomGenerator implements Service {
 	 * primary resource of the given workspace.
 	 * <p>
 	 * Do note that this is a largely more computationally complex task than creating phantoms for
-	 * {@link #createPhantomsForClasses(Workspace, Collection) one or a few classes at a time}.
+	 * {@link #createPhantomsForClasses(Workspace, Collection, int) one or a few classes at a time}.
 	 *
 	 * @param workspace
 	 * 		Workspace to scan for classes with missing references.
@@ -99,31 +118,6 @@ public class PhantomGenerator implements Service {
 				.flatMap(Bundle::stream)
 				.collect(Collectors.toMap(Info::getName, Function.identity(), (a, b) -> b, TreeMap::new));
 		versionedClassMap.forEach(classMap::putIfAbsent);
-		return generate(workspace, inputClasses, classMap, DEFAULT_TARGET_VERSION);
-	}
-
-	/**
-	 * Generates a resource containing the phantom classes necessary to compile the given classes.
-	 *
-	 * @param workspace
-	 * 		Workspace to pull class information from.
-	 * 		If a class that is required for compilation of a given class is in the workspace, then no phantom
-	 * 		for it will be generated in the resulting created resource.
-	 * @param classes
-	 * 		Classes to scan for missing references.
-	 *
-	 * @return Resource containing generated phantoms, targeting only the specified classes.
-	 *
-	 * @throws PhantomGenerationException
-	 * 		When generating phantoms failed.
-	 */
-	@Nonnull
-	public GeneratedPhantomWorkspaceResource createPhantomsForClasses(@Nonnull Workspace workspace,
-	                                                                  @Nonnull Collection<JvmClassInfo> classes)
-			throws PhantomGenerationException {
-		Collection<JvmClassInfo> inputClasses = classes.stream().toList();
-		Map<String, JvmClassInfo> classMap = inputClasses.stream()
-				.collect(Collectors.toMap(Info::getName, Function.identity(), (a, b) -> a, TreeMap::new));
 		return generate(workspace, inputClasses, classMap, DEFAULT_TARGET_VERSION);
 	}
 
@@ -167,6 +161,7 @@ public class PhantomGenerator implements Service {
 
 			PhantomConstraintCollector collector = new PhantomConstraintCollector(context);
 			inputClasses.forEach(collector::collect);
+			PhantomClassWriter.prepareAnnotationDefaults(constraints, context.getLookup());
 			new PhantomHierarchyResolver(context).resolve();
 
 			Map<String, byte[]> generated = new TreeMap<>();

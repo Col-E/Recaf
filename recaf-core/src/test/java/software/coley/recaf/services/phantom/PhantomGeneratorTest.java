@@ -11,6 +11,7 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.TypeReference;
+import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.InvokeDynamicInsnNode;
 import org.objectweb.asm.tree.JumpInsnNode;
@@ -21,6 +22,7 @@ import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TryCatchBlockNode;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.annotation.Annotated;
+import software.coley.recaf.info.annotation.AnnotationEnumReference;
 import software.coley.recaf.info.annotation.AnnotationInfo;
 import software.coley.recaf.info.builder.JvmClassInfoBuilder;
 import software.coley.recaf.info.member.FieldMember;
@@ -41,6 +43,7 @@ import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.bundle.VersionedJvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResourceBuilder;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.NavigableMap;
@@ -182,7 +185,7 @@ class PhantomGeneratorTest extends CompilerTestBase implements Opcodes {
 				}
 				""", true);
 		Workspace workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(knownParent));
-		GeneratedPhantomWorkspaceResource phantoms = assertDoesNotThrow(() -> generator.createPhantomsForClasses(workspace, List.of(input)));
+		GeneratedPhantomWorkspaceResource phantoms = assertDoesNotThrow(() -> generator.createPhantomsForClasses(workspace, List.of(input), 8));
 		JvmClassInfo child = assertHasPhantom(phantoms.getJvmClassBundle(), "MissingConstructorChild");
 		assertNotNull(child.getDeclaredMethod("<init>", "()V"));
 	}
@@ -373,7 +376,9 @@ class PhantomGeneratorTest extends CompilerTestBase implements Opcodes {
 		assertNotNull(missingClassAnnotation.getDeclaredMethod("text", "()Ljava/lang/String;"));
 		assertNotNull(missingClassAnnotation.getDeclaredMethod("classValue", "()Ljava/lang/Class;"));
 		assertNotNull(missingMethodAnnotation.getDeclaredMethod("enabled", "()Z"));
-		assertNotNull(missingMethodAnnotation.getDeclaredMethod("names", "()[Ljava/lang/String;"));
+		MethodMember namesElement = missingMethodAnnotation.getDeclaredMethod("names", "()[Ljava/lang/String;");
+		assertNotNull(namesElement);
+		assertEquals(List.of(), namesElement.getAnnotationDefault().getElementValue());
 
 		// Compiling source with annotation values should succeed with generated phantoms.
 		JavacArguments args = new JavacArgumentsBuilder()
@@ -392,6 +397,7 @@ class PhantomGeneratorTest extends CompilerTestBase implements Opcodes {
 		CompilerResult resultWithPhantoms = compiler.compile(args, null, Collections.singletonList(phantoms), null);
 		assertFalse(resultWithoutPhantoms.wasSuccess(), "Annotated class should not compile without phantoms");
 		assertTrue(resultWithPhantoms.wasSuccess(), "Annotated class should compile with phantoms");
+		compileWithPhantoms("OmittedAnnotationValues", "@MissingMethodAnnotation class OmittedAnnotationValues {}", phantoms);
 
 		// Validate the annotation values are correct on the class.
 		JvmClassInfo compiledClass = new JvmClassInfoBuilder(resultWithPhantoms.getCompilations().get("AnnotatedExample")).build();
@@ -434,6 +440,104 @@ class PhantomGeneratorTest extends CompilerTestBase implements Opcodes {
 				class EnumAnnotationUse {
 				}
 				""", phantoms);
+	}
+
+	@Test
+	void testInnerClassesFlagsInferPhantomInterface() {
+		// A class that references an inner class of a missing outer class should
+		// infer the inner class is an interface if the inner class has the interface modifier.
+		JvmClassInfo input = TestClassUtils.createClass("InnerKindEvidence", node ->
+				node.visitInnerClass("MissingOuter$Nested", "MissingOuter", "Nested",
+						ACC_PUBLIC | ACC_STATIC | ACC_ABSTRACT | ACC_INTERFACE));
+
+		GeneratedPhantomWorkspaceResource phantoms = generatePhantoms(input);
+		assertTrue(assertHasPhantom(phantoms.getJvmClassBundle(), "MissingOuter$Nested").hasInterfaceModifier());
+		compileWithPhantoms("InnerKindUse", "class InnerKindUse implements MissingOuter.Nested {}", phantoms);
+	}
+
+	@Test
+	void testSpecialInterfaceHandleInfersPhantomInterface() {
+		// A LDC handle to an interface method should infer the owner type is an interface.
+		JvmClassInfo input = TestClassUtils.createClass("SpecialHandleKindEvidence", node -> {
+			MethodNode method = new MethodNode(ACC_PUBLIC | ACC_STATIC, "example", "()V", null, null);
+			method.maxStack = 1;
+			method.visitLdcInsn(new Handle(H_INVOKESPECIAL, "MissingSpecialInterface", "run", "()V", true));
+			method.visitInsn(POP);
+			method.visitInsn(RETURN);
+			node.methods.add(method);
+		});
+		GeneratedPhantomWorkspaceResource phantoms = generatePhantoms(input);
+
+		assertTrue(assertHasPhantom(phantoms.getJvmClassBundle(), "MissingSpecialInterface").hasInterfaceModifier());
+		compileWithPhantoms("SpecialHandleKindUse", "class SpecialHandleKindUse implements MissingSpecialInterface { public void run() {} }", phantoms);
+	}
+
+	@Test
+	void testPlatformJdkTypeLookupKeepsAbsentTypesPhantom() {
+		// A class that references a platform type should not generate a phantom for the platform type.
+		JvmClassInfo input = TestClassUtils.createClass("PlatformTypeReference", node -> {
+			node.fields.add(new FieldNode(ACC_PUBLIC, "present", "Ljavax/xml/transform/Source;", null, null));
+			node.fields.add(new FieldNode(ACC_PUBLIC, "absent", "Ljavax/recaf/phantom/MissingType;", null, null));
+		});
+		JvmClassBundle phantoms = generatePhantoms(input).getJvmClassBundle();
+
+		assertNoPhantom(phantoms, "javax/xml/transform/Source");
+		assertHasPhantom(phantoms, "javax/recaf/phantom/MissingType");
+	}
+
+	@Test
+	void testAnnotationElementsReceiveNeutralDefaults() {
+		// We have a class with two annotations of the same type.
+		//
+		// - One specified values (we shove all types in here for the sake of coverage)
+		// - One with only one value specified
+		//
+		// This implies all the other elements have default-values since otherwise
+		// the code wouldn't compile. So when we generate phantoms, they get neutral default values for the unspecified elements.
+		JvmClassInfo input = TestClassUtils.createClass("NeutralDefaultCarrier", node -> {
+			AnnotationVisitor values = node.visitAnnotation("LMissingDefaults;", true);
+			values.visit("enabled", true);
+			values.visit("byteValue", (byte) 2);
+			values.visit("charValue", 'x');
+			values.visit("shortValue", (short) 3);
+			values.visit("count", 42);
+			values.visit("longValue", 42L);
+			values.visit("floatValue", 42.0f);
+			values.visit("doubleValue", 42.0d);
+			values.visit("text", "observed");
+			values.visit("type", Type.getType(String.class));
+			values.visitEnum("mode", "LMissingMode;", "ENABLED");
+			values.visitEnum("policy", "Ljava/lang/annotation/RetentionPolicy;", "RUNTIME");
+
+			AnnotationVisitor nested = values.visitAnnotation("nested", "LMissingNested;");
+			nested.visit("value", "observed");
+			nested.visitEnd();
+			values.visitEnd();
+		});
+		GeneratedPhantomWorkspaceResource phantoms = generatePhantoms(input);
+
+		JvmClassInfo annotation = assertHasPhantom(phantoms.getJvmClassBundle(), "MissingDefaults");
+		assertEquals(false, annotation.getDeclaredMethod("enabled", "()Z").getAnnotationDefault().getElementValue());
+		assertEquals((byte) 0, annotation.getDeclaredMethod("byteValue", "()B").getAnnotationDefault().getElementValue());
+		assertEquals('\0', annotation.getDeclaredMethod("charValue", "()C").getAnnotationDefault().getElementValue());
+		assertEquals((short) 0, annotation.getDeclaredMethod("shortValue", "()S").getAnnotationDefault().getElementValue());
+		assertEquals(0, annotation.getDeclaredMethod("count", "()I").getAnnotationDefault().getElementValue());
+		assertEquals(0L, annotation.getDeclaredMethod("longValue", "()J").getAnnotationDefault().getElementValue());
+		assertEquals(0.0f, annotation.getDeclaredMethod("floatValue", "()F").getAnnotationDefault().getElementValue());
+		assertEquals(0.0d, annotation.getDeclaredMethod("doubleValue", "()D").getAnnotationDefault().getElementValue());
+		assertEquals("", annotation.getDeclaredMethod("text", "()Ljava/lang/String;").getAnnotationDefault().getElementValue());
+		assertEquals(Type.getType(Object.class), annotation.getDeclaredMethod("type", "()Ljava/lang/Class;").getAnnotationDefault().getElementValue());
+
+		AnnotationEnumReference enumDefault = assertInstanceOf(AnnotationEnumReference.class, annotation.getDeclaredMethod("mode", "()LMissingMode;").getAnnotationDefault().getElementValue());
+		assertEquals("ENABLED", enumDefault.getValue());
+
+		AnnotationEnumReference platformEnumDefault = assertInstanceOf(AnnotationEnumReference.class, annotation.getDeclaredMethod("policy", "()Ljava/lang/annotation/RetentionPolicy;").getAnnotationDefault().getElementValue());
+		assertEquals("CLASS", platformEnumDefault.getValue());
+
+		AnnotationInfo nestedDefault = assertInstanceOf(AnnotationInfo.class, annotation.getDeclaredMethod("nested", "()LMissingNested;").getAnnotationDefault().getElementValue());
+		assertEquals("LMissingNested;", nestedDefault.getDescriptor());
+
+		compileWithPhantoms("NeutralDefaultUse", "@MissingDefaults class NeutralDefaultUse {}", phantoms);
 	}
 
 	@Test
@@ -576,12 +680,8 @@ class PhantomGeneratorTest extends CompilerTestBase implements Opcodes {
 			node.signature = "Ljava/lang/Object;LMissingProvider<Landroid/util/Pair<Ljava/lang/String;Ljava/lang/Integer;>;>;";
 		});
 
-		// The phantom for Pair should retain the generic signature, so that source referencing it can compile.
-		GeneratedPhantomWorkspaceResource phantoms = generatePhantoms(input);
-		JvmClassInfo pair = assertHasPhantom(phantoms.getJvmClassBundle(), "android/util/Pair");
-		assertEquals("<T0:Ljava/lang/Object;T1:Ljava/lang/Object;>Ljava/lang/Object;", pair.getSignature());
-
 		// Validate that source referencing the generic phantom can compile.
+		GeneratedPhantomWorkspaceResource phantoms = generatePhantoms(input);
 		CompilerResult result = compiler.compile(new JavacArgumentsBuilder()
 				.withClassName("GenericPairUse")
 				.withClassSource("class GenericPairUse { android.util.Pair<String, Integer> value; }")
@@ -1254,6 +1354,7 @@ class PhantomGeneratorTest extends CompilerTestBase implements Opcodes {
 		// the phantom should be inferred to extend/implement that type based on the method call that uses the invokedynamic result.
 		JvmClassInfo jvmClassInfo = TestClassUtils.createClass("InvokeDynamicReturnFlowExample", node -> {
 			MethodNode method = new MethodNode(ACC_PUBLIC | ACC_STATIC, "example", "()V", null, null);
+			method.maxStack = 2;
 			method.visitInvokeDynamicInsn(
 					"run",
 					"()LIndyList;",
@@ -1356,7 +1457,7 @@ class PhantomGeneratorTest extends CompilerTestBase implements Opcodes {
 						    B:
 						    }
 						}
-						""", false))));
+						""", false)), 8));
 
 		// With leniency enabled, we just pick the first parent we see.
 		generatorConfig.getLenientConflictingHierarchies().setValue(true);
@@ -1554,6 +1655,192 @@ class PhantomGeneratorTest extends CompilerTestBase implements Opcodes {
 		assertHasPhantoms(phantoms.getJvmClassBundle(), "MissingBaseType", "MissingVersionedType");
 	}
 
+	@Test
+	void testThrownKnownTypeInspectsItsHierarchy() {
+		// KnownError extends MissingBase. Declaring 'throws KnownError' references a known type,
+		// so the known type's own hierarchy should be inspected for the missing parent.
+		JvmClassInfo knownError = TestClassUtils.createClass("KnownError", node -> {
+			node.superName = "MissingBase";
+		});
+		JvmClassInfo input = TestClassUtils.createClass("ThrowsKnownError", node -> {
+			MethodNode method = new MethodNode(ACC_PUBLIC | ACC_STATIC, "example", "()V", null, new String[]{"KnownError"});
+			method.visitInsn(RETURN);
+			node.methods.add(method);
+		});
+		Workspace workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(knownError, input));
+
+		GeneratedPhantomWorkspaceResource phantoms = generatePhantoms(workspace, input);
+		assertFalse(assertHasPhantom(phantoms.getJvmClassBundle(), "MissingBase").hasInterfaceModifier());
+	}
+
+	@Test
+	void testAnnotationTypeInspectsItsOwnAnnotations() {
+		// KnownAnnotation is itself annotated with MissingMeta.
+		// An input class annotated with KnownAnnotation references the known annotation type,
+		// so the annotation's own annotations should be inspected.
+		JvmClassInfo knownAnnotation = TestClassUtils.createClass("KnownAnnotation", node -> {
+			node.access = ACC_PUBLIC | ACC_ANNOTATION | ACC_INTERFACE | ACC_ABSTRACT;
+			node.interfaces.add("java/lang/annotation/Annotation");
+			node.visitAnnotation("LMissingMeta;", true);
+		});
+		JvmClassInfo input = TestClassUtils.createClass("AnnotatedWithKnown", node -> {
+			node.visitAnnotation("LKnownAnnotation;", true);
+		});
+		Workspace workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(knownAnnotation, input));
+
+		GeneratedPhantomWorkspaceResource phantoms = generatePhantoms(workspace, input);
+		assertTrue(assertHasPhantom(phantoms.getJvmClassBundle(), "MissingMeta").hasAnnotationModifier());
+	}
+
+	@Test
+	void testKnownTypeReferencesDoNotInspectTheirOwnReferences() {
+		// KnownMid is a known field type of the input class.
+		//
+		// Its method descriptor names KnownDeep, and it is annotated with KnownAnnotation,
+		// which is annotated with MissingMeta.
+		//
+		// Known types reached only through those references are not inspected,
+		// so neither their missing hierarchy nor their missing annotations should be generated.
+		JvmClassInfo knownDeep = TestClassUtils.createClass("KnownDeep", node -> {
+			node.superName = "MissingDeep";
+		});
+		JvmClassInfo knownAnnotation = TestClassUtils.createClass("KnownAnnotation", node -> {
+			node.access = ACC_PUBLIC | ACC_ANNOTATION | ACC_INTERFACE | ACC_ABSTRACT;
+			node.interfaces.add("java/lang/annotation/Annotation");
+			node.visitAnnotation("LMissingMeta;", true);
+		});
+		JvmClassInfo knownMid = TestClassUtils.createClass("KnownMid", node -> {
+			node.access = ACC_PUBLIC | ACC_ABSTRACT;
+			node.visitAnnotation("LKnownAnnotation;", true);
+			node.methods.add(new MethodNode(ACC_PUBLIC | ACC_ABSTRACT, "make", "()LKnownDeep;", null, null));
+		});
+		JvmClassInfo input = TestClassUtils.createClass("KnownMidUse", node -> {
+			node.fields.add(new FieldNode(ACC_PUBLIC, "mid", "LKnownMid;", null, null));
+		});
+		Workspace workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(knownDeep, knownAnnotation, knownMid, input));
+
+		// The missing types referenced only through known types do not need to be generated.
+		JvmClassBundle phantomBundle = generatePhantoms(workspace, input).getJvmClassBundle();
+		assertNoPhantom(phantomBundle, "MissingDeep");
+		assertNoPhantom(phantomBundle, "MissingMeta");
+	}
+
+	@Test
+	void testPermittedSubclassExtendsItsSealedType() {
+		// KnownSealed permits MissingPermitted.
+		JvmClassInfo knownSealed = TestClassUtils.createClass("KnownSealed", node -> {
+			node.access = ACC_PUBLIC | ACC_ABSTRACT;
+			node.permittedSubclasses = new ArrayList<>(List.of("MissingPermitted"));
+		});
+		JvmClassInfo input = TestClassUtils.createClass("SealedUse", node -> {
+			MethodNode method = new MethodNode(ACC_PUBLIC | ACC_STATIC, "use", "(LKnownSealed;)V", null, null);
+			method.visitInsn(RETURN);
+			node.methods.add(method);
+		});
+		Workspace workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(knownSealed, input));
+
+		// The missing permitted subclass should be generated and extend the known sealed type.
+		GeneratedPhantomWorkspaceResource phantoms = generatePhantoms(workspace, input);
+		assertEquals("KnownSealed", assertHasPhantom(phantoms.getJvmClassBundle(), "MissingPermitted").getSuperName());
+	}
+
+	@Test
+	void testStrippedDebugSlotDoesNotTakeParameterType() {
+ 		// static void example(FirstValue first, SecondValue second) {
+		//     SlotInterface slot = second;
+		//     slot.run();
+		// }
+		JvmClassInfo input = TestClassUtils.createClass("StrippedSlotExample", node -> {
+			MethodNode method = new MethodNode(ACC_PUBLIC | ACC_STATIC, "example", "(LFirstValue;LSecondValue;)V", null, null);
+			method.maxStack = 1;
+
+			// SecondValue --> slot
+			method.visitVarInsn(ALOAD, 1);
+			method.visitVarInsn(ASTORE, 2);
+
+			// slot.run() --> slot must be SlotInterface
+			// SecondValue must implement SlotInterface
+			method.visitVarInsn(ALOAD, 2);
+			method.visitMethodInsn(INVOKEINTERFACE, "SlotInterface", "run", "()V", true);
+			method.visitInsn(RETURN);
+			node.methods.add(method);
+		});
+
+		// The phantom for SecondValue should implement SlotInterface.
+		JvmClassInfo second = assertHasPhantom(generatePhantoms(input).getJvmClassBundle(), "SecondValue");
+		assertEquals("java/lang/Object", second.getSuperName());
+		assertTrue(second.getInterfaces().contains("SlotInterface"));
+	}
+
+	@Test
+	void testHandlerReachableViaInitializationException() {
+		// The only instruction in the protected range is a static field read, which can fail during class initialization.
+		// The handler should still receive the local state from that read, so the local's phantom type should flow into the handler.
+		//
+ 		// static void example(HandledValue value) {
+		//     try {
+		//         Object popped = StaticHolder.FIELD; // can throw if StaticHolder.<clinit> fails
+		//     } catch (Throwable t) {
+		//         HandlerSink.take(value); // value should be inferred to extend HandlerTarget
+		//     }
+		// }
+		JvmClassInfo input = TestClassUtils.createClass("StaticReadHandlerExample", node -> {
+			MethodNode method = new MethodNode(ACC_PUBLIC | ACC_STATIC, "example", "(LHandledValue;)V", null, null);
+			method.maxStack = 1;
+			Label start = new Label();
+			Label end = new Label();
+			Label handler = new Label();
+			method.visitTryCatchBlock(start, end, handler, "java/lang/Throwable");
+			method.visitLabel(start);
+			method.visitFieldInsn(GETSTATIC, "StaticHolder", "FIELD", "Ljava/lang/Object;"); // Can throw if StaticHolder.<clinit> fails
+			method.visitInsn(POP);
+			method.visitLabel(end);
+			method.visitInsn(RETURN);
+			method.visitLabel(handler);
+			method.visitVarInsn(ASTORE, 1);
+			method.visitVarInsn(ALOAD, 0);
+			method.visitMethodInsn(INVOKESTATIC, "HandlerSink", "take", "(LHandlerTarget;)V", false);
+			method.visitInsn(RETURN);
+			node.methods.add(method);
+		});
+		JvmClassBundle phantomBundle = generatePhantoms(input).getJvmClassBundle();
+		assertEquals("HandlerTarget", assertHasPhantom(phantomBundle, "HandledValue").getSuperName());
+	}
+
+	@Test
+	void testConflictingStackHeightsAtLoopJoinTerminate() {
+		// Junk method with invalid stack heights at a loop join.
+		//
+		// We should still be able to generate phantoms for types used in the portion of the
+		// method with valid stack heights, such as LoopValue implementing LoopIface.
+		JvmClassInfo input = TestClassUtils.createClass("StackConflictLoopExample", node -> {
+			MethodNode method = new MethodNode(ACC_PUBLIC | ACC_STATIC, "example", "(LLoopValue;)V", null, null);
+			method.maxStack = 2;
+			Label header = new Label();
+			Label oneValueBranch = new Label();
+
+			method.visitVarInsn(ALOAD, 0);
+			method.visitMethodInsn(INVOKEINTERFACE, "LoopIface", "run", "()V", true);
+
+			method.visitJumpInsn(GOTO, header); // Empty stack --> header
+			method.visitLabel(header); // <-- Receives flow of {}, {0}, and {0, 0}
+
+			method.visitInsn(ICONST_0);
+			method.visitJumpInsn(IFEQ, oneValueBranch); // {0} --> oneValueBranch
+
+			method.visitInsn(ICONST_0);
+			method.visitInsn(ICONST_0);
+			method.visitJumpInsn(GOTO, header); // {0, 0} --> header
+
+			method.visitLabel(oneValueBranch);
+			method.visitInsn(ICONST_0);
+			method.visitJumpInsn(GOTO, header); // {0} --> header
+			node.methods.add(method);
+		});
+		JvmClassBundle phantomBundle = generatePhantoms(input).getJvmClassBundle();
+		assertTrue(assertHasPhantom(phantomBundle, "LoopValue").getInterfaces().contains("LoopIface"));
+	}
+
 	@Nonnull
 	private GeneratedPhantomWorkspaceResource generatePhantoms(@Nonnull String assembly, boolean isFullBody) {
 		return generatePhantoms(EmptyWorkspace.get(), assemble(assembly, isFullBody));
@@ -1566,7 +1853,7 @@ class PhantomGeneratorTest extends CompilerTestBase implements Opcodes {
 
 	@Nonnull
 	private GeneratedPhantomWorkspaceResource generatePhantoms(@Nonnull Workspace workspace, @Nonnull JvmClassInfo... classes) {
-		return assertDoesNotThrow(() -> generator.createPhantomsForClasses(workspace, List.of(classes)));
+		return assertDoesNotThrow(() -> generator.createPhantomsForClasses(workspace, List.of(classes), 8));
 	}
 
 	@Nonnull

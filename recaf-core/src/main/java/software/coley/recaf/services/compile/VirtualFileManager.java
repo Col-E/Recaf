@@ -2,6 +2,9 @@ package software.coley.recaf.services.compile;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
+import software.coley.recaf.workspace.model.bundle.VersionedJvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import javax.tools.FileObject;
@@ -12,8 +15,12 @@ import javax.tools.StandardLocation;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.NavigableMap;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 /**
  * File manager extension for handling updates to java file object's output stream.
@@ -40,7 +47,7 @@ public class VirtualFileManager extends ForwardingJavaFileManager<JavaFileManage
 	 * @param classPath
 	 * 		Compiler classpath, used to distinguish cached fallback results from other compilations.
 	 * @param versionTarget
-	 * 		Compiler target release, used to distinguish multi-release classpath results.
+	 * 		Compiler target release, used to select workspace multi-release classes.
 	 */
 	public VirtualFileManager(@Nonnull CompileClasspathCache classpathCache,
 	                          @Nonnull VirtualUnitMap unitMap,
@@ -74,10 +81,7 @@ public class VirtualFileManager extends ForwardingJavaFileManager<JavaFileManage
 						name.indexOf('/', formatted.length()) == -1;
 			}
 			return () -> new ClassPathIterator(list.iterator(), virtualClasspath.stream()
-					.flatMap(resource -> resource.jvmClassBundleStreamRecursive().flatMap(b -> b.entrySet().stream()))
-					.filter(entry -> check.test(entry.getKey()))
-					.<JavaFileObject>map(entry -> new ResourceVirtualJavaFileObject(entry.getKey(),
-							entry.getValue().getBytecode(), JavaFileObject.Kind.CLASS))
+					.flatMap(resource -> listResourceClasses(resource, check))
 					.iterator());
 		}
 
@@ -106,6 +110,47 @@ public class VirtualFileManager extends ForwardingJavaFileManager<JavaFileManage
 			unitMap.addFile(internal, obj);
 		}
 		return obj;
+	}
+
+	/**
+	 * @param resource
+	 * 		Resource to scan for classes.
+	 * @param check
+	 * 		Predicate to check if a class name should be included.
+	 *
+	 * @return Stream of class file objects from the resource and its embedded resources.
+	 */
+	@Nonnull
+	private Stream<JavaFileObject> listResourceClasses(@Nonnull WorkspaceResource resource,
+	                                                   @Nonnull Predicate<String> check) {
+		Map<String, JvmClassInfo> selectedClasses = new TreeMap<>();
+
+		// Look for multi-release classes, and select the highest version that is less than or equal to the target.
+		if (versionTarget >= 9) {
+			NavigableMap<Integer, VersionedJvmClassBundle> versionedBundlesBelow =
+					resource.getVersionedJvmClassBundles().headMap(versionTarget, true).descendingMap();
+			for (VersionedJvmClassBundle bundle : versionedBundlesBelow.values()) {
+				for (Map.Entry<String, JvmClassInfo> entry : bundle.entrySet())
+					if (check.test(entry.getKey()))
+						selectedClasses.putIfAbsent(entry.getKey(), entry.getValue());
+			}
+		}
+
+		// Fill in any remaining classes from the non-versioned bundles.
+		for (JvmClassBundle bundle : resource.jvmClassBundles()) {
+			for (Map.Entry<String, JvmClassInfo> entry : bundle.entrySet())
+				if (check.test(entry.getKey()))
+					selectedClasses.putIfAbsent(entry.getKey(), entry.getValue());
+		}
+
+		// Collect classes from embedded resources.
+		Stream<JavaFileObject> embeddedClasses = resource.getEmbeddedResources().values().stream()
+				.flatMap(embedded -> listResourceClasses(embedded, check));
+
+		// Convert the selected classes to JavaFileObjects.
+		Stream<JavaFileObject> localClasses = selectedClasses.entrySet().stream()
+				.map(entry -> new ResourceVirtualJavaFileObject(entry.getKey(), entry.getValue().getBytecode(), JavaFileObject.Kind.CLASS));
+		return Stream.concat(localClasses, embeddedClasses);
 	}
 
 	private static final class ClassPathIterator implements Iterator<JavaFileObject> {

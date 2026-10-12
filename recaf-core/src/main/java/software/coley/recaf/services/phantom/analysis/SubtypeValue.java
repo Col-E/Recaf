@@ -70,7 +70,8 @@ public class SubtypeValue implements Value {
 	}
 
 	/**
-	 * Merges two values at a control-flow join.
+	 * Merges two values at a control-flow join. The result is never less informative than either input: reference names
+	 * only grow and types only move toward {@link Types#OBJECT_TYPE}, so repeated merges reach a fixed point.
 	 *
 	 * @param value1
 	 * 		First value.
@@ -90,7 +91,16 @@ public class SubtypeValue implements Value {
 		if (!value1.isReferenceLike() || !value2.isReferenceLike()) {
 			if (value1.type != null && value1.type.equals(value2.type))
 				return value1;
-			return typed(Types.OBJECT_TYPE);
+
+			// Widen incompatible values to Object, but keep any reference names we've seen.
+			// Merging should add information, not forget it.
+			Set<String> names = new HashSet<>();
+			names.add(Types.OBJECT_TYPE.getInternalName());
+			if (value1.isReferenceLike())
+				names.addAll(value1.referenceNames);
+			if (value2.isReferenceLike())
+				names.addAll(value2.referenceNames);
+			return typed(Types.OBJECT_TYPE, names);
 		}
 
 		Set<String> mergedReferences = new HashSet<>(value1.referenceNames);

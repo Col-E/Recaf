@@ -1,13 +1,16 @@
 package software.coley.recaf.services.compile;
 
+import jakarta.annotation.Nonnull;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.ClassRemapper;
 import org.objectweb.asm.commons.SimpleRemapper;
+import org.objectweb.asm.tree.MethodNode;
 import software.coley.recaf.RecafConstants;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.StubFileInfo;
@@ -18,12 +21,16 @@ import software.coley.recaf.test.dummy.StringConsumer;
 import software.coley.recaf.util.JavaVersion;
 import software.coley.recaf.workspace.model.BasicWorkspace;
 import software.coley.recaf.workspace.model.Workspace;
+import software.coley.recaf.workspace.model.bundle.BasicVersionedJvmClassBundle;
+import software.coley.recaf.workspace.model.bundle.VersionedJvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceFileResourceBuilder;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResourceBuilder;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.NavigableMap;
+import java.util.TreeMap;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -186,12 +193,45 @@ public class JavacCompilerTest extends TestBase {
 	}
 
 	@Test
+	void testJavacUsesTargetVersionedWorkspaceClass() {
+		// Workspace with a base version of a class and a versioned variant of the same class.
+		Workspace workspace = workspaceWithVersions(
+				classWithStaticMethods("multi/TargetApi", "baseOnly"),
+				Map.of(11, classWithStaticMethods("multi/TargetApi", "baseOnly", "versionedOnly")));
+
+		// Java 11 sees the versioned variant
+		assertTrue(compileStaticCall(workspace, 11, "multi/TargetApi", "versionedOnly").wasSuccess());
+
+		// Java 8 sees the base variant, but not the versioned variant
+		assertTrue(compileStaticCall(workspace, 8, "multi/TargetApi", "baseOnly").wasSuccess());
+		assertFalse(compileStaticCall(workspace, 8, "multi/TargetApi", "versionedOnly").wasSuccess());
+	}
+
+	@Test
+	void testJavacSelectsHighestEligibleWorkspaceVersion() {
+		// Workspace with a base version of a class and multiple versioned variants of the same class.
+		Workspace workspace = workspaceWithVersions(
+				classWithStaticMethods("multi/OrderedApi", "baseOnly"),
+				Map.of(
+						9, classWithStaticMethods("multi/OrderedApi", "baseOnly", "java9Only"),
+						11, classWithStaticMethods("multi/OrderedApi", "baseOnly", "java11Only")));
+
+		// Java 10 sees the Java 9 variant, but not the Java 11 variant
+		assertTrue(compileStaticCall(workspace, 10, "multi/OrderedApi", "java9Only").wasSuccess());
+		assertFalse(compileStaticCall(workspace, 10, "multi/OrderedApi", "java11Only").wasSuccess());
+
+		// Java 11 sees the Java 11 variant, but not the Java 9 variant since the Java 11 variant is the highest eligible versioned variant.
+		assertTrue(compileStaticCall(workspace, 11, "multi/OrderedApi", "java11Only").wasSuccess());
+		assertFalse(compileStaticCall(workspace, 11, "multi/OrderedApi", "java9Only").wasSuccess());
+	}
+
+	@Test
 	void testJavacWithMultipleSources() {
 		// Specify multiple sources with a minimal dependency between them.
 		JavacArguments arguments = new JavacArgumentsBuilder()
 				.withClassSources(Map.of(
 						"HelloWorld",
-								"""
+						"""
 								public class HelloWorld {
 									public static void main(String[] args) {
 										System.out.println(Helper.message());
@@ -213,5 +253,77 @@ public class JavacCompilerTest extends TestBase {
 		assertEquals(0, result.getDiagnostics().size(), "There were unexpected diagnostic messages");
 		assertTrue(result.getCompilations().containsKey("HelloWorld"), "Primary class missing from compile map output");
 		assertTrue(result.getCompilations().containsKey("Helper"), "Dependent class missing from compile map output");
+	}
+
+	/**
+	 * Creates a class with the given static methods.
+	 *
+	 * @param name
+	 * 		Class name.
+	 * @param methodNames
+	 * 		Method names to add to the class.
+	 *
+	 * @return Class info for the generated class.
+	 */
+	@Nonnull
+	private static JvmClassInfo classWithStaticMethods(@Nonnull String name, String... methodNames) {
+		return TestClassUtils.createClass(name, node -> {
+			for (String methodName : methodNames) {
+				MethodNode method = new MethodNode(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, methodName, "()V", null, null);
+				method.visitInsn(Opcodes.RETURN);
+				method.visitMaxs(0, 0);
+				node.methods.add(method);
+			}
+		});
+	}
+
+	/**
+	 * Creates a workspace with a base class and versioned variants of that class.
+	 *
+	 * @param baseClass
+	 * 		Base class.
+	 * @param versionedClasses
+	 * 		Versioned variants of the base class.
+	 *
+	 * @return Workspace with the classes.
+	 */
+	@Nonnull
+	private static Workspace workspaceWithVersions(@Nonnull JvmClassInfo baseClass, @Nonnull Map<Integer, JvmClassInfo> versionedClasses) {
+		NavigableMap<Integer, VersionedJvmClassBundle> versionedBundles = new TreeMap<>();
+		versionedClasses.forEach((version, classInfo) -> {
+			BasicVersionedJvmClassBundle bundle = new BasicVersionedJvmClassBundle(version);
+			bundle.initialPut(classInfo);
+			versionedBundles.put(version, bundle);
+		});
+		WorkspaceResource resource = new WorkspaceResourceBuilder()
+				.withJvmClassBundle(TestClassUtils.fromClasses(baseClass))
+				.withVersionedJvmClassBundles(versionedBundles)
+				.build();
+		return new BasicWorkspace(resource);
+	}
+
+	/**
+	 * Compiles a class that calls a static method on another class.
+	 *
+	 * @param workspace
+	 * 		Workspace to use for the compilation.
+	 * @param targetVersion
+	 * 		Target version of the compilation.
+	 * @param owner
+	 * 		Class name of the static method owner.
+	 * @param methodName
+	 * 		Name of the static method to call.
+	 *
+	 * @return Compilation result.
+	 */
+	@Nonnull
+	private CompilerResult compileStaticCall(@Nonnull Workspace workspace, int targetVersion,
+	                                         @Nonnull String owner, @Nonnull String methodName) {
+		JavacArguments arguments = new JavacArgumentsBuilder()
+				.withClassName("VersionedWorkspaceUse")
+				.withClassSource("class VersionedWorkspaceUse { void use() { " + owner.replace('/', '.') + "." + methodName + "(); } }")
+				.withVersionTarget(targetVersion)
+				.build();
+		return javac.compile(arguments, workspace, null);
 	}
 }

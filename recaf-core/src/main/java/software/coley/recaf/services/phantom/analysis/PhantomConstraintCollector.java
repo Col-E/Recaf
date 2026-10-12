@@ -169,11 +169,19 @@ public class PhantomConstraintCollector {
 	 *
 	 * @param internalName
 	 * 		Type used in a {@code throws} clause.
+	 * @param followReferences
+	 *        {@code true} to queue known types for inspection,
+	 *        {@code false} to only collect phantom constraints.
 	 */
-	private void collectExceptionType(@Nullable String internalName) {
+	private void collectExceptionType(@Nullable String internalName, boolean followReferences) {
 		if (internalName == null)
 			return;
+
+		if (followReferences)
+			queueKnownType(internalName);
+
 		context.collectInternalName(internalName);
+
 		PhantomClassConstraint exceptionConstraint = constraint(internalName);
 		if (exceptionConstraint != null) {
 			exceptionConstraint.markClass();
@@ -181,16 +189,35 @@ public class PhantomConstraintCollector {
 		}
 	}
 
+	/**
+	 * @param descriptor
+	 * 		Annotation descriptor.
+	 * @param visible
+	 * 		Whether the annotation is visible at runtime.
+	 * @param followReferences
+	 *        {@code true} to queue known types for inspection,
+	 *        {@code false} to only collect phantom constraints.
+	 *
+	 * @return Constraint for the annotation type, or {@code null} if the type is known.
+	 */
 	@Nullable
-	private PhantomClassConstraint collectAnnotationDescriptor(@Nonnull String descriptor, boolean visible) {
+	private PhantomClassConstraint collectAnnotationDescriptor(@Nonnull String descriptor, boolean visible, boolean followReferences) {
+		if (followReferences)
+			queueKnownType(Type.getType(descriptor).getInternalName());
+
 		context.collectDescriptor(descriptor);
+
 		PhantomClassConstraint constraint = constraint(Type.getType(descriptor).getInternalName());
 		if (constraint != null)
 			constraint.markAnnotation(visible);
 		return constraint;
 	}
 
-	private void collectConstant(Object value) {
+	/**
+	 * @param value
+	 * 		Constant value.
+	 */
+	private void collectConstant(@Nullable Object value) {
 		switch (value) {
 			case null -> {
 				// no-op
@@ -209,6 +236,10 @@ public class PhantomConstraintCollector {
 		}
 	}
 
+	/**
+	 * @param handle
+	 * 		Method handle.
+	 */
 	private void collectHandle(@Nonnull Handle handle) {
 		// Known owners can carry the only copy of a required hierarchy or annotation declaration.
 		queueKnownType(handle.getOwner());
@@ -250,9 +281,19 @@ public class PhantomConstraintCollector {
 				}
 				context.collectMethodDescriptor(handle.getDesc());
 			}
-			case Opcodes.H_INVOKEVIRTUAL, Opcodes.H_INVOKESPECIAL -> {
+			case Opcodes.H_INVOKEVIRTUAL -> {
 				if (ownerConstraint != null) {
 					ownerConstraint.markClass();
+					ownerConstraint.addMethod(handle.getName(), handle.getDesc(), false);
+				}
+				context.collectMethodDescriptor(handle.getDesc());
+			}
+			case Opcodes.H_INVOKESPECIAL -> {
+				if (ownerConstraint != null) {
+					if (handle.isInterface())
+						ownerConstraint.markInterface();
+					else
+						ownerConstraint.markClass();
 					ownerConstraint.addMethod(handle.getName(), handle.getDesc(), false);
 				}
 				context.collectMethodDescriptor(handle.getDesc());
@@ -263,6 +304,13 @@ public class PhantomConstraintCollector {
 		}
 	}
 
+	/**
+	 * @param value
+	 * 		Annotation element value.
+	 *
+	 * @return Descriptor of the annotation element value,
+	 * or {@code null} if the value is not a primitive, string, or type.
+	 */
 	@Nullable
 	private static String annotationValueDescriptor(@Nonnull Object value) {
 		return switch (value) {
@@ -280,8 +328,21 @@ public class PhantomConstraintCollector {
 		};
 	}
 
+	/**
+	 * @param delegate
+	 * 		Delegate visitor to forward to.
+	 * @param annotationConstraint
+	 * 		Constraint for the annotation type, or {@code null} if the type is known.
+	 * @param followReferences
+	 *        {@code true} to queue known types for inspection,
+	 *        {@code false} to only collect phantom constraints.
+	 *
+	 * @return Visitor that collects constraints from the annotation.
+	 */
+	@Nonnull
 	private AnnotationVisitor annotationCollector(@Nullable AnnotationVisitor delegate,
-	                                              @Nullable PhantomClassConstraint annotationConstraint) {
+	                                              @Nullable PhantomClassConstraint annotationConstraint,
+	                                              boolean followReferences) {
 		return new AnnotationVisitor(RecafConstants.getAsmVersion(), delegate) {
 			@Override
 			public void visit(String name, Object value) {
@@ -307,10 +368,10 @@ public class PhantomConstraintCollector {
 
 			@Override
 			public AnnotationVisitor visitAnnotation(String name, String descriptor) {
-				PhantomClassConstraint nestedAnnotationConstraint = collectAnnotationDescriptor(descriptor, false);
+				PhantomClassConstraint nestedAnnotationConstraint = collectAnnotationDescriptor(descriptor, false, followReferences);
 				if (annotationConstraint != null && name != null)
 					annotationConstraint.addAnnotationElement(name, descriptor);
-				return annotationCollector(super.visitAnnotation(name, descriptor), nestedAnnotationConstraint);
+				return annotationCollector(super.visitAnnotation(name, descriptor), nestedAnnotationConstraint, followReferences);
 			}
 
 			@Override
@@ -340,10 +401,10 @@ public class PhantomConstraintCollector {
 
 					@Override
 					public AnnotationVisitor visitAnnotation(String ignoredName, String descriptor) {
-						PhantomClassConstraint nestedAnnotationConstraint = collectAnnotationDescriptor(descriptor, false);
+						PhantomClassConstraint nestedAnnotationConstraint = collectAnnotationDescriptor(descriptor, false, followReferences);
 						if (componentDescriptor == null)
 							componentDescriptor = descriptor;
-						return annotationCollector(super.visitAnnotation(ignoredName, descriptor), nestedAnnotationConstraint);
+						return annotationCollector(super.visitAnnotation(ignoredName, descriptor), nestedAnnotationConstraint, followReferences);
 					}
 
 					@Override
@@ -358,6 +419,9 @@ public class PhantomConstraintCollector {
 		};
 	}
 
+	/**
+	 * Visitor that collects constraints from a class.
+	 */
 	private class CollectionVisitor extends ClassVisitor {
 		private final boolean followReferences;
 		private final boolean collectCodeReferences;
@@ -406,6 +470,16 @@ public class PhantomConstraintCollector {
 			// Record inner/outer relationships for both the inner and outer class constraints.
 			PhantomClassConstraint innerConstraint = constraint(name);
 			PhantomClassConstraint outerConstraint = constraint(outerName);
+			if (innerConstraint != null) {
+				if ((access & Opcodes.ACC_ANNOTATION) != 0)
+					innerConstraint.markAnnotation(false);
+				else if ((access & Opcodes.ACC_ENUM) != 0)
+					innerConstraint.markEnum();
+				else if ((access & Opcodes.ACC_INTERFACE) != 0)
+					innerConstraint.markInterface();
+				else if (access != 0)
+					innerConstraint.markClass();
+			}
 			if (innerConstraint != null && outerName != null && innerName != null)
 				innerConstraint.markInnerClassOf(outerName, innerName, access);
 			if (outerConstraint != null && name != null && innerName != null)
@@ -457,19 +531,23 @@ public class PhantomConstraintCollector {
 		public void visitPermittedSubclass(String permittedSubclass) {
 			queueKnownType(permittedSubclass);
 			context.collectInternalName(permittedSubclass);
+			// A permitted subclass must directly extend or implement the sealed type that permits it.
+			PhantomClassConstraint permittedConstraint = constraint(permittedSubclass);
+			if (permittedConstraint != null && currentClassName != null)
+				permittedConstraint.addRequiredSupertype(currentClassName);
 			super.visitPermittedSubclass(permittedSubclass);
 		}
 
 		@Override
 		public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
 			return annotationCollector(super.visitAnnotation(descriptor, visible),
-					collectAnnotationDescriptor(descriptor, visible));
+					collectAnnotationDescriptor(descriptor, visible, followReferences), followReferences);
 		}
 
 		@Override
 		public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String descriptor, boolean visible) {
 			return annotationCollector(super.visitTypeAnnotation(typeRef, typePath, descriptor, visible),
-					collectAnnotationDescriptor(descriptor, visible));
+					collectAnnotationDescriptor(descriptor, visible, followReferences), followReferences);
 		}
 
 		@Override
@@ -482,14 +560,14 @@ public class PhantomConstraintCollector {
 				@Override
 				public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
 					return annotationCollector(super.visitAnnotation(descriptor, visible),
-							collectAnnotationDescriptor(descriptor, visible));
+							collectAnnotationDescriptor(descriptor, visible, followReferences), followReferences);
 				}
 
 				@Override
 				public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath,
 				                                             String descriptor, boolean visible) {
 					return annotationCollector(super.visitTypeAnnotation(typeRef, typePath, descriptor, visible),
-							collectAnnotationDescriptor(descriptor, visible));
+							collectAnnotationDescriptor(descriptor, visible, followReferences), followReferences);
 				}
 			};
 		}
@@ -505,13 +583,13 @@ public class PhantomConstraintCollector {
 				@Override
 				public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
 					return annotationCollector(super.visitAnnotation(descriptor, visible),
-							collectAnnotationDescriptor(descriptor, visible));
+							collectAnnotationDescriptor(descriptor, visible, followReferences), followReferences);
 				}
 
 				@Override
 				public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String descriptor, boolean visible) {
 					return annotationCollector(super.visitTypeAnnotation(typeRef, typePath, descriptor, visible),
-							collectAnnotationDescriptor(descriptor, visible));
+							collectAnnotationDescriptor(descriptor, visible, followReferences), followReferences);
 				}
 			};
 		}
@@ -524,42 +602,42 @@ public class PhantomConstraintCollector {
 			context.collectMethodDescriptor(descriptor);
 			if (exceptions != null)
 				for (String exception : exceptions)
-					collectExceptionType(exception);
+					collectExceptionType(exception, followReferences);
 
 			return new MethodVisitor(RecafConstants.getAsmVersion(), super.visitMethod(access, name, descriptor, signature, exceptions)) {
 				@Override
 				public AnnotationVisitor visitAnnotationDefault() {
-					return annotationCollector(super.visitAnnotationDefault(), null);
+					return annotationCollector(super.visitAnnotationDefault(), null, followReferences);
 				}
 
 				@Override
 				public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
 					return annotationCollector(super.visitAnnotation(descriptor, visible),
-							collectAnnotationDescriptor(descriptor, visible));
+							collectAnnotationDescriptor(descriptor, visible, followReferences), followReferences);
 				}
 
 				@Override
 				public AnnotationVisitor visitParameterAnnotation(int parameter, String descriptor, boolean visible) {
 					return annotationCollector(super.visitParameterAnnotation(parameter, descriptor, visible),
-							collectAnnotationDescriptor(descriptor, visible));
+							collectAnnotationDescriptor(descriptor, visible, followReferences), followReferences);
 				}
 
 				@Override
 				public AnnotationVisitor visitInsnAnnotation(int typeRef, TypePath typePath, String descriptor, boolean visible) {
 					return annotationCollector(super.visitInsnAnnotation(typeRef, typePath, descriptor, visible),
-							collectAnnotationDescriptor(descriptor, visible));
+							collectAnnotationDescriptor(descriptor, visible, followReferences), followReferences);
 				}
 
 				@Override
 				public AnnotationVisitor visitTryCatchAnnotation(int typeRef, TypePath typePath, String descriptor, boolean visible) {
 					return annotationCollector(super.visitTryCatchAnnotation(typeRef, typePath, descriptor, visible),
-							collectAnnotationDescriptor(descriptor, visible));
+							collectAnnotationDescriptor(descriptor, visible, followReferences), followReferences);
 				}
 
 				@Override
 				public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String descriptor, boolean visible) {
 					return annotationCollector(super.visitTypeAnnotation(typeRef, typePath, descriptor, visible),
-							collectAnnotationDescriptor(descriptor, visible));
+							collectAnnotationDescriptor(descriptor, visible, followReferences), followReferences);
 				}
 
 				@Override
@@ -577,7 +655,7 @@ public class PhantomConstraintCollector {
 				                                                      Label[] start, Label[] end, int[] index,
 				                                                      String descriptor, boolean visible) {
 					return annotationCollector(super.visitLocalVariableAnnotation(typeRef, typePath, start, end,
-							index, descriptor, visible), collectAnnotationDescriptor(descriptor, visible));
+							index, descriptor, visible), collectAnnotationDescriptor(descriptor, visible, followReferences), followReferences);
 				}
 
 				@Override
@@ -675,13 +753,16 @@ public class PhantomConstraintCollector {
 
 				@Override
 				public void visitTryCatchBlock(Label start, Label end, Label handler, String type) {
-					collectExceptionType(type);
+					collectExceptionType(type, followReferences);
 					super.visitTryCatchBlock(start, end, handler, type);
 				}
 			};
 		}
 	}
 
+	/**
+	 * Visitor that collects generic parameter counts from a signature.
+	 */
 	private class GenericSignatureCollector extends SignatureVisitor {
 		private String className;
 		private int argumentCount;

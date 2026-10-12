@@ -2,6 +2,8 @@ package software.coley.recaf.services.phantom.analysis;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import org.objectweb.asm.ConstantDynamic;
+import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -18,6 +20,8 @@ import org.objectweb.asm.tree.TryCatchBlockNode;
 import org.objectweb.asm.tree.TypeInsnNode;
 import org.objectweb.asm.tree.VarInsnNode;
 import org.objectweb.asm.tree.analysis.Analyzer;
+import org.slf4j.Logger;
+import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.phantom.model.PhantomClassConstraint;
 import software.coley.recaf.util.AsmInsnUtil;
 import software.coley.recaf.util.Types;
@@ -27,6 +31,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +45,7 @@ import java.util.Set;
  * @author Matt Coley
  */
 public class PhantomMethodConstraintAnalysis {
+	private static final Logger logger = Logging.get(PhantomMethodConstraintAnalysis.class);
 	private final PhantomGenerationContext context;
 
 	/**
@@ -77,20 +83,28 @@ public class PhantomMethodConstraintAnalysis {
 		Int2ObjectMap<List<ExceptionHandlerEdge>> exceptionHandlerMap = buildExceptionHandlerMap(method, insns, labelIndices);
 
 		// Start with the initial state at the method entry and propagate forward, merging at control flow joins until we reach a fixed point.
-		Map<Integer, SubtypeValue> initialLocals = initialLocals(ownerName, method, insns, labelIndices);
-		SubtypeFrameState[] incomingStates = new SubtypeFrameState[insns.length];
-		incomingStates[0] = new SubtypeFrameState(initialLocals, List.of());
+		Map<Integer, SubtypeValue> initialLocals = initialLocals(ownerName, method, labelIndices);
+		JoinStates joins = new JoinStates(ownerName, method, insns.length);
+		joins.set(0, new SubtypeFrameState(initialLocals, List.of()));
 
 		// Queue up propagation/simulation of state across the CFG until we reach a fixed point.
-		// We'll cap the number of iterations to avoid infinite loops in any weird/contrived cases.
+		// Every join changes only so often, so the loop terminates within the visit budget (see visitBudget).
+		// If we exceed the budget something is wrong with the analysis process, and we have bigger problems about correctness.
+		int stackLimit = Math.max(method.maxStack, 1);
+		long visitBudget = visitBudget(ownerName, method, insns, stackLimit);
+		long visits = 0;
+		boolean stackOverflowLogged = false;
 		Deque<Integer> unprocessed = new ArrayDeque<>();
 		unprocessed.add(0);
 		while (!unprocessed.isEmpty()) {
+			if (++visits > visitBudget)
+				throw new IllegalStateException("Subtype analysis of '" + ownerName + "." + method.name + method.desc
+						+ "' exceeded its proven visit bound, which indicates an analysis bug");
 			int index = unprocessed.removeFirst();
 
 			// Skip if we don't have any state for this instruction.
 			// Will happen for any dead code that isn't reachable from the entry instruction.
-			SubtypeFrameState incoming = incomingStates[index];
+			SubtypeFrameState incoming = joins.get(index);
 			if (incoming == null)
 				continue;
 
@@ -100,14 +114,26 @@ public class PhantomMethodConstraintAnalysis {
 
 			// Exception edges preserve locals from the throwing instruction, but replace the stack with the caught exception.
 			for (ExceptionHandlerEdge exceptionHandler : exceptionHandlerMap.getOrDefault(index, List.of()))
-				if (mergeState(incomingStates, exceptionHandler.handlerIndex(), exceptionState(incoming, exceptionHandler)))
+				if (joins.merge(exceptionHandler.handlerIndex(), exceptionState(incoming, exceptionHandler)))
 					unprocessed.add(exceptionHandler.handlerIndex());
 
 			// Continue the simulation, then merge state into successors and add them to the worklist if they changed.
 			SubtypeFrameState outgoing = incoming.copy();
 			simulateInstruction(insn, outgoing);
+			if (outgoing.getStack().size() > stackLimit) {
+				// Only malformed methods overflow max_stack.
+				if (!stackOverflowLogged) {
+					stackOverflowLogged = true;
+					logger.warn("Operand stack exceeds max_stack at an instruction in '{}.{}{}'," +
+									" so its stack view is dropped and its subtype constraints may be incomplete",
+							ownerName, method.name, method.desc);
+				}
+
+				// Drop the stack so we don't propagate a malformed state to successors. Locals are still preserved.
+				outgoing.getStack().clear();
+			}
 			for (int successor : successorMap.getOrDefault(index, List.of()))
-				if (mergeState(incomingStates, successor, outgoing))
+				if (joins.merge(successor, outgoing))
 					unprocessed.add(successor);
 		}
 	}
@@ -140,7 +166,7 @@ public class PhantomMethodConstraintAnalysis {
 			case Opcodes.ASTORE -> {
 				SubtypeValue value = peek(stack, 0);
 				Type localTarget = localTargetType(ownerName, method, instructionIndex,
-						((VarInsnNode) insn).var, labelIndices, locals);
+						((VarInsnNode) insn).var, labelIndices);
 				if (localTarget != null)
 					addSubtypeConstraints(value, localTarget);
 			}
@@ -226,8 +252,6 @@ public class PhantomMethodConstraintAnalysis {
 	 * 		Internal name of the declaring type.
 	 * @param method
 	 * 		Method being analyzed.
-	 * @param insns
-	 * 		Method instructions.
 	 * @param labelIndices
 	 * 		Instruction index lookup for labels.
 	 *
@@ -236,7 +260,6 @@ public class PhantomMethodConstraintAnalysis {
 	@Nonnull
 	private static Map<Integer, SubtypeValue> initialLocals(@Nonnull String ownerName,
 	                                                        @Nonnull MethodNode method,
-	                                                        @Nonnull AbstractInsnNode[] insns,
 	                                                        @Nonnull Map<LabelNode, Integer> labelIndices) {
 		Map<Integer, SubtypeValue> locals = new HashMap<>();
 		int slot = 0;
@@ -265,53 +288,14 @@ public class PhantomMethodConstraintAnalysis {
 			}
 		}
 
-		// Collect any reference-typed local slots.
-		List<Integer> observedReferenceLocals = new ArrayList<>();
-		for (AbstractInsnNode insn : insns) {
-			if (insn instanceof VarInsnNode varInsn && varInsn.getOpcode() == Opcodes.ALOAD &&
-					!observedReferenceLocals.contains(varInsn.var)) {
-				observedReferenceLocals.add(varInsn.var);
-			}
-		}
-
-		// Collect parameter slot information.
-		List<ParameterLocal> referenceParameters = new ArrayList<>();
-		int parameterSlot = (method.access & Opcodes.ACC_STATIC) == 0 ? 1 : 0;
-		for (Type parameterType : Type.getArgumentTypes(method.desc)) {
-			if (isReferenceType(parameterType))
-				referenceParameters.add(new ParameterLocal(parameterSlot, parameterType));
-			parameterSlot += parameterType.getSize();
-		}
-
-		// For any observed reference-typed local slots that aren't already filled in, try to map them to parameters.
-		if (!referenceParameters.isEmpty() && !observedReferenceLocals.isEmpty()) {
-			int parameterIndex = 0;
-			for (int observedSlot : observedReferenceLocals) {
-				// Abort when we've run out of parameters.
-				if (parameterIndex >= referenceParameters.size())
-					break;
-
-				// Skip parameters that are observed as reference-typed but don't match the current parameter index.
-				ParameterLocal parameter = referenceParameters.get(parameterIndex);
-				if (observedSlot == parameter.slot()) {
-					parameterIndex++;
-					continue;
-				}
-
-				// Skip observed slots that are already filled in from the local variable table.
-				if (locals.containsKey(observedSlot))
-					continue;
-
-				// Map the observed slot to the parameter type.
-				locals.put(observedSlot, SubtypeValue.typed(parameter.type()));
-				parameterIndex++;
-			}
-		}
 		return locals;
 	}
 
 	/**
-	 * Finds the best available type for a local slot at the current instruction.
+	 * Finds the declared type of a local slot at the current instruction.
+	 * <p>
+	 * Only declared types are used. The value currently simulated in a slot is not a declaration, since javac reuses
+	 * slots for unrelated types when no local variable table is present.
 	 *
 	 * @param ownerName
 	 * 		Internal name of the declaring type.
@@ -323,30 +307,22 @@ public class PhantomMethodConstraintAnalysis {
 	 * 		Local slot index.
 	 * @param labelIndices
 	 * 		Instruction index lookup for labels.
-	 * @param locals
-	 * 		Current local value state.
 	 *
-	 * @return Best known type for the local, or {@code null} when none is known.
+	 * @return Declared type for the local, or {@code null} when none is declared.
 	 */
 	@Nullable
 	private static Type localTargetType(@Nonnull String ownerName,
 	                                    @Nonnull MethodNode method,
 	                                    int instructionIndex,
 	                                    int varIndex,
-	                                    @Nonnull Map<LabelNode, Integer> labelIndices,
-	                                    @Nonnull Map<Integer, SubtypeValue> locals) {
+	                                    @Nonnull Map<LabelNode, Integer> labelIndices) {
 		// Look in the local variable table first.
 		Type localVariableType = activeLocalVariableType(method, instructionIndex, varIndex, labelIndices);
 		if (localVariableType != null)
 			return localVariableType;
 
 		// Look in the method descriptor to match a parameter or 'this'.
-		Type declaredType = declaredSlotType(ownerName, method.access, method.desc, varIndex);
-		if (declaredType != null)
-			return declaredType;
-
-		// Fall back to the simulated local state.
-		return localValueType(locals.get(varIndex));
+		return declaredSlotType(ownerName, method.access, method.desc, varIndex);
 	}
 
 	/**
@@ -416,20 +392,6 @@ public class PhantomMethodConstraintAnalysis {
 	}
 
 	/**
-	 * Reads the current simulated value type for a local slot.
-	 *
-	 * @param localValue
-	 * 		Current local value.
-	 *
-	 * @return Local type when it still looks like a reference, or {@code null}.
-	 */
-	@Nullable
-	private static Type localValueType(@Nullable SubtypeValue localValue) {
-		Type type = localValue == null ? null : localValue.getType();
-		return isReferenceType(type) ? type : null;
-	}
-
-	/**
 	 * Peek at a value on the stack.
 	 *
 	 * @param stack
@@ -474,11 +436,51 @@ public class PhantomMethodConstraintAnalysis {
 
 			ExceptionHandlerEdge edge = new ExceptionHandlerEdge(handler, caughtExceptionValue(block));
 			for (int i = start; i < end && i < insns.length; i++)
-				if (AsmInsnUtil.canThrow(insns[i]))
+				if (canThrowForPhantomAnalysis(insns[i]))
 					exceptionHandlerMap.computeIfAbsent(i, _ -> new ArrayList<>()).add(edge);
 		}
 
 		return exceptionHandlerMap;
+	}
+
+	/**
+	 * @param insn
+	 * 		Instruction to check.
+	 *
+	 * @return {@code true} when the instruction can throw an exception, which means it may have an exception handler edge.
+	 */
+	private static boolean canThrowForPhantomAnalysis(@Nonnull AbstractInsnNode insn) {
+		if (AsmInsnUtil.canThrow(insn))
+			return true;
+
+		// These aren't marked as 'can-throw' by the shared utility, as that is used by transformers that
+		// currently don't bail out on the rare case of class initialization throwing errors.
+		// But for phantom analysis, we want to model this possible LinkageError/NoClassDefFoundError.
+		//
+ 		// iconst_0
+		// istore x
+		// try:
+		//     <potentially throwing operation>
+		//     iconst_1
+		//     istore x
+		//     goto normal
+		// catch Throwable:
+		//     pop
+		//     iload x
+		//     ireturn
+		// normal:
+		//     iload x
+		//     ireturn
+		//
+		int opcode = insn.getOpcode();
+		if (opcode == Opcodes.GETSTATIC || opcode == Opcodes.PUTSTATIC)
+			return true;
+		if (opcode == Opcodes.LDC) {
+			Object constant = ((LdcInsnNode) insn).cst;
+			return constant instanceof Type || constant instanceof Handle || constant instanceof ConstantDynamic;
+		}
+
+		return false;
 	}
 
 	/**
@@ -508,32 +510,122 @@ public class PhantomMethodConstraintAnalysis {
 	}
 
 	/**
-	 * Merges a new incoming state into the stored state for one instruction.
+	 * Upper bound on the worklist visits one method can take.
+	 * <p>
+	 * An instruction's incoming state only changes by growing. Reference names are added, types move toward
+	 * {@link Types#OBJECT_TYPE}, and an empty stack takes the height of its first non-empty arrival. An arrival with a
+	 * conflicting stack height freezes the instruction, so nothing changes after that. Each stack position and local slot
+	 * therefore changes at most {@code names + 3} times, and each stack height is set at most once. Every change enqueues
+	 * one visit.
+	 * <p>
+	 * Stacks never exceed {@code stackLimit}, the method's {@code max_stack} (at least one). Collection drops any stack
+	 * that overflows it, so the bound also holds for malformed methods. With the stack limit fixed, the bound is linear
+	 * in the instruction count.
 	 *
-	 * @param states
-	 * 		Known states by instruction index.
-	 * @param index
-	 * 		Instruction index being updated.
-	 * @param incoming
-	 * 		New incoming state.
+	 * @param ownerName
+	 * 		Internal name of the declaring type.
+	 * @param method
+	 * 		Method being analyzed.
+	 * @param insns
+	 * 		Method instructions.
+	 * @param stackLimit
+	 * 		Largest operand stack height the analysis stores, see {@code max_stack}.
 	 *
-	 * @return {@code true} when the stored state changed and the instruction should be revisited.
+	 * @return Upper bound on visits, including the initial visit of the entry instruction.
 	 */
-	private static boolean mergeState(@Nonnull SubtypeFrameState[] states, int index, @Nonnull SubtypeFrameState incoming) {
-		SubtypeFrameState existing = states[index];
+	private static long visitBudget(@Nonnull String ownerName, @Nonnull MethodNode method, @Nonnull AbstractInsnNode[] insns, int stackLimit) {
+		long instructions = insns.length;
+		long changesPerInstruction = 2L + ((long) localSlotBound(method, insns) + stackLimit) * (referenceNameBound(ownerName, method, insns) + 3L);
+		return 1L + instructions * changesPerInstruction;
+	}
 
-		// No existing state --> store the incoming state.
-		if (existing == null) {
-			states[index] = incoming.copy();
-			return true;
+	/**
+	 * @param method
+	 * 		Method being analyzed.
+	 * @param insns
+	 * 		Method instructions.
+	 *
+	 * @return Upper bound on the distinct local slots the simulation can store values into.
+	 */
+	private static int localSlotBound(@Nonnull MethodNode method, @Nonnull AbstractInsnNode[] insns) {
+		Set<Integer> slots = new HashSet<>();
+		int slot = 0;
+
+		// This
+		if ((method.access & Opcodes.ACC_STATIC) == 0) {
+			slots.add(0);
+			slot = 1;
 		}
 
-		// Already have a state, merge incoming state into it.
-		SubtypeFrameState merged = existing.merge(incoming);
-		if (merged.equals(existing))
-			return false;
-		states[index] = merged;
-		return true;
+		// Parameters
+		for (Type argumentType : Type.getArgumentTypes(method.desc)) {
+			slots.add(slot);
+			slot += argumentType.getSize();
+		}
+
+		// Local variables
+		if (method.localVariables != null)
+			for (LocalVariableNode localVariable : method.localVariables)
+				slots.add(localVariable.index);
+		for (AbstractInsnNode insn : insns)
+			if (insn instanceof VarInsnNode varInsn)
+				slots.add(varInsn.var);
+
+		return slots.size();
+	}
+
+	/**
+	 * @param ownerName
+	 * 		Internal name of the declaring type.
+	 * @param method
+	 * 		Method being analyzed.
+	 * @param insns
+	 * 		Method instructions.
+	 *
+	 * @return Upper bound on the distinct reference names in the analysis.
+	 */
+	private static int referenceNameBound(@Nonnull String ownerName, @Nonnull MethodNode method, @Nonnull AbstractInsnNode[] insns) {
+		Set<String> internalNames = new HashSet<>();
+		List<String> descriptors = new ArrayList<>();
+
+		internalNames.add(ownerName);
+		internalNames.add(Types.OBJECT_TYPE.getInternalName());
+		internalNames.add(Types.STRING_TYPE.getInternalName());
+		internalNames.add(Types.CLASS_TYPE.getInternalName());
+		internalNames.add(Types.METHOD_HANDLE_TYPE.getInternalName());
+		internalNames.add("java/lang/Throwable");
+
+		descriptors.add(method.desc);
+		if (method.localVariables != null)
+			for (LocalVariableNode localVariable : method.localVariables)
+				descriptors.add(localVariable.desc);
+		if (method.tryCatchBlocks != null)
+			for (TryCatchBlockNode block : method.tryCatchBlocks)
+				if (block.type != null)
+					internalNames.add(block.type);
+		for (AbstractInsnNode insn : insns) {
+			if (insn instanceof TypeInsnNode typeInsn) {
+				internalNames.add(typeInsn.desc);
+			} else if (insn instanceof FieldInsnNode fieldInsn) {
+				internalNames.add(fieldInsn.owner);
+				descriptors.add(fieldInsn.desc);
+			} else if (insn instanceof MethodInsnNode methodInsn) {
+				internalNames.add(methodInsn.owner);
+				descriptors.add(methodInsn.desc);
+			} else if (insn instanceof InvokeDynamicInsnNode indyInsn) {
+				descriptors.add(indyInsn.desc);
+			} else if (insn instanceof MultiANewArrayInsnNode arrayInsn) {
+				descriptors.add(arrayInsn.desc);
+			} else if (insn instanceof LdcInsnNode ldcInsn && ldcInsn.cst instanceof ConstantDynamic dynamic) {
+				descriptors.add(dynamic.getDescriptor());
+			}
+		}
+		int bound = internalNames.size();
+		for (String descriptor : descriptors)
+			for (int i = 0; i < descriptor.length(); i++)
+				if (descriptor.charAt(i) == 'L')
+					bound++;
+		return bound;
 	}
 
 	/**
@@ -893,12 +985,104 @@ public class PhantomMethodConstraintAnalysis {
 				pop(stack);
 				pop(stack);
 			}
+			case Opcodes.IADD, Opcodes.LADD, Opcodes.FADD, Opcodes.DADD,
+			     Opcodes.ISUB, Opcodes.LSUB, Opcodes.FSUB, Opcodes.DSUB,
+			     Opcodes.IMUL, Opcodes.LMUL, Opcodes.FMUL, Opcodes.DMUL,
+			     Opcodes.IDIV, Opcodes.LDIV, Opcodes.FDIV, Opcodes.DDIV,
+			     Opcodes.IREM, Opcodes.LREM, Opcodes.FREM, Opcodes.DREM,
+			     Opcodes.ISHL, Opcodes.LSHL, Opcodes.ISHR, Opcodes.LSHR, Opcodes.IUSHR, Opcodes.LUSHR,
+			     Opcodes.IAND, Opcodes.LAND, Opcodes.IOR, Opcodes.LOR, Opcodes.IXOR, Opcodes.LXOR -> {
+				pop(stack);
+				pop(stack);
+				push(stack, SubtypeValue.typed(numericResultType(op)));
+			}
+			case Opcodes.INEG, Opcodes.LNEG, Opcodes.FNEG, Opcodes.DNEG,
+			     Opcodes.I2L, Opcodes.I2F, Opcodes.I2D, Opcodes.L2I, Opcodes.L2F, Opcodes.L2D,
+			     Opcodes.F2I, Opcodes.F2L, Opcodes.F2D, Opcodes.D2I, Opcodes.D2L, Opcodes.D2F,
+			     Opcodes.I2B, Opcodes.I2C, Opcodes.I2S -> {
+				pop(stack);
+				push(stack, SubtypeValue.typed(numericResultType(op)));
+			}
+			case Opcodes.LCMP, Opcodes.FCMPL, Opcodes.FCMPG, Opcodes.DCMPL, Opcodes.DCMPG -> {
+				pop(stack);
+				pop(stack);
+				push(stack, SubtypeValue.typed(Type.INT_TYPE));
+			}
+			case Opcodes.ARRAYLENGTH -> {
+				pop(stack);
+				push(stack, SubtypeValue.typed(Type.INT_TYPE));
+			}
+			case Opcodes.MONITORENTER, Opcodes.MONITOREXIT -> pop(stack);
 			default -> {
-				// If the stack change is unclear, drop the current stack view instead of guessing and
-				// creating subtype rules from a bad value later in the walk.
+				// Only the legacy subroutine opcodes (JSR and RET) reach here. Their stack effect is not modeled,
+				// so drop the current stack view instead of guessing and creating subtype rules from a bad value later.
 				stack.clear();
 			}
 		}
+	}
+
+	/**
+	 * @param op
+	 * 		Arithmetic, shift, bitwise, negation, or conversion opcode.
+	 *
+	 * @return Type of the value the opcode produces. Long and double results keep their two-slot width.
+	 */
+	@Nonnull
+	private static Type numericResultType(int op) {
+		return switch (op) {
+			case Opcodes.IADD,
+			     Opcodes.ISUB,
+			     Opcodes.IMUL,
+			     Opcodes.IDIV,
+			     Opcodes.IREM,
+			     Opcodes.INEG,
+			     Opcodes.ISHL,
+			     Opcodes.ISHR,
+			     Opcodes.IUSHR,
+			     Opcodes.IAND,
+			     Opcodes.IOR,
+			     Opcodes.IXOR,
+			     Opcodes.L2I,
+			     Opcodes.F2I,
+			     Opcodes.D2I,
+			     Opcodes.I2B,
+			     Opcodes.I2C,
+			     Opcodes.I2S -> Type.INT_TYPE;
+			case Opcodes.LADD,
+			     Opcodes.LSUB,
+			     Opcodes.LMUL,
+			     Opcodes.LDIV,
+			     Opcodes.LREM,
+			     Opcodes.LNEG,
+			     Opcodes.LSHL,
+			     Opcodes.LSHR,
+			     Opcodes.LUSHR,
+			     Opcodes.LAND,
+			     Opcodes.LOR,
+			     Opcodes.LXOR,
+			     Opcodes.I2L,
+			     Opcodes.F2L,
+			     Opcodes.D2L -> Type.LONG_TYPE;
+			case Opcodes.FADD,
+			     Opcodes.FSUB,
+			     Opcodes.FMUL,
+			     Opcodes.FDIV,
+			     Opcodes.FREM,
+			     Opcodes.FNEG,
+			     Opcodes.I2F,
+			     Opcodes.L2F,
+			     Opcodes.D2F -> Type.FLOAT_TYPE;
+			case Opcodes.DADD,
+			     Opcodes.DSUB,
+			     Opcodes.DMUL,
+			     Opcodes.DDIV,
+			     Opcodes.DREM,
+			     Opcodes.DNEG,
+			     Opcodes.I2D,
+			     Opcodes.L2D,
+			     Opcodes.F2D -> Type.DOUBLE_TYPE;
+			default -> throw new IllegalArgumentException("Not a numeric opcode: " + op);
+		};
 	}
 
 	/**
@@ -937,16 +1121,6 @@ public class PhantomMethodConstraintAnalysis {
 	}
 
 	/**
-	 * Variable slot wrapper with type information.
-	 *
-	 * @param slot
-	 * 		Local slot index.
-	 * @param type
-	 * 		Parameter type.
-	 */
-	private record ParameterLocal(int slot, @Nonnull Type type) {}
-
-	/**
 	 * Exception flow target and the caught exception value that enters it.
 	 *
 	 * @param handlerIndex
@@ -955,4 +1129,90 @@ public class PhantomMethodConstraintAnalysis {
 	 * 		Caught exception value present on the handler stack.
 	 */
 	private record ExceptionHandlerEdge(int handlerIndex, @Nonnull SubtypeValue exceptionValue) {}
+
+	/**
+	 * Incoming state of every instruction, merged across all paths that reach it.
+	 */
+	private static final class JoinStates {
+		private final SubtypeFrameState[] states;
+		private final boolean[] frozen;
+		private final String ownerName;
+		private final MethodNode method;
+		private boolean conflictLogged;
+
+		private JoinStates(@Nonnull String ownerName, @Nonnull MethodNode method, int size) {
+			this.states = new SubtypeFrameState[size];
+			this.frozen = new boolean[size];
+			this.ownerName = ownerName;
+			this.method = method;
+		}
+
+		/**
+		 * @param index
+		 * 		Instruction index being read.
+		 *
+		 * @return Current state for the instruction, or {@code null} when no state has been stored yet.
+		 */
+		@Nullable
+		private SubtypeFrameState get(int index) {
+			return states[index];
+		}
+
+		/**
+		 * Sets the state for one instruction, replacing any existing state.
+		 *
+		 * @param index
+		 * 		Instruction index being updated.
+		 * @param state
+		 * 		New state to store.
+		 */
+		private void set(int index, @Nonnull SubtypeFrameState state) {
+			states[index] = state;
+		}
+
+		/**
+		 * Merges an arriving state into the stored state for one instruction.
+		 * <p>
+		 * An arrival whose operand stack height conflicts with the stored one freezes the instruction. Its stored state
+		 * is kept, and later arrivals are ignored. This is what keeps {@link #visitBudget} a valid bound.
+		 *
+		 * @param index
+		 * 		Instruction index being updated.
+		 * @param incoming
+		 * 		Arriving state.
+		 *
+		 * @return {@code true} when the stored state changed and the instruction should be revisited.
+		 */
+		private boolean merge(int index, @Nonnull SubtypeFrameState incoming) {
+			if (frozen[index])
+				return false;
+
+			// No existing state? Just store the incoming one.
+			SubtypeFrameState existing = states[index];
+			if (existing == null) {
+				states[index] = incoming.copy();
+				return true;
+			}
+
+			// Conflicting stack heights? Freeze the instruction and log a warning.
+			if (existing.stackHeightsConflict(incoming)) {
+				frozen[index] = true;
+				if (!conflictLogged) {
+					conflictLogged = true;
+					logger.warn("Operand stack heights disagree at an instruction in '{}.{}{}'," +
+									" so its state is frozen and its subtype constraints may be incomplete",
+							ownerName, method.name, method.desc);
+				}
+				return false;
+			}
+
+			// Merge the incoming state into the existing one, and store it if it changed.
+			SubtypeFrameState merged = existing.merge(incoming);
+			if (merged.equals(existing))
+				return false;
+			states[index] = merged;
+			return true;
+		}
+	}
+
 }
