@@ -5,6 +5,7 @@ import jakarta.annotation.Nullable;
 import org.objectweb.asm.signature.SignatureReader;
 import org.objectweb.asm.signature.SignatureVisitor;
 import software.coley.recaf.RecafConstants;
+import software.coley.recaf.util.Types;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -537,18 +538,9 @@ public final class GenericSignatureRenderer {
 
 		@Override
 		public void visitBaseType(char descriptor) {
-			String type = switch (descriptor) {
-				case 'V' -> "void";
-				case 'Z' -> "boolean";
-				case 'C' -> "char";
-				case 'B' -> "byte";
-				case 'S' -> "short";
-				case 'I' -> "int";
-				case 'F' -> "float";
-				case 'J' -> "long";
-				case 'D' -> "double";
-				default -> throw new IllegalArgumentException("Invalid base type: " + descriptor);
-			};
+			String type = Types.primitiveToSource(descriptor);
+			if (type == null)
+				throw new IllegalArgumentException("Invalid base type descriptor: " + descriptor);
 			complete(type, String.valueOf(descriptor));
 		}
 

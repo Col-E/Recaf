@@ -872,7 +872,6 @@ service.analysis.graph-calls-config=Call graph
 service.analysis.graph-inheritance-config=Inheritance graph
 service.analysis.phantom-generator-config=Phantom generator
 service.analysis.phantom-generator-config.generate-workspace-phantoms=Generate and append phantoms to workspaces
-service.analysis.phantom-generator-config.lenient-conflicting-hierarchies=Generate phantom super-type hierarchies, even if the order isn't guaranteed to be correct
 service.analysis.search-config=Search
 service.analysis.areas=Application areas
 service.analysis.areas.loading=Analyzing application areas...

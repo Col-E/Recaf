@@ -16,25 +16,20 @@ import java.util.TreeMap;
  * @author Matt Coley
  */
 public class PhantomGenerationContext {
-	private final ClassLookup lookup;
 	private final Map<String, PhantomClassConstraint> constraints = new TreeMap<>();
-	private final boolean lenientConflictingHierarchies;
+	private final ClassLookup lookup;
 
 	/**
 	 * @param workspace
 	 * 		Workspace to pull values from.
 	 * @param inputClasses
 	 * 		Classes being analyzed.
-	 * @param lenientConflictingHierarchies
-	 * 		Whether incompatible class supertype candidates should be chained leniently.
 	 * @param targetVersion
 	 * 		Java version whose multi-release classes should be selected.
 	 */
 	public PhantomGenerationContext(@Nonnull Workspace workspace,
 	                                @Nonnull Map<String, JvmClassInfo> inputClasses,
-	                                boolean lenientConflictingHierarchies,
 	                                int targetVersion) {
-		this.lenientConflictingHierarchies = lenientConflictingHierarchies;
 		lookup = new ClassLookup(workspace, inputClasses, constraints, targetVersion);
 	}
 
@@ -52,13 +47,6 @@ public class PhantomGenerationContext {
 	@Nonnull
 	public Map<String, PhantomClassConstraint> getConstraints() {
 		return constraints;
-	}
-
-	/**
-	 * @return {@code true} when hierarchy conflicts should be resolved leniently.
-	 */
-	public boolean isLenientConflictingHierarchies() {
-		return lenientConflictingHierarchies;
 	}
 
 	/**

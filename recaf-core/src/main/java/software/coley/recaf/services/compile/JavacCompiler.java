@@ -12,6 +12,7 @@ import software.coley.recaf.services.Service;
 import software.coley.recaf.services.phantom.GeneratedPhantomWorkspaceResource;
 import software.coley.recaf.services.phantom.PhantomGenerationException;
 import software.coley.recaf.services.phantom.PhantomGenerator;
+import software.coley.recaf.services.phantom.PhantomHint;
 import software.coley.recaf.util.ReflectUtil;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -55,7 +56,7 @@ public class JavacCompiler implements Service {
 
 	@Inject
 	public JavacCompiler(@Nonnull PhantomGenerator phantomGenerator,
-						 @Nonnull CompileClasspathCache classpathCache,
+	                     @Nonnull CompileClasspathCache classpathCache,
 	                     @Nonnull JavacCompilerConfig config) {
 		this.phantomGenerator = phantomGenerator;
 		this.classpathCache = classpathCache;
@@ -101,9 +102,39 @@ public class JavacCompiler implements Service {
 		if (compiler == null)
 			return new CompilerResult(new IllegalStateException("Cannot load 'javac' compiler."));
 
+		// Compilation goes through a system of rounds to generate more and more phantoms based on
+		// javac error diagnostics regarding missing references.
+		return JavacPhantomRefiner.compile(arguments, workspace, listener,
+				(classSources, roundListener, hints) -> compileAttempt(arguments, classSources, workspace, supplementaryResources, roundListener, hints));
+	}
+
+	/**
+	 * @param arguments
+	 * 		Wrapper of all arguments.
+	 * @param classSources
+	 * 		Sources to compile, keyed by internal class name. These may differ from the arguments' sources.
+	 * @param workspace
+	 * 		Optional workspace to include for additional classpath support.
+	 * @param supplementaryResources
+	 * 		Optional resources to further extend the compilation classpath with.
+	 * @param listener
+	 * 		Optional listener to handle feedback with.
+	 * @param hints
+	 * 		Hints to generate phantoms with.
+	 *
+	 * @return Compilation result, with any phantoms generated for it.
+	 */
+	@Nonnull
+	private JavacPhantomRefiner.Attempt compileAttempt(@Nonnull JavacArguments arguments,
+	                                                   @Nonnull Map<String, String> classSources,
+	                                                   @Nullable Workspace workspace,
+	                                                   @Nullable List<WorkspaceResource> supplementaryResources,
+	                                                   @Nullable JavacListener listener,
+	                                                   @Nonnull List<PhantomHint> hints) {
+		GeneratedPhantomWorkspaceResource generated = null;
+
 		// Primary class to compile, plus any additional classes that are being compiled alongside it.
 		String className = arguments.getClassName(); // This is primarily used for logging, there's no other special treatment.
-		Map<String, String> classSources = arguments.getClassSources();
 		Set<String> sourceClassNames = classSources.keySet();
 		int target = arguments.getVersionTarget();
 
@@ -126,17 +157,17 @@ public class JavacCompiler implements Service {
 									sourceClassNames.stream().anyMatch(name -> c.isInnerClassOf(name) || c.isOuterClassOf(name))).stream()
 					.map(p -> p.getValue().asJvmClass())
 					.collect(Collectors.toList());
-			if (!classesToScan.isEmpty()) {
-				try {
-					WorkspaceResource phantomResource = phantomGenerator.createPhantomsForClasses(workspace, classesToScan, target);
-					int generatedCount = phantomResource.getJvmClassBundle().size();
-					if (generatedCount > 0) {
-						logger.debug("Generated {} phantoms for pre-compile", generatedCount);
-						virtualClassPath = Lists.add(virtualClassPath, phantomResource);
-					}
-				} catch (PhantomGenerationException ex) {
-					logger.warn("Failed to generate phantoms for compilation against '{}'", className, ex);
+
+			// Generation runs even with nothing to scan, since hints can require phantoms on their own.
+			try {
+				generated = phantomGenerator.createPhantomsForClasses(workspace, classesToScan, target, hints);
+				int generatedCount = generated.getJvmClassBundle().size();
+				if (generatedCount > 0) {
+					logger.debug("Generated {} phantoms for pre-compile", generatedCount);
+					virtualClassPath = Lists.add(virtualClassPath, generated);
 				}
+			} catch (PhantomGenerationException ex) {
+				logger.warn("Failed to generate phantoms for compilation against '{}'", className, ex);
 			}
 		}
 
@@ -161,6 +192,13 @@ public class JavacCompiler implements Service {
 		args.add(Integer.toString(target));
 		logger.debugging(l -> l.info("Compiler target: {}", target));
 
+		// Raise the error limit to 1000, which is the maximum allowed by javac.
+		// We want to see all the errors if possible so we can act on them in one round.
+		if (config.getGeneratePhantoms().getValue()) {
+			args.add("-Xmaxerrs");
+			args.add("1000");
+		}
+
 		// Debug info
 		String debugArg = arguments.createDebugValue();
 		args.add(debugArg);
@@ -181,10 +219,10 @@ public class JavacCompiler implements Service {
 				compilations.downsample(downsampleTarget);
 			else if (downsampleTarget >= 0)
 				logger.warn("Cannot downsample beyond Java {}", JavacCompiler.MIN_DOWNSAMPLE_VER);
-			return new CompilerResult(compilations, diagnostics);
+			return new JavacPhantomRefiner.Attempt(new CompilerResult(compilations, diagnostics), generated);
 		} catch (RuntimeException ex) {
 			logger.debugging(l -> l.error("Compilation of '{}' crashed", className, ex));
-			return new CompilerResult(ex);
+			return new JavacPhantomRefiner.Attempt(new CompilerResult(ex), generated);
 		}
 	}
 
@@ -220,28 +258,27 @@ public class JavacCompiler implements Service {
 
 				// Record the diagnostic to our output
 				if (diagnostic.getKind() == Diagnostic.Kind.ERROR) {
+					JavaFileObject source = diagnostic.getSource();
+					String sourceName = source instanceof VirtualJavaFileObject virtualSource
+							? virtualSource.getClassName() : null;
 					diagnostics.add(new CompilerDiagnostic(
 							(int) diagnostic.getLineNumber(),
 							(int) diagnostic.getColumnNumber(),
 							(int) diagnostic.getEndPosition() - (int) diagnostic.getPosition(),
 							diagnostic.getMessage(Locale.getDefault()),
-							mapKind(diagnostic.getKind())
+							mapKind(diagnostic.getKind()),
+							sourceName
 					));
 				}
 			}
 
-			private CompilerDiagnostic.Level mapKind(Diagnostic.Kind kind) {
-				switch (kind) {
-					case ERROR:
-						return CompilerDiagnostic.Level.ERROR;
-					case WARNING:
-					case MANDATORY_WARNING:
-						return CompilerDiagnostic.Level.WARNING;
-					case NOTE:
-					case OTHER:
-					default:
-						return CompilerDiagnostic.Level.INFO;
-				}
+			@Nonnull
+			private CompilerDiagnostic.Level mapKind(@Nonnull Diagnostic.Kind kind) {
+				return switch (kind) {
+					case ERROR -> CompilerDiagnostic.Level.ERROR;
+					case WARNING, MANDATORY_WARNING -> CompilerDiagnostic.Level.WARNING;
+					default -> CompilerDiagnostic.Level.INFO;
+				};
 			}
 		};
 	}

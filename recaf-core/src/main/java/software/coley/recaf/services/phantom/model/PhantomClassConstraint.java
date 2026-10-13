@@ -3,6 +3,7 @@ package software.coley.recaf.services.phantom.model;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import software.coley.recaf.info.InnerClassInfo;
+import software.coley.recaf.services.phantom.PhantomHint;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -14,6 +15,21 @@ import java.util.TreeSet;
 
 /**
  * Aggregated requirements collected for a single phantom type.
+ * <p>
+ * Supertype requirements are kept in overlapping sets, by how far they can be trusted:
+ * <ul>
+ *     <li>{@link #getRequiredSupertypes() Required}: every supertype the type must have, from any source. Most come
+ *     from approximate flow analysis, so not all of them may be satisfiable together. The other sets below are
+ *     subsets of this one.</li>
+ *     <li>{@link #getHardSupertypes() Hard}: structurally required, such as exception bases, enum bases, and sealed
+ *     parents. These are never given up in favor of a flow-inferred supertype.</li>
+ *     <li>{@link #getRequiredDirectSupertypes() Required direct}: hard supertypes that must be the direct parent,
+ *     such as a sealed parent that permits this type.</li>
+ *     <li>{@link #getHintedSupertypes() Hinted}: superclasses supplied by a {@link PhantomHint}.</li>
+ * </ul>
+ * Resolution then fills in the outcome: the {@link #getResolvedSuperName() resolved superclass}, the
+ * {@link #getResolvedInterfaces() resolved interfaces}, and the {@link #getDroppedSupertypes() dropped superclasses}
+ * that were required but not chosen. Members of dropped superclasses are copied into the type.
  *
  * @author Matt Coley
  */
@@ -23,6 +39,9 @@ public class PhantomClassConstraint {
 	private final Map<String, PhantomMethodRequirement> methods = new TreeMap<>();
 	private final Map<String, PhantomInnerRequirement> declaredInners = new TreeMap<>();
 	private final Set<String> requiredSupertypes = new TreeSet<>();
+	private final Set<String> requiredDirectSupertypes = new TreeSet<>();
+	private final Set<String> hardSupertypes = new TreeSet<>();
+	private final Set<String> hintedSupertypes = new TreeSet<>();
 	private final Set<String> droppedSupertypes = new TreeSet<>();
 	private final Set<String> resolvedInterfaces = new TreeSet<>();
 	private boolean interfaceEvidence;
@@ -103,7 +122,33 @@ public class PhantomClassConstraint {
 	}
 
 	/**
-	 * @return Dropped supertypes retained for lenient hierarchy completion.
+	 * @return Supertypes that are structurally required, such as exception bases, enum bases, and sealed parents.
+	 * Unlike {@link #getRequiredSupertypes()}, these are not inferred from approximate flow analysis.
+	 */
+	@Nonnull
+	public Set<String> getHardSupertypes() {
+		return Collections.unmodifiableSet(hardSupertypes);
+	}
+
+	/**
+	 * @return Superclasses supplied by external evidence, such as a compiler diagnostic. These are kept by the
+	 * hierarchy solver rather than treated as flow-inferred guesses.
+	 */
+	@Nonnull
+	public Set<String> getHintedSupertypes() {
+		return Collections.unmodifiableSet(hintedSupertypes);
+	}
+
+	/**
+	 * @return Supertypes that must be direct parents, such as sealed permitted parents.
+	 */
+	@Nonnull
+	public Set<String> getRequiredDirectSupertypes() {
+		return Collections.unmodifiableSet(requiredDirectSupertypes);
+	}
+
+	/**
+	 * @return Superclasses not chosen as the parent, whose members are copied into this type.
 	 */
 	@Nonnull
 	public Set<String> getDroppedSupertypes() {
@@ -204,7 +249,7 @@ public class PhantomClassConstraint {
 	public void markEnum() {
 		enumEvidence = true;
 		classEvidence = true;
-		requiredSupertypes.add("java/lang/Enum");
+		addHardSupertype("java/lang/Enum");
 	}
 
 	/**
@@ -279,6 +324,33 @@ public class PhantomClassConstraint {
 	}
 
 	/**
+	 * @param internalName
+	 * 		Supertype that must be a direct parent.
+	 */
+	public void addRequiredDirectSupertype(@Nonnull String internalName) {
+		requiredDirectSupertypes.add(internalName);
+		addHardSupertype(internalName);
+	}
+
+	/**
+	 * @param internalName
+	 * 		Internal class name of the required superclass.
+	 */
+	public void addHintedSupertype(@Nonnull String internalName) {
+		hintedSupertypes.add(internalName);
+		addRequiredSupertype(internalName);
+	}
+
+	/**
+	 * @param internalName
+	 * 		Internal class name of the required supertype.
+	 */
+	public void addHardSupertype(@Nonnull String internalName) {
+		hardSupertypes.add(internalName);
+		addRequiredSupertype(internalName);
+	}
+
+	/**
 	 * @param fieldName
 	 * 		Field name.
 	 * @param descriptor
@@ -295,6 +367,61 @@ public class PhantomClassConstraint {
 		// Interfaces can't have instance fields.
 		if (!field.isStatic())
 			classEvidence = true;
+	}
+
+	/**
+	 * Declares a field, replacing any earlier requirement for a field with the same name. Used when a later hint states
+	 * the field's type more precisely.
+	 *
+	 * @param fieldName
+	 * 		Field name.
+	 * @param descriptor
+	 * 		Field descriptor.
+	 * @param isStatic
+	 * 		Whether the field must be static.
+	 */
+	public void replaceField(@Nonnull String fieldName, @Nonnull String descriptor, boolean isStatic) {
+		fields.values().removeIf(field -> field.getName().equals(fieldName));
+		addField(fieldName, descriptor, isStatic);
+	}
+
+	/**
+	 * Declares a method, replacing any earlier requirement with the same name and parameters. Used when a later hint
+	 * states the method's return type more precisely.
+	 *
+	 * @param methodName
+	 * 		Method name.
+	 * @param descriptor
+	 * 		Method descriptor.
+	 * @param isStatic
+	 * 		Whether the method must be static.
+	 */
+	public void replaceMethod(@Nonnull String methodName, @Nonnull String descriptor, boolean isStatic) {
+		String parameters = descriptor.substring(0, descriptor.indexOf(')') + 1);
+		Set<String> kept = new TreeSet<>();
+		methods.values().removeIf(method -> {
+			boolean replaced = method.getName().equals(methodName) && method.getDescriptor().startsWith(parameters);
+			if (replaced)
+				kept.addAll(method.getExceptions());
+			return replaced;
+		});
+		addMethod(methodName, descriptor, isStatic);
+		for (String exception : kept)
+			addMethodException(methodName, descriptor, exception);
+	}
+
+	/**
+	 * @param methodName
+	 * 		Method name.
+	 * @param descriptor
+	 * 		Method descriptor of a method already declared on this type.
+	 * @param exception
+	 * 		Internal name of an exception the method declares.
+	 */
+	public void addMethodException(@Nonnull String methodName, @Nonnull String descriptor, @Nonnull String exception) {
+		PhantomMethodRequirement method = methods.get(methodName + descriptor);
+		if (method != null)
+			method.addException(exception);
 	}
 
 	/**
@@ -383,7 +510,7 @@ public class PhantomClassConstraint {
 	}
 
 	/**
-	 * Clears the lenient hierarchy leftovers.
+	 * Clears the dropped superclasses.
 	 */
 	public void clearDroppedSupertypes() {
 		droppedSupertypes.clear();
@@ -391,7 +518,7 @@ public class PhantomClassConstraint {
 
 	/**
 	 * @param internalName
-	 * 		Leniently dropped supertype name.
+	 * 		Dropped superclass name.
 	 */
 	public void addDroppedSupertype(@Nonnull String internalName) {
 		droppedSupertypes.add(internalName);

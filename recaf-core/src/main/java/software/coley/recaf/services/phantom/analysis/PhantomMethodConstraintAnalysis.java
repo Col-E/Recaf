@@ -30,7 +30,6 @@ import software.coley.recaf.util.collect.primitive.Int2ObjectMap;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -83,7 +82,7 @@ public class PhantomMethodConstraintAnalysis {
 		Int2ObjectMap<List<ExceptionHandlerEdge>> exceptionHandlerMap = buildExceptionHandlerMap(method, insns, labelIndices);
 
 		// Start with the initial state at the method entry and propagate forward, merging at control flow joins until we reach a fixed point.
-		Map<Integer, SubtypeValue> initialLocals = initialLocals(ownerName, method, labelIndices);
+		Int2ObjectMap<SubtypeValue> initialLocals = initialLocals(ownerName, method, labelIndices);
 		JoinStates joins = new JoinStates(ownerName, method, insns.length);
 		joins.set(0, new SubtypeFrameState(initialLocals, List.of()));
 
@@ -161,7 +160,7 @@ public class PhantomMethodConstraintAnalysis {
 	                                         @Nonnull SubtypeFrameState state,
 	                                         @Nonnull Map<LabelNode, Integer> labelIndices) {
 		List<SubtypeValue> stack = state.getStack();
-		Map<Integer, SubtypeValue> locals = state.getLocals();
+		Int2ObjectMap<SubtypeValue> locals = state.getLocals();
 		switch (insn.getOpcode()) {
 			case Opcodes.ASTORE -> {
 				SubtypeValue value = peek(stack, 0);
@@ -240,7 +239,6 @@ public class PhantomMethodConstraintAnalysis {
 			PhantomClassConstraint sourceConstraint = context.getOrCreateConstraint(sourceInternalName);
 			if (sourceConstraint == null)
 				continue;
-			sourceConstraint.markClass();
 			sourceConstraint.addRequiredSupertype(targetInternalName);
 		}
 	}
@@ -258,10 +256,10 @@ public class PhantomMethodConstraintAnalysis {
 	 * @return Initial local value map.
 	 */
 	@Nonnull
-	private static Map<Integer, SubtypeValue> initialLocals(@Nonnull String ownerName,
+	private static Int2ObjectMap<SubtypeValue> initialLocals(@Nonnull String ownerName,
 	                                                        @Nonnull MethodNode method,
 	                                                        @Nonnull Map<LabelNode, Integer> labelIndices) {
-		Map<Integer, SubtypeValue> locals = new HashMap<>();
+		Int2ObjectMap<SubtypeValue> locals = new Int2ObjectMap<>();
 		int slot = 0;
 
 		// Add 'this' reference for non-static methods.
@@ -638,7 +636,7 @@ public class PhantomMethodConstraintAnalysis {
 	 */
 	private static void simulateInstruction(@Nonnull AbstractInsnNode insn, @Nonnull SubtypeFrameState state) {
 		List<SubtypeValue> stack = state.getStack();
-		Map<Integer, SubtypeValue> locals = state.getLocals();
+		Int2ObjectMap<SubtypeValue> locals = state.getLocals();
 		int op = insn.getOpcode();
 		switch (op) {
 			case -1,

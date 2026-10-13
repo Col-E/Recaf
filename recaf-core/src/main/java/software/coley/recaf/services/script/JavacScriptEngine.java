@@ -177,7 +177,7 @@ public class JavacScriptEngine implements ScriptEngine {
 		AugmentedSourceUnit prepared = ScriptSourceAugmentation.augmentStandardClass(source);
 		if (prepared == null)
 			return new ScriptTemplate.Failed(List.of(
-					new CompilerDiagnostic(-1, -1, 0, "Could not determine name of class", CompilerDiagnostic.Level.ERROR)));
+					new CompilerDiagnostic(-1, -1, 0, "Could not determine name of class", CompilerDiagnostic.Level.ERROR, null)));
 		return generate(prepared);
 	}
 

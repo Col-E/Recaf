@@ -5,6 +5,7 @@ import jakarta.annotation.Nullable;
 import org.objectweb.asm.Type;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.PathNodes;
 import software.coley.recaf.services.phantom.GeneratedPhantomWorkspaceResource;
@@ -15,6 +16,8 @@ import software.coley.recaf.workspace.model.bundle.VersionedJvmClassBundle;
 import software.coley.recaf.workspace.model.resource.RuntimeWorkspaceResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.HashMap;
@@ -22,6 +25,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * Shared class/type lookup utility for phantom analysis stages.
@@ -135,6 +139,102 @@ public class ClassLookup {
 		if (info.hasAnnotationModifier())
 			return PhantomTypeKind.ANNOTATION;
 		return info.hasInterfaceModifier() ? PhantomTypeKind.INTERFACE : PhantomTypeKind.CLASS;
+	}
+
+	/**
+	 * @param internalName
+	 * 		Internal name of a known or platform type.
+	 *
+	 * @return Superclass of the type, or {@code null} when the type is an interface, has no superclass,
+	 * or is neither known nor available from the platform.
+	 */
+	@Nullable
+	public String getKnownSuperName(@Nonnull String internalName) {
+		ClassInfo info = getKnownClassInfo(internalName);
+		if (info != null)
+			return info.hasInterfaceModifier() ? null : info.getSuperName();
+
+		Class<?> type = getPlatformClass(internalName);
+		if (type == null || type.isInterface() || type.getSuperclass() == null)
+			return null;
+
+		return type.getSuperclass().getName().replace('.', '/');
+	}
+
+	/**
+	 * @param internalName
+	 * 		Internal name of a known or platform type.
+	 *
+	 * @return Interfaces the type directly implements or extends.
+	 * Empty when the type is neither known nor available from the platform.
+	 */
+	@Nonnull
+	public Set<String> getKnownInterfaces(@Nonnull String internalName) {
+		Set<String> result = new TreeSet<>();
+		ClassInfo info = getKnownClassInfo(internalName);
+		if (info != null) {
+			result.addAll(info.getInterfaces());
+			return result;
+		}
+
+		Class<?> type = getPlatformClass(internalName);
+		if (type != null)
+			for (Class<?> implemented : type.getInterfaces())
+				result.add(implemented.getName().replace('.', '/'));
+
+		return result;
+	}
+
+	/**
+	 * @param internalName
+	 * 		Internal name of a known or platform type.
+	 *
+	 * @return {@code true} when the type is a {@code final} class, so it cannot be extended.
+	 */
+	public boolean isKnownFinal(@Nonnull String internalName) {
+		ClassInfo info = getKnownClassInfo(internalName);
+		if (info != null)
+			return info.hasFinalModifier();
+
+		Class<?> type = getPlatformClass(internalName);
+		return type != null && !type.isInterface() && Modifier.isFinal(type.getModifiers());
+	}
+
+	/**
+	 * @param internalName
+	 * 		Internal name of a known or platform type.
+	 * @param name
+	 * 		Method name.
+	 * @param descriptor
+	 * 		Method descriptor.
+	 *
+	 * @return {@code true} when the type itself declares the method as a {@code final} instance method. Inherited
+	 * methods are not considered.
+	 */
+	public boolean declaresFinalInstanceMethod(@Nonnull String internalName, @Nonnull String name,
+	                                           @Nonnull String descriptor) {
+		ClassInfo info = getKnownClassInfo(internalName);
+		if (info != null) {
+			for (MethodMember method : info.getMethods())
+				if (method.getName().equals(name) && method.getDescriptor().equals(descriptor)
+						&& method.hasFinalModifier() && !method.hasStaticModifier())
+					return true;
+			return false;
+		}
+
+		Class<?> type = getPlatformClass(internalName);
+		if (type == null)
+			return false;
+
+		try {
+			for (Method method : type.getDeclaredMethods())
+				if (method.getName().equals(name) && Type.getMethodDescriptor(method).equals(descriptor)
+						&& Modifier.isFinal(method.getModifiers()) && !Modifier.isStatic(method.getModifiers()))
+					return true;
+		} catch (LinkageError ignored) {
+			// Platform type with unloadable signature types. Treat the method as not final.
+		}
+		return false;
 	}
 
 	/**

@@ -2,9 +2,10 @@ package software.coley.recaf.services.phantom;
 
 import jakarta.annotation.Nonnull;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ConstantDynamic;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Label;
@@ -12,6 +13,7 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.TypeReference;
 import org.objectweb.asm.tree.FieldNode;
+import org.objectweb.asm.tree.InnerClassNode;
 import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.InvokeDynamicInsnNode;
 import org.objectweb.asm.tree.JumpInsnNode;
@@ -32,6 +34,7 @@ import software.coley.recaf.services.compile.CompilerResult;
 import software.coley.recaf.services.compile.JavacArguments;
 import software.coley.recaf.services.compile.JavacArgumentsBuilder;
 import software.coley.recaf.services.compile.JavacCompiler;
+import software.coley.recaf.services.compile.JavacCompilerConfig;
 import software.coley.recaf.test.CompilerTestBase;
 import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.util.Handles;
@@ -57,19 +60,12 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class PhantomGeneratorTest extends CompilerTestBase implements Opcodes {
 	private static PhantomGenerator generator;
-	private static PhantomGeneratorConfig generatorConfig;
 	private static JavacCompiler compiler;
 
 	@BeforeAll
 	static void setup() {
 		generator = recaf.get(PhantomGenerator.class);
-		generatorConfig = recaf.get(PhantomGeneratorConfig.class);
 		compiler = recaf.get(JavacCompiler.class);
-	}
-
-	@BeforeEach
-	void resetGeneratorConfig() {
-		generatorConfig.getLenientConflictingHierarchies().setValue(true);
 	}
 
 	@Test
@@ -254,6 +250,65 @@ class PhantomGeneratorTest extends CompilerTestBase implements Opcodes {
 	}
 
 	@Test
+	void testFinalObjectMethodsAreNotAddedToPhantomOwners() {
+		// class FinalObjectMethodUse {
+		//      public static Class<?> getClass(FinalObjectMethodInterface iface) {
+		//	        return iface.getClass();
+		//	    }
+		//      public static Class<?> getClassFromClass(FinalObjectMethodClass clazz) {
+		//	        return clazz.getClass();
+		//	    }
+		//      public static void waitHandle() {
+		//	        Handle handle = new Handle(H_INVOKEINTERFACE, "FinalObjectHandleInterface", "wait", "()V", true);
+		//	    }
+		// }
+		JvmClassInfo input = TestClassUtils.createClass("FinalObjectMethodUse", node -> {
+			MethodNode method = new MethodNode(
+					ACC_PUBLIC | ACC_STATIC,
+					"getClass",
+					"(LFinalObjectMethodInterface;)Ljava/lang/Class;",
+					null,
+					null);
+			method.maxStack = 1;
+			method.visitVarInsn(ALOAD, 0);
+			method.visitMethodInsn(INVOKEINTERFACE, "FinalObjectMethodInterface", "getClass", "()Ljava/lang/Class;", true);
+			method.visitInsn(ARETURN);
+			node.methods.add(method);
+
+			method = new MethodNode(
+					ACC_PUBLIC | ACC_STATIC,
+					"getClassFromClass",
+					"(LFinalObjectMethodClass;)Ljava/lang/Class;",
+					null,
+					null);
+			method.maxStack = 1;
+			method.visitVarInsn(ALOAD, 0);
+			method.visitMethodInsn(INVOKEVIRTUAL, "FinalObjectMethodClass", "getClass", "()Ljava/lang/Class;", false);
+			method.visitInsn(ARETURN);
+			node.methods.add(method);
+
+			method = new MethodNode(ACC_PUBLIC | ACC_STATIC, "waitHandle", "()V", null, null);
+			method.maxStack = 1;
+			method.visitLdcInsn(new Handle(H_INVOKEINTERFACE, "FinalObjectHandleInterface", "wait", "()V", true));
+			method.visitInsn(POP);
+			method.visitInsn(RETURN);
+			node.methods.add(method);
+		});
+
+		// The phantom generator should not add the final methods of java.lang.Object to the phantom owners.
+		JvmClassBundle phantomBundle = generatePhantoms(input).getJvmClassBundle();
+		JvmClassInfo getClassOwner = assertHasPhantom(phantomBundle, "FinalObjectMethodInterface");
+		JvmClassInfo classOwner = assertHasPhantom(phantomBundle, "FinalObjectMethodClass");
+		JvmClassInfo waitOwner = assertHasPhantom(phantomBundle, "FinalObjectHandleInterface");
+		assertTrue(getClassOwner.hasInterfaceModifier());
+		assertFalse(classOwner.hasInterfaceModifier());
+		assertTrue(waitOwner.hasInterfaceModifier());
+		assertNull(getClassOwner.getDeclaredMethod("getClass", "()Ljava/lang/Class;"));
+		assertNull(classOwner.getDeclaredMethod("getClass", "()Ljava/lang/Class;"));
+		assertNull(waitOwner.getDeclaredMethod("wait", "()V"));
+	}
+
+	@Test
 	void testSpecialMemberInsnReference() {
 		// void example(MissingSource param) {
 		//     ((MissingTarget) param).privateCall();
@@ -432,6 +487,7 @@ class PhantomGeneratorTest extends CompilerTestBase implements Opcodes {
 		GeneratedPhantomWorkspaceResource phantoms = generatePhantoms(input);
 		JvmClassInfo mode = assertHasPhantom(phantoms.getJvmClassBundle(), "MissingMode");
 		assertTrue(mode.hasEnumModifier());
+		assertEquals("java/lang/Enum", mode.getSuperName());
 		assertNotNull(mode.getDeclaredField("ENABLED", "LMissingMode;"));
 
 		// We should be able to use the enum in source now.
@@ -440,6 +496,30 @@ class PhantomGeneratorTest extends CompilerTestBase implements Opcodes {
 				class EnumAnnotationUse {
 				}
 				""", phantoms);
+	}
+
+	@Test
+	void testEnumConstantFieldRequirementIsNotWrittenTwice() {
+		// The annotation discovers VALUE as an enum constant, while GETSTATIC also records it as a regular field.
+		JvmClassInfo input = TestClassUtils.createClass("EnumConstantFieldUse", node -> {
+			AnnotationVisitor annotation = node.visitAnnotation("LMissingEnumAnnotation;", true);
+			annotation.visitEnum("value", "LMissingEnum;", "VALUE");
+			annotation.visitEnd();
+
+			MethodNode method = new MethodNode(ACC_PUBLIC | ACC_STATIC, "value", "()LMissingEnum;", null, null);
+			method.maxStack = 1;
+			method.visitFieldInsn(GETSTATIC, "MissingEnum", "VALUE", "LMissingEnum;");
+			method.visitInsn(ARETURN);
+			node.methods.add(method);
+		});
+
+		// The phantom should only have the 'VALUE' field once, and it should be an enum constant.
+		JvmClassInfo phantom = assertHasPhantom(generatePhantoms(input).getJvmClassBundle(), "MissingEnum");
+		assertTrue(phantom.hasEnumModifier());
+		assertEquals(1, phantom.getFields().size());
+		FieldMember value = phantom.getFirstDeclaredFieldByName("VALUE");
+		assertNotNull(value);
+		assertTrue(value.hasEnumModifier());
 	}
 
 	@Test
@@ -453,6 +533,25 @@ class PhantomGeneratorTest extends CompilerTestBase implements Opcodes {
 		GeneratedPhantomWorkspaceResource phantoms = generatePhantoms(input);
 		assertTrue(assertHasPhantom(phantoms.getJvmClassBundle(), "MissingOuter$Nested").hasInterfaceModifier());
 		compileWithPhantoms("InnerKindUse", "class InnerKindUse implements MissingOuter.Nested {}", phantoms);
+	}
+
+	@Test
+	void testTopLevelDollarPrefixedClassNameIsNotNested() {
+		// We don't want the phantom generator to get fooled by being over-eager on inner name $ splitting.
+		// Things like com.example.Outer$Inner are 99% of the time gonna be an inner class.
+		// But sometimes you have funky names like com.example.$Thing which are normal top-level classes just with a $ in the name.
+		String topLevelName = "foo/$Bar";
+		String nestedName = topLevelName + "$Types";
+		JvmClassInfo input = TestClassUtils.createClass("DollarPrefixedTypeUse", node -> {
+			node.fields.add(new FieldNode(ACC_PUBLIC, "bar", "L" + topLevelName + ";", null, null));
+			node.fields.add(new FieldNode(ACC_PUBLIC, "types", "L" + nestedName + ";", null, null));
+		});
+		JvmClassBundle phantomBundle = generatePhantoms(input).getJvmClassBundle();
+		JvmClassInfo topLevel = assertHasPhantom(phantomBundle, topLevelName);
+		JvmClassInfo nested = assertHasPhantom(phantomBundle, nestedName);
+		assertNull(phantomBundle.get("foo/"));
+		assertNull(topLevel.getOuterClassName());
+		assertEquals(topLevelName, nested.getOuterClassName());
 	}
 
 	@Test
@@ -1438,29 +1537,9 @@ class PhantomGeneratorTest extends CompilerTestBase implements Opcodes {
 	}
 
 	@Test
-	void testConflictingClassConstraintsLenientMethodsCompile() {
-		// With leniency disabled there is a conflict here. We have 'Child'
-		// which should have two class parents, ParentA and ParentB.
-		// There is no way to tell which one should be the immediate parent so we fail.
-		generatorConfig.getLenientConflictingHierarchies().setValue(false);
-		assertThrows(PhantomGenerationException.class,
-				() -> generator.createPhantomsForClasses(EmptyWorkspace.get(), List.of(assemble("""
-						.method public static example (LChild;)V {
-							parameters: { child },
-						    code: {
-						    A:
-						        aload child
-						        invokevirtual ParentA.use ()V
-						        aload child
-						        invokevirtual ParentB.use ()V
-						        return
-						    B:
-						    }
-						}
-						""", false)), 8));
-
-		// With leniency enabled, we just pick the first parent we see.
-		generatorConfig.getLenientConflictingHierarchies().setValue(true);
+	void testConflictingClassConstraintsMethodsCompile() {
+		// 'Child' is used as both a 'ParentA' and a 'ParentB', and both are classes. A class has one direct parent,
+		// but both parents are phantoms, so they can be chained to satisfy both uses.
 		GeneratedPhantomWorkspaceResource phantoms = generatePhantoms(assemble("""
 				.method public static example (LChild;)V {
 					parameters: { child },
@@ -1490,9 +1569,9 @@ class PhantomGeneratorTest extends CompilerTestBase implements Opcodes {
 			assertEquals("ParentA", parentB.getSuperName());
 		}
 
-		// Compilation should succeed, and both calls should be 'invokevirtual' since both parents are classes in the lenient chain.
-		JvmClassInfo use = compileWithPhantoms("LenientUse", """
-				public class LenientUse {
+		// Compilation should succeed, and both calls should be 'invokevirtual' since both parents are classes in the chain.
+		JvmClassInfo use = compileWithPhantoms("ChainedParentsUse", """
+				public class ChainedParentsUse {
 				    void run(Child child) {
 				        ((ParentA)child).useA();
 				        ((ParentB)child).useB();
@@ -1505,9 +1584,661 @@ class PhantomGeneratorTest extends CompilerTestBase implements Opcodes {
 	}
 
 	@Test
-	void testConflictingClassConstraintsLenientFieldsCompile() {
-		// Same idea as above but with fields.
-		generatorConfig.getLenientConflictingHierarchies().setValue(true);
+	void testKnownClassKeepsItsPhantomParent() {
+		// 'KnownChild' exists in the workspace and extends 'MissingBase', which does not. 'PhantomSource' is returned as a
+		// 'KnownChild', so it must extend it. The known class's own parent cannot change, so it still needs a phantom.
+		JvmClassInfo knownChild = TestClassUtils.createClass("KnownChild", node -> node.superName = "MissingBase");
+		Workspace workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(knownChild));
+		JvmClassInfo input = assemble("""
+				.method public static asKnown (LPhantomSource;)LKnownChild; {
+					parameters: { source },
+				    code: {
+				    A:
+				        aload source
+				        areturn
+				    B:
+				    }
+				}
+				""", false);
+
+		// The known class is not regenerated, the phantom extends it, and its missing parent is generated.
+		GeneratedPhantomWorkspaceResource phantoms = generatePhantoms(workspace, input);
+		JvmClassBundle bundle = phantoms.getJvmClassBundle();
+		assertNoPhantom(bundle, "KnownChild");
+		assertEquals("KnownChild", assertHasPhantom(bundle, "PhantomSource").getSuperName());
+		assertHasPhantom(bundle, "MissingBase");
+	}
+
+	@Test
+	void testFinalSuperclassFlowRequirementIsDropped() {
+		// 'Child' is returned as both a 'FinalParent' and an 'OtherParent'. 'FinalParent' is a known final class,
+		// so nothing can extend it.
+		JvmClassInfo finalParent = TestClassUtils.createClass("FinalParent", node -> {
+			node.access = ACC_PUBLIC | ACC_FINAL | ACC_SUPER;
+			node.superName = "java/lang/Object";
+		});
+		Workspace workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(finalParent));
+		JvmClassInfo input = assemble("""
+				.method public static toFinal (LChild;)LFinalParent; {
+					parameters: { child },
+				    code: {
+				    A:
+				        aload child
+				        areturn
+				    B:
+				    }
+				}
+				.method public static toOther (LChild;)LOtherParent; {
+					parameters: { child },
+				    code: {
+				    A:
+				        aload child
+				        areturn
+				    B:
+				    }
+				}
+				""", false);
+
+		// The final superclass is a soft flow requirement, so it is dropped rather than aborting generation.
+		JvmClassBundle bundle = generatePhantoms(workspace, input).getJvmClassBundle();
+		assertNoPhantom(bundle, "FinalParent");
+		assertNotEquals("FinalParent", assertHasPhantom(bundle, "Child").getSuperName());
+	}
+
+	@Test
+	void testFinalInheritedMethodIsNotRedeclared() {
+		// Object.getClass() is final, so a phantom that receives the call must not declare it again.
+		GeneratedPhantomWorkspaceResource phantoms = generatePhantoms(assemble("""
+				.method public static example (LGz;)Ljava/lang/Class; {
+					parameters: { gz },
+				    code: {
+				    A:
+				        aload gz
+				        invokevirtual Gz.getClass ()Ljava/lang/Class;
+				        areturn
+				    B:
+				    }
+				}
+				""", false));
+
+		// The phantom inherits 'getClass()' from Object rather than declaring it.
+		JvmClassInfo gz = assertHasPhantom(phantoms.getJvmClassBundle(), "Gz");
+		assertTrue(gz.getMethods().stream().noneMatch(method -> method.getName().equals("getClass")));
+	}
+
+	@Test
+	void testAbstractNestedEnumIsNotEmittedFinal() {
+		// javac records an enum with abstract members as ABSTRACT (not FINAL) in its InnerClasses entry.
+		// A class cannot be both, so the generated inner-class record must not combine them.
+		JvmClassInfo outer = TestClassUtils.createClass("Outer", node -> node.innerClasses.add(
+				new InnerClassNode("Outer$Kind", "Outer", "Kind", ACC_PUBLIC | ACC_STATIC | ACC_ENUM | ACC_ABSTRACT)));
+		GeneratedPhantomWorkspaceResource phantoms = generatePhantoms(outer);
+		JvmClassInfo kind = assertHasPhantom(phantoms.getJvmClassBundle(), "Outer$Kind");
+
+		// Read the access flags of the phantom's own inner-class record.
+		int[] innerAccess = {-1};
+		new ClassReader(kind.getBytecode()).accept(new ClassVisitor(ASM9) {
+			@Override
+			public void visitInnerClass(String name, String outerName, String innerName, int access) {
+				if ("Outer$Kind".equals(name))
+					innerAccess[0] = access;
+			}
+		}, 0);
+		assertTrue(innerAccess[0] != -1, "Missing inner class record for Outer$Kind");
+		assertFalse((innerAccess[0] & ACC_FINAL) != 0 && (innerAccess[0] & ACC_ABSTRACT) != 0,
+				"Illegal combined FINAL and ABSTRACT: 0x" + Integer.toHexString(innerAccess[0]));
+	}
+
+	@Test
+	void testHintSetsSuperclassOfUnevidencedPhantom() {
+		// Nothing in the input says what 'MissingRel' extends. A hint supplies the relation.
+		Workspace workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(
+				TestClassUtils.createClass("KnownBase", node -> {})));
+		JvmClassInfo input = TestClassUtils.createClass("HintUse", node -> {
+			MethodNode method = new MethodNode(ACC_PUBLIC | ACC_STATIC, "run", "(LMissingRel;)V", null, null);
+			method.visitInsn(RETURN);
+			node.methods.add(method);
+		});
+		// The hinted class should become the phantom's superclass.
+		GeneratedPhantomWorkspaceResource phantoms = assertDoesNotThrow(() ->
+				generator.createPhantomsForClasses(workspace, List.of(input), 8,
+						List.of(new PhantomHint.Supertype("MissingRel", "KnownBase"))));
+		assertEquals("KnownBase", assertHasPhantom(phantoms.getJvmClassBundle(), "MissingRel").getSuperName(),
+				"Hint not honored");
+	}
+
+	@Test
+	void testEnumConstructorIsNotDeclaredTwice() {
+		// Constructing an enum constant body invokes the (String, int) constructor. The writer already declares that
+		// constructor for enums, so the requirement must not add a second copy, which the JVM rejects as a duplicate.
+		JvmClassInfo input = TestClassUtils.createClass("EnumBodyUse", node -> {
+			node.innerClasses.add(new InnerClassNode("MissingBody", null, null, ACC_ENUM | ACC_STATIC | ACC_FINAL));
+			MethodNode make = new MethodNode(ACC_PUBLIC | ACC_STATIC, "make", "()V", null, null);
+			make.visitTypeInsn(NEW, "MissingBody");
+			make.visitInsn(DUP);
+			make.visitLdcInsn("CONSTANT");
+			make.visitInsn(ICONST_0);
+			make.visitMethodInsn(INVOKESPECIAL, "MissingBody", "<init>", "(Ljava/lang/String;I)V", false);
+			make.visitInsn(POP);
+			make.visitInsn(RETURN);
+			node.methods.add(make);
+		});
+
+		// The enum constructor should be declared exactly once.
+		JvmClassInfo body = assertHasPhantom(generatePhantoms(input).getJvmClassBundle(), "MissingBody");
+		long declarations = body.getMethods().stream()
+				.filter(method -> method.getName().equals("<init>") && method.getDescriptor().equals("(Ljava/lang/String;I)V"))
+				.count();
+		assertEquals(1, declarations, "Enum constructor declared " + declarations + " times");
+	}
+
+	@Test
+	void testConflictingHintDoesNotCostUnrelatedHint() {
+		// 'Conflict' is hinted to two incomparable known classes, which no single chain can satisfy.
+		// 'Other' shares no type with it, so its hint must still be honored.
+		Workspace workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(
+				TestClassUtils.createClass("KnownLeft", node -> {}),
+				TestClassUtils.createClass("KnownRight", node -> {})));
+		JvmClassInfo input = TestClassUtils.createClass("HintScope", node -> {
+			MethodNode conflict = new MethodNode(ACC_PUBLIC | ACC_STATIC, "a", "(LConflict;)V", null, null);
+			conflict.visitInsn(RETURN);
+			node.methods.add(conflict);
+			MethodNode other = new MethodNode(ACC_PUBLIC | ACC_STATIC, "b", "(LOther;)V", null, null);
+			other.visitInsn(RETURN);
+			node.methods.add(other);
+		});
+
+		// Generation should not fail on the conflict, and the unrelated hint should hold.
+		GeneratedPhantomWorkspaceResource phantoms = assertDoesNotThrow(() ->
+				generator.createPhantomsForClasses(workspace, List.of(input), 8, List.of(
+						new PhantomHint.Supertype("Conflict", "KnownLeft"),
+						new PhantomHint.Supertype("Conflict", "KnownRight"),
+						new PhantomHint.Supertype("Other", "KnownLeft"))));
+		assertEquals("KnownLeft", assertHasPhantom(phantoms.getJvmClassBundle(), "Other").getSuperName());
+	}
+
+	@Test
+	void testHintAddsInterfaceToUnevidencedPhantom() {
+		// Nothing in the input says 'MissingImpl' implements 'KnownIface'. A hint naming an interface must add it as an
+		// interface, not as a superclass.
+		Workspace workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(
+				TestClassUtils.createClass("KnownIface", node -> node.access = ACC_PUBLIC | ACC_INTERFACE | ACC_ABSTRACT),
+				TestClassUtils.createClass("ImplUse", node -> {
+					MethodNode method = new MethodNode(ACC_PUBLIC | ACC_STATIC, "run", "(LMissingImpl;)V", null, null);
+					method.visitInsn(RETURN);
+					node.methods.add(method);
+				})));
+
+		// The interface should be implemented, and the superclass left as Object.
+		GeneratedPhantomWorkspaceResource phantoms = assertDoesNotThrow(() ->
+				generator.createPhantomsForWorkspace(workspace, List.of(new PhantomHint.Supertype("MissingImpl", "KnownIface"))));
+		JvmClassInfo impl = assertHasPhantom(phantoms.getJvmClassBundle(), "MissingImpl");
+		assertTrue(impl.getInterfaces().contains("KnownIface"), "Interface hint not honored");
+		assertEquals("java/lang/Object", impl.getSuperName(), "Interface hint leaked into superclass");
+	}
+
+	@Test
+	void testCompileRefinesUnevidencedInterfaceFromJavacRelationErrors() {
+		// 'IfaceUse' references 'MissingRel' with no evidence about its interfaces. The source assigns it to 'KnownIface',
+		// which javac rejects until an interface hint is applied.
+		Workspace workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(
+				TestClassUtils.createClass("KnownIface", node -> node.access = ACC_PUBLIC | ACC_INTERFACE | ACC_ABSTRACT),
+				TestClassUtils.createClass("IfaceUse", node -> {
+					MethodNode method = new MethodNode(ACC_PUBLIC | ACC_STATIC, "run", "(LMissingRel;)V", null, null);
+					method.visitInsn(RETURN);
+					node.methods.add(method);
+				})));
+		String source = """
+				public class IfaceUse {
+				    void run(MissingRel r) {
+				        KnownIface iface = r;
+				    }
+				}
+				""";
+
+		// Compiling with phantom generation enabled should succeed once javac's relation error becomes an interface hint.
+		JavacCompilerConfig javacConfig = recaf.get(JavacCompilerConfig.class);
+		javacConfig.getGeneratePhantoms().setValue(true);
+		try {
+			CompilerResult result = compiler.compile(new JavacArgumentsBuilder()
+					.withClassName("IfaceUse")
+					.withClassSource(source)
+					.build(), workspace, null);
+			assertTrue(result.wasSuccess(), () -> "Refinement should satisfy the interface"
+					+ "\nDiagnostics: " + result.getDiagnostics().stream()
+					.map(CompilerDiagnostic::toString)
+					.collect(Collectors.joining("\n")));
+		} finally {
+			javacConfig.getGeneratePhantoms().setValue(false);
+		}
+	}
+
+	@Test
+	void testTypeOnlyHintCreatesPhantomWithoutRelations() {
+		// No input class is scanned, so 'OnlyNamed' is only known through the hint naming it.
+		Workspace workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(TestClassUtils.createClass("KnownBase", node -> {})));
+		GeneratedPhantomWorkspaceResource phantoms = assertDoesNotThrow(() ->
+				generator.createPhantomsForClasses(workspace, List.of(), 8, List.of(new PhantomHint.TypeOnly("OnlyNamed"))));
+
+		// The phantom should exist with no relation to any other type.
+		JvmClassInfo named = assertHasPhantom(phantoms.getJvmClassBundle(), "OnlyNamed");
+		assertEquals("java/lang/Object", named.getSuperName());
+		assertTrue(named.getInterfaces().isEmpty());
+	}
+
+	@Test
+	void testCompileGeneratesMissingClassReferencedOnlyBySource() {
+		// 'ClassHost' exists in the workspace with no references. 'MissingPlain' is named only by the source, so no
+		// phantom exists for it until javac reports it missing and the compiler adds a type-only hint.
+		Workspace workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(TestClassUtils.createClass("ClassHost", node -> {})));
+		String source = """
+				public class ClassHost {
+				    void run() {
+				        MissingPlain m = null;
+				    }
+				}
+				""";
+
+		// Compiling with phantom generation enabled should succeed once the missing class is generated.
+		JavacCompilerConfig javacConfig = recaf.get(JavacCompilerConfig.class);
+		javacConfig.getGeneratePhantoms().setValue(true);
+		try {
+			CompilerResult result = compiler.compile(new JavacArgumentsBuilder()
+					.withClassName("ClassHost")
+					.withClassSource(source)
+					.build(), workspace, null);
+			assertTrue(result.wasSuccess(), () -> "Missing class should be generated"
+					+ "\nDiagnostics: " + result.getDiagnostics().stream()
+					.map(CompilerDiagnostic::toString)
+					.collect(Collectors.joining("\n")));
+		} finally {
+			javacConfig.getGeneratePhantoms().setValue(false);
+		}
+	}
+
+	@Test
+	void testCompileGeneratesMissingClassInSourcePackage() {
+		// A simple name inside a class resolves in that class's package, so 'pkg/Missing' is the phantom to create.
+		Workspace workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(TestClassUtils.createClass("pkg/ClassHost", node -> {})));
+		String source = """
+				package pkg;
+				public class ClassHost {
+				    void run() {
+				        Missing m = null;
+				    }
+				}
+				""";
+
+		// Compiling with phantom generation enabled should succeed once 'pkg/Missing' is generated.
+		JavacCompilerConfig javacConfig = recaf.get(JavacCompilerConfig.class);
+		javacConfig.getGeneratePhantoms().setValue(true);
+		try {
+			CompilerResult result = compiler.compile(new JavacArgumentsBuilder()
+					.withClassName("pkg/ClassHost")
+					.withClassSource(source)
+					.build(), workspace, null);
+			assertTrue(result.wasSuccess(), () -> "Missing class in source package should be generated\nDiagnostics: "
+					+ result.getDiagnostics().stream()
+					.map(CompilerDiagnostic::toString)
+					.collect(Collectors.joining("\n")));
+		} finally {
+			javacConfig.getGeneratePhantoms().setValue(false);
+		}
+	}
+
+	@Test
+	void testSingleStarImportNamesMissingClassInThatPackage() {
+		// The host lives in 'app', but its only on-demand import is 'lib', so the missing name belongs to 'lib'. 'lib'
+		// has a surviving class, so the import itself is valid and javac goes on to report the missing name.
+		Workspace workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(
+				TestClassUtils.createClass("app/ClassHost", node -> {}),
+				TestClassUtils.createClass("lib/Present", node -> {})));
+
+		// The compiled host should reference the phantom in 'lib', not in its own package.
+		String compiled = compileHost(workspace, """
+				package app;
+				import lib.*;
+				public class ClassHost {
+				    Object run() { return Missing.class; }
+				}
+				""");
+		assertTrue(compiled.contains("lib/Missing"), "Missing class should resolve through the star import");
+		assertFalse(compiled.contains("app/Missing"), "Missing class should not be placed in the host's package");
+	}
+
+	@Test
+	void testMultipleStarImportsPreferPackageTheWorkspaceHasClassesIn() {
+		// Both 'lib' and 'other' could hold 'Missing'. Hinting both would make javac report it as ambiguous, so one is
+		// chosen. 'other' has more classes in the workspace, so it is the likelier home. 'lib' is listed first, so
+		// only the count can pick 'other'.
+		Workspace workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(
+				TestClassUtils.createClass("app/ClassHost", node -> {}),
+				TestClassUtils.createClass("lib/Present", node -> {}),
+				TestClassUtils.createClass("other/Present", node -> {}),
+				TestClassUtils.createClass("other/Another", node -> {})));
+
+		// The compiled host should reference the phantom in 'other' only.
+		String compiled = compileHost(workspace, """
+				package app;
+				import lib.*;
+				import other.*;
+				public class ClassHost {
+				    Object run() { return Missing.class; }
+				}
+				""");
+		assertTrue(compiled.contains("other/Missing"), "Missing class should prefer the populated star package");
+		assertFalse(compiled.contains("lib/Missing"), "Missing class should be placed in only one star package");
+	}
+
+	@Test
+	void testAbsentSingleStarImportIsDiscoveredThroughItsNames() {
+		// 'lib' has no classes, so javac stops at the import and reports nothing used from it. The names are found by
+		// compiling again without the import, then resolved to 'lib' because it is the only on-demand import.
+		Workspace workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(TestClassUtils.createClass("app/ClassHost", node -> {})));
+
+		// The compiled host should reference the phantom in 'lib'.
+		String compiled = compileHost(workspace, """
+				package app;
+				import lib.*;
+				public class ClassHost {
+				    Object run() { return Missing.class; }
+				}
+				""");
+		assertTrue(compiled.contains("lib/Missing"), "Name should be discovered through the absent star import");
+	}
+
+	@Test
+	void testAbsentStarImportRanksBelowPopulatedOne() {
+		// 'lib' is absent and 'other' is populated, so the name goes to 'other' even though 'lib' is listed first.
+		Workspace workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(
+				TestClassUtils.createClass("app/ClassHost", node -> {}),
+				TestClassUtils.createClass("other/Present", node -> {}),
+				TestClassUtils.createClass("other/Another", node -> {})));
+
+		// The compiled host should reference the phantom in 'other' only.
+		String compiled = compileHost(workspace, """
+				package app;
+				import lib.*;
+				import other.*;
+				public class ClassHost {
+				    Object run() { return Missing.class; }
+				}
+				""");
+		assertTrue(compiled.contains("other/Missing"), "Name should prefer the populated star package");
+		assertFalse(compiled.contains("lib/Missing"), "Name should not be placed in the absent star package");
+	}
+
+	@Test
+	void testQualifiedReferenceIntoAbsentPackageIsDiscoveredFromItsLine() {
+		// 'lib' has no classes, so javac reports the package alone. The class name is read from the reported line.
+		Workspace workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(TestClassUtils.createClass("app/ClassHost", node -> {})));
+
+		// The compiled host should reference the phantom in 'lib'.
+		String compiled = compileHost(workspace, """
+				package app;
+				public class ClassHost {
+				    Object run() { return lib.Missing.class; }
+				}
+				""");
+		assertTrue(compiled.contains("lib/Missing"), "Qualified reference should name the class in its absent package");
+	}
+
+	@Test
+	void testSingleTypeImportFromAbsentPackageIsDiscoveredFromItsLine() {
+		// The import names 'lib.Missing' directly, so no discovery pass is needed.
+		Workspace workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(TestClassUtils.createClass("app/ClassHost", node -> {})));
+
+		// The compiled host should reference the phantom in 'lib'.
+		String compiled = compileHost(workspace, """
+				package app;
+				import lib.Missing;
+				public class ClassHost {
+				    Object run() { return Missing.class; }
+				}
+				""");
+		assertTrue(compiled.contains("lib/Missing"), "Single-type import should name the class in its absent package");
+	}
+
+	@Test
+	void testCompileDeclaresMissingMembersOnPhantomReceiver() {
+		// 'MissingMember' is named only by the source. Once it exists, the instance method, field, and static method used
+		// on it are missing too, so javac reports each one. Their arguments and receivers come from those reports.
+		Workspace workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(TestClassUtils.createClass("MemberHost", node -> {})));
+		String source = """
+				public class MemberHost {
+				    void run(MissingMember r) {
+				        r.doThing(1, "text");
+				        Object value = r.value;
+				        MissingMember.make();
+				    }
+				}
+				""";
+
+		// Compiling with phantom generation enabled should succeed once each reported member is declared.
+		JavacCompilerConfig javacConfig = recaf.get(JavacCompilerConfig.class);
+		javacConfig.getGeneratePhantoms().setValue(true);
+		try {
+			CompilerResult result = compiler.compile(new JavacArgumentsBuilder()
+					.withClassName("MemberHost")
+					.withClassSource(source)
+					.build(), workspace, null);
+			assertTrue(result.wasSuccess(), () -> "Missing members should be declared on the phantom\nDiagnostics: "
+					+ result.getDiagnostics().stream()
+					.map(CompilerDiagnostic::toString)
+					.collect(Collectors.joining("\n")));
+		} finally {
+			javacConfig.getGeneratePhantoms().setValue(false);
+		}
+	}
+
+	@Test
+	void testCompileRefinesMemberReturnTypeFromUse() {
+		// 'count()' is used as an int and 'name()' as a String. Each is first declared as returning Object, then javac's
+		// incompatible-types errors on those lines give the types they must return.
+		Workspace workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(TestClassUtils.createClass("ReturnHost", node -> {})));
+		String source = """
+				public class ReturnHost {
+				    void run(MissingRet r) {
+				        int count = r.count();
+				        String name = r.name();
+				    }
+				}
+				""";
+
+		// Compiling with phantom generation enabled should succeed once both return types are refined.
+		JavacCompilerConfig javacConfig = recaf.get(JavacCompilerConfig.class);
+		javacConfig.getGeneratePhantoms().setValue(true);
+		try {
+			CompilerResult result = compiler.compile(new JavacArgumentsBuilder()
+					.withClassName("ReturnHost")
+					.withClassSource(source)
+					.build(), workspace, null);
+			assertTrue(result.wasSuccess(), () -> "Return types should be refined from their uses\nDiagnostics: "
+					+ result.getDiagnostics().stream()
+					.map(CompilerDiagnostic::toString)
+					.collect(Collectors.joining("\n")));
+		} finally {
+			javacConfig.getGeneratePhantoms().setValue(false);
+		}
+	}
+
+	@Test
+	void testMultiSourceDiagnosticsRetainTheirCompilationUnit() {
+		Workspace workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(
+				TestClassUtils.createClass("UnrelatedError", node -> {}),
+				TestClassUtils.createClass("MemberSource", node -> {})));
+		String unrelatedSource = """
+				public class UnrelatedError {
+				    void run() {
+				        String value = new Object();
+				    }
+				}
+				""";
+		String memberSource = """
+				public class MemberSource {
+				    Object run(MissingMember member) {
+				        Object value = member.read();
+				        return value;
+				    }
+				}
+				""";
+
+		JavacCompilerConfig javacConfig = recaf.get(JavacCompilerConfig.class);
+		javacConfig.getGeneratePhantoms().setValue(true);
+		try {
+			CompilerResult result = compiler.compile(new JavacArgumentsBuilder()
+					.withClassName("UnrelatedError")
+					.withClassSource(unrelatedSource)
+					.withClassSources(Collections.singletonMap("MemberSource", memberSource))
+					.build(), workspace, null);
+
+			// Both sources have a diagnostic or member use on line 3. The recorded source must identify only the
+			// compilation unit that javac reported for the unrelated Object-to-String error.
+			CompilerDiagnostic unrelatedError = result.getDiagnostics().stream()
+					.filter(diagnostic -> diagnostic.message().contains("cannot be converted"))
+					.findFirst()
+					.orElseThrow();
+			assertEquals("UnrelatedError", unrelatedError.sourceName());
+			assertEquals(3, unrelatedError.line());
+		} finally {
+			javacConfig.getGeneratePhantoms().setValue(false);
+		}
+	}
+
+	@Test
+	void testCompileDeclaresMissingConstructorOnPhantom() {
+		// 'MissingCtor' is named only by the source, so its phantom has just the default constructor at first. The call
+		// with an int and a String is then reported as matching no constructor, and its argument types declare one.
+		Workspace workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(TestClassUtils.createClass("CtorHost", node -> {})));
+		String source = """
+				public class CtorHost {
+				    void run() {
+				        MissingCtor made = new MissingCtor(1, "text");
+				    }
+				}
+				""";
+
+		// Compiling with phantom generation enabled should succeed once the (int, String) constructor is declared.
+		JavacCompilerConfig javacConfig = recaf.get(JavacCompilerConfig.class);
+		javacConfig.getGeneratePhantoms().setValue(true);
+		try {
+			CompilerResult result = compiler.compile(new JavacArgumentsBuilder()
+					.withClassName("CtorHost")
+					.withClassSource(source)
+					.build(), workspace, null);
+			assertTrue(result.wasSuccess(), () -> "Missing constructor should be declared on the phantom\nDiagnostics: "
+					+ result.getDiagnostics().stream()
+					.map(CompilerDiagnostic::toString)
+					.collect(Collectors.joining("\n")));
+		} finally {
+			javacConfig.getGeneratePhantoms().setValue(false);
+		}
+	}
+
+	@Test
+	void testCompileDeclaresExceptionForCatchOfMissingMember() {
+		// 'read()' is called on a phantom and caught as IOException. A phantom method declares nothing at first, so javac
+		// reports the catch clause as never thrown. The method on the try block's line then declares IOException.
+		Workspace workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(TestClassUtils.createClass("CatchHost", node -> {})));
+		String source = """
+				public class CatchHost {
+				    void run(MissingIo r) {
+				        try {
+				            r.read();
+				        } catch (java.io.IOException e) {
+				        }
+				    }
+				}
+				""";
+
+		// Compiling with phantom generation enabled should succeed once 'read()' declares IOException.
+		JavacCompilerConfig javacConfig = recaf.get(JavacCompilerConfig.class);
+		javacConfig.getGeneratePhantoms().setValue(true);
+		try {
+			CompilerResult result = compiler.compile(new JavacArgumentsBuilder()
+					.withClassName("CatchHost")
+					.withClassSource(source)
+					.build(), workspace, null);
+			assertTrue(result.wasSuccess(), () -> "Catch should be satisfied by a declared exception\nDiagnostics: "
+					+ result.getDiagnostics().stream()
+					.map(CompilerDiagnostic::toString)
+					.collect(Collectors.joining("\n")));
+		} finally {
+			javacConfig.getGeneratePhantoms().setValue(false);
+		}
+	}
+
+	@Test
+	void testCompileGeneratesNestedClassWhoseClassFileIsMissing() {
+		// 'Outer' declares member 'Inner' in its InnerClasses attribute, but 'Outer$Inner' has no class file. javac
+		// reports "class file for Outer$Inner not found" rather than "cannot find symbol", so only the binary name
+		// in that message can supply the phantom.
+		Workspace workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(
+				TestClassUtils.createClass("Outer", node -> node.innerClasses.add(
+						new InnerClassNode("Outer$Inner", "Outer", "Inner", ACC_PUBLIC | ACC_STATIC))),
+				TestClassUtils.createClass("NestedHost", node -> {})));
+		String source = """
+				public class NestedHost {
+				    Object run() { return Outer.Inner.class; }
+				}
+				""";
+
+		// Compiling with phantom generation enabled should succeed once 'Outer$Inner' is generated.
+		JavacCompilerConfig javacConfig = recaf.get(JavacCompilerConfig.class);
+		javacConfig.getGeneratePhantoms().setValue(true);
+		try {
+			CompilerResult result = compiler.compile(new JavacArgumentsBuilder()
+					.withClassName("NestedHost")
+					.withClassSource(source)
+					.build(), workspace, null);
+			assertTrue(result.wasSuccess(), () -> "Nested class should be generated from its class-file error\nDiagnostics: "
+					+ result.getDiagnostics().stream()
+					.map(CompilerDiagnostic::toString)
+					.collect(Collectors.joining("\n")));
+		} finally {
+			javacConfig.getGeneratePhantoms().setValue(false);
+		}
+	}
+
+	@Test
+	void testCompileRefinesUnevidencedSuperclassFromJavacRelationErrors() {
+		// 'RelUse' is in the workspace and references 'MissingRel', so a phantom is generated for it with no superclass
+		// evidence. The source then needs 'MissingRel' to be a 'KnownBase', which javac rejects until a hint is applied.
+		Workspace workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(
+				TestClassUtils.createClass("KnownBase", node -> {}),
+				TestClassUtils.createClass("RelUse", node -> {
+					MethodNode method = new MethodNode(ACC_PUBLIC | ACC_STATIC, "run", "(LMissingRel;)V", null, null);
+					method.visitInsn(RETURN);
+					node.methods.add(method);
+				})));
+		String source = """
+				public class RelUse {
+				    void run(MissingRel r) {
+				        KnownBase base = r;
+				    }
+				}
+				""";
+
+		// Compiling with phantom generation enabled should succeed once javac's relation error becomes a superclass hint.
+		JavacCompilerConfig javacConfig = recaf.get(JavacCompilerConfig.class);
+		javacConfig.getGeneratePhantoms().setValue(true);
+		try {
+			CompilerResult result = compiler.compile(new JavacArgumentsBuilder()
+					.withClassName("RelUse")
+					.withClassSource(source)
+					.build(), workspace, null);
+			assertTrue(result.wasSuccess(), () -> "Refinement should satisfy the relation"
+					+ "\nDiagnostics: " + result.getDiagnostics().stream()
+					.map(CompilerDiagnostic::toString)
+					.collect(Collectors.joining("\n")));
+		} finally {
+			javacConfig.getGeneratePhantoms().setValue(false);
+		}
+	}
+
+	@Test
+	void testConflictingClassConstraintsFieldsCompile() {
+		// Same idea as 'testConflictingClassConstraintsMethodsCompile', but with fields.
 		GeneratedPhantomWorkspaceResource phantoms = generatePhantoms(assemble("""
 				.method public static example (LChild;)I {
 					parameters: { child },
@@ -1524,7 +2255,7 @@ class PhantomGeneratorTest extends CompilerTestBase implements Opcodes {
 				}
 				""", false));
 
-		// Same case as above test.
+		// Doesn't matter which order we see, but 'Child' should extend one parent, which extends the other.
 		JvmClassInfo child = assertHasPhantom(phantoms.getJvmClassBundle(), "Child");
 		JvmClassInfo parentA = assertHasPhantom(phantoms.getJvmClassBundle(), "ParentA");
 		JvmClassInfo parentB = assertHasPhantom(phantoms.getJvmClassBundle(), "ParentB");
@@ -1537,9 +2268,9 @@ class PhantomGeneratorTest extends CompilerTestBase implements Opcodes {
 			assertEquals("ParentA", parentB.getSuperName());
 		}
 
-		// Compilation should succeed, and both field accesses should be 'getfield' since both parents are classes in the lenient chain.
-		JvmClassInfo use = compileWithPhantoms("LenientFieldUse", """
-				public class LenientFieldUse {
+		// Compilation should succeed, and both field accesses should be 'getfield' since both parents are classes in the chain.
+		JvmClassInfo use = compileWithPhantoms("ChainedParentsFieldUse", """
+				public class ChainedParentsFieldUse {
 				    int read(Child child) {
 				        return ((ParentA)child).valueA + ((ParentB)child).valueB;
 				    }
@@ -1746,7 +2477,7 @@ class PhantomGeneratorTest extends CompilerTestBase implements Opcodes {
 
 	@Test
 	void testStrippedDebugSlotDoesNotTakeParameterType() {
- 		// static void example(FirstValue first, SecondValue second) {
+		// static void example(FirstValue first, SecondValue second) {
 		//     SlotInterface slot = second;
 		//     slot.run();
 		// }
@@ -1777,7 +2508,7 @@ class PhantomGeneratorTest extends CompilerTestBase implements Opcodes {
 		// The only instruction in the protected range is a static field read, which can fail during class initialization.
 		// The handler should still receive the local state from that read, so the local's phantom type should flow into the handler.
 		//
- 		// static void example(HandledValue value) {
+		// static void example(HandledValue value) {
 		//     try {
 		//         Object popped = StaticHolder.FIELD; // can throw if StaticHolder.<clinit> fails
 		//     } catch (Throwable t) {
@@ -1870,6 +2601,26 @@ class PhantomGeneratorTest extends CompilerTestBase implements Opcodes {
 		byte[] bytecode = result.getCompilations().get(className);
 		assertNotNull(bytecode, "Missing compilation output: " + className);
 		return new JvmClassInfoBuilder(bytecode).build();
+	}
+
+	@Nonnull
+	private String compileHost(@Nonnull Workspace workspace, @Nonnull String source) {
+		JavacCompilerConfig javacConfig = recaf.get(JavacCompilerConfig.class);
+		javacConfig.getGeneratePhantoms().setValue(true);
+		try {
+			CompilerResult result = compiler.compile(new JavacArgumentsBuilder()
+					.withClassName("app/ClassHost")
+					.withClassSource(source)
+					.build(), workspace, null);
+			assertTrue(result.wasSuccess(), () -> "Compile should succeed after refinement\nDiagnostics: "
+					+ result.getDiagnostics().stream()
+					.map(CompilerDiagnostic::toString)
+					.collect(Collectors.joining("\n")));
+			byte[] bytes = result.getCompilations().values().iterator().next();
+			return new String(bytes, java.nio.charset.StandardCharsets.ISO_8859_1);
+		} finally {
+			javacConfig.getGeneratePhantoms().setValue(false);
+		}
 	}
 
 	@Nonnull

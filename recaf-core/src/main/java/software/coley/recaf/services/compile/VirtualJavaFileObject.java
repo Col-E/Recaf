@@ -15,6 +15,7 @@ import java.net.URI;
  */
 public class VirtualJavaFileObject extends SimpleJavaFileObject {
 	private final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+	private final String className;
 	private final String content;
 
 	/**
@@ -26,7 +27,16 @@ public class VirtualJavaFileObject extends SimpleJavaFileObject {
 	public VirtualJavaFileObject(@Nonnull String className, @Nullable String content) {
 		super(URI.create("string:///" + className.replace('.', '/') + Kind.SOURCE.extension),
 				Kind.SOURCE);
+		this.className = className;
 		this.content = content;
+	}
+
+	/**
+	 * @return Internal name of the class represented by this file object.
+	 */
+	@Nonnull
+	public String getClassName() {
+		return className;
 	}
 
 	/**

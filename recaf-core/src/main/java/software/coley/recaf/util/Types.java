@@ -114,6 +114,63 @@ public class Types {
 	}
 
 	/**
+	 * @param desc
+	 * 		Some internal type descriptor.
+	 *
+	 * @return Source name of the primitive, or {@code null} if it is not a primitive.
+	 */
+	@Nullable
+	public static String primitiveToSource(@Nonnull String desc) {
+		if (desc.length() != 1)
+			return null;
+		return primitiveToSource(desc.charAt(0));
+	}
+
+	/**
+	 * @param desc
+	 * 		Some single-char descriptor.
+	 *
+	 * @return Source name of the primitive, or {@code null} if it is not a primitive.
+	 */
+	@Nullable
+	public static String primitiveToSource(char desc) {
+		return switch (desc) {
+			case 'V' -> "void";
+			case 'Z' -> "boolean";
+			case 'B' -> "byte";
+			case 'C' -> "char";
+			case 'S' -> "short";
+			case 'I' -> "int";
+			case 'J' -> "long";
+			case 'F' -> "float";
+			case 'D' -> "double";
+			default -> null;
+		};
+	}
+
+	/**
+	 * @param type
+	 * 		Source name of a primitive.
+	 *
+	 * @return Internal descriptor of the primitive, or {@code null} if it is not a primitive.
+	 */
+	@Nullable
+	public static String sourceToPrimitive(@Nonnull String type) {
+		return switch (type) {
+			case "void" -> "V";
+			case "boolean" -> "Z";
+			case "byte" -> "B";
+			case "char" -> "C";
+			case "short" -> "S";
+			case "int" -> "I";
+			case "long" -> "J";
+			case "float" -> "F";
+			case "double" -> "D";
+			default -> null;
+		};
+	}
+
+	/**
 	 * @param name
 	 * 		Must be a primitive class name. See {@link #isPrimitiveClassName(String)}.
 	 *

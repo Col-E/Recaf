@@ -17,8 +17,10 @@ import software.coley.recaf.services.phantom.model.PhantomMethodRequirement;
 import software.coley.recaf.util.JavaVersion;
 
 import java.lang.reflect.Field;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 import static org.objectweb.asm.Opcodes.*;
 import static software.coley.recaf.util.Types.parameterEndSlot;
@@ -89,14 +91,20 @@ public class PhantomClassWriter {
 					innerClassAccess(constraints.get(inner.innerName()), constraint.getDeclaredInnerAccess(inner.innerName())));
 		}
 
-		if (constraint.isEnum()) {
-			String enumDescriptor = 'L' + constraint.getName() + ';';
-			for (String enumConstant : constraint.getEnumConstants())
+		String enumDescriptor = constraint.isEnum() ? 'L' + constraint.getName() + ';' : null;
+		Set<String> enumConstants = constraint.isEnum() ? constraint.getEnumConstants() : Set.of();
+		if (enumDescriptor != null)
+			for (String enumConstant : enumConstants)
 				writer.visitField(ACC_PUBLIC | ACC_STATIC | ACC_FINAL | ACC_ENUM,
 						enumConstant, enumDescriptor, null, null).visitEnd();
-		}
 
 		for (PhantomFieldRequirement field : constraint.getFieldRequirements()) {
+			// Enum constants are already emitted with their required ACC_ENUM flags above.
+			if (enumDescriptor != null
+					&& enumConstants.contains(field.getName())
+					&& enumDescriptor.equals(field.getDescriptor()))
+				continue;
+
 			int fieldAccess = ACC_PUBLIC;
 			if (isInterface || field.isStatic())
 				fieldAccess |= ACC_STATIC;
@@ -106,14 +114,22 @@ public class PhantomClassWriter {
 		}
 
 		if (!isInterface) {
+			Set<String> constructors = new HashSet<>();
+
+			// Write a default constructor for the phantom class.
+			// If the phantom is an enum, then the constructor must take a name and ordinal.
 			if (constraint.isEnum()) {
 				writeEnumConstructor(writer, constraint.getResolvedSuperName());
+				constructors.add("(Ljava/lang/String;I)V");
 			} else {
 				String superConstructorDescriptor = superConstructorDescriptor(constraint.getResolvedSuperName(), constraints, lookup);
 				writeConstructor(writer, constraint.getResolvedSuperName(), "()V", superConstructorDescriptor);
+				constructors.add("()V");
 			}
+
+			// Write any additional constructors that were observed in the phantom constraints.
 			for (PhantomMethodRequirement method : constraint.getMethodRequirements()) {
-				if (method.isConstructor() && !"()V".equals(method.getDescriptor()))
+				if (method.isConstructor() && constructors.add(method.getDescriptor()))
 					writeConstructor(writer, constraint.getResolvedSuperName(), method.getDescriptor(),
 							superConstructorDescriptor(constraint.getResolvedSuperName(), constraints, lookup));
 			}
@@ -121,6 +137,12 @@ public class PhantomClassWriter {
 
 		for (PhantomMethodRequirement method : constraint.getMethodRequirements()) {
 			if (method.isConstructor())
+				continue;
+
+			// Skip writing a method if it is an instance method and a superclass declares it as final.
+			if (!isInterface
+					&& !method.isStatic()
+					&& isFinalInSuperChain(constraint.getResolvedSuperName(), method.getName(), method.getDescriptor(), constraints, lookup))
 				continue;
 			writeMethod(writer, method, isInterface, isAnnotation, constraints, lookup);
 		}
@@ -181,8 +203,11 @@ public class PhantomClassWriter {
 			access |= ACC_INTERFACE | ACC_ABSTRACT;
 		if (constraint.isAnnotation())
 			access |= ACC_ANNOTATION;
-		if (constraint.isEnum())
-			access |= ACC_ENUM | ACC_FINAL;
+		if (constraint.isEnum()) {
+			access |= ACC_ENUM;
+			if ((access & ACC_ABSTRACT) == 0)
+				access |= ACC_FINAL;
+		}
 		return access;
 	}
 
@@ -241,6 +266,28 @@ public class PhantomClassWriter {
 		return "()V";
 	}
 
+	private static boolean isFinalInSuperChain(@Nullable String superName,
+	                                           @Nonnull String name,
+	                                           @Nonnull String descriptor,
+	                                           @Nonnull Map<String, PhantomClassConstraint> constraints,
+	                                           @Nullable ClassLookup lookup) {
+		Set<String> visited = new HashSet<>();
+		String current = superName;
+		while (current != null && visited.add(current)) {
+			PhantomClassConstraint phantom = constraints.get(current);
+			if (phantom != null) {
+				current = phantom.getResolvedSuperName();
+				continue;
+			}
+			if (lookup == null)
+				return false;
+			if (lookup.declaresFinalInstanceMethod(current, name, descriptor))
+				return true;
+			current = lookup.getKnownSuperName(current);
+		}
+		return false;
+	}
+
 	private static boolean isAccessible(@Nullable MethodMember method) {
 		return method != null && (method.hasPublicModifier() || method.hasProtectedModifier());
 	}
@@ -268,7 +315,8 @@ public class PhantomClassWriter {
 		if (isAbstract)
 			access |= ACC_ABSTRACT;
 
-		MethodVisitor visitor = writer.visitMethod(access, method.getName(), method.getDescriptor(), null, null);
+		String[] exceptions = method.getExceptions().isEmpty() ? null : method.getExceptions().toArray(String[]::new);
+		MethodVisitor visitor = writer.visitMethod(access, method.getName(), method.getDescriptor(), null, exceptions);
 		if (isAbstract) {
 			if (ownerIsAnnotation)
 				writeNeutralAnnotationDefault(visitor, Type.getReturnType(method.getDescriptor()), constraints, lookup);

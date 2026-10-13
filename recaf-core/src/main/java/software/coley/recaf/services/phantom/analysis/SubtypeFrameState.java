@@ -2,11 +2,11 @@ package software.coley.recaf.services.phantom.analysis;
 
 import jakarta.annotation.Nonnull;
 import org.objectweb.asm.tree.analysis.Frame;
+import software.coley.recaf.util.collect.primitive.Int2ObjectMap;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 
 /**
  * Minimal recreation of {@link Frame} for subtype relationship inference in {@link PhantomMethodConstraintAnalysis}.
@@ -15,7 +15,7 @@ import java.util.Map;
  * @see SubtypeValue
  */
 public class SubtypeFrameState {
-	private final Map<Integer, SubtypeValue> locals;
+	private final Int2ObjectMap<SubtypeValue> locals;
 	private final List<SubtypeValue> stack;
 
 	/**
@@ -24,8 +24,8 @@ public class SubtypeFrameState {
 	 * @param stack
 	 * 		Operand stack state.
 	 */
-	public SubtypeFrameState(@Nonnull Map<Integer, SubtypeValue> locals, @Nonnull List<SubtypeValue> stack) {
-		this.locals = new HashMap<>(locals);
+	public SubtypeFrameState(@Nonnull Int2ObjectMap<SubtypeValue> locals, @Nonnull List<SubtypeValue> stack) {
+		this.locals = new Int2ObjectMap<>(locals);
 		this.stack = new ArrayList<>(stack);
 	}
 
@@ -33,7 +33,7 @@ public class SubtypeFrameState {
 	 * @return Mutable local state.
 	 */
 	@Nonnull
-	public Map<Integer, SubtypeValue> getLocals() {
+	public Int2ObjectMap<SubtypeValue> getLocals() {
 		return locals;
 	}
 
@@ -77,9 +77,12 @@ public class SubtypeFrameState {
 		if (stackHeightsConflict(other))
 			throw new IllegalStateException("Cannot merge operand stacks of different heights");
 
-		Map<Integer, SubtypeValue> mergedLocals = new HashMap<>(locals);
-		for (Map.Entry<Integer, SubtypeValue> entry : other.locals.entrySet())
-			mergedLocals.merge(entry.getKey(), entry.getValue(), SubtypeValue::merge);
+		Int2ObjectMap<SubtypeValue> mergedLocals = new Int2ObjectMap<>(locals);
+		other.locals.forEach((index, value) -> {
+			Objects.requireNonNull(value, "Cannot merge null local variable value");
+			SubtypeValue existing = mergedLocals.get(index);
+			mergedLocals.put(index, existing == null ? value : SubtypeValue.merge(existing, value));
+		});
 
 		List<SubtypeValue> mergedStack;
 		if (stack.isEmpty()) {

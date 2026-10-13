@@ -185,7 +185,7 @@ public class PhantomConstraintCollector {
 		PhantomClassConstraint exceptionConstraint = constraint(internalName);
 		if (exceptionConstraint != null) {
 			exceptionConstraint.markClass();
-			exceptionConstraint.addRequiredSupertype("java/lang/Throwable");
+			exceptionConstraint.addHardSupertype("java/lang/Throwable");
 		}
 	}
 
@@ -260,7 +260,8 @@ public class PhantomConstraintCollector {
 			case Opcodes.H_INVOKEINTERFACE -> {
 				if (ownerConstraint != null) {
 					ownerConstraint.markInterface();
-					ownerConstraint.addMethod(handle.getName(), handle.getDesc(), false);
+					if (!isFinalObjectInstanceMethod(handle.getName(), handle.getDesc()))
+						ownerConstraint.addMethod(handle.getName(), handle.getDesc(), false);
 				}
 				context.collectMethodDescriptor(handle.getDesc());
 			}
@@ -270,7 +271,8 @@ public class PhantomConstraintCollector {
 						ownerConstraint.markInterface();
 					else
 						ownerConstraint.markClass();
-					ownerConstraint.addMethod(handle.getName(), handle.getDesc(), true);
+					if (!isFinalObjectInstanceMethod(handle.getName(), handle.getDesc()))
+						ownerConstraint.addMethod(handle.getName(), handle.getDesc(), true);
 				}
 				context.collectMethodDescriptor(handle.getDesc());
 			}
@@ -284,7 +286,8 @@ public class PhantomConstraintCollector {
 			case Opcodes.H_INVOKEVIRTUAL -> {
 				if (ownerConstraint != null) {
 					ownerConstraint.markClass();
-					ownerConstraint.addMethod(handle.getName(), handle.getDesc(), false);
+					if (!isFinalObjectInstanceMethod(handle.getName(), handle.getDesc()))
+						ownerConstraint.addMethod(handle.getName(), handle.getDesc(), false);
 				}
 				context.collectMethodDescriptor(handle.getDesc());
 			}
@@ -294,7 +297,8 @@ public class PhantomConstraintCollector {
 						ownerConstraint.markInterface();
 					else
 						ownerConstraint.markClass();
-					ownerConstraint.addMethod(handle.getName(), handle.getDesc(), false);
+					if (!isFinalObjectInstanceMethod(handle.getName(), handle.getDesc()))
+						ownerConstraint.addMethod(handle.getName(), handle.getDesc(), false);
 				}
 				context.collectMethodDescriptor(handle.getDesc());
 			}
@@ -302,6 +306,24 @@ public class PhantomConstraintCollector {
 				// no-op
 			}
 		}
+	}
+
+	/**
+	 * @param name
+	 * 		Method name.
+	 * @param descriptor
+	 * 		Method descriptor.
+	 *
+	 * @return {@code true} when the method is a final public instance method declared by {@link Object}.
+	 *			Such a reference resolves to {@link Object}, so it must not become a declaration requirement on the owner.
+	 */
+	private static boolean isFinalObjectInstanceMethod(@Nonnull String name, @Nonnull String descriptor) {
+		return switch (name) {
+			case "getClass" -> "()Ljava/lang/Class;".equals(descriptor);
+			case "notify", "notifyAll" -> "()V".equals(descriptor);
+			case "wait" -> "()V".equals(descriptor) || "(J)V".equals(descriptor) || "(JI)V".equals(descriptor);
+			default -> false;
+		};
 	}
 
 	/**
@@ -534,7 +556,7 @@ public class PhantomConstraintCollector {
 			// A permitted subclass must directly extend or implement the sealed type that permits it.
 			PhantomClassConstraint permittedConstraint = constraint(permittedSubclass);
 			if (permittedConstraint != null && currentClassName != null)
-				permittedConstraint.addRequiredSupertype(currentClassName);
+				permittedConstraint.addRequiredDirectSupertype(currentClassName);
 			super.visitPermittedSubclass(permittedSubclass);
 		}
 
@@ -711,7 +733,8 @@ public class PhantomConstraintCollector {
 							ownerConstraint.markClass();
 						if ("<init>".equals(name))
 							ownerConstraint.markClass();
-						ownerConstraint.addMethod(name, descriptor, opcode == Opcodes.INVOKESTATIC);
+						if (!isFinalObjectInstanceMethod(name, descriptor))
+							ownerConstraint.addMethod(name, descriptor, opcode == Opcodes.INVOKESTATIC);
 					}
 					context.collectMethodDescriptor(descriptor);
 					super.visitMethodInsn(opcode, owner, name, descriptor, isInterface);
