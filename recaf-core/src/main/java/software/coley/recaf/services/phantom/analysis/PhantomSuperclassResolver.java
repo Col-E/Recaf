@@ -3,6 +3,7 @@ package software.coley.recaf.services.phantom.analysis;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import software.coley.recaf.services.phantom.model.PhantomClassConstraint;
+import software.coley.recaf.util.Tarjan;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -254,7 +255,7 @@ final class PhantomSuperclassResolver {
 					edges.add(target);
 			graph.put(plan.name(), edges);
 		}
-		return StronglyConnectedComponents.cyclic(graph);
+		return Tarjan.cyclic(graph);
 	}
 
 	/**

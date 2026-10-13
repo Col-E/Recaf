@@ -58,6 +58,7 @@ import software.coley.recaf.services.Service;
 import software.coley.recaf.services.analysis.entry.EntryAnalysisService;
 import software.coley.recaf.services.search.similarity.PackagePurpose;
 import software.coley.recaf.util.Handles;
+import software.coley.recaf.util.Tarjan;
 import software.coley.recaf.util.Types;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
@@ -68,16 +69,15 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.PriorityQueue;
-import java.util.Set;
 import java.util.TreeMap;
 
 /**
@@ -156,7 +156,12 @@ public class AreaAnalysisService implements Service {
 		scanDependencies(graph);
 
 		// Compute strongly connected components (SCCs) to find tightly coupled classes that should be grouped together.
-		List<Component> initialComponents = new Tarjan(graph).compute();
+		Map<String, Collection<String>> componentGraph = new HashMap<>();
+		for (Map.Entry<String, Node> entry : graph.nodes.entrySet())
+			componentGraph.put(entry.getKey(), entry.getValue().internalOutgoing.keySet());
+		List<Component> initialComponents = Tarjan.components(componentGraph).stream()
+				.map(Component::new)
+				.toList();
 
 		// We have our own merge heuristic that considers reference weights and user-requested merge settings.
 		// The gist is we can merge two strong components if they have a strong connection.
@@ -1364,77 +1369,10 @@ public class AreaAnalysisService implements Service {
 	}
 
 	/**
-	 * Helper to compute strongly connected components (SCCs) of the graph.
-	 * <p>
-	 * See: <a href="https://en.wikipedia.org/wiki/Tarjan%27s_strongly_connected_components_algorithm">Tarjan's algorithm</a>
-	 * <p>
-	 * video: <a href="https://www.youtube.com/watch?v=wUgWX0nc4NY">WilliamFiset's Tarjan's Strongly Connected Component (SCC) Algorithm</a>
-	 */
-	private static final class Tarjan {
-		private final AreaGraph graph;
-		private final Map<String, Integer> indexByNode = new HashMap<>();
-		private final Map<String, Integer> lowByNode = new HashMap<>();
-		private final ArrayDeque<String> stack = new ArrayDeque<>();
-		private final Set<String> onStack = new HashSet<>();
-		private final List<Component> components = new ArrayList<>();
-		private int index;
-
-		private Tarjan(@Nonnull AreaGraph graph) {
-			this.graph = graph;
-		}
-
-		@Nonnull
-		private List<Component> compute() {
-			for (String nodeName : graph.nodes.keySet())
-				if (!indexByNode.containsKey(nodeName))
-					strongConnect(nodeName);
-			components.sort(Comparator.comparing(Component::rootName));
-			return List.copyOf(components);
-		}
-
-		private void strongConnect(@Nonnull String nodeName) {
-			indexByNode.put(nodeName, index);
-			lowByNode.put(nodeName, index);
-			index++;
-			stack.push(nodeName);
-			onStack.add(nodeName);
-
-			// Sort neighbors for deterministic output, even though the order doesn't affect the resulting components.
-			List<String> neighbors = new ArrayList<>(graph.nodes.get(nodeName).internalOutgoing.keySet());
-			Collections.sort(neighbors);
-
-			// Explore neighbors, tracking low-link values to identify strongly connected components.
-			for (String neighbor : neighbors) {
-				if (!indexByNode.containsKey(neighbor)) {
-					strongConnect(neighbor);
-					lowByNode.put(nodeName, Math.min(lowByNode.get(nodeName), lowByNode.get(neighbor)));
-				} else if (onStack.contains(neighbor)) {
-					lowByNode.put(nodeName, Math.min(lowByNode.get(nodeName), indexByNode.get(neighbor)));
-				}
-			}
-
-			// If this node is a root of a strongly connected component, pop the stack to build the component.
-			if (Objects.equals(lowByNode.get(nodeName), indexByNode.get(nodeName))) {
-				List<String> members = new ArrayList<>();
-				String member;
-				do {
-					member = stack.pop();
-					onStack.remove(member);
-					members.add(member);
-				} while (!nodeName.equals(member));
-				members.sort(String::compareTo);
-				components.add(new Component(members));
-			}
-		}
-	}
-
-	/**
 	 * Initial component of classes that are strongly connected to each other, represented by their internal names.
 	 *
 	 * @param members
 	 * 		Internal class names of the members of this component, sorted with the representative first for determinism.
-	 *
-	 * @see Tarjan#components
 	 */
 	private record Component(@Nonnull List<String> members) {
 		/**
