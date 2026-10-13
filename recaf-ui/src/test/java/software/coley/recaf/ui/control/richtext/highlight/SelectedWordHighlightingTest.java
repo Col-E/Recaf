@@ -1,6 +1,7 @@
 package software.coley.recaf.ui.control.richtext.highlight;
 
 import jakarta.annotation.Nonnull;
+import org.fxmisc.richtext.model.PlainTextChange;
 import org.fxmisc.richtext.model.StyleSpan;
 import org.fxmisc.richtext.model.StyleSpans;
 import org.junit.jupiter.api.Test;
@@ -91,6 +92,30 @@ class SelectedWordHighlightingTest {
 				new IntRange(foo, foo + 3),
 				new IntRange(bar, bar + 3)
 		), highlighting.updateMatchesAndGetAffectedRanges(text, "bar", bar));
+	}
+
+	@Test
+	void shiftsCachedMatchesAcrossRapidDeletions() {
+		String text = "foo foo blah foo padding padding";
+		SelectedWordHighlighting highlighting = new SelectedWordHighlighting();
+		highlighting.updateMatches(text, "foo", 1);
+
+		// Simulate holding Delete at the beginning of the first match. Between edits, style updates may
+		// apply the cached ranges, so those offsets must move with the text immediately.
+		for (String removed : List.of("f", "o", "o", " ")) {
+			PlainTextChange change = new PlainTextChange(0, removed, "");
+			text = text.substring(change.getRemovalEnd());
+			highlighting.onTextChange(change);
+		}
+
+		assertEquals("foo blah foo padding padding", text);
+		StyleSpans<Collection<String>> spans = StyleSpans.singleton(Collections.emptyList(), text.length());
+		assertEquals(List.of(
+				span(3, MATCH_STYLE),
+				span(6),
+				span(3, MATCH_STYLE),
+				span(text.length() - 12)
+		), describe(highlighting.apply(0, spans)));
 	}
 
 	@Test

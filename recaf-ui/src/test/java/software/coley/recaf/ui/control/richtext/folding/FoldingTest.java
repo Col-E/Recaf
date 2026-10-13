@@ -5,13 +5,20 @@ import javafx.scene.Scene;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.stage.Stage;
+import org.fxmisc.richtext.model.StyleSpan;
+import org.fxmisc.richtext.model.StyleSpans;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import software.coley.recaf.ui.BaseFxTest;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.highlight.SelectedWordHighlighting;
+import software.coley.recaf.util.IntRange;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -105,6 +112,24 @@ class FoldingTest extends BaseFxTest {
 	}
 
 	@Test
+	void testSelectedWordHighlightingTracksRapidDeletion() {
+		String text = "foo foo blah foo padding padding";
+		onEditor(text, editor -> {
+			var codeArea = editor.getCodeArea();
+			codeArea.moveTo(1);
+			editor.setSelectedWordHighlighting(new SelectedWordHighlighting());
+
+			// Delete the first word and its trailing space, then force a style update before the debounce fires.
+			for (int i = 0; i < 4; i++)
+				codeArea.deleteText(0, 1);
+			assertEquals("foo blah foo padding padding", editor.getText());
+			editor.setStyleSpans(0, StyleSpans.singleton(Collections.emptyList(), editor.getTextLength()));
+
+			assertEquals(List.of(new IntRange(0, 3), new IntRange(9, 12)), selectedWordRanges(editor));
+		});
+	}
+
+	@Test
 	void testFoldKeepsCaretInPlace() {
 		onEditor(editor -> {
 			editor.getCodeArea().moveTo(2);
@@ -178,6 +203,18 @@ class FoldingTest extends BaseFxTest {
 			assertEquals(6, editor.getCodeArea().getCurrentParagraph());
 			assertEquals(headerLength, editor.getCodeArea().getCaretColumn(), "Navigating onto a longer line should snap back to the remembered column");
 		});
+	}
+
+	private List<IntRange> selectedWordRanges(Editor editor) {
+		List<IntRange> ranges = new ArrayList<>();
+		int position = 0;
+		for (StyleSpan<Collection<String>> span : editor.getCodeArea().getStyleSpans(0, editor.getTextLength())) {
+			int end = position + span.getLength();
+			if (span.getStyle().contains("selected-word-match"))
+				ranges.add(new IntRange(position, end));
+			position = end;
+		}
+		return ranges;
 	}
 
 	private void fireKey(Editor editor, KeyCode code, boolean shift) {

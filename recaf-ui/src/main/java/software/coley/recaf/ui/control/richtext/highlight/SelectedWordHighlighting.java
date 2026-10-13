@@ -1,5 +1,6 @@
 package software.coley.recaf.ui.control.richtext.highlight;
 
+import com.google.common.annotations.VisibleForTesting;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import javafx.beans.value.ChangeListener;
@@ -15,7 +16,6 @@ import org.fxmisc.richtext.model.StyleSpansBuilder;
 import org.reactfx.Change;
 import org.reactfx.EventStream;
 import org.slf4j.Logger;
-import software.coley.collections.Lists;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.EditorComponent;
@@ -49,8 +49,10 @@ public class SelectedWordHighlighting implements EditorComponent {
 	private CodeArea codeArea;
 	private EventStream<Change<Integer>> caretPosEventStream;
 	private Consumer<Change<Integer>> caretPosObserver;
-	private EventStream<List<PlainTextChange>> textChangeEventStream;
-	private Consumer<List<PlainTextChange>> textChangeObserver;
+	private EventStream<PlainTextChange> textChangeRangeEventStream;
+	private Consumer<PlainTextChange> textChangeRangeObserver;
+	private EventStream<PlainTextChange> textChangeEventStream;
+	private Consumer<PlainTextChange> textChangeObserver;
 	private ChangeListener<IndexRange> selectionListener;
 	private EventHandler<MouseEvent> mousePressedHandler;
 	private EventHandler<MouseEvent> mouseReleasedHandler;
@@ -166,9 +168,12 @@ public class SelectedWordHighlighting implements EditorComponent {
 		};
 		codeArea.addEventFilter(MouseEvent.MOUSE_PRESSED, mousePressedHandler);
 		codeArea.addEventHandler(MouseEvent.MOUSE_RELEASED, mouseReleasedHandler);
-		textChangeObserver = this::updateSelectedWordHighlights;
+		textChangeRangeObserver = this::onTextChange;
+		textChangeRangeEventStream = editor.getTextChangeEventStream();
+		textChangeRangeEventStream.addObserver(textChangeRangeObserver);
+		textChangeObserver = change -> updateSelectedWordHighlights();
 		textChangeEventStream = editor.getTextChangeEventStream()
-				.reduceSuccessions(Collections::singletonList, Lists::add, Duration.ofMillis(Editor.MEDIUM_DELAY_MS));
+				.successionEnds(Duration.ofMillis(Editor.MEDIUM_DELAY_MS));
 		textChangeEventStream.addObserver(textChangeObserver);
 
 		// Do an initial refresh to highlight any pre-existing selected word.
@@ -189,6 +194,8 @@ public class SelectedWordHighlighting implements EditorComponent {
 		// Unregister listeners.
 		if (caretPosEventStream != null && caretPosObserver != null)
 			caretPosEventStream.removeObserver(caretPosObserver);
+		if (textChangeRangeEventStream != null && textChangeRangeObserver != null)
+			textChangeRangeEventStream.removeObserver(textChangeRangeObserver);
 		if (textChangeEventStream != null && textChangeObserver != null)
 			textChangeEventStream.removeObserver(textChangeObserver);
 		if (codeArea != null && selectionListener != null)
@@ -199,6 +206,8 @@ public class SelectedWordHighlighting implements EditorComponent {
 			codeArea.removeEventHandler(MouseEvent.MOUSE_RELEASED, mouseReleasedHandler);
 		caretPosEventStream = null;
 		caretPosObserver = null;
+		textChangeRangeEventStream = null;
+		textChangeRangeObserver = null;
 		textChangeEventStream = null;
 		textChangeObserver = null;
 		selectionListener = null;
@@ -388,80 +397,29 @@ public class SelectedWordHighlighting implements EditorComponent {
 
 	/**
 	 * Restyle any affected ranges due to a change in the selected word or caret position after a text change event.
-	 *
-	 * @param changes
-	 * 		Text changes that may have affected the selected word matches.
 	 */
-	private void updateSelectedWordHighlights(@Nonnull List<PlainTextChange> changes) {
+	private void updateSelectedWordHighlights() {
 		if (editor == null || codeArea == null || mouseSelectionInProgress)
 			return;
 
 		List<IntRange> previousStyledRanges = styledRanges;
 		List<IntRange> updatedRanges = findMatchRanges(editor.getText(), codeArea.getSelectedText(), codeArea.getCaretPosition());
-		List<IntRange> affectedRanges = withTextChangeRanges(previousStyledRanges, changes);
-		affectedRanges = mergeRanges(affectedRanges, updatedRanges);
+		List<IntRange> affectedRanges = mergeRanges(previousStyledRanges, updatedRanges);
 		matchRanges = updatedRanges;
 		styledRanges = updatedRanges;
 		restyleSelectedWordHighlights(affectedRanges);
 	}
 
 	/**
-	 * @param ranges
-	 * 		Ranges that were styled before the text changes.
-	 * @param changes
-	 * 		Text changes that may have shifted or inherited selected-word styling.
+	 * Advance cached ranges immediately as the document changes, before any delayed style updates can use their offsets.
 	 *
-	 * @return Previous styled ranges mapped through the changes, plus inserted ranges that may have inherited styling.
+	 * @param change
+	 * 		Text change to apply to the cached ranges.
 	 */
-	@Nonnull
-	private static List<IntRange> withTextChangeRanges(@Nonnull List<IntRange> ranges, @Nonnull List<PlainTextChange> changes) {
-		if (changes.isEmpty())
-			return ranges;
-
-		// Copy existing ranges so we can shift them through the changes.
-		List<IntRange> affectedRanges = new ArrayList<>(ranges);
-		for (PlainTextChange change : changes) {
-			int changeStart = change.getPosition();
-			int removalEnd = change.getRemovalEnd();
-			int insertionEnd = change.getInsertionEnd();
-			int delta = insertionEnd - removalEnd;
-
-			List<IntRange> shiftedRanges = new ArrayList<>(affectedRanges.size() + 1);
-			for (IntRange range : affectedRanges) {
-				if (changeStart == removalEnd) {
-					// Insertion shifts styled text after it.
-					// Insertion inside a styled range extends that range.
-					if (range.end() <= changeStart) {
-						shiftedRanges.add(range);
-					} else if (range.start() >= changeStart) {
-						shiftedRanges.add(new IntRange(range.start() + delta, range.end() + delta));
-					} else {
-						shiftedRanges.add(new IntRange(range.start(), range.end() + delta));
-					}
-				} else {
-					// Preserve any styled text that survived before or after the removed interval.
-					if (range.start() < changeStart) {
-						int prefixEnd = Math.min(range.end(), changeStart);
-						if (range.start() < prefixEnd)
-							shiftedRanges.add(new IntRange(range.start(), prefixEnd));
-					}
-					if (range.end() > removalEnd) {
-						int suffixStart = Math.max(range.start(), removalEnd) + delta;
-						int suffixEnd = range.end() + delta;
-						if (suffixStart < suffixEnd)
-							shiftedRanges.add(new IntRange(suffixStart, suffixEnd));
-					}
-				}
-			}
-
-			affectedRanges = shiftedRanges;
-			if (changeStart < insertionEnd) {
-				// Inserted text can inherit the selected-word style from adjacent text. Track it through later changes too.
-				IntRange insertedRange = new IntRange(changeStart, insertionEnd);
-				affectedRanges = mergeRanges(affectedRanges, Collections.singletonList(insertedRange));
-			}
-		}
-		return affectedRanges;
+	@VisibleForTesting
+	void onTextChange(@Nonnull PlainTextChange change) {
+		matchRanges = mapRangesThroughTextChange(matchRanges, change);
+		styledRanges = withTextChangeRange(styledRanges, change);
 	}
 
 	/**
@@ -542,6 +500,46 @@ public class SelectedWordHighlighting implements EditorComponent {
 			i = end;
 		}
 		return matches;
+	}
+
+	@Nonnull
+	private static List<IntRange> withTextChangeRange(@Nonnull List<IntRange> ranges, @Nonnull PlainTextChange change) {
+		List<IntRange> affectedRanges = mapRangesThroughTextChange(ranges, change);
+		int changeStart = change.getPosition();
+		int insertionEnd = change.getInsertionEnd();
+		if (changeStart < insertionEnd) {
+			IntRange insertedRange = new IntRange(changeStart, insertionEnd);
+			affectedRanges = mergeRanges(affectedRanges, Collections.singletonList(insertedRange));
+		}
+		return affectedRanges;
+	}
+
+	@Nonnull
+	private static List<IntRange> mapRangesThroughTextChange(@Nonnull List<IntRange> ranges, @Nonnull PlainTextChange change) {
+		if (ranges.isEmpty())
+			return ranges;
+
+		int changeStart = change.getPosition();
+		int removalEnd = change.getRemovalEnd();
+		int insertionEnd = change.getInsertionEnd();
+		int delta = insertionEnd - removalEnd;
+
+		// Map ranges through the text change, adjusting their offsets based on the change's position and length.
+		List<IntRange> mappedRanges = new ArrayList<>(ranges.size() + 1);
+		for (IntRange range : ranges) {
+			if (range.start() < changeStart) {
+				int prefixEnd = Math.min(range.end(), changeStart);
+				if (range.start() < prefixEnd)
+					mappedRanges.add(new IntRange(range.start(), prefixEnd));
+			}
+			if (range.end() > removalEnd) {
+				int suffixStart = Math.max(range.start(), removalEnd) + delta;
+				int suffixEnd = range.end() + delta;
+				if (suffixStart < suffixEnd)
+					mappedRanges.add(new IntRange(suffixStart, suffixEnd));
+			}
+		}
+		return mappedRanges;
 	}
 
 	@Nonnull
