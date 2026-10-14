@@ -34,6 +34,7 @@ Navigate compiled applications using a familiar, IDE-like interface.
 
 <details>
 <summary><strong>Edit Java bytecode with ease from a high or low level</strong></summary>
+
 ![Edit via the decompiler](docs/images/edit-source-save.gif)
 
 Make simple edits by just plainly editing decompiled Java source code, save your changes, then export the modified application.
