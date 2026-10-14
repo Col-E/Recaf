@@ -4,9 +4,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
-import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -15,6 +13,7 @@ import javafx.geometry.Bounds;
 import javafx.scene.Node;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import org.fxmisc.flowless.VirtualFlow;
@@ -29,6 +28,7 @@ import software.coley.recaf.ui.pane.editing.binary.hex.ops.HexOperations;
 import software.coley.recaf.ui.pane.editing.binary.hex.cell.HexRow;
 import software.coley.recaf.ui.pane.editing.binary.hex.cell.HexRowHeader;
 import software.coley.recaf.util.FxThreadUtil;
+import software.coley.recaf.util.IntRange;
 import software.coley.recaf.util.NodeEvents;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
 
@@ -59,6 +59,11 @@ public class HexEditor extends BorderPane {
 	private Consumer<byte[]> commitAction;
 	private byte[] data;
 	private byte[] dataDefaultState;
+	private HexSelection selection = new HexSelection(0, 0);
+	private boolean hexColumnActive = true;
+	private int dragOrigin = -1;
+	private int dragAnchor;
+	private boolean shiftDragging;
 	private long revision;
 	private ExecutorService executor;
 
@@ -88,25 +93,48 @@ public class HexEditor extends BorderPane {
 		NodeEvents.addMousePressHandler(flow, e -> {
 			if (!e.isPrimaryButtonDown())
 				return;
-			int currentOffset = ops.navigation().selectionOffset();
-			for (HexRow cell : flow.visibleCells()) {
-				Bounds bounds = cell.getNode().getBoundsInParent();
-				if (bounds.contains(e.getX(), e.getY())) {
-					int offset = cell.pickOffsetAtPosition(e.getX(), e.getY());
-					if (offset >= 0) {
-						if (currentOffset == offset) {
-							ops.engageCurrent();
-						} else {
-							ops.navigation().select(offset);
-						}
-					}
+
+			int offset = pickOffsetAtPosition(e.getX(), e.getY());
+			dragOrigin = offset;
+			if (offset >= 0) {
+				HexNavigation navigation = ops.navigation();
+				HexSelection current = navigation.selection();
+				shiftDragging = e.isShiftDown();
+				dragAnchor = shiftDragging ? current.anchor() : offset;
+				if (shiftDragging) {
+					int caret = offset < dragAnchor ? offset : Math.min(data.length, offset + 1);
+					navigation.selectRange(dragAnchor, caret);
+				} else if (current.range().empty() && current.caret() == offset) {
+					ops.engageCurrent();
+				} else {
+					navigation.select(offset);
 				}
 			}
 
 			// Do not propagate the event up the scene graph.
 			e.consume();
 		});
+		NodeEvents.addMouseDraggedHandler(flow, e -> {
+			if (dragOrigin < 0 || !e.isPrimaryButtonDown())
+				return;
+			int offset = pickOffsetAtPosition(e.getX(), e.getY());
+			if (offset < 0)
+				return;
+
+			if (shiftDragging) {
+				int caret = offset < dragAnchor ? offset : Math.min(data.length, offset + 1);
+				ops.navigation().selectRange(dragAnchor, caret);
+			} else if (offset < dragOrigin) {
+				ops.navigation().selectRange(dragOrigin + 1, offset);
+			} else {
+				ops.navigation().selectRange(dragOrigin, Math.min(data.length, offset + 1));
+			}
+			e.consume();
+		});
 		NodeEvents.addMouseReleaseHandler(flow, e -> {
+			if (e.getButton() == MouseButton.PRIMARY)
+				dragOrigin = -1;
+
 			// If we've not gotten focus grab it and consume the event so that it does not propagate up the scene graph.
 			if (!flow.isFocusWithin()) {
 				e.consume();
@@ -152,7 +180,7 @@ public class HexEditor extends BorderPane {
 	}
 
 	/**
-	 * Refresh visible byte cells after search state changes.
+	 * Refresh visible cells after search-result state changes.
 	 */
 	public void refreshHexDisplay() {
 		refreshRowDisplay();
@@ -172,7 +200,7 @@ public class HexEditor extends BorderPane {
 	private void finishPendingInput() {
 		if (data == null || data.length == 0)
 			return;
-		int offset = ops.navigation().selectionOffset();
+		int offset = Math.min(ops.navigation().selection().caret(), data.length - 1);
 		bringOffsetIntoView(offset);
 		flow.getCellIfVisible(offsetToRowIndex(offset)).ifPresent(row -> row.finishPendingInput(offset));
 	}
@@ -279,8 +307,10 @@ public class HexEditor extends BorderPane {
 			return;
 		}
 		this.data = data;
+		selection = clampSelection(selection);
 		revision++;
 
+		refreshRowModel();
 		refreshRowDisplay();
 		refreshSearchResults();
 	}
@@ -290,7 +320,9 @@ public class HexEditor extends BorderPane {
 	 */
 	public void resetData() {
 		this.data = Arrays.copyOf(dataDefaultState, dataDefaultState.length);
+		selection = clampSelection(selection);
 		revision++;
+		refreshRowModel();
 		refreshRowDisplay();
 		refreshSearchResults();
 	}
@@ -302,6 +334,8 @@ public class HexEditor extends BorderPane {
 	private void setData0(@Nonnull byte[] data) {
 		this.data = data;
 		this.dataDefaultState = Arrays.copyOf(data, data.length);
+		selection = new HexSelection(0, 0);
+		dragOrigin = -1;
 		revision++;
 
 		// Refresh model/display.
@@ -379,100 +413,251 @@ public class HexEditor extends BorderPane {
 		return (offset / rowLength);
 	}
 
+	/**
+	 * @param x
+	 * 		X coordinate in the flow.
+	 * @param y
+	 * 		Y coordinate in the flow.
+	 *
+	 * @return Offset at the given position, or {@code -1} if no offset is at that position.
+	 */
+	private int pickOffsetAtPosition(double x, double y) {
+		for (HexRow row : flow.visibleCells()) {
+			Bounds bounds = row.getNode().getBoundsInParent();
+			if (bounds.contains(x, y))
+				return row.pickOffsetAtPosition(x, y);
+		}
+		return -1;
+	}
+
+	/**
+	 * Select a single byte at the given offset. Clamped to {@code [0, data length]}.
+	 *
+	 * @param offset
+	 * 		Byte offset to select.
+	 */
+	private void select(int offset) {
+		finishPendingInput();
+		int length = data == null ? 0 : data.length;
+		int clamped = length == 0 ? 0 : Math.clamp(offset, 0, length - 1);
+		setSelection(new HexSelection(clamped, clamped));
+		bringOffsetIntoView(clamped);
+	}
+
+	/**
+	 * Select a range of bytes. Both boundaries are clamped to {@code [0, data length]}.
+	 *
+	 * @param anchor
+	 * 		Fixed boundary.
+	 * @param caret
+	 * 		Moving boundary.
+	 */
+	private void selectRange(int anchor, int caret) {
+		finishPendingInput();
+		setSelection(new HexSelection(clampBoundary(anchor), clampBoundary(caret)));
+		bringOffsetIntoView(selection.caret());
+	}
+
+	/**
+	 * Move the caret to a byte boundary, optionally extending from the current anchor.
+	 *
+	 * @param offset
+	 * 		Target boundary.
+	 * @param extend
+	 *        {@code true} to preserve the current anchor.
+	 */
+	private void moveTo(int offset, boolean extend) {
+		finishPendingInput();
+		int clamped = clampBoundary(offset);
+		setSelection(extend ? new HexSelection(selection.anchor(), clamped) : new HexSelection(clamped, clamped));
+		bringOffsetIntoView(clamped);
+	}
+
+	/**
+	 * @param offset
+	 * 		Byte offset to clamp.
+	 *
+	 * @return Clamped offset to {@code [0, data length]}
+	 */
+	private int clampBoundary(long offset) {
+		int length = data == null ? 0 : data.length;
+		return (int) Math.max(0L, Math.min(length, offset));
+	}
+
+	/**
+	 * @param selection
+	 * 		Selection to clamp.
+	 *
+	 * @return Clamped selection.
+	 */
+	@Nonnull
+	private HexSelection clampSelection(@Nonnull HexSelection selection) {
+		return new HexSelection(clampBoundary(selection.anchor()), clampBoundary(selection.caret()));
+	}
+
+	/**
+	 * @param selection
+	 * 		New selection to set.
+	 */
+	private void setSelection(@Nonnull HexSelection selection) {
+		if (this.selection.equals(selection))
+			return;
+
+		this.selection = selection;
+		refreshRowDisplay();
+	}
+
+	/**
+	 * Delete the current selection, or if there is no selection delete a single byte in the given direction.
+	 *
+	 * @param backward
+	 *        {@code true} to delete the byte before the caret,
+	 *        {@code false} to delete the byte after the caret.
+	 */
+	private void deleteSelection(boolean backward) {
+		finishPendingInput();
+		if (data == null)
+			return;
+
+		IntRange range = selection.range();
+		int start;
+		int end;
+		if (!range.empty()) {
+			start = range.start();
+			end = range.end();
+		} else if (backward) {
+			if (selection.caret() == 0)
+				return;
+			start = selection.caret() - 1;
+			end = selection.caret();
+		} else {
+			if (selection.caret() >= data.length)
+				return;
+			start = selection.caret();
+			end = selection.caret() + 1;
+		}
+		replaceRange(start, end, new byte[0]);
+	}
+
+	/**
+	 * Replace a range of bytes with the given replacement.
+	 *
+	 * @param start
+	 * 		Start of the range to replace (inclusive).
+	 * @param end
+	 * 		End of the range to replace (exclusive).
+	 * @param replacement
+	 * 		New bytes to insert in place of the range.
+	 */
+	private void replaceRange(int start, int end, @Nonnull byte[] replacement) {
+		if (data == null || start < 0 || end < start || end > data.length)
+			throw new IndexOutOfBoundsException("Invalid byte range: [" + start + ", " + end + ")");
+
+		long resultLength = (long) data.length - (end - start) + replacement.length;
+		if (resultLength > Integer.MAX_VALUE)
+			throw new IllegalArgumentException("Edited data is too large");
+		if (start == end && replacement.length == 0)
+			return;
+
+		byte[] updated = new byte[(int) resultLength];
+		System.arraycopy(data, 0, updated, 0, start);
+		System.arraycopy(replacement, 0, updated, start, replacement.length);
+		System.arraycopy(data, end, updated, start + replacement.length, data.length - end);
+		data = updated;
+		selection = new HexSelection(start, start);
+		revision++;
+		refreshRowModel();
+		refreshRowDisplay();
+		refreshSearchResults();
+	}
+
+	/**
+	 * @return New operations API for this editor.
+	 */
 	@Nonnull
 	private HexOperations newHexOperations() {
-		IntegerProperty focusedOffset = new SimpleIntegerProperty(0);
-		BooleanProperty isHexColumActive = new SimpleBooleanProperty(true);
 		HexAccess currentRead = () -> data;
 		HexAccess originalRead = () -> dataDefaultState;
 		HexNavigation navigation = new HexNavigation() {
+			@Nonnull
 			@Override
-			public int selectionOffset() {
-				return focusedOffset.get();
+			public HexSelection selection() {
+				return selection;
 			}
 
 			@Override
 			public boolean isHexColumnSelected() {
-				return isHexColumActive.get();
+				return hexColumnActive;
 			}
 
 			@Override
 			public void switchColumns() {
 				if (config.getShowAscii().getValue()) {
-					// If we show both hex/ascii columns we want to toggle between the two and refresh the display.
-					isHexColumActive.set(!isHexColumActive.get());
-					refreshRowDisplay(focusedOffset.get());
+					hexColumnActive = !hexColumnActive;
+					refreshRowDisplay();
 				} else {
-					// If we only show the hex column there is nothing to toggle between, and no reason to refresh.
-					isHexColumActive.set(true);
+					hexColumnActive = true;
 				}
 			}
 
 			@Override
 			public void select(int offset) {
-				int max = currentRead.length();
-				int clampedOffset = Math.clamp(offset, 0, max - 1);
-
-				focusedOffset.setValue(clampedOffset);
-
-				flow.visibleCells().forEach(c -> c.updateSelection(clampedOffset));
-
-				bringOffsetIntoView(offset);
+				HexEditor.this.select(offset);
 			}
 
 			@Override
-			public void selectNext() {
-				select(focusedOffset.get() + 1);
+			public void selectRange(int anchor, int caret) {
+				HexEditor.this.selectRange(anchor, caret);
 			}
 
 			@Override
-			public void selectPrevious() {
-				select(focusedOffset.get() - 1);
-			}
-
-			@Override
-			public void selectDown() {
-				select(focusedOffset.get() + config.getRowLength().getValue());
-			}
-
-			@Override
-			public void selectUp() {
-				select(focusedOffset.get() - config.getRowLength().getValue());
-			}
-
-			@Override
-			public void selectDown(int rows) {
-				select(focusedOffset.get() + config.getRowLength().getValue() * rows);
-			}
-
-			@Override
-			public void selectUp(int rows) {
-				select(focusedOffset.get() - config.getRowLength().getValue() * rows);
+			public void moveTo(int offset, boolean extend) {
+				HexEditor.this.moveTo(offset, extend);
 			}
 		};
 		return new HexOperations() {
 			private final EventHandler<KeyEvent> listener = e -> {
+				KeyCode code = e.getCode();
+				// Leave deletion keys to the active TextField while editing a single byte.
+				if ((code == KeyCode.BACK_SPACE || code == KeyCode.DELETE)
+						&& e.getTarget() instanceof javafx.scene.control.TextField)
+					return;
+
 				// If the focus is not in the editor, bring it in.
 				if (!isFocusWithin()) flow.requestFocus();
 
 				// Do not propagate the key-event up the scene graph.
-				// Things like arrow keys and tabs if handled by parents can
-				// unintentionally bring focus away from the editor component.
 				e.consume();
 
-				// Handle special keys.
-				KeyCode code = e.getCode();
 				HexNavigation nav = navigation();
+				HexSelection current = nav.selection();
+				int caret = current.caret();
+				boolean extend = e.isShiftDown();
+				int rowLength = config.getRowLength().getValue();
 				switch (code) {
 					case ENTER -> engageCurrent();
 					case ESCAPE -> cancelCurrent();
 					case TAB -> nav.switchColumns();
-					case PAGE_UP -> nav.selectUp(Math.max(1, flow.visibleCells().size() - 1));
-					case PAGE_DOWN -> nav.selectDown(Math.max(1, flow.visibleCells().size() - 1));
-					case RIGHT, KP_RIGHT -> nav.selectNext();
-					case LEFT, KP_LEFT -> nav.selectPrevious();
-					case UP, KP_UP -> nav.selectUp();
-					case DOWN, KP_DOWN -> nav.selectDown();
+					case BACK_SPACE -> deleteSelection(true);
+					case DELETE -> deleteSelection(false);
+					case PAGE_UP -> nav.moveTo(clampBoundary((long) caret - (long) rowLength * Math.max(1, flow.visibleCells().size() - 1)), extend);
+					case PAGE_DOWN -> nav.moveTo(clampBoundary((long) caret + (long) rowLength * Math.max(1, flow.visibleCells().size() - 1)), extend);
+					case RIGHT, KP_RIGHT -> {
+						if (!extend && !current.range().empty())
+							nav.select(current.range().end());
+						else
+							nav.moveTo(clampBoundary((long) caret + 1), extend);
+					}
+					case LEFT, KP_LEFT -> {
+						if (!extend && !current.range().empty())
+							nav.select(current.range().start());
+						else
+							nav.moveTo(clampBoundary((long) caret - 1), extend);
+					}
+					case UP, KP_UP -> nav.moveTo(clampBoundary((long) caret - rowLength), extend);
+					case DOWN, KP_DOWN -> nav.moveTo(clampBoundary((long) caret + rowLength), extend);
+					case HOME -> nav.moveTo(caret - caret % rowLength, extend);
+					case END -> nav.moveTo(clampBoundary((long) (caret - caret % rowLength) + rowLength), extend);
 				}
 			};
 
@@ -504,18 +689,12 @@ public class HexEditor extends BorderPane {
 			@Override
 			public void engageCurrent() {
 				engage((row, offset) -> row.engage(offset, true));
-
-				// Engage can initiate editing in a cell, or commit work-in-progress edits.
-				// When WIP edits are committed, the text editor is swapped out of the scene
-				// which can cause a loss of focus. We'll catch that and re-focus here.
 				if (!flow.isFocusWithin()) flow.requestFocus();
 			}
 
 			@Override
 			public void cancelCurrent() {
 				engage((row, offset) -> row.engage(offset, false));
-
-				// Same reasoning as with engage-current above.
 				if (!flow.isFocusWithin()) flow.requestFocus();
 			}
 
@@ -536,21 +715,33 @@ public class HexEditor extends BorderPane {
 			}
 
 			@Override
-			public boolean isActiveSearchMatch(int offset) {
-				return searchBar != null && searchBar.isActiveMatch(offset);
+			public boolean isSearchMatchStart(int offset) {
+				return searchBar != null && searchBar.isMatchStart(offset);
+			}
+
+			@Override
+			public boolean isSearchMatchEnd(int offset) {
+				return searchBar != null && searchBar.isMatchEnd(offset);
+			}
+
+			@Override
+			public boolean isSearchMatchTop(int offset, int rowStart, int rowLength) {
+				return searchBar != null && searchBar.isMatchTop(offset, rowStart, rowLength);
+			}
+
+			@Override
+			public boolean isSearchMatchBottom(int offset, int rowStart, int rowLength) {
+				return searchBar != null && searchBar.isMatchBottom(offset, rowStart, rowLength);
 			}
 
 			private void engage(CellConsumer consumer) {
-				int currentOffset = focusedOffset.get();
+				int currentOffset = selection.caret();
+				if (data == null || currentOffset >= data.length)
+					return;
 
 				bringOffsetIntoView(currentOffset);
-				int rowLength = config.getRowLength().getValue();
-
 				Optional<HexRow> cellIfVisible = flow.getCellIfVisible(offsetToRowIndex(currentOffset));
-				if (cellIfVisible.isPresent()) {
-					HexRow row = cellIfVisible.get();
-					consumer.accept(row, currentOffset);
-				}
+				cellIfVisible.ifPresent(row -> consumer.accept(row, currentOffset));
 			}
 
 			interface CellConsumer {

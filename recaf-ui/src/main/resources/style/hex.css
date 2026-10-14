@@ -11,16 +11,143 @@
 .hex-view .label:edited {
     -fx-text-fill: -color-danger-5;
 }
-.hex-view .label:selected {
-    -fx-text-fill: -color-accent-3;
-}
+
 .hex-view .label:match {
     -fx-background-color: -color-warning-muted;
     -fx-background-radius: 2;
 }
-.hex-view .label:active-match {
+.hex-view .label:match-range {
+    -fx-background-color: -color-warning-emphasis, -color-bg-default, -color-warning-muted;
+    -fx-background-insets: 0 -2 0 -2, 0 -2 0 -2, 0 -2 0 -2;
+    -fx-background-radius: 0, 0, 0;
+}
+.hex-view .label:match-range-top {
+    -fx-background-insets: 0 -2 0 -2, 1 -2 0 -2, 1 -2 0 -2;
+}
+.hex-view .label:match-range-bottom {
+    -fx-background-insets: 0 -2 0 -2, 0 -2 1 -2, 0 -2 1 -2;
+}
+.hex-view .label:match-range-left {
+    -fx-background-insets: 0 -2 0 0, 0 -2 0 1, 0 -2 0 1;
+}
+.hex-view .label:match-range-right {
+    -fx-background-insets: 0 0 0 -2, 0 1 0 -2, 0 1 0 -2;
+}
+.hex-view .label:match-range-top:match-range-bottom {
+    -fx-background-insets: 0 -2 0 -2, 1 -2 1 -2, 1 -2 1 -2;
+}
+.hex-view .label:match-range-top:match-range-left {
+    -fx-background-insets: 0 -2 0 0, 1 -2 0 1, 1 -2 0 1;
+}
+.hex-view .label:match-range-top:match-range-right {
+    -fx-background-insets: 0 0 0 -2, 1 1 0 -2, 1 1 0 -2;
+}
+.hex-view .label:match-range-bottom:match-range-left {
+    -fx-background-insets: 0 -2 0 0, 0 -2 1 1, 0 -2 1 1;
+}
+.hex-view .label:match-range-bottom:match-range-right {
+    -fx-background-insets: 0 0 0 -2, 0 1 1 -2, 0 1 1 -2;
+}
+.hex-view .label:match-range-left:match-range-right {
+    -fx-background-insets: 0 0 0 0, 0 1 0 1, 0 1 0 1;
+}
+.hex-view .label:match-range-top:match-range-bottom:match-range-left {
+    -fx-background-insets: 0 -2 0 0, 1 -2 1 1, 1 -2 1 1;
+}
+.hex-view .label:match-range-top:match-range-bottom:match-range-right {
+    -fx-background-insets: 0 0 0 -2, 1 1 1 -2, 1 1 1 -2;
+}
+.hex-view .label:match-range-top:match-range-left:match-range-right {
+    -fx-background-insets: 0 0 0 0, 1 1 0 1, 1 1 0 1;
+}
+.hex-view .label:match-range-bottom:match-range-left:match-range-right {
+    -fx-background-insets: 0 0 0 0, 0 1 1 1, 0 1 1 1;
+}
+.hex-view .label:match-range-top:match-range-bottom:match-range-left:match-range-right {
+    -fx-background-insets: 0 0 0 0, 1 1 1 1, 1 1 1 1;
+}
+.hex-view .hex-row-range-spacer:match-range {
+    -fx-background-color: -color-warning-emphasis, -color-bg-default, -color-warning-muted;
+    -fx-background-insets: 0 -2, 0 -2, 0 -2;
+}
+.hex-view .hex-row-range-spacer:match-range-top {
+    -fx-background-insets: 0 -2, 1 -2, 1 -2;
+}
+.hex-view .hex-row-range-spacer:match-range-bottom {
+    -fx-background-insets: 0 -2, 0 -2 1 -2, 0 -2 1 -2;
+}
+.hex-view .hex-row-range-spacer:match-range-top:match-range-bottom {
+    -fx-background-insets: 0 -2, 1 -2 1 -2, 1 -2 1 -2;
+}
+
+.hex-view .label:selected {
+    -fx-text-fill: -color-accent-3;
     -fx-background-color: -color-accent-muted;
     -fx-background-radius: 2;
+}
+.hex-view .label:range {
+    -fx-text-fill: -color-fg-emphasis;
+    -fx-background-color: -color-accent-3, -color-accent-6;
+    -fx-background-insets: 0 -2 0 -2, 0 -2 0 -2;
+    -fx-background-radius: 0, 0;
+}
+.hex-view .label:range-top {
+    -fx-background-insets: 0 -2 0 -2, 1 -2 0 -2;
+}
+.hex-view .label:range-bottom {
+    -fx-background-insets: 0 -2 0 -2, 0 -2 1 -2;
+}
+.hex-view .label:range-left {
+    -fx-background-insets: 0 -2 0 0, 0 -2 0 1;
+}
+.hex-view .label:range-right {
+    -fx-background-insets: 0 0 0 -2, 0 1 0 -2;
+}
+.hex-view .label:range-top:range-bottom {
+    -fx-background-insets: 0 -2 0 -2, 1 -2 1 -2;
+}
+.hex-view .label:range-top:range-left {
+    -fx-background-insets: 0 -2 0 0, 1 -2 0 1;
+}
+.hex-view .label:range-top:range-right {
+    -fx-background-insets: 0 0 0 -2, 1 1 0 -2;
+}
+.hex-view .label:range-bottom:range-left {
+    -fx-background-insets: 0 -2 0 0, 0 -2 1 1;
+}
+.hex-view .label:range-bottom:range-right {
+    -fx-background-insets: 0 0 0 -2, 0 1 1 -2;
+}
+.hex-view .label:range-left:range-right {
+    -fx-background-insets: 0 0 0 0, 0 1 0 1;
+}
+.hex-view .label:range-top:range-bottom:range-left {
+    -fx-background-insets: 0 -2 0 0, 1 -2 1 1;
+}
+.hex-view .label:range-top:range-bottom:range-right {
+    -fx-background-insets: 0 0 0 -2, 1 1 1 -2;
+}
+.hex-view .label:range-top:range-left:range-right {
+    -fx-background-insets: 0 0 0 0, 1 1 0 1;
+}
+.hex-view .label:range-bottom:range-left:range-right {
+    -fx-background-insets: 0 0 0 0, 0 1 1 1;
+}
+.hex-view .label:range-top:range-bottom:range-left:range-right {
+    -fx-background-insets: 0 0 0 0, 1 1 1 1;
+}
+.hex-view .hex-row-range-spacer:range {
+    -fx-background-color: -color-accent-3, -color-accent-6;
+    -fx-background-insets: 0 -2, 0 -2;
+}
+.hex-view .hex-row-range-spacer:range-top {
+    -fx-background-insets: 0 -2, 1 -2;
+}
+.hex-view .hex-row-range-spacer:range-bottom {
+    -fx-background-insets: 0 -2, 0 -2 1 -2;
+}
+.hex-view .hex-row-range-spacer:range-top:range-bottom {
+    -fx-background-insets: 0 -2, 1 -2 1 -2;
 }
 .hex-view .header {
     -fx-padding: 1 0 1 0;
@@ -35,3 +162,4 @@
     -fx-background-color: -color-bg-inset;
     -fx-highlight-fill: -color-accent-5;
 }
+

@@ -35,7 +35,19 @@ public interface HexOperations {
 		return false;
 	}
 
-	default boolean isActiveSearchMatch(int offset) {
+	default boolean isSearchMatchStart(int offset) {
+		return false;
+	}
+
+	default boolean isSearchMatchEnd(int offset) {
+		return false;
+	}
+
+	default boolean isSearchMatchTop(int offset, int rowStart, int rowLength) {
+		return false;
+	}
+
+	default boolean isSearchMatchBottom(int offset, int rowStart, int rowLength) {
 		return false;
 	}
 }

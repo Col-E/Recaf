@@ -4,6 +4,7 @@ import atlantafx.base.controls.Spacer;
 import jakarta.annotation.Nonnull;
 import javafx.beans.property.IntegerProperty;
 import javafx.collections.ObservableList;
+import javafx.css.PseudoClass;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
@@ -13,9 +14,11 @@ import org.fxmisc.flowless.Cell;
 import org.fxmisc.flowless.VirtualFlow;
 import software.coley.collections.Unchecked;
 import software.coley.recaf.ui.pane.editing.binary.hex.HexConfig;
+import software.coley.recaf.ui.pane.editing.binary.hex.HexSelection;
 import software.coley.recaf.ui.pane.editing.binary.hex.HexUtil;
 import software.coley.recaf.ui.pane.editing.binary.hex.ops.HexAccess;
 import software.coley.recaf.ui.pane.editing.binary.hex.ops.HexOperations;
+import software.coley.recaf.util.IntRange;
 import software.coley.recaf.util.StringUtil;
 
 import java.util.ArrayList;
@@ -154,7 +157,7 @@ public class HexRow implements Cell<Integer, Node> {
 
 		// Update selection so that the newly generated row will display the current selection
 		// if it appears on this row.
-		updateSelection(ops.navigation().selectionOffset());
+		updateSelection();
 	}
 
 	protected void buildFreshLayout() {
@@ -178,7 +181,7 @@ public class HexRow implements Cell<Integer, Node> {
 		lblAddress = new Label(StringUtil.fillLeft(8, " ", HexUtil.strFormat(addressWidth, baseOffset) + ":"));
 		for (int i = 0; i < rowLength; i++) {
 			if (i % rowSplit == 0 && i < rowLength - 1)
-				contentHexLabels.add(new SmallSpacer());
+				contentHexLabels.add(i == 0 ? new SmallSpacer() : new RangeSpacer(i - 1, i));
 			int offset = baseOffset + i;
 			byte b = read.getByte(offset);
 			boolean outOfBounds = !read.isInBounds(offset);
@@ -202,7 +205,7 @@ public class HexRow implements Cell<Integer, Node> {
 
 		// Update selection so that the newly generated row will display the current selection
 		// if it appears on this row.
-		updateSelection(ops.navigation().selectionOffset());
+		updateSelection();
 	}
 
 	protected void setChildren(@Nonnull Label lblAddress,
@@ -224,31 +227,39 @@ public class HexRow implements Cell<Integer, Node> {
 	}
 
 	/**
-	 * @return {@code true} when this row contains the current selected offset.
+	 * @return {@code true} when this row contains the caret byte or intersects the selected range.
 	 */
 	public boolean isRowSelected() {
-		return layout.getChildren().stream()
-				.anyMatch(child -> child instanceof HexCell cell
-						&& cell.offset() == ops.navigation().selectionOffset());
+		HexSelection selection = ops.navigation().selection();
+		IntRange range = selection.range();
+		int rowEnd = baseOffset + config.getRowLength().getValue();
+		if (!range.empty())
+			return range.start() < rowEnd && range.end() > baseOffset;
+
+		return selection.caret() >= baseOffset && selection.caret() < rowEnd
+				&& ops.currentAccess().isInBounds(selection.caret());
 	}
 
 	/**
-	 * Notifies cells of selection updates, primarily to refresh visual cues.
-	 *
-	 * @param offset
-	 * 		Target selection offset.
+	 * Updates the selection state of all cells in this row.
 	 */
-	public void updateSelection(int offset) {
+	public void updateSelection() {
+		HexSelection selection = ops.navigation().selection();
+		IntRange range = selection.range();
+		boolean hasRange = !range.empty();
+		boolean hexColumn = ops.navigation().isHexColumnSelected();
+		int rowLength = config.getRowLength().getValue();
 		Unchecked.checkedForEach(layout.getChildren(), child -> {
-			boolean hexColumn = ops.navigation().isHexColumnSelected();
-			if (child instanceof EditableHexCell cell) {
-				boolean match = hexColumn && cell.offset() == offset;
-				if (match) cell.onSelectionGained();
+			if (child instanceof HexCellBase cell) {
+				boolean caret = !hasRange && cell.offset() == selection.caret()
+						&& (cell instanceof EditableHexCell) == hexColumn;
+				if (caret) cell.onSelectionGained();
 				else cell.onSelectionLost();
-			} else if (child instanceof EditableAsciiCell cell) {
-				boolean match = !hexColumn && cell.offset() == offset;
-				if (match) cell.onSelectionGained();
-				else cell.onSelectionLost();
+				cell.updateRangeOutline(baseOffset, rowLength, range.start(), range.end());
+				cell.updateSearchMatchOutline(baseOffset, rowLength);
+			} else if (child instanceof RangeSpacer spacer) {
+				spacer.update(baseOffset, rowLength, range.start(), range.end());
+				spacer.updateMatch(baseOffset, rowLength, ops);
 			}
 		}, (cell, error) -> {});
 	}
@@ -260,7 +271,7 @@ public class HexRow implements Cell<Integer, Node> {
 	 * @return {@code true} if this row contains the offset.
 	 */
 	public boolean hasOffset(int offset) {
-		return offset >= baseOffset && offset <= baseOffset + config.getRowLength().getValue();
+		return offset >= baseOffset && offset < baseOffset + config.getRowLength().getValue();
 	}
 
 	/**
@@ -376,6 +387,73 @@ public class HexRow implements Cell<Integer, Node> {
 	protected static class SmallSpacer extends Spacer {
 		protected SmallSpacer() {
 			setMaxWidth(12);
+		}
+	}
+
+	/**
+	 * Spacer that can be styled to indicate a range selection is present in the row.
+	 */
+	private static final class RangeSpacer extends SmallSpacer {
+		private static final PseudoClass PSEUDO_RANGE = PseudoClass.getPseudoClass("range");
+		private static final PseudoClass PSEUDO_RANGE_TOP = PseudoClass.getPseudoClass("range-top");
+		private static final PseudoClass PSEUDO_RANGE_BOTTOM = PseudoClass.getPseudoClass("range-bottom");
+		private static final PseudoClass PSEUDO_MATCH_RANGE = PseudoClass.getPseudoClass("match-range");
+		private static final PseudoClass PSEUDO_MATCH_RANGE_TOP = PseudoClass.getPseudoClass("match-range-top");
+		private static final PseudoClass PSEUDO_MATCH_RANGE_BOTTOM = PseudoClass.getPseudoClass("match-range-bottom");
+		private final int previousIndex;
+		private final int nextIndex;
+
+		private RangeSpacer(int previousIndex, int nextIndex) {
+			this.previousIndex = previousIndex;
+			this.nextIndex = nextIndex;
+			getStyleClass().add("hex-row-range-spacer");
+		}
+
+		/**
+		 * Updates the pseudo-class state of this spacer based on the given range.
+		 *
+		 * @param baseOffset
+		 * 		Base offset of the row this spacer is in.
+		 * @param rowLength
+		 * 		Length of the row this spacer is in.
+		 * @param rangeStart
+		 * 		Start of the selection range.
+		 * @param rangeEnd
+		 * 		End of the selection range.
+		 */
+		private void update(int baseOffset, int rowLength, int rangeStart, int rangeEnd) {
+			long rowEnd = (long) baseOffset + rowLength;
+			long previousOffset = (long) baseOffset + previousIndex;
+			long nextOffset = (long) baseOffset + nextIndex;
+			boolean selected = previousOffset >= rangeStart && nextOffset < rangeEnd;
+			pseudoClassStateChanged(PSEUDO_RANGE, selected);
+			pseudoClassStateChanged(PSEUDO_RANGE_TOP, selected && rangeStart >= baseOffset && rangeStart < rowEnd);
+			pseudoClassStateChanged(PSEUDO_RANGE_BOTTOM, selected && rangeEnd > baseOffset && rangeEnd <= rowEnd);
+		}
+
+		/**
+		 * Updates the pseudo-class state of this spacer based on the search match state of the given offsets.
+		 *
+		 * @param baseOffset
+		 * 		Base offset of the row this spacer is in.
+		 * @param rowLength
+		 * 		Length of the row this spacer is in.
+		 * @param ops
+		 * 		Operations to check for search matches.
+		 */
+		private void updateMatch(int baseOffset, int rowLength, HexOperations ops) {
+			int previousOffset = baseOffset + previousIndex;
+			int nextOffset = baseOffset + nextIndex;
+			boolean outlinedMatch = !getPseudoClassStates().contains(PSEUDO_RANGE)
+					&& ops.isSearchMatch(previousOffset)
+					&& ops.isSearchMatch(nextOffset);
+			pseudoClassStateChanged(PSEUDO_MATCH_RANGE, outlinedMatch);
+			pseudoClassStateChanged(PSEUDO_MATCH_RANGE_TOP, outlinedMatch
+					&& ops.isSearchMatchTop(previousOffset, baseOffset, rowLength)
+					&& ops.isSearchMatchTop(nextOffset, baseOffset, rowLength));
+			pseudoClassStateChanged(PSEUDO_MATCH_RANGE_BOTTOM, outlinedMatch
+					&& ops.isSearchMatchBottom(previousOffset, baseOffset, rowLength)
+					&& ops.isSearchMatchBottom(nextOffset, baseOffset, rowLength));
 		}
 	}
 }

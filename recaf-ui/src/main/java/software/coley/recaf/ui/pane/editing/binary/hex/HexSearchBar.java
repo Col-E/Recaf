@@ -3,6 +3,7 @@ package software.coley.recaf.ui.pane.editing.binary.hex;
 import atlantafx.base.theme.Styles;
 import jakarta.annotation.Nonnull;
 import javafx.animation.PauseTransition;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.geometry.Insets;
@@ -19,7 +20,6 @@ import javafx.util.StringConverter;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import software.coley.recaf.ui.control.AbstractSearchBar;
 import software.coley.recaf.ui.control.ActionButton;
-import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.threading.ThreadUtil;
 
@@ -116,24 +116,82 @@ public final class HexSearchBar extends AbstractSearchBar {
 	}
 
 	/**
-	 * Checks whether a byte offset belongs to any current search result.
+	 * @param offset
+	 * 		Offset to check.
 	 *
-	 * @return {@code true} when the offset is inside any match.
+	 * @return {@code true} if the offset is part of a match, {@code false} otherwise.
 	 */
 	public boolean isMatch(int offset) {
 		return findContaining(offset) >= 0;
 	}
 
 	/**
-	 * Checks whether a byte offset belongs to the active search result.
+	 * @param offset
+	 * 		Offset to check.
 	 *
-	 * @return {@code true} when the offset is inside the active match.
+	 * @return {@code true} if the offset is the start of a match, {@code false} otherwise.
 	 */
-	public boolean isActiveMatch(int offset) {
-		if (currentMatchIndex < 0 || currentMatchIndex >= matches.length)
+	public boolean isMatchStart(int offset) {
+		return Arrays.binarySearch(matches, offset) >= 0;
+	}
+
+	/**
+	 * @param offset
+	 * 		Offset to check.
+	 *
+	 * @return {@code true} if the offset is the end of a match, {@code false} otherwise.
+	 */
+	public boolean isMatchEnd(int offset) {
+		long start = (long) offset - matchLength + 1;
+		return matchLength > 0 && start >= 0 && Arrays.binarySearch(matches, (int) start) >= 0;
+	}
+
+	/**
+	 * @param offset
+	 * 		Offset to check.
+	 * @param rowStart
+	 * 		Start of the row.
+	 * @param rowLength
+	 * 		Length of the row.
+	 *
+	 * @return {@code true} if the offset is part of a match that is fully contained within the row, {@code false} otherwise.
+	 */
+	public boolean isMatchTop(int offset, int rowStart, int rowLength) {
+		if (matchLength <= 0)
 			return false;
-		int start = matches[currentMatchIndex];
-		return offset >= start && offset < start + matchLength;
+
+		long rowEnd = (long) rowStart + rowLength;
+		long firstStart = Math.max(rowStart, (long) offset - matchLength + 1);
+		long lastStart = Math.min(offset, rowEnd - 1);
+		if (firstStart > lastStart)
+			return false;
+
+		int index = findMatchAtOrAfter((int) firstStart);
+		return index < matches.length && matches[index] <= lastStart;
+	}
+
+	/**
+	 * @param offset
+	 * 		Offset to check.
+	 * @param rowStart
+	 * 		Start of the row.
+	 * @param rowLength
+	 * 		Length of the row.
+	 *
+	 * @return {@code true} if the offset is part of a match that is fully contained within the row, {@code false} otherwise.
+	 */
+	public boolean isMatchBottom(int offset, int rowStart, int rowLength) {
+		if (matchLength <= 0)
+			return false;
+
+		long rowEnd = (long) rowStart + rowLength;
+		long firstStart = Math.max((long) rowStart - matchLength + 1, (long) offset - matchLength + 1);
+		long lastStart = Math.min(offset, rowEnd - matchLength);
+		if (firstStart > lastStart)
+			return false;
+
+		int index = findMatchAtOrAfter((int) Math.max(0, firstStart));
+		return index < matches.length && matches[index] <= lastStart;
 	}
 
 	@Override
@@ -245,7 +303,7 @@ public final class HexSearchBar extends AbstractSearchBar {
 			}
 		}, EMPTY, editor.getExecutor()).thenAcceptAsync(found -> {
 			if (found != null) applySearchResult(id, revision, query, pattern, found);
-		}, FxThreadUtil.executor());
+		}, Platform::runLater);
 		if (id == requestId)
 			searchFuture = submitted;
 		else
@@ -265,7 +323,7 @@ public final class HexSearchBar extends AbstractSearchBar {
 		searchFuture = null;
 		matchLength = pattern.length();
 		matches = found;
-		currentMatchIndex = matches.length == 0 ? -1 : findAtOrAfter(editor.getOperations().navigation().selectionOffset());
+		currentMatchIndex = matches.length == 0 ? -1 : findAtOrAfter(editor.getOperations().navigation().selection().caret());
 		if (searchInput.isFocused() && currentMatchIndex >= 0)
 			selectMatch(currentMatchIndex);
 		updateResultState();
@@ -290,7 +348,7 @@ public final class HexSearchBar extends AbstractSearchBar {
 		if (matches.length == 0)
 			return;
 		currentMatchIndex = currentMatchIndex < 0 ?
-				findAtOrAfter(editor.getOperations().navigation().selectionOffset()) :
+				findAtOrAfter(editor.getOperations().navigation().selection().caret()) :
 				(currentMatchIndex + 1) % matches.length;
 		selectMatch(currentMatchIndex);
 	}
@@ -300,7 +358,7 @@ public final class HexSearchBar extends AbstractSearchBar {
 		if (matches.length == 0)
 			return;
 		if (currentMatchIndex < 0) {
-			int candidate = findAtOrAfter(editor.getOperations().navigation().selectionOffset());
+			int candidate = findAtOrAfter(editor.getOperations().navigation().selection().caret());
 			currentMatchIndex = candidate <= 0 ? matches.length - 1 : candidate - 1;
 		} else {
 			currentMatchIndex = currentMatchIndex == 0 ? matches.length - 1 : currentMatchIndex - 1;
@@ -311,16 +369,19 @@ public final class HexSearchBar extends AbstractSearchBar {
 	private void selectMatch(int index) {
 		if (index < 0 || index >= matches.length)
 			return;
-		editor.getOperations().navigation().select(matches[index]);
-		editor.refreshHexDisplay();
+		int start = matches[index];
+		editor.getOperations().navigation().selectRange(start, start + matchLength);
 		updateResultState();
 	}
 
 	private int findAtOrAfter(int offset) {
-		int index = Arrays.binarySearch(matches, offset);
-		if (index < 0)
-			index = -index - 1;
+		int index = findMatchAtOrAfter(offset);
 		return index >= matches.length ? 0 : index;
+	}
+
+	private int findMatchAtOrAfter(int offset) {
+		int index = Arrays.binarySearch(matches, offset);
+		return index < 0 ? -index - 1 : index;
 	}
 
 	private int findContaining(int offset) {
