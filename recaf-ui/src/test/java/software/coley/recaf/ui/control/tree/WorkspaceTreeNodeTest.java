@@ -44,6 +44,7 @@ import software.coley.recaf.workspace.model.BasicWorkspace;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.BasicFileBundle;
 import software.coley.recaf.workspace.model.bundle.BasicJvmClassBundle;
+import software.coley.recaf.workspace.model.bundle.FileBundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.bundle.VersionedJvmClassBundle;
 import software.coley.recaf.workspace.model.resource.BasicWorkspaceFileResource;
@@ -197,6 +198,35 @@ class WorkspaceTreeNodeTest {
 		Object createdPathFile = child.getValue().getValue();
 		FileInfo file = default1.getValue();
 		assertEquals(file, createdPathFile, "File at end of path not the same");
+	}
+
+	@Test
+	void embeddedFileCanBeFound() {
+		// root:
+		//  a.jar/a.txt
+		WorkspaceFileResource aResource = embeddedResource("a.jar", "a.txt");
+		FileBundle aBundle = aResource.getFileBundle();
+		FileInfo aFile = aBundle.get("a.txt");
+		Map<String, WorkspaceFileResource> embeddedResources = new LinkedHashMap<>();
+		embeddedResources.put("a.jar", aResource);
+		WorkspaceResource hostResource = new WorkspaceResourceBuilder()
+				.withEmbeddedResources(embeddedResources)
+				.build();
+		Workspace workspace = new BasicWorkspace(hostResource);
+		WorkspacePathNode rootPath = PathNodes.workspacePath(workspace);
+		ResourcePathNode hostPath = rootPath.child(hostResource);
+		WorkspaceRootTreeNode root = new WorkspaceRootTreeNode(new WorkspaceExplorerConfig(), rootPath);
+
+		root.build();
+
+		// The embedded resource should be resolvable from the host resource.
+		assertSame(aResource, hostResource.resolveBundleContainer(aBundle));
+
+		// Looking up the path to the embedded file should yield the same file object.
+		FilePathNode path = PathNodes.filePath(workspace, aResource, aBundle, aFile);
+		WorkspaceTreeNode lookupPath = root.getNodeByPath(path);
+		assertNotNull(lookupPath, "Exact embedded-resource path should match the tree hierarchy");
+		assertSame(aFile, lookupPath.getValue().getValue());
 	}
 
 	@Test
