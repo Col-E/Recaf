@@ -155,7 +155,7 @@ public class FilePane extends AbstractContentPane<FilePathNode> implements FileN
 
 		// Update content in pane.
 		switch (mode) {
-			case HEX -> setDisplay(new HexAdapter(hexConfig, saveService));
+			case HEX -> setDisplay(new HexAdapter(hexConfig, saveService, keys));
 			case TEXT -> setDisplay(textProvider.get());
 			case TEXT_BINARY_XML -> setDisplay(binaryXmlProvider.get());
 			case IMAGE -> setDisplay(imageProvider.get());

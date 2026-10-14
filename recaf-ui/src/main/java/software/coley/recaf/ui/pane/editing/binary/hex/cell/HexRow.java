@@ -264,6 +264,19 @@ public class HexRow implements Cell<Integer, Node> {
 	}
 
 	/**
+	 * Commit an active edit for the specified byte, if one exists.
+	 *
+	 * @param offset
+	 * 		Offset in the data to check.
+	 */
+	public void finishPendingInput(int offset) {
+		Unchecked.checkedForEach(layout.getChildren(), child -> {
+			if (child instanceof HexCellBase cell && cell.offset() == offset && cell.isEditing())
+				cell.endEdit(true);
+		}, (cell, error) -> {});
+	}
+
+	/**
 	 * Toggles editing in the cell at the given offset.
 	 *
 	 * @param offset

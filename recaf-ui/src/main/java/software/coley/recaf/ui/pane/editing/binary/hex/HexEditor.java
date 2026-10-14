@@ -12,13 +12,16 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.geometry.Bounds;
+import javafx.scene.Node;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.VBox;
 import org.fxmisc.flowless.VirtualFlow;
 import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.ui.control.AbstractSearchBar;
 import software.coley.recaf.ui.control.VirtualizedScrollPaneWrapper;
 import software.coley.recaf.ui.pane.editing.binary.hex.ops.HexAccess;
 import software.coley.recaf.ui.pane.editing.binary.hex.ops.HexNavigation;
@@ -27,10 +30,12 @@ import software.coley.recaf.ui.pane.editing.binary.hex.cell.HexRow;
 import software.coley.recaf.ui.pane.editing.binary.hex.cell.HexRowHeader;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.NodeEvents;
+import software.coley.recaf.util.threading.ThreadPoolFactory;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -47,10 +52,15 @@ public class HexEditor extends BorderPane {
 	private final ObservableList<Integer> rows = FXCollections.observableArrayList();
 	private final IntegerProperty rowCount = new SimpleIntegerProperty(0);
 	private final VirtualFlow<Integer, HexRow> flow;
+	private final VBox topContent = new VBox();
 	private final HexOperations ops = newHexOperations();
+	private final Node rowHeader;
+	private HexSearchBar searchBar;
 	private Consumer<byte[]> commitAction;
 	private byte[] data;
 	private byte[] dataDefaultState;
+	private long revision;
+	private ExecutorService executor;
 
 	@Inject
 	public HexEditor(@Nonnull HexConfig config) {
@@ -67,7 +77,9 @@ public class HexEditor extends BorderPane {
 
 		registerInputListeners();
 
-		setTop(new HexRowHeader(config, rowCount, ops).getNode());
+		rowHeader = new HexRowHeader(config, rowCount, ops).getNode();
+		topContent.getChildren().add(rowHeader);
+		setTop(topContent);
 		setCenter(scroll);
 	}
 
@@ -109,6 +121,87 @@ public class HexEditor extends BorderPane {
 	@Nonnull
 	public HexOperations getOperations() {
 		return ops;
+	}
+
+	/**
+	 * Open the byte search bar.
+	 */
+	public void openFindDialog() {
+		finishPendingInput();
+		if (searchBar == null)
+			searchBar = new HexSearchBar(this);
+		searchBar.show();
+	}
+
+	/**
+	 * Set or remove the optional search bar from the editor header.
+	 * @param node Search bar node to set, or {@code null} to remove the search bar.
+	 */
+	public void setSearchBarNode(@Nullable AbstractSearchBar node) {
+		if (node == null)
+			topContent.getChildren().setAll(rowHeader);
+		else
+			topContent.getChildren().setAll(node, rowHeader);
+	}
+
+	/**
+	 * Return keyboard focus to the byte grid.
+	 */
+	public void requestByteFocus() {
+		flow.requestFocus();
+	}
+
+	/**
+	 * Refresh visible byte cells after search state changes.
+	 */
+	public void refreshHexDisplay() {
+		refreshRowDisplay();
+	}
+
+	/**
+	 * Refresh search results after data changes.
+	 */
+	private void refreshSearchResults() {
+		if (searchBar != null && searchBar.isVisible())
+			searchBar.refreshResults();
+	}
+
+	/**
+	 * If there is any pending input in the editor, finish it before doing other operations.
+	 */
+	private void finishPendingInput() {
+		if (data == null || data.length == 0)
+			return;
+		int offset = ops.navigation().selectionOffset();
+		bringOffsetIntoView(offset);
+		flow.getCellIfVisible(offsetToRowIndex(offset)).ifPresent(row -> row.finishPendingInput(offset));
+	}
+
+	/**
+	 * @return Current revision of the data.
+	 */
+	public long getRevision() {
+		return revision;
+	}
+
+	/**
+	 * @return Executor service for running background tasks.
+	 */
+	@Nonnull
+	public ExecutorService getExecutor() {
+		if (executor == null)
+			executor = ThreadPoolFactory.newSingleThreadExecutor("hex-pool");
+		return executor;
+	}
+
+	/**
+	 * Dispose of the editor and any resources it holds.
+	 */
+	public void dispose() {
+		if (searchBar != null)
+			searchBar.dispose();
+		if (executor != null)
+			executor.shutdownNow();
 	}
 
 	/**
@@ -186,8 +279,10 @@ public class HexEditor extends BorderPane {
 			return;
 		}
 		this.data = data;
+		revision++;
 
 		refreshRowDisplay();
+		refreshSearchResults();
 	}
 
 	/**
@@ -195,7 +290,9 @@ public class HexEditor extends BorderPane {
 	 */
 	public void resetData() {
 		this.data = Arrays.copyOf(dataDefaultState, dataDefaultState.length);
+		revision++;
 		refreshRowDisplay();
+		refreshSearchResults();
 	}
 
 	/**
@@ -205,10 +302,12 @@ public class HexEditor extends BorderPane {
 	private void setData0(@Nonnull byte[] data) {
 		this.data = data;
 		this.dataDefaultState = Arrays.copyOf(data, data.length);
+		revision++;
 
 		// Refresh model/display.
 		refreshRowModel();
 		refreshRowDisplay();
+		refreshSearchResults();
 	}
 
 	/**
@@ -397,7 +496,9 @@ public class HexEditor extends BorderPane {
 
 			@Override
 			public void refreshDisplay(int offset, boolean asciiOrigin) {
+				revision++;
 				refreshRowDisplay(offset);
+				refreshSearchResults();
 			}
 
 			@Override
@@ -427,6 +528,16 @@ public class HexEditor extends BorderPane {
 			@Override
 			public EventHandler<KeyEvent> keyListener() {
 				return listener;
+			}
+
+			@Override
+			public boolean isSearchMatch(int offset) {
+				return searchBar != null && searchBar.isMatch(offset);
+			}
+
+			@Override
+			public boolean isActiveSearchMatch(int offset) {
+				return searchBar != null && searchBar.isActiveMatch(offset);
 			}
 
 			private void engage(CellConsumer consumer) {

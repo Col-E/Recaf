@@ -30,4 +30,12 @@ public interface HexOperations {
 
 	@Nonnull
 	EventHandler<KeyEvent> keyListener();
+
+	default boolean isSearchMatch(int offset) {
+		return false;
+	}
+
+	default boolean isActiveSearchMatch(int offset) {
+		return false;
+	}
 }

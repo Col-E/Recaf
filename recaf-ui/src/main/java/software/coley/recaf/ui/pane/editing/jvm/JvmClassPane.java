@@ -7,6 +7,7 @@ import jakarta.inject.Inject;
 import javafx.scene.Node;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.ui.config.ClassEditingConfig;
+import software.coley.recaf.ui.config.KeybindingConfig;
 import software.coley.recaf.ui.pane.editing.ClassPane;
 import software.coley.recaf.ui.pane.editing.SideTabsInjector;
 import software.coley.recaf.ui.pane.editing.binary.hex.HexAdapter;
@@ -25,12 +26,14 @@ public class JvmClassPane extends ClassPane {
 	private final Instance<JvmLowLevelPane> lowLevelProvider;
 	private final WorkspaceSaveService saveService;
 	private final HexConfig hexConfig;
+	private final KeybindingConfig keys;
 	private JvmClassEditorType editorType;
 
 	@Inject
 	public JvmClassPane(@Nonnull WorkspaceSaveService saveService,
 	                    @Nonnull ClassEditingConfig config,
 	                    @Nonnull HexConfig hexConfig,
+	                    @Nonnull KeybindingConfig keys,
 	                    @Nonnull SideTabsInjector sideTabsInjector,
 	                    @Nonnull Instance<JvmDecompilerPane> decompilerProvider,
 	                    @Nonnull Instance<JvmLowLevelPane> lowLevelProvider) {
@@ -38,6 +41,7 @@ public class JvmClassPane extends ClassPane {
 		this.lowLevelProvider = lowLevelProvider;
 		this.saveService = saveService;
 		this.hexConfig = hexConfig;
+		this.keys = keys;
 
 		sideTabsInjector.injectLater(this);
 
@@ -76,7 +80,7 @@ public class JvmClassPane extends ClassPane {
 		switch (type) {
 			case DECOMPILE -> setDisplay(decompilerProvider.get());
 			case LOW_LEVEL -> setDisplay(lowLevelProvider.get());
-			case HEX -> setDisplay(new HexAdapter(hexConfig, saveService));
+			case HEX -> setDisplay(new HexAdapter(hexConfig, saveService, keys));
 			default -> throw new IllegalStateException("Unknown editor type: " + type.name());
 		}
 	}

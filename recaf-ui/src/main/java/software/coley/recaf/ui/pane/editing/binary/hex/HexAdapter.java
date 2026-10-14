@@ -1,6 +1,8 @@
 package software.coley.recaf.ui.pane.editing.binary.hex;
 
 import jakarta.annotation.Nonnull;
+import javafx.event.EventHandler;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
@@ -13,6 +15,7 @@ import software.coley.recaf.path.FilePathNode;
 import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
+import software.coley.recaf.ui.config.KeybindingConfig;
 import software.coley.recaf.util.Animations;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.workspace.WorkspaceSaveService;
@@ -31,13 +34,17 @@ import java.util.Collections;
 public class HexAdapter extends BorderPane implements UpdatableNavigable {
 	private static final Logger logger = Logging.get(HexAdapter.class);
 	private final WorkspaceSaveService saveService;
+	private final KeybindingConfig keys;
 	private final HexEditor editor;
+	private final EventHandler<KeyEvent> keyFilter = this::handleKeys;
 	private PathNode<?> path;
 
-	public HexAdapter(@Nonnull HexConfig config, @Nonnull WorkspaceSaveService saveService) {
+	public HexAdapter(@Nonnull HexConfig config, @Nonnull WorkspaceSaveService saveService, @Nonnull KeybindingConfig keys) {
 		this.saveService = saveService;
+		this.keys = keys;
 
 		setCenter(editor = new HexEditor(config));
+		addEventFilter(KeyEvent.KEY_PRESSED, keyFilter);
 	}
 
 	/**
@@ -52,6 +59,17 @@ public class HexAdapter extends BorderPane implements UpdatableNavigable {
 			Animations.animateSuccess(editor, 1000);
 		} else {
 			Animations.animateFailure(editor, 1000);
+		}
+	}
+
+	/**
+	 * @param event
+	 * 		Key event to handle.
+	 */
+	private void handleKeys(@Nonnull KeyEvent event) {
+		if (keys.getFind().match(event)) {
+			editor.openFindDialog();
+			event.consume();
 		}
 	}
 
@@ -74,6 +92,8 @@ public class HexAdapter extends BorderPane implements UpdatableNavigable {
 
 	@Override
 	public void disable() {
+		removeEventFilter(KeyEvent.KEY_PRESSED, keyFilter);
+		editor.dispose();
 		setCenter(null);
 		setDisable(true);
 	}

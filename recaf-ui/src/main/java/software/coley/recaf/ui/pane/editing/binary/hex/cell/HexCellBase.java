@@ -28,6 +28,8 @@ public abstract class HexCellBase extends BorderPane implements HexCell {
 	protected static final PseudoClass PSEUDO_ZERO = PseudoClass.getPseudoClass("zero");
 	protected static final PseudoClass PSEUDO_SELECTED = PseudoClass.getPseudoClass("selected");
 	protected static final PseudoClass PSEUDO_EDITED = PseudoClass.getPseudoClass("edited");
+	protected static final PseudoClass PSEUDO_MATCH = PseudoClass.getPseudoClass("match");
+	protected static final PseudoClass PSEUDO_ACTIVE_MATCH = PseudoClass.getPseudoClass("active-match");
 	protected final StringProperty textProperty = new SimpleStringProperty();
 	protected final StringProperty cachedTextProperty = new SimpleStringProperty();
 	protected final IntegerProperty offsetProperty = new SimpleIntegerProperty();
@@ -100,8 +102,9 @@ public abstract class HexCellBase extends BorderPane implements HexCell {
 		textProperty.setValue(mapper().map(b));
 		cachedTextProperty.set(textProperty.get());
 
-		// Initialize edited pseudo-state.
+		// Initialize modified and search pseudo-states.
 		updateEditedPseudoState();
+		updateSearchPseudoState();
 	}
 
 	/**
@@ -166,6 +169,15 @@ public abstract class HexCellBase extends BorderPane implements HexCell {
 	}
 
 	/**
+	 * Refresh search match styling for this cell's byte offset.
+	 */
+	protected void updateSearchPseudoState() {
+		int offset = offsetProperty.get();
+		label.pseudoClassStateChanged(PSEUDO_MATCH, ops.isSearchMatch(offset));
+		label.pseudoClassStateChanged(PSEUDO_ACTIVE_MATCH, ops.isActiveSearchMatch(offset));
+	}
+
+	/**
 	 * Updates the offset value. If the value is not different,
 	 * we refresh the display in case the backing data has changed.
 	 *
@@ -178,8 +190,9 @@ public abstract class HexCellBase extends BorderPane implements HexCell {
 		else
 			offsetProperty.set(offset);
 
-		// Refresh the edited pseudo-state since the data could have been changed from the original.
+		// Refresh modified and search pseudo-states since data or cell offset may have changed.
 		updateEditedPseudoState();
+		updateSearchPseudoState();
 	}
 
 	/**

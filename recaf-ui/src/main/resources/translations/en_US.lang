@@ -511,6 +511,11 @@ find.replace=Replace
 find.replaceall=Replace all
 find.regexinvalid=Invalid Regex
 find.regexreplace=Replacement text
+find.hex.search.mode.hex=Hex
+find.hex.search.mode.ascii=ASCII
+find.hex.search.invalid-pattern=Invalid pattern
+find.hex.search.current-count=%d/%d
+find.hex.search.result-count=%d matches
 
 ## Fields and methods
 fieldsandmethods.title=Fields & methods

@@ -14,7 +14,14 @@
 .hex-view .label:selected {
     -fx-text-fill: -color-accent-3;
 }
-
+.hex-view .label:match {
+    -fx-background-color: -color-warning-muted;
+    -fx-background-radius: 2;
+}
+.hex-view .label:active-match {
+    -fx-background-color: -color-accent-muted;
+    -fx-background-radius: 2;
+}
 .hex-view .header {
     -fx-padding: 1 0 1 0;
     -fx-background-color: -color-bg-default;
