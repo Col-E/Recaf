@@ -1,5 +1,7 @@
 package software.coley.recaf.util.collect.primitive;
 
+import jakarta.annotation.Nonnull;
+
 import java.util.Map;
 
 /**
@@ -29,6 +31,19 @@ public class Object2LongMap<K> extends AbstractObjectKeyMap<K> {
 	public Object2LongMap(int initialCapacity) {
 		super(initialCapacity);
 		values = new long[keys.length];
+	}
+
+	/**
+	 * New map with the same contents as another map.
+	 *
+	 * @param other
+	 * 		Map to copy.
+	 */
+	public Object2LongMap(@Nonnull Object2LongMap<K> other) {
+		super(other.size());
+
+		values = new long[keys.length];
+		other.forEach(this::put);
 	}
 
 	/**

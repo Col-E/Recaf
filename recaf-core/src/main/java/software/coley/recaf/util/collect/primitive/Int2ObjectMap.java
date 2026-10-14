@@ -43,9 +43,7 @@ public class Int2ObjectMap<V> extends AbstractIntKeyMap {
 		super(other.size());
 
 		values = new Object[keys.length];
-		for (int i = 0; i < keys.length; i++)
-			if (occupied[i])
-				values[i] = other.values[i];
+		other.forEach(this::put);
 	}
 
 	/**
