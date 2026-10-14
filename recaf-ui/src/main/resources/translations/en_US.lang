@@ -506,6 +506,11 @@ java.info=Class information
 java.info.version=Class version
 java.info.sourcefile=Source file name
 
+## Hex editor
+hex.cut=Cut
+hex.copy=Copy
+hex.paste=Paste
+
 ## Search bar
 find.replace=Replace
 find.replaceall=Replace all

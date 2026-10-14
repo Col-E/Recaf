@@ -10,7 +10,13 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.geometry.Bounds;
+import javafx.geometry.Point2D;
 import javafx.scene.Node;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.SeparatorMenuItem;
+import javafx.scene.control.TextField;
+import javafx.scene.input.ContextMenuEvent;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
@@ -18,17 +24,19 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import org.fxmisc.flowless.VirtualFlow;
 import org.fxmisc.flowless.VirtualizedScrollPane;
+import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.ui.control.AbstractSearchBar;
 import software.coley.recaf.ui.control.VirtualizedScrollPaneWrapper;
+import software.coley.recaf.ui.pane.editing.binary.hex.cell.HexRow;
+import software.coley.recaf.ui.pane.editing.binary.hex.cell.HexRowHeader;
 import software.coley.recaf.ui.pane.editing.binary.hex.ops.HexAccess;
 import software.coley.recaf.ui.pane.editing.binary.hex.ops.HexNavigation;
 import software.coley.recaf.ui.pane.editing.binary.hex.ops.HexOperations;
-import software.coley.recaf.ui.pane.editing.binary.hex.cell.HexRow;
-import software.coley.recaf.ui.pane.editing.binary.hex.cell.HexRowHeader;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.IntRange;
+import software.coley.recaf.util.Menus;
 import software.coley.recaf.util.NodeEvents;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
 
@@ -54,6 +62,7 @@ public class HexEditor extends BorderPane {
 	private final VirtualFlow<Integer, HexRow> flow;
 	private final VBox topContent = new VBox();
 	private final HexOperations ops = newHexOperations();
+	private final EventHandler<ContextMenuEvent> contextMenuHandler = this::onContextMenuRequested;
 	private final Node rowHeader;
 	private HexSearchBar searchBar;
 	private Consumer<byte[]> commitAction;
@@ -141,6 +150,47 @@ public class HexEditor extends BorderPane {
 				flow.requestFocus();
 			}
 		});
+		flow.addEventHandler(ContextMenuEvent.CONTEXT_MENU_REQUESTED, contextMenuHandler);
+	}
+
+	private void onContextMenuRequested(@Nonnull ContextMenuEvent event) {
+		if (data == null || event.getTarget() instanceof TextField)
+			return;
+
+		// If the context menu was triggered by a mouse event,
+		// select the byte under the mouse if it is not already selected.
+		if (!event.isKeyboardTrigger()) {
+			Point2D point = flow.screenToLocal(event.getScreenX(), event.getScreenY());
+			int offset = pickOffsetAtPosition(point.getX(), point.getY());
+			if (offset >= 0) {
+				IntRange range = selection.range();
+				if (range.empty() || offset < range.start() || offset >= range.end())
+					select(offset);
+			}
+		}
+
+		MenuItem cut = Menus.action("hex.cut", CarbonIcons.CUT, this::cutSelection);
+		MenuItem copy = Menus.action("hex.copy", CarbonIcons.COPY, this::copySelection);
+		MenuItem paste = Menus.action("hex.paste", CarbonIcons.PASTE, this::pasteClipboard);
+		ContextMenu menu = new ContextMenu(cut, copy, new SeparatorMenuItem(), paste);
+		menu.setOnShowing(ignored -> {
+			boolean hasSelection = !selection.range().empty();
+			cut.setDisable(!hasSelection);
+			copy.setDisable(!hasSelection);
+			paste.setDisable(!canPasteClipboard());
+		});
+
+		double screenX = event.getScreenX();
+		double screenY = event.getScreenY();
+		if (event.isKeyboardTrigger()) {
+			Bounds bounds = flow.localToScreen(flow.getBoundsInLocal());
+			if (bounds != null) {
+				screenX = bounds.getMinX() + 12;
+				screenY = bounds.getMinY() + 12;
+			}
+		}
+		menu.show(flow, screenX, screenY);
+		event.consume();
 	}
 
 	/**
@@ -163,7 +213,9 @@ public class HexEditor extends BorderPane {
 
 	/**
 	 * Set or remove the optional search bar from the editor header.
-	 * @param node Search bar node to set, or {@code null} to remove the search bar.
+	 *
+	 * @param node
+	 * 		Search bar node to set, or {@code null} to remove the search bar.
 	 */
 	public void setSearchBarNode(@Nullable AbstractSearchBar node) {
 		if (node == null)
@@ -226,6 +278,7 @@ public class HexEditor extends BorderPane {
 	 * Dispose of the editor and any resources it holds.
 	 */
 	public void dispose() {
+		flow.removeEventHandler(ContextMenuEvent.CONTEXT_MENU_REQUESTED, contextMenuHandler);
 		if (searchBar != null)
 			searchBar.dispose();
 		if (executor != null)
@@ -508,6 +561,96 @@ public class HexEditor extends BorderPane {
 	}
 
 	/**
+	 * Copy the selected bytes to both the system text clipboard and the editor's raw-byte clipboard format.
+	 */
+	private void copySelection() {
+		finishPendingInput();
+		if (data == null)
+			return;
+
+		IntRange range = selection.range();
+		if (!range.empty())
+			copyRangeToClipboard(range);
+	}
+
+	/**
+	 * Cut the selected bytes to both the system text clipboard and the editor's raw-byte clipboard format.
+	 */
+	private void cutSelection() {
+		finishPendingInput();
+		if (data == null)
+			return;
+
+		IntRange range = selection.range();
+		if (!range.empty() && copyRangeToClipboard(range))
+			replaceRange(range.start(), range.end(), new byte[0]);
+	}
+
+	/**
+	 * Copy the given range of bytes to both the system text clipboard and the editor's raw-byte clipboard format.
+	 *
+	 * @param range
+	 * 		Range of bytes to copy.
+	 *
+	 * @return {@code true} when the copy was successful, {@code false} otherwise.
+	 */
+	private boolean copyRangeToClipboard(@Nonnull IntRange range) {
+		try {
+			if (HexClipboard.copy(data, range.start(), range.end()))
+				return true;
+			logger.warn("Failed to write selected hex bytes to the system clipboard");
+		} catch (RuntimeException ex) {
+			logger.warn("Failed to write selected hex bytes to the system clipboard", ex);
+		}
+		return false;
+	}
+
+	/**
+	 * @return {@code true} when the system clipboard has bytes that can be pasted into this editor.
+	 */
+	private boolean canPasteClipboard() {
+		if (data == null)
+			return false;
+		try {
+			byte[] bytes = HexClipboard.readBytes(hexColumnActive);
+			return bytes != null && bytes.length > 0;
+		} catch (RuntimeException ignored) {
+			return false;
+		}
+	}
+
+	/**
+	 * Replace the selected range, or insert at the caret, with clipboard bytes.
+	 */
+	private void pasteClipboard() {
+		finishPendingInput();
+		if (data == null)
+			return;
+
+		// Read bytes from the system clipboard. If the clipboard is empty or cannot be read, do nothing.
+		byte[] bytes;
+		try {
+			bytes = HexClipboard.readBytes(hexColumnActive);
+		} catch (RuntimeException ex) {
+			logger.warn("Failed to read bytes from the system clipboard", ex);
+			return;
+		}
+		if (bytes == null || bytes.length == 0)
+			return;
+
+		// Validate that the paste will not exceed the maximum array size.
+		IntRange range = selection.range();
+		int start = range.empty() ? selection.caret() : range.start();
+		int end = range.empty() ? start : range.end();
+		long updatedLength = (long) data.length - (end - start) + bytes.length;
+		if (updatedLength > Integer.MAX_VALUE)
+			return;
+
+		int caretAfterPaste = start + bytes.length;
+		replaceRange(start, end, bytes, new HexSelection(caretAfterPaste, caretAfterPaste));
+	}
+
+	/**
 	 * Delete the current selection, or if there is no selection delete a single byte in the given direction.
 	 *
 	 * @param backward
@@ -550,6 +693,22 @@ public class HexEditor extends BorderPane {
 	 * 		New bytes to insert in place of the range.
 	 */
 	private void replaceRange(int start, int end, @Nonnull byte[] replacement) {
+		replaceRange(start, end, replacement, new HexSelection(start, start));
+	}
+
+	/**
+	 * Replace a range of bytes with the given replacement.
+	 *
+	 * @param start
+	 * 		Start of the range to replace (inclusive).
+	 * @param end
+	 * 		End of the range to replace (exclusive).
+	 * @param replacement
+	 * 		New bytes to insert in place of the range.
+	 * @param selectionAfter
+	 * 		New selection after the replacement is made.
+	 */
+	private void replaceRange(int start, int end, @Nonnull byte[] replacement, @Nonnull HexSelection selectionAfter) {
 		if (data == null || start < 0 || end < start || end > data.length)
 			throw new IndexOutOfBoundsException("Invalid byte range: [" + start + ", " + end + ")");
 
@@ -564,7 +723,7 @@ public class HexEditor extends BorderPane {
 		System.arraycopy(replacement, 0, updated, start, replacement.length);
 		System.arraycopy(data, end, updated, start + replacement.length, data.length - end);
 		data = updated;
-		selection = new HexSelection(start, start);
+		selection = clampSelection(selectionAfter);
 		revision++;
 		refreshRowModel();
 		refreshRowDisplay();
@@ -620,8 +779,24 @@ public class HexEditor extends BorderPane {
 				KeyCode code = e.getCode();
 				// Leave deletion keys to the active TextField while editing a single byte.
 				if ((code == KeyCode.BACK_SPACE || code == KeyCode.DELETE)
-						&& e.getTarget() instanceof javafx.scene.control.TextField)
+						&& e.getTarget() instanceof TextField)
 					return;
+
+				if (!(e.getTarget() instanceof TextField) && e.isShortcutDown() && !e.isShiftDown() && !e.isAltDown()) {
+					if (code == KeyCode.C) {
+						copySelection();
+						e.consume();
+						return;
+					} else if (code == KeyCode.X) {
+						cutSelection();
+						e.consume();
+						return;
+					} else if (code == KeyCode.V) {
+						pasteClipboard();
+						e.consume();
+						return;
+					}
+				}
 
 				// If the focus is not in the editor, bring it in.
 				if (!isFocusWithin()) flow.requestFocus();
