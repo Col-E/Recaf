@@ -89,7 +89,7 @@ A complete list of features can be found in the [user documentation](https://rec
 
 - [User guide](https://recaf.coley.software/user/index.html): Covers functionality, configuration, and usage.
 - [Developer guide](https://recaf.coley.software/dev/index.html): Covers architecture, scripting, plugins, and APIs.
-- [Discord](https://discord.gg/Bya5HaA): Community discussion, support, and shitposting.
+- [Discord](https://discord.gg/Bya5HaA): Community discussion, support, and hangout.
 
 ## Development Setup
 
