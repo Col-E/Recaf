@@ -43,6 +43,7 @@ public class WindowManager implements Service {
 	public static final String WIN_CONFIG = "config";
 	public static final String WIN_INFO = "system-information";
 	public static final String WIN_SCRIPTS = "script-manager";
+	public static final String WIN_PLUGINS = "plugin-manager";
 	public static final String WIN_MAP_PROGRESS = "mapping-progress";
 	public static final String WIN_QUICK_NAV = "quick-nav";
 	// Manager instance data
@@ -228,6 +229,14 @@ public class WindowManager implements Service {
 	@Nonnull
 	public Stage getScriptManagerWindow() {
 		return Objects.requireNonNull(getWindow(WIN_SCRIPTS));
+	}
+
+	/**
+	 * @return Window for the plugin manager display.
+	 */
+	@Nonnull
+	public Stage getPluginManagerWindow() {
+		return Objects.requireNonNull(getWindow(WIN_PLUGINS));
 	}
 
 	/**
