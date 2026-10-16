@@ -11,6 +11,8 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import software.coley.recaf.util.LayoutIndependentKeys;
+
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -153,8 +155,7 @@ public class Binding extends ArrayList<String> {
 	 */
 	public boolean match(@Nonnull KeyEvent event) {
 		if (size() == 1)
-			// Simple 1-key check
-			return event.getCode().getName().equalsIgnoreCase(get(0));
+			return LayoutIndependentKeys.resolveKeyCode(event).getName().equalsIgnoreCase(get(0));
 		else if (size() > 1) {
 			// Checking binds with masks
 			Set<String> bindSet = new HashSet<>(this);
@@ -181,7 +182,7 @@ public class Binding extends ArrayList<String> {
 			eventSet.add(nameOf(KeyCode.ALT));
 		if (event.isShiftDown())
 			eventSet.add(nameOf(KeyCode.SHIFT));
-		eventSet.add(nameOf(event.getCode()));
+		eventSet.add(nameOf(LayoutIndependentKeys.resolveKeyCode(event)));
 		return eventSet;
 	}
 
