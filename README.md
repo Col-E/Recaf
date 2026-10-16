@@ -83,7 +83,7 @@ Recaf exposes all of its functionality through modular API's. You can write a sc
 - Looking to automate workflows with AI? Use the CLI's `--headless` and the [MCP plugin](https://github.com/Recaf-Plugins/Recaf-MCP) to give agents access to all of Recaf's capabilities.
 </details>
 
-A complete list of features can be found in the [user documentation](https://recaf.coley.software/user/index.html).
+A complete list of features can be found in the [user guide](https://recaf.coley.software/user/index.html).
 
 ## Documentation
 
