@@ -1,6 +1,6 @@
 package software.coley.recaf.services.workspace.io;
 
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import software.coley.recaf.info.*;
 import software.coley.recaf.info.properties.builtin.ZipMarkerProperty;
@@ -24,11 +24,12 @@ import static org.mockito.Mockito.*;
  * Tests for {@link InfoImporter}
  */
 class InfoImporterTest {
-	static final ClassPatcher mockedPatcher = mock(ClassPatcher.class);
-	static InfoImporter importer;
+	ClassPatcher mockedPatcher;
+	InfoImporter importer;
 
-	@BeforeAll
-	static void setup() {
+	@BeforeEach
+	void setup() {
+		mockedPatcher = mock(ClassPatcher.class);
 		importer = new BasicInfoImporter(new InfoImporterConfig(), new TextFormatConfig(), mockedPatcher);
 	}
 
@@ -56,7 +57,8 @@ class InfoImporterTest {
 	@Test
 	void testUsesClassPatcher() throws IOException {
 		JvmClassInfo classInfo = TestClassUtils.fromRuntimeClass(ArrayList.class);
-		ByteSource invalidSource = ByteSources.wrap(classInfo.getBytecode(), 0, 20);
+		byte[] invalidBytes = Arrays.copyOf(classInfo.getBytecode(), 20);
+		ByteSource invalidSource = ByteSources.wrap(invalidBytes);
 
 		// Cut off the class file so that it is 'invalid'.
 		// We've passed in a no-op mock for the patcher, so it won't do anything currently.
@@ -65,7 +67,7 @@ class InfoImporterTest {
 		assertTrue(read.isFile(), "Should have read partial class as generic file");
 
 		// Mock it so that patcher 'fixes' the bytecode by returning the original.
-		when(mockedPatcher.patch(anyString(), any())).thenReturn(classInfo.getBytecode());
+		when(mockedPatcher.patch(eq(""), argThat(bytes -> Arrays.equals(bytes, invalidBytes)))).thenReturn(classInfo.getBytecode());
 
 		// Now that patcher component is 'implemented' the class should be fixable by the importer.
 		read = importer.readInfo("", invalidSource);
