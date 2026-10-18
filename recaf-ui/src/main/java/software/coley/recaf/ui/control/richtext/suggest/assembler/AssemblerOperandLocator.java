@@ -267,7 +267,7 @@ final class AssemblerOperandLocator {
 		return operand == DalvikOperands.REGISTER.getOperand()
 				|| operand == DalvikOperands.REGISTER_WIDE.getOperand()
 				|| operand == DalvikOperands.REGISTER_ARRAY.getOperand()
-				|| operand == DalvikOperands.REGISTER_RANGE.getOperand();
+				|| operand == DalvikOperands.INVOKE_REGISTERS.getOperand();
 	}
 
 	/**
