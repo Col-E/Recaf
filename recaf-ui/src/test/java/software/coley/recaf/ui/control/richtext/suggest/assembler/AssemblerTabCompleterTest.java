@@ -318,7 +318,7 @@ class AssemblerTabCompleterTest extends TestBase {
 				    parameters: { this, wide, precise, text },
 				    code: {
 				        invoke-static { v0, named } sample/Owner.call ()V
-				        invoke-static/range { first, last } sample/Owner.call ()V
+				        invoke-static { words: { first, last } } sample/Owner.call ()V
 				        return-void
 				    }
 				}

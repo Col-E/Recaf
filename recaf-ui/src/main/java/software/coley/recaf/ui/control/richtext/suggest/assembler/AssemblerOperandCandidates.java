@@ -8,6 +8,7 @@ import me.darknet.assembler.ast.primitive.ASTIdentifier;
 import me.darknet.assembler.ast.primitive.ASTInstruction;
 import me.darknet.assembler.ast.primitive.ASTLabel;
 import me.darknet.assembler.ast.primitive.ASTNumber;
+import me.darknet.assembler.ast.primitive.ASTObject;
 import me.darknet.assembler.ast.specific.ASTMethod;
 import me.darknet.assembler.backend.jvm.JvmTargetContext;
 import me.darknet.assembler.helper.Handle;
@@ -230,7 +231,10 @@ final class AssemblerOperandCandidates {
 	}
 
 	/**
-	 * Collects register names from an AST element, recursively descending into arrays.
+	 * Collects register names from an AST element, recursively descending into register lists.
+	 * <p>
+	 * Raw invoke words are written as {@code { words: { v0, v2 } }}, so that object is searched through its
+	 * {@code words} key only, which is the only key the Dalvik invoke grammar accepts.
 	 *
 	 * @param element
 	 * 		AST element to collect register names from.
@@ -243,6 +247,9 @@ final class AssemblerOperandCandidates {
 		} else if (element instanceof ASTArray array) {
 			for (ASTElement value : array.values())
 				collectRegisterNames(value, names);
+		} else if (element instanceof ASTObject object) {
+			ASTElement words = object.value("words");
+			collectRegisterNames(words, names);
 		}
 	}
 
