@@ -86,6 +86,7 @@ menu.help.docsdev=Online developer documentation
 menu.help.github=Github
 menu.help.issues=Issue tracker
 menu.help.sysinfo=System information
+menu.help.shortcuts=Keyboard Shortcuts
 menu.help.tutorial=Tutorial
 menu.refactor=Refactor
 menu.refactor.move=Move
