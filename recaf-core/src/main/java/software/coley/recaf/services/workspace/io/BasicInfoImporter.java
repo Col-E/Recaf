@@ -126,7 +126,6 @@ public class BasicInfoImporter implements InfoImporter {
 	@Nullable
 	private static FileInfo readAsSpecializedFile(@Nonnull String name, byte[] data) {
 		if (ByteHeaderUtil.match(data, ByteHeaderUtil.DEX)) {
-			CodeCodec.readDebug = false; // TODO: Remove this flag when debug parsing is fixed upstream.
 			return new DexFileInfoBuilder()
 					.withRawContent(data)
 					.withName(name)
