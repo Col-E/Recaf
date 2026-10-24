@@ -50,6 +50,11 @@ public class IncludeModifiersNameFilter extends NameGeneratorFilter {
 	}
 
 	@Override
+	public boolean shouldMapPackage(@Nonnull ClassInfo info) {
+		return shouldMapClass(info);
+	}
+
+	@Override
 	public boolean shouldMapField(@Nonnull ClassInfo owner, @Nonnull FieldMember field) {
 		if (targetFields && field.hasAnyModifiers(flags))
 			return true;
