@@ -2879,7 +2879,7 @@ public class FoldingDeobfuscationTest extends TransformerTestBase {
 				        iconst_0
 				        istore a
 				        iinc a 4
-						iload a
+					    iload a
 				        ireturn
 				    B:
 				    }
@@ -2917,6 +2917,145 @@ public class FoldingDeobfuscationTest extends TransformerTestBase {
 			assertEquals(0, StringUtil.count("iadd", dis), "Expected to remove redundant iadd");
 			assertEquals(0, StringUtil.count("iload", dis), "Expected to inline redundant iload");
 			assertEquals(1, StringUtil.count("iconst_4", dis), "Expected to have single iconst_4");
+		});
+	}
+
+	@Test
+	void foldUnusedVariablesAfterConstantFolding() {
+		String asm = """
+				.method public static example ()I {
+				    exceptions: { { TRY, END, HANDLER, Ljava/lang/RuntimeException; } },
+				    code: {
+				    TRY:
+				        iconst_0
+				        istore dead
+				        iinc dead 1
+				        iinc dead 2
+				        iload dead
+				        iconst_1
+				        iadd
+				    END:
+				        ireturn
+				    HANDLER:
+				        pop
+				        iconst_m1
+				        ireturn
+				    FINISH:
+				    }
+				}
+				""";
+
+		// Baseline expectation is 4
+		assemble(asm, false);
+		assertEquals(4, invokeStatic(CLASS_NAME, "example", CLASS_NAME));
+
+		// First apply opaque constant folding to remove the iadd and iload, leaving only the iinc and istore.
+		// These leftovers aren't used any more but are not the responsibility of the constant folding transformer to remove.
+		transformAndApply(List.of(OpaqueConstantFoldingTransformer.class));
+		String opaqueDisassembly = disassemble(false);
+		assertEquals(0, StringUtil.count("iload", opaqueDisassembly), opaqueDisassembly);
+		assertEquals(0, StringUtil.count("iadd", opaqueDisassembly), opaqueDisassembly);
+		assertTrue(StringUtil.count("istore", opaqueDisassembly) > 0, opaqueDisassembly);
+		assertTrue(StringUtil.count("iinc", opaqueDisassembly) > 0, opaqueDisassembly);
+		assertEquals(4, invokeStatic(CLASS_NAME, "example", CLASS_NAME));
+
+		// The variable folding transformer however does have the responsibility to remove these leftover variable writes, and will do so.
+		transformAndApply(List.of(VariableFoldingTransformer.class));
+		String finalDisassembly = disassemble(false);
+		assertEquals(0, StringUtil.count("istore", finalDisassembly), finalDisassembly);
+		assertEquals(0, StringUtil.count("iinc", finalDisassembly), finalDisassembly);
+		assertEquals(0, StringUtil.count("iload", finalDisassembly), finalDisassembly);
+		assertEquals(4, invokeStatic(CLASS_NAME, "example", CLASS_NAME));
+	}
+
+	@Test
+	void foldUnusedVariablesPreservesEffects() {
+		// The 'example()' method calls two methods that increment a static counter.
+		// Folding unused variables should not remove the method calls, as they have side effects.
+		compileFull(CLASS_NAME, """
+				class Example {
+				    static int calls;
+				    static long produce() { calls++; return 1L; }
+				    static int throwing() { calls++; throw new IllegalStateException(); }
+				    static int example() {
+				        try {
+				            long unusedLong = produce();
+				            int unusedInt = throwing();
+				        } catch (IllegalStateException ignored) {
+				        }
+				        return calls;
+				    }
+				}
+				""");
+		assertEquals(2, invokeStatic(CLASS_NAME, "example", CLASS_NAME));
+		transformAndApply(List.of(VariableFoldingTransformer.class));
+
+		// The variable folding transformer will remove the unused variable writes,
+		// but it will not remove the side-effecting method calls that produced those values.
+		// The disassembly should show that the method calls are still present, but the variable stores are gone.
+		String disassembly = disassemble(false);
+		assertEquals(0, StringUtil.count("lstore", disassembly), disassembly);
+		assertEquals(0, StringUtil.count("istore", disassembly), disassembly);
+		assertEquals(0, StringUtil.count("astore", disassembly), disassembly);
+		assertTrue(disassembly.contains("invokestatic Example.produce ()J"), disassembly);
+		assertTrue(disassembly.contains("invokestatic Example.throwing ()I"), disassembly);
+		assertTrue(disassembly.contains("pop2"), disassembly);
+		assertEquals(2, invokeStatic(CLASS_NAME, "example", CLASS_NAME));
+	}
+
+	@Test
+	void foldUnusedVariablesWithEmptyProtectedCopyChain() {
+		// A bunch of intermediate variables are written to, but never read from in a try {...} range.
+		// After folding, the try range should be empty, thus it should also be removed.
+		// The final result is the 2+2 return outside the try range.
+		String asm = """
+				.super java/lang/Object
+				.class public super Example {
+				    .method public static example (I)I {
+				        parameters: { seed },
+				        exceptions: { { TRY, END, HANDLER, Ljava/lang/RuntimeException; } },
+				        code: {
+				        TRY:
+				            iload seed
+				            istore source
+				            iload source
+				            istore middle
+				            iload middle
+				            istore unused
+				            iinc unused 1
+				        END:
+				            iconst_2
+				            iconst_2
+				            iadd
+				            ireturn
+				        HANDLER:
+				            pop
+				            iconst_m1
+				            ireturn
+				        FINISH:
+				        }
+				    }
+				    .method public static run ()I {
+				        code: {
+				        A:
+				            bipush 7
+				            invokestatic Example.example (I)I
+				            ireturn
+				        B:
+				        }
+				    }
+				}
+				""";
+		assemble(asm, true);
+		assertEquals(4, invokeStatic(CLASS_NAME, "run", CLASS_NAME));
+
+		// The redundant variable usage should all be gone, and the try-catch range should be removed as well.
+		validateAfterAssembly(asm, List.of(VariableFoldingTransformer.class, OpaqueConstantFoldingTransformer.class), dis -> {
+			assertEquals(0, StringUtil.count("iload", dis), dis);
+			assertEquals(0, StringUtil.count("istore", dis), dis);
+			assertEquals(0, StringUtil.count("iinc", dis), dis);
+			assertFalse(dis.contains("exceptions:"), dis);
+			assertEquals(4, invokeStatic(CLASS_NAME, "run", CLASS_NAME));
 		});
 	}
 

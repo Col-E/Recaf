@@ -86,6 +86,9 @@ public class VariableFoldingTransformer implements JvmClassTransformer {
 			// Fold constant locals whose single definition remains hidden behind control flow.
 			dirty |= foldSingleConstantLocals(className, method);
 
+			// Remove stores and increments for typed locals that have no executable variable loads.
+			dirty |= removeUnusedLocals(method);
+
 			// Build successor and predecessor maps modeling control flow.
 			Int2ObjectMap<List<Integer>> successorMap = new Int2ObjectMap<>();
 			Int2ObjectMap<List<Integer>> predecessorMap = new Int2ObjectMap<>();
@@ -231,12 +234,106 @@ public class VariableFoldingTransformer implements JvmClassTransformer {
 					dirty = true;
 				}
 			}
+			dirty |= removeUnusedLocals(method);
 		}
 		if (dirty) {
 			// Removed stores and folded loads change which locals are assigned, which existing frames may still claim.
 			context.setRecomputeFrames(className);
 			context.setNode(bundle, initialClassState, node);
 		}
+	}
+
+	/**
+	 * Removes stores and increments for typed locals that have no executable variable loads.
+	 * <p>
+	 * Repeating the analysis is necessary because removing an unused copy can make its source
+	 * local unread as well.
+	 *
+	 * @param method
+	 * 		Method whose unused locals should be removed.
+	 *
+	 * @return {@code true} when instructions or exception metadata changed.
+	 */
+	private static boolean removeUnusedLocals(@Nonnull MethodNode method) {
+		InsnList instructions = method.instructions;
+		if (instructions == null || instructions.size() == 0)
+			return false;
+
+		boolean dirty = false;
+		while (true) {
+			Int2ObjectMap<LocalAccessState> accessStates = new Int2ObjectMap<>();
+			populateVariableAccessStates(method, accessStates);
+
+			boolean roundDirty = false;
+			for (int stateKey : accessStates.keys()) {
+				LocalAccessState state = accessStates.get(stateKey);
+
+				// IINC is tracked as a read for the other folding algorithms, but does not
+				// keep a local alive when no variable load observes its value.
+				boolean hasLoad = false;
+				for (LocalAccess read : state.getReads()) {
+					if (read.offset >= 0 && read.offset < instructions.size()
+							&& instructions.get(read.offset) == read.instruction
+							&& read.instruction instanceof VarInsnNode variable
+							&& isVarLoad(variable.getOpcode())) {
+						hasLoad = true;
+						break;
+					}
+				}
+				if (hasLoad)
+					continue;
+
+				// Remove all writes to the local, as they are not observed by any load.
+				for (LocalAccess write : state.getWrites()) {
+					if (write.offset < 0 || write.offset >= instructions.size())
+						continue;
+
+					// Sanity check the write instruction is still in the list, as a prior pass may have removed it.
+					AbstractInsnNode writeInsn = write.instruction;
+					if (instructions.get(write.offset) != writeInsn)
+						continue;
+
+					// Remove the write instruction, replacing it with a POP if necessary.
+					if (writeInsn instanceof IincInsnNode) {
+						instructions.set(writeInsn, new InsnNode(NOP));
+						roundDirty = true;
+					} else if (writeInsn instanceof VarInsnNode store && isVarStore(store.getOpcode())) {
+						Type type = getTypeForVarInsn(store);
+
+						// If the store is preceded by a constant or load of the same type, we can remove both instructions.
+						AbstractInsnNode predecessor = store.getPrevious();
+						while (predecessor != null && predecessor.getOpcode() == NOP)
+							predecessor = predecessor.getPrevious();
+						if (predecessor != null && (isConstantForStore(predecessor, store) || isMatchingLoad(type.getSort(), predecessor.getOpcode()))) {
+							instructions.set(predecessor, new InsnNode(NOP));
+							instructions.set(writeInsn, new InsnNode(NOP));
+						} else {
+							instructions.set(writeInsn, new InsnNode(type.getSize() == 2 ? POP2 : POP));
+						}
+
+						roundDirty = true;
+					}
+				}
+			}
+
+			if (!roundDirty)
+				break;
+			dirty = true;
+
+			// Remove any try/catch blocks that are now empty due to removed instructions.
+			List<TryCatchBlockNode> tryCatchBlocks = method.tryCatchBlocks;
+			if (tryCatchBlocks != null && !tryCatchBlocks.isEmpty()) {
+				tryCatchBlocks.removeIf(block -> {
+					for (AbstractInsnNode current = block.start; current != null && current != block.end; current = current.getNext()) {
+						int opcode = current.getOpcode();
+						if (opcode >= 0 && opcode != NOP)
+							return false;
+					}
+					return true;
+				});
+			}
+		}
+		return dirty;
 	}
 
 	/**
