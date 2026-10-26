@@ -29,11 +29,13 @@ import software.coley.recaf.ui.control.BoundBiDiComboBox;
 import software.coley.recaf.ui.control.DynamicNumericTextField;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.util.Lang;
+import software.coley.recaf.util.NumberUtil;
 import software.coley.recaf.util.ToStringConverter;
 
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Number search pane.
@@ -46,6 +48,7 @@ public class NumberSearchPane extends AbstractSearchPane {
 	private final ObjectProperty<Number> numericValueProperty = new SimpleObjectProperty<>(0);
 	private final ObjectProperty<Class<? extends Number>> numericTypeProperty = new SimpleObjectProperty<>(Integer.class);
 	private final ObservableValue<Boolean> isBlank;
+	private final DynamicNumericTextField textField;
 	private final NumberPredicateProvider numberPredicateProvider;
 
 	@Inject
@@ -59,7 +62,7 @@ public class NumberSearchPane extends AbstractSearchPane {
 		this.numberPredicateProvider = numberPredicateProvider;
 
 		List<String> biPredicates = numberPredicateProvider.getBiNumberMatchers().keySet().stream().sorted().toList();
-		DynamicNumericTextField textField = new DynamicNumericTextField(numericValueProperty, numericTypeProperty);
+		textField = new DynamicNumericTextField(numericValueProperty, numericTypeProperty);
 		ComboBox<String> modeCombo = new BoundBiDiComboBox<>(numericPredicateId, biPredicates,
 				ToStringConverter.from(s -> Lang.get(NumberPredicate.TRANSLATION_PREFIX + s)));
 		modeCombo.getSelectionModel().select(NumberPredicateProvider.KEY_EQUAL);
@@ -106,6 +109,17 @@ public class NumberSearchPane extends AbstractSearchPane {
 	@Nonnull
 	public ObjectProperty<Class<? extends Number>> numericTypePropertyProperty() {
 		return numericTypeProperty;
+	}
+
+	/**
+	 * @param value
+	 * 		Value to search for.
+	 */
+	public void setSearchValue(@Nonnull Number value) {
+		Number previousValue = numericValueProperty.get();
+		textField.setText(NumberUtil.toString(value));
+		if (Objects.equals(previousValue, numericValueProperty.get()))
+			searchLive();
 	}
 
 	@Override

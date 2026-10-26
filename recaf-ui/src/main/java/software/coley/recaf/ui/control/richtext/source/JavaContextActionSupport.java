@@ -72,8 +72,10 @@ import software.coley.recaf.workspace.model.Workspace;
 import software.coley.sourcesolver.Parser;
 import software.coley.sourcesolver.model.ClassModel;
 import software.coley.sourcesolver.model.CompilationUnitModel;
+import software.coley.sourcesolver.model.ErroneousModel;
 import software.coley.sourcesolver.model.ImportModel;
 import software.coley.sourcesolver.model.LambdaExpressionModel;
+import software.coley.sourcesolver.model.LiteralExpressionModel;
 import software.coley.sourcesolver.model.MethodBodyModel;
 import software.coley.sourcesolver.model.MethodModel;
 import software.coley.sourcesolver.model.Model;
@@ -761,14 +763,19 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 
 			// Create menu
 			int offsetHitIndex = offset(hit.getInsertionIndex());
-			AstResolveResult result = resolvePosition(offsetHitIndex, false);
-			if (result != null) {
-				PathNode<?> path = result.path();
-				logger.debugging(l -> l.info("Path at offset '{}' = {}", offsetHitIndex, path));
+			Object literalValue = findSearchableLiteralValue(unit, offsetHitIndex);
+			if (literalValue != null) {
+				menu = cellConfigurationService.contextMenuOfConstant(literalValue);
+			} else {
+				AstResolveResult result = resolvePosition(offsetHitIndex, false);
+				if (result != null) {
+					PathNode<?> path = result.path();
+					logger.debugging(l -> l.info("Path at offset '{}' = {}", offsetHitIndex, path));
 
-				// Map the result's declaration state to a context-source.
-				ContextSource source = result.isDeclaration() ? ContextSource.DECLARATION : ContextSource.REFERENCE;
-				menu = cellConfigurationService.contextMenuOf(source, path);
+					// Map the result's declaration state to a context-source.
+					ContextSource source = result.isDeclaration() ? ContextSource.DECLARATION : ContextSource.REFERENCE;
+					menu = cellConfigurationService.contextMenuOf(source, path);
+				}
 			}
 
 			// Show menu
@@ -834,6 +841,24 @@ public class JavaContextActionSupport implements EditorComponent, UpdatableNavig
 			ClassInfo classInfo = classPath.getValue();
 			ThreadUtil.run(() -> initialize(classInfo));
 		}
+	}
+
+	@Nullable
+	protected static Object findSearchableLiteralValue(@Nonnull CompilationUnitModel unit, int position) {
+		Model model = unit;
+		Model child;
+		while ((child = model.getChildAtPosition(position)) != null && !(child instanceof ErroneousModel))
+			model = child;
+
+		if (!(model instanceof LiteralExpressionModel literal))
+			return null;
+
+		Object content = literal.getContent();
+		return switch (literal.getKind()) {
+			case STRING -> content instanceof String ? content : null;
+			case INT, LONG, FLOAT, DOUBLE -> content instanceof Number ? content : null;
+			default -> null;
+		};
 	}
 
 	@Nullable

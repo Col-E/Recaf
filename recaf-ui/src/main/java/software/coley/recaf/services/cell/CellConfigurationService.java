@@ -683,6 +683,17 @@ public class CellConfigurationService implements Service {
 	}
 
 	/**
+	 * @param value
+	 * 		Constant value to create a context menu for.
+	 *
+	 * @return Context-menu for the constant value.
+	 */
+	@Nullable
+	public ContextMenu contextMenuOfConstant(@Nonnull Object value) {
+		return contextMenuService.getConstantContextMenuProvider(value).makeMenu();
+	}
+
+	/**
 	 * @param source
 	 * 		Origin source of the cell, for context menu specialization.
 	 * @param item

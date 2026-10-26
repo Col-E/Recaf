@@ -4,6 +4,8 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.geometry.Insets;
@@ -24,7 +26,9 @@ import software.coley.recaf.services.search.query.Query;
 import software.coley.recaf.services.search.query.StringQuery;
 import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.ui.control.BoundBiDiComboBox;
+import software.coley.recaf.ui.control.BoundCheckBox;
 import software.coley.recaf.ui.control.richtext.Editor;
+import software.coley.recaf.util.EscapeUtil;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.RegexUtil;
 import software.coley.recaf.util.ToStringConverter;
@@ -44,6 +48,7 @@ import static software.coley.recaf.services.search.match.StringPredicateProvider
 @Dependent
 public class StringSearchPane extends AbstractSearchPane {
 	private final StringProperty stringPredicateId = new SimpleStringProperty();
+	private final BooleanProperty escapedInput = new SimpleBooleanProperty();
 	private final StringProperty stringValue;
 	private final StringPredicateProvider stringPredicateProvider;
 
@@ -64,6 +69,9 @@ public class StringSearchPane extends AbstractSearchPane {
 		ComboBox<String> modeCombo = new BoundBiDiComboBox<>(stringPredicateId, stringPredicates,
 				ToStringConverter.from(s -> Lang.get(StringPredicate.TRANSLATION_PREFIX + s)));
 		modeCombo.getSelectionModel().select(StringPredicateProvider.KEY_CONTAINS);
+		BoundCheckBox escaped = new BoundCheckBox(Lang.getBinding("menu.search.string.escaped-input"), escapedInput);
+		escaped.visibleProperty().bind(stringPredicateId.map(s -> !(s.contains("regex") || s.contains("wildcard"))));
+		escaped.managedProperty().bind(escaped.visibleProperty());
 
 		GridPane input = new GridPane();
 		ColumnConstraints colTexts = new ColumnConstraints();
@@ -73,12 +81,13 @@ public class StringSearchPane extends AbstractSearchPane {
 		input.getColumnConstraints().addAll(colTexts, colCombos);
 		input.setHgap(10);
 		input.setPadding(new Insets(10));
-		input.addRow(0, textField, modeCombo);
+		input.addRow(0, textField, modeCombo, escaped);
 		GridPane.setHgrow(textField, Priority.ALWAYS);
 
 		stringValue = textField.textProperty();
-		EventStreams.changesOf(stringValue)
-				.or(EventStreams.changesOf(stringPredicateId))
+		EventStreams.changesOf(stringValue).map(unused -> new Object())
+				.or(EventStreams.changesOf(stringPredicateId).map(unused -> new Object()))
+				.or(EventStreams.changesOf(escapedInput).map(unused -> new Object()))
 				.reduceSuccessions(Collections::singletonList, Lists::add, Duration.ofMillis(Editor.MEDIUM_DELAY_MS))
 				.addObserver(unused -> searchLive());
 
@@ -101,6 +110,24 @@ public class StringSearchPane extends AbstractSearchPane {
 		return stringValue;
 	}
 
+	/**
+	 * @return {@code true} if the input is escaped, {@code false} if the input is raw.
+	 */
+	@Nonnull
+	public BooleanProperty escapedInputProperty() {
+		return escapedInput;
+	}
+
+	/**
+	 * @param value
+	 * 		Value to search for
+	 */
+	public void setSearchValue(@Nonnull String value) {
+		String displayValue = EscapeUtil.escapeStandardAndUnicodeWhitespace(value);
+		escapedInput.set(!displayValue.equals(value)); // Auto-detect if we need to escape the input for display purposes.
+		stringValue.set(displayValue);
+	}
+
 	@Override
 	protected boolean supportsFileSearchOptions() {
 		return true;
@@ -109,15 +136,15 @@ public class StringSearchPane extends AbstractSearchPane {
 	@Nullable
 	@Override
 	protected Query buildQuery() {
-		String search = stringValue.get();
+		String input = stringValue.get();
 		String id = stringPredicateId.get();
-
-		// Skip for blank input
-		if (search.isBlank())
+		if (input.isBlank())
 			return null;
 
 		// Validate regex input
-		if (id.contains("regex") && !RegexUtil.validate(search).valid())
+		boolean isRegex = id.contains("regex");
+		String search = isRegex ? input : resolveSearchText(input, escapedInput.get());
+		if (isRegex && !RegexUtil.validate(search).valid())
 			return null;
 
 		// Skip if unrecognized string predicate id
@@ -126,5 +153,30 @@ public class StringSearchPane extends AbstractSearchPane {
 			return null;
 
 		return new StringQuery(predicate);
+	}
+
+	@Nonnull
+	private static String resolveSearchText(@Nonnull String input, boolean escapedInput) {
+		if (!escapedInput)
+			return input;
+
+		// Preserve escaped backslashes before decoding other sequences.
+		// We wouldn't want "\\n" to be decoded to a newline, but "\\\\n" should be decoded to "\n".
+		StringBuilder result = null;
+		int segmentStart = 0;
+		for (int i = 0; i + 1 < input.length(); i++) {
+			if (input.charAt(i) == '\\' && input.charAt(i + 1) == '\\') {
+				if (result == null)
+					result = new StringBuilder(input.length());
+				result.append(EscapeUtil.unescapeStandardAndUnicodeWhitespace(input.substring(segmentStart, i)));
+				result.append('\\');
+				i++;
+				segmentStart = i + 1;
+			}
+		}
+
+		if (result == null)
+			return EscapeUtil.unescapeStandardAndUnicodeWhitespace(input);
+		return result.append(EscapeUtil.unescapeStandardAndUnicodeWhitespace(input.substring(segmentStart))).toString();
 	}
 }

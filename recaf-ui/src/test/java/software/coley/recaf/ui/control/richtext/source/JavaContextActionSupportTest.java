@@ -174,6 +174,32 @@ class JavaContextActionSupportTest extends TestBase {
 		assertEquals("lambda$predicate$2", predicatePath.getValue().getName());
 	}
 
+	@Test
+	void resolvesConstantsFromSource() {
+		String source = """
+				class ConstantValues {
+					void values() {
+						String text = "string";
+						int integer = 42;
+						long longValue = 42L;
+						float floatValue = 1.5F;
+						double doubleValue = 2.5;
+					}
+				}
+				""";
+		AstService astService = recaf.get(AstService.class);
+		CompilationUnitModel unit;
+		synchronized (astService.getSharedJavaParser()) {
+			unit = astService.getSharedJavaParser().parse(source);
+		}
+
+		assertEquals("string", JavaContextActionSupport.findSearchableLiteralValue(unit, source.indexOf("\"string\"")));
+		assertEquals(42, JavaContextActionSupport.findSearchableLiteralValue(unit, source.indexOf("42;")));
+		assertEquals(42L, JavaContextActionSupport.findSearchableLiteralValue(unit, source.indexOf("42L")));
+		assertEquals(1.5F, JavaContextActionSupport.findSearchableLiteralValue(unit, source.indexOf("1.5F")));
+		assertEquals(2.5D, JavaContextActionSupport.findSearchableLiteralValue(unit, source.indexOf("2.5")));
+	}
+
 	private ClassMemberPathNode resolveLambdaPath(String source, Class<?> runtimeClass,
 	                                              String className, String lambdaBody) throws IOException {
 		return resolveLambdaPath(source, TestClassUtils.fromRuntimeClass(runtimeClass), className, lambdaBody);

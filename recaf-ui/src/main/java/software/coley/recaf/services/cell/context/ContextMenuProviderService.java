@@ -52,6 +52,7 @@ import java.util.function.BiConsumer;
  *     <li>{@link #addBundleContextMenuAdapter(BundleContextMenuAdapter)}</li>
  *     <li>{@link #addResourceContextMenuAdapter(ResourceContextMenuAdapter)}</li>
  *     <li>{@link #addAssemblerContextMenuAdapter(AssemblerContextMenuAdapter)}</li>
+ *     <li>{@link #addConstantContextMenuAdapter(ConstantContextMenuAdapter)}</li>
  * </ul>
  *
  * @author Matt Coley
@@ -73,6 +74,7 @@ public class ContextMenuProviderService implements Service {
 	private final List<BundleContextMenuAdapter> bundleContextMenuAdapters = new ArrayList<>();
 	private final List<ResourceContextMenuAdapter> resourceContextMenuAdapters = new ArrayList<>();
 	private final List<AssemblerContextMenuAdapter> assemblerContextMenuAdapters = new ArrayList<>();
+	private final List<ConstantContextMenuAdapter> constantContextMenuAdapters = new ArrayList<>();
 	// Defaults
 	private final ClassContextMenuProviderFactory classContextMenuDefault;
 	private final FileContextMenuProviderFactory fileContextMenuDefault;
@@ -86,6 +88,7 @@ public class ContextMenuProviderService implements Service {
 	private final BundleContextMenuProviderFactory bundleContextMenuDefault;
 	private final ResourceContextMenuProviderFactory resourceContextMenuDefault;
 	private final AssemblerContextMenuProviderFactory assemblerContextMenuDefault;
+	private final ConstantContextMenuProviderFactory constantContextMenuDefault;
 
 	@Inject
 	public ContextMenuProviderService(@Nonnull ContextMenuProviderServiceConfig config,
@@ -100,7 +103,8 @@ public class ContextMenuProviderService implements Service {
 	                                  @Nonnull DirectoryContextMenuProviderFactory directoryContextMenuDefault,
 	                                  @Nonnull BundleContextMenuProviderFactory bundleContextMenuDefault,
 	                                  @Nonnull ResourceContextMenuProviderFactory resourceContextMenuDefault,
-	                                  @Nonnull AssemblerContextMenuProviderFactory assemblerContextMenuDefault) {
+	                                  @Nonnull AssemblerContextMenuProviderFactory assemblerContextMenuDefault,
+	                                  @Nonnull ConstantContextMenuProviderFactory constantContextMenuDefault) {
 		this.config = config;
 
 		// Default factories
@@ -116,6 +120,7 @@ public class ContextMenuProviderService implements Service {
 		this.bundleContextMenuDefault = bundleContextMenuDefault;
 		this.resourceContextMenuDefault = resourceContextMenuDefault;
 		this.assemblerContextMenuDefault = assemblerContextMenuDefault;
+		this.constantContextMenuDefault = constantContextMenuDefault;
 	}
 
 	/**
@@ -458,6 +463,18 @@ public class ContextMenuProviderService implements Service {
 	}
 
 	/**
+	 * @param value
+	 * 		Constant value to create a menu for.
+	 *
+	 * @return Menu provider for the constant value.
+	 */
+	@Nonnull
+	public ContextMenuProvider getConstantContextMenuProvider(@Nonnull Object value) {
+		ContextMenuProvider provider = constantContextMenuDefault.getConstantContextMenuProvider(value);
+		return adapt(provider, constantContextMenuAdapters, (adapter, menu) -> adapter.adaptConstantContextMenu(menu, value));
+	}
+
+	/**
 	 * @param adapter
 	 * 		Adapter to register for modifying class context menus.
 	 *
@@ -698,6 +715,26 @@ public class ContextMenuProviderService implements Service {
 	}
 
 	/**
+	 * @param adapter
+	 * 		Adapter to register for modifying constant context menus.
+	 *
+	 * @return {@code true} when the adapter was added. {@link false} when the adapter has already been added.
+	 */
+	public boolean addConstantContextMenuAdapter(@Nonnull ConstantContextMenuAdapter adapter) {
+		return PrioritySortable.add(constantContextMenuAdapters, adapter);
+	}
+
+	/**
+	 * @param adapter
+	 * 		Adapter to remove.
+	 *
+	 * @return {@code true} when the adapter was removed. {@link false} when the adapter was not previously registered.
+	 */
+	public boolean removeConstantContextMenuAdapter(@Nonnull ConstantContextMenuAdapter adapter) {
+		return constantContextMenuAdapters.remove(adapter);
+	}
+
+	/**
 	 * @return Default menu provider for classes.
 	 */
 	@Nonnull
@@ -791,6 +828,14 @@ public class ContextMenuProviderService implements Service {
 	@Nonnull
 	public AssemblerContextMenuProviderFactory getAssemblerContextMenuDefault() {
 		return assemblerContextMenuDefault;
+	}
+
+	/**
+	 * @return Default menu provider for constant values.
+	 */
+	@Nonnull
+	public ConstantContextMenuProviderFactory getConstantContextMenuDefault() {
+		return constantContextMenuDefault;
 	}
 
 	@Nonnull
