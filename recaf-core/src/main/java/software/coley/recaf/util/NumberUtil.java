@@ -48,10 +48,32 @@ public class NumberUtil {
 	 * @throws NumberFormatException
 	 * 		When the input cannot be parsed.
 	 */
-	@SuppressWarnings("")
 	@Nonnull
 	public static Number parse(@Nonnull String input) {
 		String text = input.trim().toUpperCase();
+
+		// Check special cases
+		switch (text) {
+			case "NAN", "NAND" -> {
+				return Double.NaN;
+			}
+			case "INFINITY", "INFINITYD" -> {
+				return Double.POSITIVE_INFINITY;
+			}
+			case "-INFINITY", "-INFINITYD" -> {
+				return Double.NEGATIVE_INFINITY;
+			}
+			case "NANF" -> {
+				return Float.NaN;
+			}
+			case "INFINITYF" -> {
+				return Float.POSITIVE_INFINITY;
+			}
+			case "-INFINITYF" -> {
+				return Float.NEGATIVE_INFINITY;
+			}
+		}
+
 		Number value;
 		if (text.indexOf('.') > 0) {
 			value = parseDecimal(text);
@@ -65,13 +87,21 @@ public class NumberUtil {
 			else if (text.startsWith("0X")) {
 				String substring = text.substring(2);
 				if (substring.isEmpty()) return 0;
-				value = Integer.parseInt(substring, 16);
+				try {
+					value = Integer.parseInt(substring, 16);
+				} catch (NumberFormatException ex) {
+					value = Long.parseLong(substring, 16);
+				}
 			} else if (text.endsWith("F"))
 				value = Float.parseFloat(text.substring(0, text.indexOf("F")));
 			else if (text.endsWith("D") || text.contains("."))
 				value = Double.parseDouble(text.substring(0, text.indexOf("D")));
 			else
-				value = Integer.parseInt(text);
+				try {
+					value = Integer.parseInt(text);
+				} catch (NumberFormatException ex) {
+					value = Long.parseLong(text);
+				}
 		}
 		return value;
 	}

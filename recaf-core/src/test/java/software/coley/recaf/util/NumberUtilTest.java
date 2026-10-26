@@ -34,6 +34,16 @@ class NumberUtilTest {
 		assertEquals(0L, NumberUtil.parse("0xL"));
 		assertEquals(0, NumberUtil.parse("0x0"));
 		assertEquals(0L, NumberUtil.parse("0x0L"));
+
+		assertEquals(99999999999L, NumberUtil.parse("99999999999"));
+		assertEquals(0xFFFFFFFFFFL, NumberUtil.parse("0xFFFFFFFFFF"));
+
+		assertEquals(Double.NaN, NumberUtil.parse("NaN"));
+		assertEquals(Double.POSITIVE_INFINITY, NumberUtil.parse("Infinity"));
+		assertEquals(Double.NEGATIVE_INFINITY, NumberUtil.parse("-Infinity"));
+		assertEquals(Float.NaN, NumberUtil.parse("NaNF"));
+		assertEquals(Float.POSITIVE_INFINITY, NumberUtil.parse("InfinityF"));
+		assertEquals(Float.NEGATIVE_INFINITY, NumberUtil.parse("-InfinityF"));
 	}
 
 	@Test
