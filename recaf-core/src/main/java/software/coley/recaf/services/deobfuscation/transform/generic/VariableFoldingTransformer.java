@@ -748,12 +748,13 @@ public class VariableFoldingTransformer implements JvmClassTransformer {
 		if (writesX.first().offset >= storeIndexY)
 			return false;
 
-		// Propagate the copy fact from this definition until a later write to Y kills it.
+		// Propagate from method entry so uses reached by a path that bypasses this definition cannot be folded.
 		//
 		// State values are bitmasks:
 		//   0b0000 means unreachable
 		//   0b0010 means the source was changed
 		//   0b0100 means the target was killed
+		//   0b1000 means this path has not executed the copy store
 		//
 		// Multiple bits mean paths with different states merged at a control-flow join,
 		// such as one path reading Y before another path overwrites it. Examples:
@@ -792,29 +793,45 @@ public class VariableFoldingTransformer implements JvmClassTransformer {
 		final int validState = 1;
 		final int sourceChangedState = 1 << 1;
 		final int targetKilledState = 1 << 2;
+		final int bypassedStoreState = 1 << 3;
 		int size = instructions.size();
 		int[] state = new int[size];
 
-		// Add initial successors of store Y to the queue and mark them as unchanged.
+		// Start before the copy definition. A read reached while this state is present has an incoming path that
+		// bypasses the copy, such as an exception handler reached from an instruction before the store.
 		Deque<Integer> unprocessed = new ArrayDeque<>();
-		for (int s : successorMap.getOrDefault(storeIndexY, emptyList())) {
-			state[s] |= validState;
-			unprocessed.add(s);
-		}
+		state[0] = bypassedStoreState;
+		unprocessed.add(0);
 
-		// Follow only the part of the graph where this particular definition still reaches Y.
+		// Track bypass paths alongside the copy definition so joins can reject reads not dominated by the store.
 		while (!unprocessed.isEmpty()) {
 			int i = unprocessed.poll();
 			AbstractInsnNode insn = instructions.get(i);
 			int op = insn.getOpcode();
 			int currentState = state[i];
+
+			// Executing the copy store establishes the fact on every path reaching it, including paths that
+			// previously bypassed the definition.
+			if (i == storeIndexY) {
+				for (int s : successorMap.getOrDefault(i, emptyList())) {
+					int oldState = state[s];
+					int newState = oldState | validState;
+					if (newState != oldState) {
+						state[s] = newState;
+						unprocessed.add(s);
+					}
+				}
+				continue;
+			}
+
 			boolean copyIsValid = (currentState & validState) != 0;
 			boolean sourceChanged = (currentState & sourceChangedState) != 0;
 			boolean targetKilled = (currentState & targetKilledState) != 0;
+			boolean bypassedStore = (currentState & bypassedStoreState) != 0;
 
 			// IINC reads Y before writing it, so it can be remapped when safe, but it kills the copy afterward.
 			if (typeSort == Type.INT && insn instanceof IincInsnNode iinc && iinc.var == slotY) {
-				if (sourceChanged || (copyIsValid && targetKilled))
+				if (bypassedStore || sourceChanged || (copyIsValid && targetKilled))
 					return false;
 				if (copyIsValid)
 					foldableReads.add(i);
@@ -845,7 +862,7 @@ public class VariableFoldingTransformer implements JvmClassTransformer {
 
 			// A matching load from Y consumes the value defined by this copy.
 			if (insn instanceof VarInsnNode variable && variable.var == slotY && isMatchingLoad(typeSort, op)) {
-				if (sourceChanged || (copyIsValid && targetKilled))
+				if (bypassedStore || sourceChanged || (copyIsValid && targetKilled))
 					return false;
 				if (copyIsValid)
 					foldableReads.add(i);

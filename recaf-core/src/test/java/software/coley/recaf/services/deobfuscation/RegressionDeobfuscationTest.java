@@ -823,6 +823,55 @@ public class RegressionDeobfuscationTest extends TransformerTestBase {
 	}
 
 	/**
+	 * A handler can be reached both before and after a redundant copy store. The handler load must keep using
+	 * the target local because the source local is not initialized on the pre-store exception path.
+	 */
+	@Test
+	void variableFoldingDoesNotUseCopySourceAcrossBypassExceptionPath() {
+		compileFull("Example", """
+				class Example {
+				    static String create(boolean shouldThrow) {
+				        if (shouldThrow) throw new IllegalStateException();
+				        return "source";
+				    }
+				    static void maybeThrow(boolean shouldThrow) {
+				        if (shouldThrow) throw new IllegalStateException();
+				    }
+				    static String throwBeforeCopy() {
+				        String copy = null;
+				        try {
+				            String source = create(true);
+				            copy = source;
+				            maybeThrow(false);
+				        } catch (IllegalStateException ignored) {
+				            return copy;
+				        }
+				        return copy;
+				    }
+				    static String throwAfterCopy() {
+				        String copy = null;
+				        try {
+				            String source = create(false);
+				            copy = source;
+				            maybeThrow(true);
+				        } catch (IllegalStateException ignored) {
+				            return copy;
+				        }
+				        return copy;
+				    }
+				}
+				""");
+
+		assertNull(invokeStatic("Example", "throwBeforeCopy", "Example"));
+		assertEquals("source", invokeStatic("Example", "throwAfterCopy", "Example"));
+
+		transformAndApply(List.of(VariableFoldingTransformer.class));
+
+		assertNull(invokeStatic("Example", "throwBeforeCopy", "Example"));
+		assertEquals("source", invokeStatic("Example", "throwAfterCopy", "Example"));
+	}
+
+	/**
 	 * If {@link ReInterpreter#merge(ReValue, ReValue)} is implemented incorrectly, some transformers relying on
 	 * frame analysis with {@link ReValue} contents may incorrectly assume they should make optimizations.
 	 * <p>
