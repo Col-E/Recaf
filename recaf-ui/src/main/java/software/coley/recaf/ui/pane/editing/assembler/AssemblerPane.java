@@ -18,6 +18,8 @@ import me.darknet.assembler.compiler.ClassResult;
 import me.darknet.assembler.error.Diagnostic;
 import me.darknet.assembler.error.Outcome;
 import me.darknet.assembler.parser.Token;
+import me.darknet.assembler.query.AssemblyQueries;
+import me.darknet.assembler.query.resolution.Resolution;
 import me.darknet.assembler.target.TargetContext;
 import me.darknet.assembler.util.Location;
 import org.fxmisc.richtext.CodeArea;
@@ -28,6 +30,8 @@ import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.InnerClassInfo;
 import software.coley.recaf.info.member.ClassMember;
+import software.coley.recaf.path.AssemblerPathData;
+import software.coley.recaf.path.AssemblerPathNode;
 import software.coley.recaf.path.ClassMemberPathNode;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.DirectoryPathNode;
@@ -39,6 +43,7 @@ import software.coley.recaf.services.cell.CellConfigurationService;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.inheritance.InheritanceGraphService;
 import software.coley.recaf.services.navigation.ClassNavigable;
+import software.coley.recaf.services.navigation.NavigationHistoryService;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
 import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.ui.LanguageStylesheets;
@@ -86,6 +91,7 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 
 	private final AssemblerPipelineManager pipelineManager;
 	private final AssemblerToolTabs assemblerToolTabs;
+	private final NavigationHistoryService navigationHistoryService;
 	private final WorkspaceSaveService saveService;
 	private final ProblemTracking problemTracking = new ProblemTracking();
 	private final Editor editor = new Editor();
@@ -101,6 +107,7 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 	public AssemblerPane(@Nonnull AssemblerPipelineManager pipelineManager,
 	                     @Nonnull AssemblerToolTabs assemblerToolTabs,
 	                     @Nonnull AssemblerContextActionSupport contextActionSupport,
+	                     @Nonnull NavigationHistoryService navigationHistoryService,
 	                     @Nonnull SearchBar searchBar,
 	                     @Nonnull KeybindingConfig keys,
 	                     @Nonnull SideTabsInjector sideTabsInjector,
@@ -115,6 +122,7 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 
 		this.pipelineManager = pipelineManager;
 		this.assemblerToolTabs = assemblerToolTabs;
+		this.navigationHistoryService = navigationHistoryService;
 		this.saveService = saveService;
 
 		assemblerToolTabs.setOwner(this);
@@ -174,6 +182,7 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 		// update them when a method is selected. We do so by tracking the caret position for being within the
 		// range of one of the methods in the last AST model.
 		Box<PathNode<?>> lastPathBox = new Box<>();
+		Box<PathNode<?>> lastHistoryPathBox = new Box<>();
 		Box<ClassResult<?>> lastResultBox = new Box<>();
 		editor.getCaretPosEventStream().addObserver(e -> {
 			if (lastConcreteAst == null)
@@ -199,11 +208,19 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 						PathNode<?> prior = lastPathBox.get();
 						if (classMember != null) {
 							ClassMemberPathNode memberPath = classPath.child(classMember);
+							if (!Objects.equals(lastHistoryPathBox.get(), memberPath)) {
+								lastHistoryPathBox.set(memberPath);
+								recordAssemblerHistory(classPath, caret);
+							}
 							if (!Objects.equals(prior, memberPath)) {
 								lastPathBox.set(memberPath);
 								eachChild(UpdatableNavigable.class, c -> c.onUpdatePath(memberPath));
 							}
 						} else {
+							if (!Objects.equals(lastHistoryPathBox.get(), classPath)) {
+								lastHistoryPathBox.set(classPath);
+								recordAssemblerHistory(classPath, caret);
+							}
 							if (!Objects.equals(prior, classPath)) {
 								lastPathBox.set(classPath);
 								eachChild(UpdatableNavigable.class, c -> c.onUpdatePath(classPath));
@@ -216,6 +233,10 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 							eachChild(AssemblerBuildConsumer.class, c -> c.consumeClass(lastResult, lastAssembledClass));
 						}
 						return;
+					}
+					if (astClass.range().within(caret) && !Objects.equals(lastHistoryPathBox.get(), classPath)) {
+						lastHistoryPathBox.set(classPath);
+						recordAssemblerHistory(classPath, caret);
 					}
 				}
 			}
@@ -233,9 +254,41 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 	 * 		The given path.
 	 */
 	private void lateInitForMethod(@Nonnull ClassMemberPathNode memberPathNode) {
+		Box<PathNode<?>> lastHistoryPathBox = new Box<>();
+		editor.getCaretPosEventStream().addObserver(e -> {
+			if (lastConcreteAst == null || Objects.equals(lastHistoryPathBox.get(), memberPathNode))
+				return;
+			lastHistoryPathBox.set(memberPathNode);
+			recordAssemblerHistory(memberPathNode, editor.getCodeArea().getCaretPosition());
+		});
+
 		// Common init
 		assemblerToolTabs.onUpdatePath(memberPathNode);
 		lateInit();
+	}
+
+	/**
+	 * Records the current assembler state in the navigation history.
+	 *
+	 * @param path
+	 * 		Path to record.
+	 * @param caret
+	 * 		Caret position to resolve the current assembler state.
+	 */
+	private void recordAssemblerHistory(@Nonnull PathNode<?> path, int caret) {
+		if (lastConcreteAst == null)
+			return;
+
+		ClassInfo classInfo = path.getValueOfType(ClassInfo.class);
+		if (classInfo == null)
+			return;
+
+		TargetContext targetContext = classInfo.isAndroidClass()
+				? DalvikTargetContext.INSTANCE
+				: JvmTargetContext.INSTANCE;
+		Resolution resolution = AssemblyQueries.resolveAt(lastConcreteAst, caret, targetContext);
+		AssemblerPathData data = new AssemblerPathData(editor, resolution);
+		navigationHistoryService.record(new AssemblerPathNode(path, data));
 	}
 
 	@Override

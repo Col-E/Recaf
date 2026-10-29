@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import software.coley.recaf.path.AssemblerPathNode;
 import software.coley.recaf.path.ClassMemberPathNode;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.IncompletePathException;
@@ -136,13 +137,16 @@ public class NavigationHistoryService implements Service {
 				cursor = targetIndex;
 			}
 
-			// Navigate to the declaration.
+			// Navigate to the declaration or reopen the assembler when the entry originated there.
 			// If the path is incomplete, then remove it from history and try the next entry in the history.
 			try {
 				// Mark that we are replaying a navigation event,
 				// so that we don't record the navigation event in history.
 				replaying = true;
-				actions.gotoDeclaration(currentPath);
+				if (currentPath instanceof AssemblerPathNode assemblerPath)
+					actions.openAssembler(assemblerPath.getParent());
+				else
+					actions.gotoDeclaration(currentPath);
 				return true;
 			} catch (IncompletePathException ignored) {
 				removeAt(targetIndex);
@@ -189,12 +193,15 @@ public class NavigationHistoryService implements Service {
 	/**
 	 * Fetches a fresh path for the given path. This is necessary because we may be operating on an old path
 	 * with outdated contents, so navigating to it may show outdated information.
-	 * @param path Recorded path, either a class or class member path.
+	 * @param path Recorded class, class member, or assembler path.
 	 * @return Current path, or {@code null} when the path no longer exists.
 	 */
 	@Nullable
 	private static PathNode<?> resolveCurrent(@Nonnull PathNode<?> path) {
-		if (path instanceof ClassMemberPathNode memberPath) {
+		if (path instanceof AssemblerPathNode assemblerPath) {
+			PathNode<?> currentParentPath = resolveCurrent(assemblerPath.getParent());
+			return currentParentPath == null ? null : new AssemblerPathNode(currentParentPath, assemblerPath.getValue());
+		} else if (path instanceof ClassMemberPathNode memberPath) {
 			ClassPathNode parentPath = memberPath.getParent();
 			if (parentPath == null)
 				return null;
@@ -237,7 +244,7 @@ public class NavigationHistoryService implements Service {
 	}
 
 	private static boolean isSupported(@Nonnull PathNode<?> path) {
-		return path instanceof ClassPathNode || path instanceof ClassMemberPathNode;
+		return path instanceof AssemblerPathNode || path instanceof ClassPathNode || path instanceof ClassMemberPathNode;
 	}
 
 	@Nonnull

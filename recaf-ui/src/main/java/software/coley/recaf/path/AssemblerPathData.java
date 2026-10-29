@@ -14,5 +14,4 @@ import software.coley.recaf.ui.control.richtext.Editor;
  *
  * @author Matt Coley
  */
-public record AssemblerPathData(@Nonnull Editor editor, @Nonnull Resolution resolution) {
-}
+public record AssemblerPathData(@Nonnull Editor editor, @Nonnull Resolution resolution) {}
