@@ -75,7 +75,15 @@ public class TransformationPresetManager implements Service {
 		return switch (raw) {
 			case Number number when (type == int.class || type == Integer.class) -> number.intValue();
 			case Boolean bool when (type == boolean.class || type == Boolean.class) -> bool;
+			case Enum<?> enumValue when type.isInstance(enumValue) -> enumValue;
 			case String string when type == String.class -> string;
+			case String string when type.isEnum() -> {
+				Object defaultValue = definition.defaultValue();
+				for (Object constant : type.getEnumConstants())
+					if (constant instanceof Enum<?> enumConstant && enumConstant.name().equals(string))
+						yield constant;
+				yield defaultValue;
+			}
 			case null, default -> definition.defaultValue();
 		};
 	}
