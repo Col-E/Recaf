@@ -1,6 +1,7 @@
 package software.coley.recaf.services.transform;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -17,6 +18,32 @@ public interface ClassTransformer {
 	 */
 	@Nonnull
 	String identifier();
+
+	/**
+	 * The default key is {@code deobf.<identifier>.description}.
+	 *
+	 * @return Translation key used for this transformer's localized description.
+	 */
+	@Nonnull
+	default String descriptionKey() {
+		return "deobf." + identifier() + ".description";
+	}
+
+	/**
+	 * @return Java source showing the class before transformation, or {@code null} when no before example is available.
+	 */
+	@Nullable
+	default String beforeExample() {
+		return null;
+	}
+
+	/**
+	 * @return Java source showing the class after transformation, or {@code null} when no after example is available.
+	 */
+	@Nullable
+	default String afterExample() {
+		return null;
+	}
 
 	/**
 	 * @return {@code true} if this transformer should not be applied to following passes if in the current pass it reports no work being done.

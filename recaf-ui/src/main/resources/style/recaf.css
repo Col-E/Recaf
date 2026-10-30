@@ -614,9 +614,6 @@ Text {
   -color-button-border-pressed: transparent;
   -fx-effect: none;
 }
-.button.flat:hover {
-  -fx-underline: true;
-}
 .button.small {
   -fx-padding: 4.2857142857px 8.5714285714px 4.2857142857px 8.5714285714px;
   -fx-font-size: 0.8em;
