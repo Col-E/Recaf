@@ -44,6 +44,24 @@ public class IllegalAnnotationRemovingTransformer implements JvmClassTransformer
 		return IDENTIFIER;
 	}
 
+	@Nonnull
+	@Override
+	public String beforeExample() {
+		return """
+				@Bogus(void value = "what?") // Annotation with 'void' element type is illegal.
+				class Example {}
+				""";
+	}
+
+	@Nonnull
+	@Override
+	public String afterExample() {
+		return """
+				// Any invalid annotations are removed.
+				class Example {}
+				""";
+	}
+
 	@Override
 	public boolean pruneAfterNoWork() {
 		// Other transformers should not introduce junk annotations,

@@ -196,6 +196,35 @@ public class StaticValueInliningTransformer implements JvmClassTransformer {
 
 	@Nonnull
 	@Override
+	public String beforeExample() {
+		return """
+				static final int foo = "abc".length();
+				
+				void foo() {
+				  if (foo > 0) {
+				    System.out.println("Hello world");
+				  }
+				}
+				""";
+	}
+
+	@Nonnull
+	@Override
+	public String afterExample() {
+		return """
+				static final int foo = "abc".length();
+				
+				void foo() {
+				  // The static field read is inlined, which you could further clean up with other transformers.
+				  if (3 > 0) {
+				    System.out.println("Hello world");
+				  }
+				}
+				""";
+	}
+
+	@Nonnull
+	@Override
 	public Set<Class<? extends ClassTransformer>> dependencies() {
 		return Collections.singleton(StaticValueCollectionTransformer.class);
 	}

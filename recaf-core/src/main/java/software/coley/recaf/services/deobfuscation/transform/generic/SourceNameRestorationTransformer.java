@@ -54,4 +54,21 @@ public class SourceNameRestorationTransformer implements JvmClassTransformer {
 	public String identifier() {
 		return IDENTIFIER;
 	}
+
+	@Nonnull
+	@Override
+	public String beforeExample() {
+		return """
+				// SourceFile: "Example.java"
+				class A {}
+				""";
+	}
+
+	@Nonnull
+	@Override
+	public String afterExample() {
+		return """
+				class Example {}
+				""";
+	}
 }

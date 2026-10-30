@@ -62,6 +62,23 @@ public class LongExceptionRemovingTransformer implements JvmClassTransformer {
 
 	@Nonnull
 	@Override
+	public String beforeExample() {
+		return """
+				void foo() throws AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA {}
+				""";
+	}
+
+	@Nonnull
+	@Override
+	public String afterExample() {
+		return """
+				// Any long throws are removed. You can configure the max length of exceptions to keep.
+				void foo() {}
+				""";
+	}
+
+	@Nonnull
+	@Override
 	public List<TransformationParameter<?>> getParameterDefinitions() {
 		return List.of(MAX_LENGTH_PARAMETER);
 	}

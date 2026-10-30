@@ -819,7 +819,7 @@ public class DeobfuscationWindow extends RecafStage {
 				activeTransformerInfoPopover = null;
 		});
 		activeTransformerInfoPopover = popover;
-		popover.show(anchor); // TODO: This doesn't actually anchor it properly ffs.
+		popover.show(anchor);
 	}
 
 	/**

@@ -149,6 +149,27 @@ public class RedundantTryCatchRemovingTransformer implements JvmClassTransformer
 
 	@Nonnull
 	@Override
+	public String beforeExample() {
+		return """
+				// The try-catch is redundant since no code in the block can possibly throw the exception.
+				try {
+					return 5;
+				} catch (java.lang.NullPointerException ex) {
+					return -1;
+				}
+				""";
+	}
+
+	@Nonnull
+	@Override
+	public String afterExample() {
+		return """
+				return 5;
+				""";
+	}
+
+	@Nonnull
+	@Override
 	public List<TransformationParameter<?>> getParameterDefinitions() {
 		return List.of(DELETE_JUNK_WORKSPACE_EXCEPTIONS_PARAMETER);
 	}

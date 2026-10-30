@@ -90,6 +90,30 @@ public class KotlinNameRestorationTransformer implements JvmClassTransformer {
 
 	@Nonnull
 	@Override
+	public String beforeExample() {
+		return """
+				// Kotlin metadata is generally larger than this, but the key part is
+				// the d1 field which contains encoded data about the class.
+				@Metadata(mv = {1, 8, 0}, d1 = {"..."})
+				class AA {
+					int aaa;
+				}
+				""";
+	}
+
+	@Nonnull
+	@Override
+	public String afterExample() {
+		return """
+				// Depending on the contents, original names can be restored for the class, fields, and methods.
+				class BoxedInt {
+					int value;
+				}
+				""";
+	}
+
+	@Nonnull
+	@Override
 	public Set<Class<? extends ClassTransformer>> dependencies() {
 		return Collections.singleton(KotlinMetadataCollectionTransformer.class);
 	}

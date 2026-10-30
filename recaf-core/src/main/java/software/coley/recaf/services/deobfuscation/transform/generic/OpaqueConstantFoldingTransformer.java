@@ -1093,6 +1093,28 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 
 	@Nonnull
 	@Override
+	public String beforeExample() {
+		return """
+				// Foldable cases:
+				//   value * 1        ---> value
+				//   "##".length()    ---> 2
+				// Then:
+				//   32 / 2 - 16      ---> 0
+				//   value << 0       ---> value
+				return (input * 1) << (32 / "##".length() - 16);
+				""";
+	}
+
+	@Nonnull
+	@Override
+	public String afterExample() {
+		return """
+				return input;
+				""";
+	}
+
+	@Nonnull
+	@Override
 	public List<TransformationParameter<?>> getParameterDefinitions() {
 		return List.of(INLINE_STRING_CTORS_PARAMETER);
 	}

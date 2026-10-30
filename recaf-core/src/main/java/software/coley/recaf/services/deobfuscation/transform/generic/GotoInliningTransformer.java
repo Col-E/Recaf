@@ -327,6 +327,37 @@ public class GotoInliningTransformer implements JvmClassTransformer {
 
 	@Nonnull
 	@Override
+	public String beforeExample() {
+		return """
+				// Its not possible to use proper Java source to model pushing values onto the stack,
+				// but the idea is that what should be a simple linear flow gets shuffled around.
+				goto c;
+				a:
+				  ldc "Hello world"
+				  goto d;
+				b:
+				  invokevirtual java/io/PrintStream.println (Ljava/lang/String;)V
+				  return;
+				c:
+				  getstatic java/lang/System.out Ljava/io/PrintStream;
+				  goto a;
+				d:
+				  goto b;
+				""";
+	}
+
+	@Nonnull
+	@Override
+	public String afterExample() {
+		return """
+				// Without the goto instructions, the flow is linear and easy to follow.
+				System.out.println("Hello world");
+				return;
+				""";
+	}
+
+	@Nonnull
+	@Override
 	public List<TransformationParameter<?>> getParameterDefinitions() {
 		return List.of(BACKWARDS_SWITCH_FLOW_PARAMETER);
 	}

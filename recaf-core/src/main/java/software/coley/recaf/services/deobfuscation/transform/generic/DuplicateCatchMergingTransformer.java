@@ -154,6 +154,35 @@ public class DuplicateCatchMergingTransformer implements JvmClassTransformer {
 
 	@Nonnull
 	@Override
+	public String beforeExample() {
+		return """
+				try { ... }
+				catch (Exception t) {
+				    // This block is the same as the more generic 'Throwable' block below
+				    t.printStackTrace();
+				    throw t;
+				}
+				catch (Throwable t) {
+				    t.printStackTrace();
+				    throw t;
+				}
+				""";
+	}
+
+	@Nonnull
+	@Override
+	public String afterExample() {
+		return """
+				try { ... }
+				catch (Throwable t) {
+				    t.printStackTrace();
+				    throw t;
+				}
+				""";
+	}
+
+	@Nonnull
+	@Override
 	public List<TransformationParameter<?>> getParameterDefinitions() {
 		return List.of(MIN_BLOCK_THRESHOLD_PARAMETER);
 	}

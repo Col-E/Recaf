@@ -101,4 +101,32 @@ public class DashOpaqueSeedFoldingTransformer implements JvmClassTransformer, Co
 	public String identifier() {
 		return IDENTIFIER;
 	}
+
+	@Nonnull
+	@Override
+	public String beforeExample() {
+		return """
+				// The obfuscator generates methods which generate a positive number >= 1.
+				// Later, these int values are used as opaque predicates to determine if a string should be decrypted or not.
+				static int seed() {
+				    try {
+				        return new Random().nextInt(100) + 1;
+				    } catch (Exception e) {
+				        return -1;
+				    }
+				}
+				""";
+	}
+
+	@Nonnull
+	@Override
+	public String afterExample() {
+		return """
+				// The opaque predicate only relies on the number being positive, so we can just return a constant value.
+				// This makes the other transformers see the seed value as constant rather than non-deterministic.
+				static int seed() {
+				    return 5;
+				}
+				""";
+	}
 }

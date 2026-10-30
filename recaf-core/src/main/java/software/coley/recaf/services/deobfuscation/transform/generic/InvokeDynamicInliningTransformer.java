@@ -618,6 +618,28 @@ public class InvokeDynamicInliningTransformer implements JvmClassTransformer {
 		return IDENTIFIER;
 	}
 
+
+	@Nonnull
+	@Override
+	public String beforeExample() {
+		return """
+				// Not super easy to represent as Java source since there is no direct way to represent
+				// custom invokedynamic bootstrapping, but typically decompilers will emit something like this:
+				String s = "Hello world";
+				long l = 3239848925L;
+				DynamicLoookup.a("\\u00df", string, (long)4118739427681035372L, (long)l);
+				""";
+	}
+
+	@Nonnull
+	@Override
+	public String afterExample() {
+		return """
+				// The dynamic reference is decoded, and metadata arguments are discarded, leaving only the direct member call.
+				println("Hello world");
+				""";
+	}
+
 	@Nonnull
 	@Override
 	public List<TransformationParameter<?>> getParameterDefinitions() {

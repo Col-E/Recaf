@@ -489,4 +489,27 @@ public class OpaquePredicateFoldingTransformer implements JvmClassTransformer {
 	public String identifier() {
 		return IDENTIFIER;
 	}
+
+	@Nonnull
+	@Override
+	public String beforeExample() {
+		return """
+				if (1 + 1 == 2) {
+					System.out.println("Real code");
+				} else {
+					// This path will never be taken, but the obfuscator made it look like it could be
+					// by making the condition a little more complex than a stupid '1 + 1 == 2' or 'if (true)' check.
+					System.out.println("Dead code");
+				}
+				""";
+	}
+
+	@Nonnull
+	@Override
+	public String afterExample() {
+		return """
+				// The always-taken conditional becomes a 'goto' which decompilers can generally handle and clean up.
+				System.out.println("Real code");
+				""";
+	}
 }

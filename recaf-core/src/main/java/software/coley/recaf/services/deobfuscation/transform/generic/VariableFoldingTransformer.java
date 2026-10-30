@@ -969,6 +969,30 @@ public class VariableFoldingTransformer implements JvmClassTransformer {
 		return IDENTIFIER;
 	}
 
+	@Nonnull
+	@Override
+	public String beforeExample() {
+		return """
+				int get(int i) {
+				    int j = i; // Junk intermediate copy
+				    int k = j;
+				    k++; // Junk operations on copies of copies
+				    j = 0 - i;
+				    return i;
+				}
+				""";
+	}
+
+	@Nonnull
+	@Override
+	public String afterExample() {
+		return """
+				int get(int i) {
+				    return i;
+				}
+				""";
+	}
+
 	/**
 	 * @param slot
 	 * 		Variable index.

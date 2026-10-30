@@ -1534,6 +1534,28 @@ public class ZkmDecryptionCleanupTransformer implements JvmClassTransformer {
 
 	@Nonnull
 	@Override
+	public String beforeExample() {
+		return """
+				// ZKM generates a large blob of code in the static initializer and inserts a few helper methods.
+				// We just delete them once the inliner has turned the dynamic sites into direct calls.
+				static {
+				    // Component wiring code...
+				}
+				static String decode(int key) { ... }
+				static int mapKey(int foo) { ... }
+				""";
+	}
+
+	@Nonnull
+	@Override
+	public String afterExample() {
+		return """
+				// Nothing, ideally.
+				""";
+	}
+
+	@Nonnull
+	@Override
 	public Set<Class<? extends ClassTransformer>> recommendedPredecessors() {
 		// Cleanup is only meaningful once the inliner has turned ZKM's dynamic sites into direct calls. This
 		// ordering is also why the inliner's presence is treated as a hard precondition throughout.

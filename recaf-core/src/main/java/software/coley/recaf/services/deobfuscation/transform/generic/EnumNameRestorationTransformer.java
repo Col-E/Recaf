@@ -137,4 +137,32 @@ public class EnumNameRestorationTransformer implements JvmClassTransformer {
 	public String identifier() {
 		return IDENTIFIER;
 	}
+
+	@Nonnull
+	@Override
+	public String beforeExample() {
+		return """
+				enum ObfuscatedEnum {
+					A, B, C;
+				
+					// Obfuscator renamed the enum constants, but the static initializer still leaks their original names.
+					// since enum constants are constructed with a String name and int ordinal.
+					static {
+						A = new ObfuscatedEnum("First", 0);
+						B = new ObfuscatedEnum("Second", 1);
+						C = new ObfuscatedEnum("Third", 2);
+					}
+				}
+				""";
+	}
+
+	@Nonnull
+	@Override
+	public String afterExample() {
+		return """
+				class ObfuscatedEnum {
+					FIRST, SECOND, THIRD;
+				}
+				""";
+	}
 }

@@ -194,6 +194,29 @@ public class DeadCodeRemovingTransformer implements JvmClassTransformer {
 		return IDENTIFIER;
 	}
 
+	@Nonnull
+	@Override
+	public String beforeExample() {
+		return """
+				goto after; // Java doesn't have 'goto' in source, but this is the general idea
+				dead:
+				  System.out.println("Dead code");
+				after:
+				  return;
+				""";
+	}
+
+	@Nonnull
+	@Override
+	public String afterExample() {
+		return """
+				goto after;
+				// Dead block removed
+				after:
+				  return;
+				""";
+	}
+
 	record TryCatch(@Nonnull TryCatchBlockNode block, @Nonnull List<AbstractInsnNode> visitedInstructions) {
 		boolean hasInsn(@Nonnull AbstractInsnNode insn) {
 			return visitedInstructions.contains(insn);

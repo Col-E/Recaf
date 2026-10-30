@@ -209,6 +209,24 @@ public class CallResultInliningTransformer implements JvmClassTransformer {
 
 	@Nonnull
 	@Override
+	public String beforeExample() {
+		return """
+				// Assuming 'xor(String, int)' is a static method, and the inputs are known
+				// the result is also effectively known, so the call can be replaced with the result.
+				return xor("Idmmn!vnsme", 0x010101);
+				""";
+	}
+
+	@Nonnull
+	@Override
+	public String afterExample() {
+		return """
+				return "Hello world";
+				""";
+	}
+
+	@Nonnull
+	@Override
 	public List<TransformationParameter<?>> getParameterDefinitions() {
 		return List.of(MAX_STEPS_PARAMETER, EVALUATE_CLASS_INITIALIZERS_PARAMETER);
 	}

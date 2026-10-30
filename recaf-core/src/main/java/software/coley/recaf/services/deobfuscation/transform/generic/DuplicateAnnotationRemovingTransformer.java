@@ -44,6 +44,26 @@ public class DuplicateAnnotationRemovingTransformer implements JvmClassTransform
 		return IDENTIFIER;
 	}
 
+	@Nonnull
+	@Override
+	public String beforeExample() {
+		return """
+				@Foo
+				@Foo // Redundant copies after the first are invalid.
+				@Foo
+				class Example {}
+				""";
+	}
+
+	@Nonnull
+	@Override
+	public String afterExample() {
+		return """
+				@Foo
+				class Example {}
+				""";
+	}
+
 	@Override
 	public boolean pruneAfterNoWork() {
 		// Other transformers should not introduce duplicate annotations,
