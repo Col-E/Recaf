@@ -135,6 +135,7 @@ public final class ArrayValueMutableImpl implements ArrayValue {
 				|| value instanceof ObjectValue object && object.isNull());
 	}
 
+	@Nonnull
 	@Override
 	public ReValue mergeWith(@Nonnull ReValue other) throws IllegalValueException {
 		if (other == UninitializedValue.UNINITIALIZED_VALUE)

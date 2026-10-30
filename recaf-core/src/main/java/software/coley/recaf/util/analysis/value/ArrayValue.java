@@ -18,36 +18,36 @@ import java.util.OptionalInt;
  * @author Matt Coley
  */
 public interface ArrayValue extends ObjectValue {
-	ArrayValue VAL_BOOLEANS = new ArrayValueImpl(Type.getType("[Z"), Nullness.NOT_NULL);
-	ArrayValue VAL_BOOLEANS_NULL = new ArrayValueImpl(Type.getType("[Z"), Nullness.NULL);
-	ArrayValue VAL_BOOLEANS_MAYBE_NULL = new ArrayValueImpl(Type.getType("[Z"), Nullness.UNKNOWN);
-	ArrayValue VAL_CHARS = new ArrayValueImpl(Type.getType("[C"), Nullness.NOT_NULL);
-	ArrayValue VAL_CHARS_NULL = new ArrayValueImpl(Type.getType("[C"), Nullness.NULL);
-	ArrayValue VAL_CHARS_MAYBE_NULL = new ArrayValueImpl(Type.getType("[C"), Nullness.UNKNOWN);
-	ArrayValue VAL_BYTES = new ArrayValueImpl(Type.getType("[B"), Nullness.NOT_NULL);
-	ArrayValue VAL_BYTES_NULL = new ArrayValueImpl(Type.getType("[B"), Nullness.NULL);
-	ArrayValue VAL_BYTES_MAYBE_NULL = new ArrayValueImpl(Type.getType("[B"), Nullness.UNKNOWN);
-	ArrayValue VAL_SHORTS = new ArrayValueImpl(Type.getType("[S"), Nullness.NOT_NULL);
-	ArrayValue VAL_SHORTS_NULL = new ArrayValueImpl(Type.getType("[S"), Nullness.NULL);
-	ArrayValue VAL_SHORTS_MAYBE_NULL = new ArrayValueImpl(Type.getType("[S"), Nullness.UNKNOWN);
-	ArrayValue VAL_INTS = new ArrayValueImpl(Type.getType("[I"), Nullness.NOT_NULL);
-	ArrayValue VAL_INTS_NULL = new ArrayValueImpl(Type.getType("[I"), Nullness.NULL);
-	ArrayValue VAL_INTS_MAYBE_NULL = new ArrayValueImpl(Type.getType("[I"), Nullness.UNKNOWN);
-	ArrayValue VAL_FLOATS = new ArrayValueImpl(Type.getType("[F"), Nullness.NOT_NULL);
-	ArrayValue VAL_FLOATS_NULL = new ArrayValueImpl(Type.getType("[F"), Nullness.NULL);
-	ArrayValue VAL_FLOATS_MAYBE_NULL = new ArrayValueImpl(Type.getType("[F"), Nullness.UNKNOWN);
-	ArrayValue VAL_DOUBLES = new ArrayValueImpl(Type.getType("[D"), Nullness.NOT_NULL);
-	ArrayValue VAL_DOUBLES_NULL = new ArrayValueImpl(Type.getType("[D"), Nullness.NULL);
-	ArrayValue VAL_DOUBLES_MAYBE_NULL = new ArrayValueImpl(Type.getType("[D"), Nullness.UNKNOWN);
-	ArrayValue VAL_LONGS = new ArrayValueImpl(Type.getType("[J"), Nullness.NOT_NULL);
-	ArrayValue VAL_LONGS_NULL = new ArrayValueImpl(Type.getType("[J"), Nullness.NULL);
-	ArrayValue VAL_LONGS_MAYBE_NULL = new ArrayValueImpl(Type.getType("[J"), Nullness.UNKNOWN);
-	ArrayValue VAL_OBJECTS = new ArrayValueImpl(Type.getType("[Ljava/lang/Object;"), Nullness.NOT_NULL);
-	ArrayValue VAL_OBJECTS_NULL = new ArrayValueImpl(Type.getType("[Ljava/lang/Object;"), Nullness.NULL);
-	ArrayValue VAL_OBJECTS_MAYBE_NULL = new ArrayValueImpl(Type.getType("[Ljava/lang/Object;"), Nullness.UNKNOWN);
-	ArrayValue VAL_STRINGS = new ArrayValueImpl(Type.getType("[Ljava/lang/String;"), Nullness.NOT_NULL);
-	ArrayValue VAL_STRINGS_NULL = new ArrayValueImpl(Type.getType("[Ljava/lang/String;"), Nullness.NULL);
-	ArrayValue VAL_STRINGS_MAYBE_NULL = new ArrayValueImpl(Type.getType("[Ljava/lang/String;"), Nullness.UNKNOWN);
+	ArrayValue VAL_BOOLEANS = new ArrayValueImpl(Types.ARRAY_1D_BOOLEAN, Nullness.NOT_NULL);
+	ArrayValue VAL_BOOLEANS_NULL = new ArrayValueImpl(Types.ARRAY_1D_BOOLEAN, Nullness.NULL);
+	ArrayValue VAL_BOOLEANS_MAYBE_NULL = new ArrayValueImpl(Types.ARRAY_1D_BOOLEAN, Nullness.UNKNOWN);
+	ArrayValue VAL_CHARS = new ArrayValueImpl(Types.ARRAY_1D_CHAR, Nullness.NOT_NULL);
+	ArrayValue VAL_CHARS_NULL = new ArrayValueImpl(Types.ARRAY_1D_CHAR, Nullness.NULL);
+	ArrayValue VAL_CHARS_MAYBE_NULL = new ArrayValueImpl(Types.ARRAY_1D_CHAR, Nullness.UNKNOWN);
+	ArrayValue VAL_BYTES = new ArrayValueImpl(Types.ARRAY_1D_BYTE, Nullness.NOT_NULL);
+	ArrayValue VAL_BYTES_NULL = new ArrayValueImpl(Types.ARRAY_1D_BYTE, Nullness.NULL);
+	ArrayValue VAL_BYTES_MAYBE_NULL = new ArrayValueImpl(Types.ARRAY_1D_BYTE, Nullness.UNKNOWN);
+	ArrayValue VAL_SHORTS = new ArrayValueImpl(Types.ARRAY_1D_SHORT, Nullness.NOT_NULL);
+	ArrayValue VAL_SHORTS_NULL = new ArrayValueImpl(Types.ARRAY_1D_SHORT, Nullness.NULL);
+	ArrayValue VAL_SHORTS_MAYBE_NULL = new ArrayValueImpl(Types.ARRAY_1D_SHORT, Nullness.UNKNOWN);
+	ArrayValue VAL_INTS = new ArrayValueImpl(Types.ARRAY_1D_INT, Nullness.NOT_NULL);
+	ArrayValue VAL_INTS_NULL = new ArrayValueImpl(Types.ARRAY_1D_INT, Nullness.NULL);
+	ArrayValue VAL_INTS_MAYBE_NULL = new ArrayValueImpl(Types.ARRAY_1D_INT, Nullness.UNKNOWN);
+	ArrayValue VAL_FLOATS = new ArrayValueImpl(Types.ARRAY_1D_FLOAT, Nullness.NOT_NULL);
+	ArrayValue VAL_FLOATS_NULL = new ArrayValueImpl(Types.ARRAY_1D_FLOAT, Nullness.NULL);
+	ArrayValue VAL_FLOATS_MAYBE_NULL = new ArrayValueImpl(Types.ARRAY_1D_FLOAT, Nullness.UNKNOWN);
+	ArrayValue VAL_DOUBLES = new ArrayValueImpl(Types.ARRAY_1D_DOUBLE, Nullness.NOT_NULL);
+	ArrayValue VAL_DOUBLES_NULL = new ArrayValueImpl(Types.ARRAY_1D_DOUBLE, Nullness.NULL);
+	ArrayValue VAL_DOUBLES_MAYBE_NULL = new ArrayValueImpl(Types.ARRAY_1D_DOUBLE, Nullness.UNKNOWN);
+	ArrayValue VAL_LONGS = new ArrayValueImpl(Types.ARRAY_1D_LONG, Nullness.NOT_NULL);
+	ArrayValue VAL_LONGS_NULL = new ArrayValueImpl(Types.ARRAY_1D_LONG, Nullness.NULL);
+	ArrayValue VAL_LONGS_MAYBE_NULL = new ArrayValueImpl(Types.ARRAY_1D_LONG, Nullness.UNKNOWN);
+	ArrayValue VAL_OBJECTS = new ArrayValueImpl(Types.ARRAY_1D_OBJECT, Nullness.NOT_NULL);
+	ArrayValue VAL_OBJECTS_NULL = new ArrayValueImpl(Types.ARRAY_1D_OBJECT, Nullness.NULL);
+	ArrayValue VAL_OBJECTS_MAYBE_NULL = new ArrayValueImpl(Types.ARRAY_1D_OBJECT, Nullness.UNKNOWN);
+	ArrayValue VAL_STRINGS = new ArrayValueImpl(Types.ARRAY_1D_STRING, Nullness.NOT_NULL);
+	ArrayValue VAL_STRINGS_NULL = new ArrayValueImpl(Types.ARRAY_1D_STRING, Nullness.NULL);
+	ArrayValue VAL_STRINGS_MAYBE_NULL = new ArrayValueImpl(Types.ARRAY_1D_STRING, Nullness.UNKNOWN);
 
 	/**
 	 * @param type

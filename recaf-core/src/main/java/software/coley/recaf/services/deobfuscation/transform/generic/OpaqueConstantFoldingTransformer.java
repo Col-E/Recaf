@@ -29,6 +29,7 @@ import software.coley.recaf.services.transform.ClassTransformer;
 import software.coley.recaf.services.transform.JvmClassTransformer;
 import software.coley.recaf.services.transform.JvmTransformerContext;
 import software.coley.recaf.services.transform.TransformationException;
+import software.coley.recaf.services.transform.TransformationParameter;
 import software.coley.recaf.util.AsmInsnUtil;
 import software.coley.recaf.util.Types;
 import software.coley.recaf.util.analysis.ReFrame;
@@ -36,6 +37,7 @@ import software.coley.recaf.util.analysis.eval.EvaluationResult;
 import software.coley.recaf.util.analysis.eval.EvaluationYieldResult;
 import software.coley.recaf.util.analysis.eval.Evaluator;
 import software.coley.recaf.util.analysis.eval.FieldCacheManager;
+import software.coley.recaf.util.analysis.eval.InstancedObjectValue;
 import software.coley.recaf.util.analysis.lookup.BasicGetStaticLookup;
 import software.coley.recaf.util.analysis.lookup.BasicInvokeStaticLookup;
 import software.coley.recaf.util.analysis.lookup.BasicInvokeVirtualLookup;
@@ -49,10 +51,13 @@ import software.coley.recaf.util.analysis.value.LongValue;
 import software.coley.recaf.util.analysis.value.ObjectValue;
 import software.coley.recaf.util.analysis.value.ReValue;
 import software.coley.recaf.util.analysis.value.StringValue;
+import software.coley.recaf.util.analysis.value.Values;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -76,6 +81,12 @@ import static software.coley.recaf.util.AsmInsnUtil.*;
 public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 	/** Stable translation key for this transformer. */
 	public static final String IDENTIFIER = "peephole.data.constfold";
+
+	public static final String KEY_INLINE_STRING_CTORS = IDENTIFIER + ".inline-string-ctors";
+	private static final boolean DEFAULT_INLINE_STRING_CTORS = false;
+	private static final TransformationParameter<Boolean> INLINE_STRING_CTORS_PARAMETER =
+			new TransformationParameter<>(KEY_INLINE_STRING_CTORS, boolean.class, DEFAULT_INLINE_STRING_CTORS);
+
 	private static final int[] ARG_1_SIZE = new int[255];
 	private static final int[] ARG_2_SIZE = new int[255];
 	private static final GetStaticLookup STATIC_FIELD_LOOKUP = new BasicGetStaticLookup();
@@ -84,6 +95,7 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 	private final InheritanceGraphService graphService;
 	private InheritanceGraph inheritanceGraph;
 	private JvmTransformerContext context;
+	private boolean inlineStringConstructors;
 
 	@Inject
 	public OpaqueConstantFoldingTransformer(@Nonnull InheritanceGraphService graphService) {
@@ -94,6 +106,7 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 	public void setup(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace) {
 		this.context = context;
 
+		inlineStringConstructors = context.getParameters().getBoolean(KEY_INLINE_STRING_CTORS, DEFAULT_INLINE_STRING_CTORS);
 		inheritanceGraph = graphService.getOrCreateInheritanceGraph(workspace);
 	}
 
@@ -404,7 +417,8 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 				continue;
 
 			// Repeated unknown operations cannot become known by expanding the same straight-line chain.
-			ReValue resultValue = isReturn ?
+			StringValue foldedStringValue = inlineStringConstructors ? getKnownStringConstructorValue(instruction, frame) : null;
+			ReValue resultValue = foldedStringValue != null ? foldedStringValue : isReturn ?
 					frame.getStack(frame.getStackSize() - 1) :
 					nextFrame.getStack(nextFrame.getStackSize() - 1);
 			AbstractInsnNode nextInstruction = instruction.getNext();
@@ -428,6 +442,10 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 			boolean validSequence = true;
 			int netStackChange = 0;
 			int j = i;
+			boolean ignoreUnknownArrayState = foldedStringValue != null
+					&& unknownState >= 0
+					&& unknownState < i
+					&& isArrayStore(instructions.get(unknownState).getOpcode());
 			sequence.clear();
 			Map<Integer, ReValue> sequenceVarWrites = new HashMap<>();
 			while (j >= 0) {
@@ -437,7 +455,8 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 					sequence.add(insn);
 
 				// Abort if we've walked backwards into instructions where we observed an unknown stack state.
-				if (j < unknownState) {
+				// Arrays are a special case since they can be used to compute values, but the array itself is not known.
+				if (j < unknownState && !ignoreUnknownArrayState) {
 					// Move the unknown state forward since up to this point the stack is unbalanced
 					// and thus this point relies on the prior point.
 					unknownState = i;
@@ -454,7 +473,7 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 
 				// Abort if the sequence does something besides computing values. Folding replaces the whole sequence
 				// with a constant, which would delete the effect. Variable writes are handled below.
-				if (hasUnkeepableSideEffect(insn)) {
+				if (hasUnkeepableSideEffect(insn) && !(insn == instruction && foldedStringValue != null)) {
 					validSequence = false;
 					break;
 				}
@@ -507,7 +526,7 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 			// - Too small
 			// - The sequence isn't balanced, or requires a larger scope to include all "contributing" instructions
 			if (!validSequence || sequence.size() < 2
-					|| shouldContinueSequence(sequence)
+					|| shouldContinueSequence(sequence, foldedStringValue != null)
 					|| !isSelfContainedAroundArrayStores(sequence))
 				continue;
 
@@ -527,7 +546,7 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 			}
 
 			// Replace the operation with a constant value, or simplified instruction pattern.
-			ReValue topValue = isReturn ?
+			ReValue topValue = foldedStringValue != null ? foldedStringValue : isReturn ?
 					frame.getStack(frame.getStackSize() - 1) :
 					nextFrame.getStack(nextFrame.getStackSize() - 1);
 
@@ -733,16 +752,178 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 			return null;
 
 		return switch (producer) {
-			case LdcInsnNode ldc when ldc.cst instanceof String ->
-					Type.getObjectType("java/lang/String");
+			case LdcInsnNode ldc when ldc.cst instanceof String -> Type.getObjectType("java/lang/String");
 			case TypeInsnNode type when type.getOpcode() == CHECKCAST ->
 					type.desc.startsWith("[") ? Type.getType(type.desc) : Type.getObjectType(type.desc);
 			case FieldInsnNode field when field.getOpcode() == GETSTATIC || field.getOpcode() == GETFIELD ->
 					Type.getType(field.desc);
-			case MethodInsnNode method ->
-					Type.getReturnType(method.desc);
+			case MethodInsnNode method -> Type.getReturnType(method.desc);
 			default -> null;
 		};
+	}
+
+	/**
+	 * Resolves a supported {@code String} constructor when all inputs have known contents.
+	 *
+	 * @param instruction
+	 * 		Potential String constructor call.
+	 * @param frame
+	 * 		Stack frame before the constructor call.
+	 *
+	 * @return Known String value, or {@code null} when the constructor or any input is not supported.
+	 */
+	@Nullable
+	@SuppressWarnings({"deprecation", "OptionalGetWithoutIsPresent"})
+	private static StringValue getKnownStringConstructorValue(@Nonnull AbstractInsnNode instruction,
+	                                                          @Nonnull Frame<ReValue> frame) {
+		// Must be a: new String(...)
+		if (!(instruction instanceof MethodInsnNode constructor)
+				|| instruction.getOpcode() != INVOKESPECIAL
+				|| !constructor.owner.equals("java/lang/String")
+				|| !constructor.name.equals("<init>"))
+			return null;
+
+		// The receiver must be a String and the arguments must be known.
+		int argumentCount = Type.getArgumentCount(constructor.desc);
+		int receiverIndex = frame.getStackSize() - argumentCount - 1;
+		if (receiverIndex < 0
+				|| !(frame.getStack(receiverIndex) instanceof ObjectValue receiver)
+				|| !Types.STRING_TYPE.equals(receiver.type()) || !receiver.isNotNull())
+			return null;
+		int argumentsIndex = receiverIndex + 1;
+
+		// Resolve the constructor arguments to a known String value.
+		String text;
+		try {
+			text = switch (constructor.desc) {
+				case "(Ljava/lang/String;)V" -> Values.asStringOrNull(frame.getStack(argumentsIndex));
+				case "([C)V" -> {
+					char[] chars = Values.getKnownCharArray(frame.getStack(argumentsIndex));
+					yield chars == null ? null : new String(chars);
+				}
+				case "([CII)V" -> {
+					char[] chars = Values.getKnownCharArray(frame.getStack(argumentsIndex));
+					IntValue offset = getKnownIntValue(frame, argumentsIndex + 1);
+					IntValue count = getKnownIntValue(frame, argumentsIndex + 2);
+					yield chars == null || offset == null || count == null ? null :
+							new String(chars, offset.value().getAsInt(), count.value().getAsInt());
+				}
+				case "([III)V" -> {
+					int[] codePoints = Values.getKnownIntArray(frame.getStack(argumentsIndex));
+					IntValue offset = getKnownIntValue(frame, argumentsIndex + 1);
+					IntValue count = getKnownIntValue(frame, argumentsIndex + 2);
+					yield codePoints == null || offset == null || count == null ? null :
+							new String(codePoints, offset.value().getAsInt(), count.value().getAsInt());
+				}
+				case "([BI)V" -> {
+					byte[] bytes = Values.getKnownByteArray(frame.getStack(argumentsIndex));
+					IntValue highByte = getKnownIntValue(frame, argumentsIndex + 1);
+					yield bytes == null || highByte == null ? null :
+							new String(bytes, highByte.value().getAsInt());
+				}
+				case "([BIII)V" -> {
+					byte[] bytes = Values.getKnownByteArray(frame.getStack(argumentsIndex));
+					IntValue highByte = getKnownIntValue(frame, argumentsIndex + 1);
+					IntValue offset = getKnownIntValue(frame, argumentsIndex + 2);
+					IntValue count = getKnownIntValue(frame, argumentsIndex + 3);
+					yield bytes == null || highByte == null || offset == null || count == null ? null :
+							new String(bytes, highByte.value().getAsInt(), offset.value().getAsInt(), count.value().getAsInt());
+				}
+				case "([BIILjava/lang/String;)V" -> {
+					byte[] bytes = Values.getKnownByteArray(frame.getStack(argumentsIndex));
+					IntValue offset = getKnownIntValue(frame, argumentsIndex + 1);
+					IntValue length = getKnownIntValue(frame, argumentsIndex + 2);
+					String charsetName = Values.asStringOrNull(frame.getStack(argumentsIndex + 3));
+					yield bytes == null || offset == null || length == null || charsetName == null ? null :
+							new String(bytes, offset.value().getAsInt(), length.value().getAsInt(), charsetName);
+				}
+				case "([BIILjava/nio/charset/Charset;)V" -> {
+					byte[] bytes = Values.getKnownByteArray(frame.getStack(argumentsIndex));
+					IntValue offset = getKnownIntValue(frame, argumentsIndex + 1);
+					IntValue length = getKnownIntValue(frame, argumentsIndex + 2);
+					Charset charset = getKnownCharset(frame.getStack(argumentsIndex + 3), instruction);
+					yield bytes == null || offset == null || length == null || charset == null ? null :
+							new String(bytes, offset.value().getAsInt(), length.value().getAsInt(), charset);
+				}
+				case "([BLjava/lang/String;)V" -> {
+					byte[] bytes = Values.getKnownByteArray(frame.getStack(argumentsIndex));
+					String charsetName = Values.asStringOrNull(frame.getStack(argumentsIndex + 1));
+					yield bytes == null || charsetName == null ? null : new String(bytes, charsetName);
+				}
+				case "([BLjava/nio/charset/Charset;)V" -> {
+					byte[] bytes = Values.getKnownByteArray(frame.getStack(argumentsIndex));
+					Charset charset = getKnownCharset(frame.getStack(argumentsIndex + 1), instruction);
+					yield bytes == null || charset == null ? null : new String(bytes, charset);
+				}
+				case "([BII)V" -> {
+					byte[] bytes = Values.getKnownByteArray(frame.getStack(argumentsIndex));
+					IntValue offset = getKnownIntValue(frame, argumentsIndex + 1);
+					IntValue length = getKnownIntValue(frame, argumentsIndex + 2);
+					yield bytes == null || offset == null || length == null ? null :
+							new String(bytes, offset.value().getAsInt(), length.value().getAsInt());
+				}
+				case "([B)V" -> {
+					byte[] bytes = Values.getKnownByteArray(frame.getStack(argumentsIndex));
+					yield bytes == null ? null : new String(bytes);
+				}
+				default -> null;
+			};
+		} catch (Exception ex) {
+			// Invalid slices, code points, or charset names keep the original constructor and its exception behavior.
+			return null;
+		}
+
+		return text == null ? null : ObjectValue.string(text);
+	}
+
+	/**
+	 * @param frame
+	 * 		Stack frame to inspect.
+	 * @param index
+	 * 		Index of the stack value to inspect.
+	 *
+	 * @return Known IntValue, or {@code null} when the value is not known.
+	 */
+	@Nullable
+	private static IntValue getKnownIntValue(@Nonnull Frame<ReValue> frame, int index) {
+		if (frame.getStack(index) instanceof IntValue intValue && intValue.hasKnownValue())
+			return intValue;
+		return null;
+	}
+
+	/**
+	 * @param value
+	 * 		Value to convert.
+	 * @param constructor
+	 * 		Method instruction that is constructing the value.
+	 *
+	 * @return Known Charset value, or {@code null} when the constructor or any input is not supported.
+	 */
+	@Nullable
+	private static Charset getKnownCharset(@Nonnull ReValue value, @Nonnull AbstractInsnNode constructor) {
+		if (value instanceof InstancedObjectValue<?> instanced && instanced.getRealInstance() instanceof Charset charset)
+			return charset;
+		if (!(value instanceof ObjectValue object) || !Types.CHARSET_TYPE.equals(object.type()))
+			return null;
+
+		AbstractInsnNode producer = getPreviousInsn(constructor, true);
+		if (producer instanceof FieldInsnNode field
+				&& field.getOpcode() == GETSTATIC
+				&& field.owner.equals("java/nio/charset/StandardCharsets")
+				&& Types.CHARSET_TYPE.equals(Type.getType(field.desc)))
+			return switch (field.name) {
+				case "ISO_8859_1" -> StandardCharsets.ISO_8859_1;
+				case "US_ASCII" -> StandardCharsets.US_ASCII;
+				case "UTF_8" -> StandardCharsets.UTF_8;
+				case "UTF_16" -> StandardCharsets.UTF_16;
+				case "UTF_16BE" -> StandardCharsets.UTF_16BE;
+				case "UTF_16LE" -> StandardCharsets.UTF_16LE;
+				case "UTF_32" -> StandardCharsets.UTF_32;
+				case "UTF_32BE" -> StandardCharsets.UTF_32BE;
+				case "UTF_32LE" -> StandardCharsets.UTF_32LE;
+				default -> null;
+			};
+		return null;
 	}
 
 	/**
@@ -856,10 +1037,12 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 	 *
 	 * @param sequence
 	 * 		Instruction sequence.
+	 * @param stringConstructorResult
+	 *        {@code true} when the sequence ends with a String constructor call that has a known value.
 	 *
 	 * @return {@code true} when the instruction sequence should continue expanding backwards.
 	 */
-	private static boolean shouldContinueSequence(@Nonnull List<AbstractInsnNode> sequence) {
+	private static boolean shouldContinueSequence(@Nonnull List<AbstractInsnNode> sequence, boolean stringConstructorResult) {
 		int stackDiff = 0;
 		int consumed = 0;
 		int produced = 0;
@@ -897,6 +1080,8 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 			stackDiff = produced - consumed;
 			netStackChange += stackDiff;
 		}
+		if (stringConstructorResult)
+			produced = 1;
 		return netStackChange > consumed || netStackChange != produced;
 	}
 
@@ -904,6 +1089,12 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 	@Override
 	public String identifier() {
 		return IDENTIFIER;
+	}
+
+	@Nonnull
+	@Override
+	public List<TransformationParameter<?>> getParameterDefinitions() {
+		return List.of(INLINE_STRING_CTORS_PARAMETER);
 	}
 
 	@Nonnull
@@ -989,7 +1180,8 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 						return false;
 				}
 				case FieldInsnNode fieldInsn when fieldInsn.getOpcode() == GETSTATIC || fieldInsn.getOpcode() == GETFIELD -> {
-					if (Types.isReference(Type.getType(fieldInsn.desc)))
+					Type fieldType = Type.getType(fieldInsn.desc);
+					if (Types.isReference(fieldType) && !Types.CHARSET_TYPE.equals(fieldType))
 						return false;
 				}
 				case MethodInsnNode methodInsn when isSideEffectingProducer(methodInsn) -> {

@@ -2,9 +2,9 @@ package software.coley.recaf.util.analysis.lookup;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
-import software.coley.recaf.util.Types;
-import software.coley.recaf.util.analysis.Nullness;
-import software.coley.recaf.util.analysis.eval.InstancedObjectValue;
+import software.coley.recaf.util.analysis.gen.InstanceMapperGenerator;
+import software.coley.recaf.util.analysis.gen.InstanceMethodInvokeHandlerGenerator;
+import software.coley.recaf.util.analysis.gen.LookupGenerator;
 import software.coley.recaf.util.analysis.value.ArrayValue;
 import software.coley.recaf.util.analysis.value.DoubleValue;
 import software.coley.recaf.util.analysis.value.FloatValue;
@@ -13,461 +13,256 @@ import software.coley.recaf.util.analysis.value.LongValue;
 import software.coley.recaf.util.analysis.value.ObjectValue;
 import software.coley.recaf.util.analysis.value.ReValue;
 import software.coley.recaf.util.analysis.value.StringValue;
-import software.coley.recaf.util.analysis.value.impl.ArrayValueImpl;
-import software.coley.recaf.util.analysis.value.impl.BoxedByteValueImpl;
-import software.coley.recaf.util.analysis.value.impl.BoxedCharacterValueImpl;
-import software.coley.recaf.util.analysis.value.impl.BoxedDoubleValueImpl;
-import software.coley.recaf.util.analysis.value.impl.BoxedFloatValueImpl;
-import software.coley.recaf.util.analysis.value.impl.BoxedIntegerValueImpl;
-import software.coley.recaf.util.analysis.value.impl.BoxedLongValueImpl;
-import software.coley.recaf.util.analysis.value.impl.BoxedShortValueImpl;
-import software.coley.recaf.util.analysis.value.impl.ObjectValueBoxImpl;
+import software.coley.recaf.util.analysis.value.Values;
 
 import java.util.List;
-import java.util.OptionalInt;
 
 /**
  * Common utilities for lookup implementations to convert between JVM values and interpreter values.
+ * <p>
+ * The shorthand names exist here for brevity in auto-generated code.
+ * See:
+ * <ul>
+ *     <li>{@link InstanceMapperGenerator}</li>
+ *     <li>{@link InstanceMethodInvokeHandlerGenerator}</li>
+ *     <li>{@link LookupGenerator}</li>
+ * </ul>
  *
  * @author Matt Coley
  */
 public class BasicLookupUtils {
-	// TODO: These short-named methods are useful for code generation and should stay as-is,
-	//       But we should also expose the conversion logic in a more explicit way for plugin developers
-	//       to use when writing transformers or their own lookup implementations.
+	protected static byte b(@Nonnull IntValue value) {
+		return Values.asByte(value);
+	}
 
-	@SuppressWarnings("all")
-	protected static byte b(@Nonnull IntValue value) {return (byte) value.value().getAsInt();}
+	protected static boolean z(@Nonnull IntValue value) {
+		return Values.asBoolean(value);
+	}
 
-	@SuppressWarnings("all")
-	protected static boolean z(@Nonnull IntValue value) {return value.isNotEqualTo(0);}
+	protected static short s(@Nonnull IntValue value) {
+		return Values.asShort(value);
+	}
 
-	@SuppressWarnings("all")
-	protected static short s(@Nonnull IntValue value) {return (short) value.value().getAsInt();}
+	protected static char c(@Nonnull IntValue value) {
+		return Values.asChar(value);
+	}
 
-	@SuppressWarnings("all")
-	protected static char c(@Nonnull IntValue value) {return (char) value.value().getAsInt();}
+	protected static int i(@Nonnull IntValue value) {
+		return Values.asInt(value);
+	}
 
-	@SuppressWarnings("all")
-	protected static int i(@Nonnull IntValue value) {return value.value().getAsInt();}
+	protected static long j(@Nonnull LongValue value) {
+		return Values.asLong(value);
+	}
 
-	@SuppressWarnings("all")
-	protected static long j(@Nonnull LongValue value) {return value.value().getAsLong();}
+	protected static float f(@Nonnull FloatValue value) {
+		return Values.asFloat(value);
+	}
 
-	@SuppressWarnings("all")
-	protected static float f(@Nonnull FloatValue value) {return (float) value.value().getAsDouble();}
+	protected static double d(@Nonnull DoubleValue value) {
+		return Values.asDouble(value);
+	}
 
-	@SuppressWarnings("all")
-	protected static double d(@Nonnull DoubleValue value) {return value.value().getAsDouble();}
-
-	@SuppressWarnings("all")
 	protected static String str(@Nonnull ObjectValue value) {
-		if (value.isNull())
-			return null;
-		if (value instanceof StringValue string)
-			return string.getText().orElseThrow(() -> new IllegalArgumentException("Unknown string value"));
-		if (value instanceof InstancedObjectValue<?> instance && instance.getRealInstance() instanceof String string)
-			return string;
-		throw new IllegalArgumentException("Unsupported string unwrap: " + value);
+		return Values.asString(value);
 	}
 
 	protected static Object objl(@Nonnull ObjectValue value) {
-		// Yield object type literally instead of auto-casting at call-site with T.
-		return obj(value);
+		return Values.asObjectLiteral(value);
 	}
 
-	@SuppressWarnings("all")
 	protected static <T> T obj(@Nonnull ObjectValue value) {
-		// Map null to null
-		if (value.isNull())
-			return null;
-
-		// Unwrap strings
-		if (value instanceof StringValue string)
-			return (T) str(string);
-
-		// Unwrap boxed values
-		if (value instanceof ObjectValueBoxImpl<?> box)
-			return (T) box.unbox();
-
-		// Instanced values already contain the exact object.
-		if (value instanceof InstancedObjectValue<?> instanced && instanced.getRealInstance() != null)
-			return (T) instanced.getRealInstance();
-
-		throw new IllegalArgumentException("Unsupported object unwrap: " + value);
+		return Values.asObject(value);
 	}
 
 	@Nonnull
-	protected static IntValue z(boolean value) {return IntValue.of(value ? 1 : 0);}
+	protected static IntValue z(boolean value) {
+		return Values.toBooleanValue(value);
+	}
 
 	@Nonnull
-	protected static IntValue b(byte value) {return IntValue.of(value);}
+	protected static IntValue b(byte value) {
+		return Values.toByteValue(value);
+	}
 
 	@Nonnull
-	protected static IntValue c(char value) {return IntValue.of(value);}
+	protected static IntValue c(char value) {
+		return Values.toCharValue(value);
+	}
 
 	@Nonnull
-	protected static IntValue s(short value) {return IntValue.of(value);}
+	protected static IntValue s(short value) {
+		return Values.toShortValue(value);
+	}
 
 	@Nonnull
-	protected static IntValue i(int value) {return IntValue.of(value);}
+	protected static IntValue i(int value) {
+		return Values.toIntValue(value);
+	}
 
 	@Nonnull
-	protected static LongValue j(long value) {return LongValue.of(value);}
+	protected static LongValue j(long value) {
+		return Values.toLongValue(value);
+	}
 
 	@Nonnull
-	protected static FloatValue f(float value) {return FloatValue.of(value);}
+	protected static FloatValue f(float value) {
+		return Values.toFloatValue(value);
+	}
 
 	@Nonnull
-	protected static DoubleValue d(double value) {return DoubleValue.of(value);}
+	protected static DoubleValue d(double value) {
+		return Values.toDoubleValue(value);
+	}
 
 	@Nonnull
-	protected static StringValue str(@Nullable String value) {return ObjectValue.string(value);}
+	protected static StringValue str(@Nullable String value) {
+		return Values.toStringValue(value);
+	}
 
 	@Nonnull
-	protected static StringValue str(@Nullable CharSequence value) {return str(value == null ? null : value.toString());}
+	protected static StringValue str(@Nullable CharSequence value) {
+		return Values.toStringValue(value);
+	}
 
 	@Nonnull
 	protected static ObjectValue obj(@Nullable Object value) {
-		// This isn't exactly perfect, as we lose type info with this conversion.
-		if (value == null)
-			return ObjectValue.VAL_OBJECT_NULL;
-
-		// String-like
-		if (value instanceof CharSequence string)
-			return str(string);
-
-		// Primitive boxes
-		if (value instanceof Integer i)
-			return new BoxedIntegerValueImpl(i);
-		if (value instanceof Long l)
-			return new BoxedLongValueImpl(l);
-		if (value instanceof Byte b)
-			return new BoxedByteValueImpl(b);
-		if (value instanceof Float f)
-			return new BoxedFloatValueImpl(f);
-		if (value instanceof Double d)
-			return new BoxedDoubleValueImpl(d);
-		if (value instanceof Character c)
-			return new BoxedCharacterValueImpl(c);
-		if (value instanceof Short s)
-			return new BoxedShortValueImpl(s);
-
-		throw new IllegalArgumentException("Unsupported Object wrap: " + value);
+		return Values.toObjectValue(value);
 	}
 
 	protected static boolean[] arrz(@Nonnull ArrayValue value) {
-		if (value.isNull())
-			return null;
-		OptionalInt dimLength = value.getFirstDimensionLength();
-		if (dimLength.isEmpty() || !value.hasKnownValue())
-			throw new IllegalArgumentException();
-		int length = dimLength.getAsInt();
-		boolean[] booleans = new boolean[length];
-		for (int i = 0; i < length; i++) {
-			ReValue iv = value.getValue(i);
-			if (iv instanceof IntValue iiv && iiv.hasKnownValue())
-				booleans[i] = z(iiv);
-		}
-		return booleans;
+		return Values.asBooleanArray(value);
 	}
 
 	protected static byte[] arrb(@Nonnull ArrayValue value) {
-		if (value.isNull())
-			return null;
-		OptionalInt dimLength = value.getFirstDimensionLength();
-		if (dimLength.isEmpty() || !value.hasKnownValue())
-			throw new IllegalArgumentException();
-		int length = dimLength.getAsInt();
-		byte[] bytes = new byte[length];
-		for (int i = 0; i < length; i++) {
-			ReValue iv = value.getValue(i);
-			if (iv instanceof IntValue iiv && iiv.hasKnownValue())
-				bytes[i] = b(iiv);
-		}
-		return bytes;
+		return Values.asByteArray(value);
 	}
 
 	protected static short[] arrs(@Nonnull ArrayValue value) {
-		if (value.isNull())
-			return null;
-		OptionalInt dimLength = value.getFirstDimensionLength();
-		if (dimLength.isEmpty() || !value.hasKnownValue())
-			throw new IllegalArgumentException();
-		int length = dimLength.getAsInt();
-		short[] shorts = new short[length];
-		for (int i = 0; i < length; i++) {
-			ReValue iv = value.getValue(i);
-			if (iv instanceof IntValue iiv && iiv.hasKnownValue())
-				shorts[i] = s(iiv);
-		}
-		return shorts;
+		return Values.asShortArray(value);
 	}
 
 	protected static char[] arrc(@Nonnull ArrayValue value) {
-		if (value.isNull())
-			return null;
-		OptionalInt dimLength = value.getFirstDimensionLength();
-		if (dimLength.isEmpty() || !value.hasKnownValue())
-			throw new IllegalArgumentException();
-		int length = dimLength.getAsInt();
-		char[] chars = new char[length];
-		for (int i = 0; i < length; i++) {
-			ReValue iv = value.getValue(i);
-			if (iv instanceof IntValue iiv && iiv.hasKnownValue())
-				chars[i] = c(iiv);
-		}
-		return chars;
+		return Values.asCharArray(value);
 	}
 
 	protected static int[] arri(@Nonnull ArrayValue value) {
-		if (value.isNull())
-			return null;
-		OptionalInt dimLength = value.getFirstDimensionLength();
-		if (dimLength.isEmpty() || !value.hasKnownValue())
-			throw new IllegalArgumentException();
-		int length = dimLength.getAsInt();
-		int[] ints = new int[length];
-		for (int i = 0; i < length; i++) {
-			ReValue iv = value.getValue(i);
-			if (iv instanceof IntValue iiv && iiv.hasKnownValue())
-				ints[i] = i(iiv);
-		}
-		return ints;
+		return Values.asIntArray(value);
 	}
 
 	protected static float[] arrf(@Nonnull ArrayValue value) {
-		if (value.isNull())
-			return null;
-		OptionalInt dimLength = value.getFirstDimensionLength();
-		if (dimLength.isEmpty() || !value.hasKnownValue())
-			throw new IllegalArgumentException();
-		int length = dimLength.getAsInt();
-		float[] floats = new float[length];
-		for (int i = 0; i < length; i++) {
-			ReValue iv = value.getValue(i);
-			if (iv instanceof FloatValue fv && fv.hasKnownValue())
-				floats[i] = f(fv);
-		}
-		return floats;
+		return Values.asFloatArray(value);
 	}
 
 	protected static double[] arrd(@Nonnull ArrayValue value) {
-		if (value.isNull())
-			return null;
-		OptionalInt dimLength = value.getFirstDimensionLength();
-		if (dimLength.isEmpty() || !value.hasKnownValue())
-			throw new IllegalArgumentException();
-		int length = dimLength.getAsInt();
-		double[] doubles = new double[length];
-		for (int i = 0; i < length; i++) {
-			ReValue iv = value.getValue(i);
-			if (iv instanceof DoubleValue dv && dv.hasKnownValue())
-				doubles[i] = d(dv);
-		}
-		return doubles;
+		return Values.asDoubleArray(value);
 	}
 
 	protected static long[] arrj(@Nonnull ArrayValue value) {
-		if (value.isNull())
-			return null;
-		OptionalInt dimLength = value.getFirstDimensionLength();
-		if (dimLength.isEmpty() || !value.hasKnownValue())
-			throw new IllegalArgumentException();
-		int length = dimLength.getAsInt();
-		long[] longs = new long[length];
-		for (int i = 0; i < length; i++) {
-			ReValue iv = value.getValue(i);
-			if (iv instanceof LongValue lv && lv.hasKnownValue())
-				longs[i] = j(lv);
-		}
-		return longs;
+		return Values.asLongArray(value);
 	}
 
 	protected static String[] arrstr(@Nonnull ArrayValue value) {
-		if (value.isNull())
-			return null;
-		OptionalInt dimLength = value.getFirstDimensionLength();
-		if (dimLength.isEmpty() || !value.hasKnownValue())
-			throw new IllegalArgumentException();
-		int length = dimLength.getAsInt();
-		String[] strings = new String[length];
-		for (int i = 0; i < length; i++) {
-			ReValue iv = value.getValue(i);
-			if (iv instanceof StringValue sv && sv.hasKnownValue())
-				strings[i] = str(sv);
-		}
-		return strings;
+		return Values.asStringArray(value);
 	}
 
 	protected static Object[] arrobj(@Nonnull ArrayValue value) {
-		if (value.isNull())
-			return null;
-		OptionalInt dimLength = value.getFirstDimensionLength();
-		if (dimLength.isEmpty() || !value.hasKnownValue())
-			throw new IllegalArgumentException();
-		int length = dimLength.getAsInt();
-		Object[] objects = new Object[length];
-		for (int i = 0; i < length; i++) {
-			ReValue iv = value.getValue(i);
-			if (iv instanceof ObjectValue sv && sv.hasKnownValue())
-				objects[i] = obj(sv);
-		}
-		return objects;
+		return Values.asObjectArray(value);
 	}
 
 	protected static boolean[] arrz(@Nonnull ReValue value) {
-		if (value instanceof ArrayValue array)
-			return arrz(array);
-		return hostArray(value, boolean[].class);
+		return Values.asBooleanArray(value);
 	}
 
 	protected static byte[] arrb(@Nonnull ReValue value) {
-		if (value instanceof ArrayValue array)
-			return arrb(array);
-		return hostArray(value, byte[].class);
+		return Values.asByteArray(value);
 	}
 
 	protected static short[] arrs(@Nonnull ReValue value) {
-		if (value instanceof ArrayValue array)
-			return arrs(array);
-		return hostArray(value, short[].class);
+		return Values.asShortArray(value);
 	}
 
 	protected static char[] arrc(@Nonnull ReValue value) {
-		if (value instanceof ArrayValue array)
-			return arrc(array);
-		return hostArray(value, char[].class);
+		return Values.asCharArray(value);
 	}
 
 	protected static int[] arri(@Nonnull ReValue value) {
-		if (value instanceof ArrayValue array)
-			return arri(array);
-		return hostArray(value, int[].class);
+		return Values.asIntArray(value);
 	}
 
 	protected static float[] arrf(@Nonnull ReValue value) {
-		if (value instanceof ArrayValue array)
-			return arrf(array);
-		return hostArray(value, float[].class);
+		return Values.asFloatArray(value);
 	}
 
 	protected static double[] arrd(@Nonnull ReValue value) {
-		if (value instanceof ArrayValue array)
-			return arrd(array);
-		return hostArray(value, double[].class);
+		return Values.asDoubleArray(value);
 	}
 
 	protected static long[] arrj(@Nonnull ReValue value) {
-		if (value instanceof ArrayValue array)
-			return arrj(array);
-		return hostArray(value, long[].class);
+		return Values.asLongArray(value);
 	}
 
 	protected static String[] arrstr(@Nonnull ReValue value) {
-		if (value instanceof ArrayValue array)
-			return arrstr(array);
-		Object hostValue = hostArray(value, Object[].class);
-		if (hostValue instanceof String[] strings)
-			return strings;
-		Object[] objects = (Object[]) hostValue;
-		String[] strings = new String[objects.length];
-		for (int i = 0; i < objects.length; i++)
-			strings[i] = objects[i] == null ? null : objects[i].toString();
-		return strings;
+		return Values.asStringArray(value);
 	}
 
 	protected static Object[] arrobj(@Nonnull ReValue value) {
-		if (value instanceof ArrayValue array)
-			return arrobj(array);
-		return hostArray(value, Object[].class);
-	}
-
-	@Nonnull
-	private static <T> T hostArray(@Nonnull ReValue value, @Nonnull Class<T> type) {
-		if (value instanceof InstancedObjectValue<?> instanced) {
-			Object realInstance = instanced.getRealInstance();
-			if (type.isInstance(realInstance))
-				return type.cast(realInstance);
-		}
-		throw new IllegalArgumentException("Expected host-backed " + type.getTypeName() + ": " + value);
+		return Values.asObjectArray(value);
 	}
 
 	@Nonnull
 	protected static ArrayValue arrz(@Nullable boolean[] value) {
-		if (value == null)
-			return ArrayValue.VAL_BOOLEANS_NULL;
-		return new ArrayValueImpl(Types.ARRAY_1D_BOOLEAN, Nullness.NOT_NULL, value.length, index -> IntValue.of(value[index] ? 1 : 0));
+		return Values.toBooleanArrayValue(value);
 	}
 
 	@Nonnull
 	protected static ArrayValue arrb(@Nullable byte[] value) {
-		if (value == null)
-			return ArrayValue.VAL_BYTES_NULL;
-		return new ArrayValueImpl(Types.ARRAY_1D_BYTE, Nullness.NOT_NULL, value.length, index -> IntValue.of(value[index]));
+		return Values.toByteArrayValue(value);
 	}
 
 	@Nonnull
 	protected static ArrayValue arrs(@Nullable short[] value) {
-		if (value == null)
-			return ArrayValue.VAL_SHORTS_NULL;
-		return new ArrayValueImpl(Types.ARRAY_1D_SHORT, Nullness.NOT_NULL, value.length, index -> IntValue.of(value[index]));
+		return Values.toShortArrayValue(value);
 	}
 
 	@Nonnull
 	protected static ArrayValue arrc(@Nullable char[] value) {
-		if (value == null)
-			return ArrayValue.VAL_CHARS_NULL;
-		return new ArrayValueImpl(Types.ARRAY_1D_CHAR, Nullness.NOT_NULL, value.length, index -> IntValue.of(value[index]));
+		return Values.toCharArrayValue(value);
 	}
 
 	@Nonnull
 	protected static ArrayValue arri(@Nullable int[] value) {
-		if (value == null)
-			return ArrayValue.VAL_INTS_NULL;
-		return new ArrayValueImpl(Types.ARRAY_1D_INT, Nullness.NOT_NULL, value.length, index -> IntValue.of(value[index]));
+		return Values.toIntArrayValue(value);
 	}
 
 	@Nonnull
 	protected static ArrayValue arrj(@Nullable long[] value) {
-		if (value == null)
-			return ArrayValue.VAL_LONGS_NULL;
-		return new ArrayValueImpl(Types.ARRAY_1D_LONG, Nullness.NOT_NULL, value.length, index -> LongValue.of(value[index]));
+		return Values.toLongArrayValue(value);
 	}
 
 	@Nonnull
 	protected static ArrayValue arrf(@Nullable float[] value) {
-		if (value == null)
-			return ArrayValue.VAL_FLOATS_NULL;
-		return new ArrayValueImpl(Types.ARRAY_1D_FLOAT, Nullness.NOT_NULL, value.length, index -> FloatValue.of(value[index]));
+		return Values.toFloatArrayValue(value);
 	}
 
 	@Nonnull
 	protected static ArrayValue arrd(@Nullable double[] value) {
-		if (value == null)
-			return ArrayValue.VAL_DOUBLES_NULL;
-		return new ArrayValueImpl(Types.ARRAY_1D_DOUBLE, Nullness.NOT_NULL, value.length, index -> DoubleValue.of(value[index]));
+		return Values.toDoubleArrayValue(value);
 	}
 
 	@Nonnull
 	protected static ArrayValue arrstr(@Nullable CharSequence[] value) {
-		if (value == null)
-			return ArrayValue.VAL_STRINGS_NULL;
-		return new ArrayValueImpl(Types.ARRAY_1D_STRING, Nullness.NOT_NULL, value.length, index -> ObjectValue.string(String.valueOf(value[index])));
+		return Values.toCharSequenceArrayValue(value);
 	}
 
 	@Nonnull
 	protected static ArrayValue arrstr(@Nullable String[] value) {
-		if (value == null)
-			return ArrayValue.VAL_STRINGS_NULL;
-		return new ArrayValueImpl(Types.ARRAY_1D_STRING, Nullness.NOT_NULL, value.length, index -> ObjectValue.string(value[index]));
+		return Values.toStringArrayValue(value);
 	}
 
 	@Nonnull
 	protected static ArrayValue arrobj(@Nullable Object[] value) {
-		if (value == null)
-			return ArrayValue.VAL_OBJECTS_NULL;
-		return new ArrayValueImpl(Types.ARRAY_1D_OBJECT, Nullness.NOT_NULL, value.length, index -> obj(value[index]));
+		return Values.toObjectArrayValue(value);
 	}
 
 	@SuppressWarnings("unchecked")

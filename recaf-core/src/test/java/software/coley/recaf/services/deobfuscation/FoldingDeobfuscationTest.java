@@ -1564,6 +1564,110 @@ public class FoldingDeobfuscationTest extends TransformerTestBase {
 	}
 
 	@Test
+	void foldKnownStringLength() {
+		String asm = """
+				.method public static example ()I {
+				    code: {
+				    A:
+				        ldc "Hello"
+				        invokevirtual java/lang/String.length ()I
+				        ireturn
+				    B:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
+			assertEquals(1, StringUtil.count("iconst_5", dis), "Expected to fold to constant length");
+			assertEquals(0, StringUtil.count("ldc \"Hello\"", dis), "Expected to fold away string");
+		});
+	}
+
+	@Test
+	void foldKnownStringContentsIntoConst() {
+		// new String(new byte[] {72, 101, 108, 108, 111});  --> "Hello"
+		String asm = """
+				.method public static example ()Ljava/lang/String; {
+				    code: {
+				    A:
+				        new java/lang/String
+				        dup
+				        iconst_5
+				        newarray byte
+				        dup
+				        iconst_0
+				        bipush 72
+				        bastore
+				        dup
+				        iconst_1
+				        bipush 101
+				        bastore
+				        dup
+				        iconst_2
+				        bipush 108
+				        bastore
+				        dup
+				        iconst_3
+				        bipush 108
+				        bastore
+				        dup
+				        iconst_4
+				        bipush 111
+				        bastore
+				        invokespecial java/lang/String.<init> ([B)V
+				        areturn
+				    B:
+				    }
+				}
+				""";
+		assemble(asm, false);
+
+		JvmTransformResult defaultResult = assertDoesNotThrow(() -> newApplier().transformJvm(List.of(OpaqueConstantFoldingTransformer.class)));
+		assertTrue(defaultResult.getTransformerFailures().isEmpty(), "Expected no transformation failures");
+		assertTrue(defaultResult.getTransformedClasses().isEmpty(), "Expected String constructor folding to be disabled by default");
+
+		TransformationParameters parameters = new TransformationParameters(Map.of(
+				OpaqueConstantFoldingTransformer.KEY_INLINE_STRING_CTORS, true
+		));
+		JvmTransformResult result = assertDoesNotThrow(() -> newApplier().transformJvm(List.of(OpaqueConstantFoldingTransformer.class), parameters));
+		String dis = disassembleTransformed(result, false);
+		assertEquals(1, StringUtil.count("ldc \"Hello\"", dis), "Expected to fold to constant string");
+		assertEquals(0, StringUtil.count("new java/lang/String", dis), "Expected to remove String allocation");
+		assertEquals(0, StringUtil.count("java/lang/String.<init>", dis), "Expected to remove String constructor");
+	}
+
+	@Test
+	void foldKnownStringContentsForConstructorOverloads() {
+		compile("""
+				public static String fromString() { return new String("original"); }
+				public static String fromChars() { return new String(new char[]{'C', 'h', 'a', 'r'}); }
+				public static String fromCharSlice() { return new String(new char[]{'x', 's', 'l', 'i', 'c', 'e', 'y'}, 1, 5); }
+				public static String fromCodePoints() { return new String(new int[]{72, 105}, 0, 2); }
+				public static String fromHibyte() { return new String(new byte[]{'D'}, 0); }
+				public static String fromHibyteSlice() { return new String(new byte[]{'x', 'S'}, 0, 1, 1); }
+				public static String fromNamedCharset() throws java.io.UnsupportedEncodingException { return new String(new byte[]{'N', 'o'}, "UTF-8"); }
+				public static String fromNamedCharsetSlice() throws java.io.UnsupportedEncodingException { return new String(new byte[]{'x', 'R', 'g'}, 1, 2, "UTF-8"); }
+				public static String fromCharset() { return new String(new byte[]{'C', 's'}, java.nio.charset.StandardCharsets.UTF_8); }
+				public static String fromCharsetSlice() { return new String(new byte[]{'x', 'C', 'r'}, 1, 2, java.nio.charset.StandardCharsets.UTF_8); }
+				public static String fromByteSlice() { return new String(new byte[]{'x', 'e', 'y'}, 1, 1); }
+				public static String fromBytes() { return new String(new byte[]{'B', 'y'}); }
+				
+				// Keep these since they are invalid or unknown and we don't want to fold them
+				public static String fromUnknownBytes(byte[] bytes) { return new String(bytes); }
+				public static String fromInvalidCharSlice() { return new String(new char[]{'x'}, 1, 1); }
+				""");
+
+		TransformationParameters parameters = new TransformationParameters(Map.of(
+				OpaqueConstantFoldingTransformer.KEY_INLINE_STRING_CTORS, true
+		));
+		JvmTransformResult result = assertDoesNotThrow(() -> newApplier().transformJvm(List.of(OpaqueConstantFoldingTransformer.class), parameters));
+		assertTrue(result.getTransformerFailures().isEmpty(), "Expected no transformation failures");
+		String dis = disassembleTransformed(result, true);
+		for (String expected : List.of("original", "Char", "slice", "Hi", "D", "S", "No", "Rg", "Cs", "Cr", "e", "By"))
+			assertEquals(1, StringUtil.count("ldc " + '"' + expected + '"', dis), "Expected to fold constructor result: " + expected);
+		assertEquals(2, StringUtil.count("java/lang/String.<init>", dis), "Expected unknown or invalid constructors to remain");
+	}
+
+	@Test
 	void foldCharArrayIntoStringFromValueOf() {
 		String asm = """
 				.method public static example ()Ljava/lang/String; {
