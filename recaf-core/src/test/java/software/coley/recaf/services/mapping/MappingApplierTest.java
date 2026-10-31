@@ -383,6 +383,25 @@ class MappingApplierTest extends TestBase {
 	}
 
 	@Test
+	void applyDuplicateMethodFamilyMappings() {
+		String shape = SealedShape.class.getName().replace('.', '/');
+		String circle = SealedCircle.class.getName().replace('.', '/');
+
+		// Duplicate records from mapping files must not alter how the family is mapped.
+		IntermediateMappings mappings = new IntermediateMappings();
+		for (int i = 0; i < 100; i++)
+			mappings.addMethod(shape, "()D", "area", "space");
+		mappings.addMethod(circle, "()D", "area", "space");
+
+		MappingResults results = mappingApplierService.inCurrentWorkspace().applyToPrimaryResource(mappings);
+		for (String owner : Arrays.asList(shape, circle)) {
+			ClassInfo post = results.getPostMappingClass(owner);
+			assertNotNull(post, "Class should be remapped: " + owner);
+			assertNotNull(post.getFirstDeclaredMethodByName("space"), "Method should be renamed in: " + owner);
+		}
+	}
+
+	@Test
 	void applyMappingWorksBiDirectional() {
 		String shape = SealedShape.class.getName().replace('.', '/');
 		String circle = SealedCircle.class.getName().replace('.', '/');
