@@ -158,13 +158,13 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 		// Check for general ZIP container format (ZIP/JAR/WAR/APK/JMod)
 		if (readInfoAsFile.isZipFile()) {
 			ZipFileInfo readInfoAsZip = readInfoAsFile.asZipFile();
-			return handleZip(builder, readInfoAsZip, source, true);
+			return handleZip(builder, readInfoAsZip, source, true, 0);
 		} else if (ZipMarkerProperty.get(readInfoAsFile)) {
 			// In some cases the file may have been matched as something else (like an executable)
 			// but also count as a ZIP container. Applications that bundle Java applications into native exe files
 			// tend to do this.
 			try {
-				return handleZip(builder, new ZipFileInfoBuilder(readInfoAsFile.toFileBuilder()).build(), source, true);
+				return handleZip(builder, new ZipFileInfoBuilder(readInfoAsFile.toFileBuilder()).build(), source, true, 0);
 			} catch (Throwable t) {
 				// Some files will just so happen to have a ZIP marker in their bytes but not represent an actual ZIP.
 				// This is fine because by this point we have an info-type to fall back on.
@@ -198,7 +198,8 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 	private WorkspaceFileResource handleZip(@Nonnull WorkspaceFileResourceBuilder builder,
 	                                        @Nonnull ZipFileInfo zipInfo,
 	                                        @Nonnull ByteSource source,
-	                                        boolean rootResource) throws IOException {
+	                                        boolean rootResource,
+	                                        int zipDepth) throws IOException {
 		logger.info("Reading input from ZIP container '{}'", zipInfo.getName());
 		builder.withFileInfo(zipInfo);
 		BasicJvmClassBundle classes = new BasicJvmClassBundle();
@@ -284,9 +285,7 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 						if (Arrays.equals(zipFile.getRawContent(), zipInfo.getRawContent())) {
 							logger.warn("Skip self-extracting ZIP bomb: {}", entryName);
 							return null;
-						} else if (Arrays.stream(Thread.currentThread().getStackTrace())
-								.filter(trace -> trace.getMethodName().equals("handleZip"))
-								.count() > maxZipDepth) {
+						} else if (zipDepth >= maxZipDepth) {
 							logger.warn("Skip extracting embedded ZIP after {} levels: {}", maxZipDepth, entryName);
 							return null;
 						}
@@ -294,7 +293,7 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 
 					// Add the info to the appropriate bundle
 					addInfo(classes, files, androidClassBundles, versionedJvmClassBundles, embeddedResources,
-							headerSource, entryName, info);
+							headerSource, entryName, info, zipDepth);
 					return null;
 				});
 			}
@@ -347,7 +346,7 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 
 						// Add the info to the appropriate bundle
 						addInfo(classes, files, androidClassBundles, versionedJvmClassBundles, embeddedResources,
-								source, fileName, info);
+								source, fileName, info, 0);
 					} catch (IOException ex) {
 						logger.error("IO error walking directory entry '{}' - skipping", path, ex);
 					}
@@ -388,11 +387,12 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 	                     @Nonnull Map<String, WorkspaceFileResource> embeddedResources,
 	                     @Nonnull ByteSource infoSource,
 	                     @Nonnull String pathName,
-	                     @Nonnull Info info) {
+	                     @Nonnull Info info,
+	                     int zipDepth) {
 		if (info.isClass()) {
 			addClassInfo(classes, files, versionedJvmClassBundles, pathName, info);
 		} else if (info.isFile()) {
-			addFileInfo(files, androidClassBundles, embeddedResources, infoSource, pathName, info);
+			addFileInfo(files, androidClassBundles, embeddedResources, infoSource, pathName, info, zipDepth);
 		} else {
 			throw new IllegalStateException("Unknown info type: " + info);
 		}
@@ -517,7 +517,8 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 	                         @Nonnull Map<String, WorkspaceFileResource> embeddedResources,
 	                         @Nonnull ByteSource infoSource,
 	                         @Nonnull String pathName,
-	                         @Nonnull Info info) {
+	                         @Nonnull Info info,
+	                         int zipDepth) {
 		FileInfo fileInfo = info.asFile();
 
 		// Check for special file cases (Currently just DEX)
@@ -544,7 +545,7 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 				WorkspaceFileResourceBuilder embeddedResourceBuilder = new WorkspaceFileResourceBuilder()
 						.withFileInfo(fileInfo);
 				WorkspaceFileResource embeddedResource = handleZip(embeddedResourceBuilder,
-						fileInfo.asZipFile(), infoSource, false);
+						fileInfo.asZipFile(), infoSource, false, zipDepth + 1);
 				embeddedResources.put(pathName, embeddedResource);
 			} catch (Throwable t) {
 				logger.error("Failed to read embedded ZIP '{}'", pathName, t);

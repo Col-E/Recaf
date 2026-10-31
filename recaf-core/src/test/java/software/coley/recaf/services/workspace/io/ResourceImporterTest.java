@@ -551,4 +551,29 @@ class ResourceImporterTest {
 				"Actual inflated size must be limited when ZIP metadata lies");
 	}
 
+	@Test
+	void testEmbeddedZipDepthLimitWithParallelImport() throws IOException {
+		ResourceImporterConfig config = new ResourceImporterConfig();
+		config.getMaxEmbeddedZipDepth().setValue(2);
+		config.doParallelize().setValue(true);
+		ResourceImporter limitedImporter = new BasicResourceImporter(
+				new BasicInfoImporter(new InfoImporterConfig(), new TextFormatConfig(), new BasicClassPatcher()),
+				config
+		);
+
+		// Make a ZIP of a ZIP of a ZIP of a... you get the idea.
+		byte[] zipBytes = ZipCreationUtils.createZip(Map.of("payload.txt", new byte[]{1}));
+		for (int level = 3; level >= 1; level--)
+			zipBytes = ZipCreationUtils.createZip(Map.of("level-" + level + ".zip", zipBytes));
+
+		// If the ZIP depth is 2, the third level should not be imported.
+		// Just the first two levels should be.
+		WorkspaceResource root = limitedImporter.importResource(ByteSources.wrap(zipBytes));
+		WorkspaceResource levelOne = root.getEmbeddedResources().get("level-1.zip");
+		WorkspaceResource levelTwo = levelOne.getEmbeddedResources().get("level-2.zip");
+		assertNotNull(levelOne, "First embedded ZIP not imported");
+		assertNotNull(levelTwo, "Second embedded ZIP not imported");
+		assertTrue(levelTwo.getEmbeddedResources().isEmpty(), "Embedded ZIP was read beyond depth limit");
+	}
+
 }
