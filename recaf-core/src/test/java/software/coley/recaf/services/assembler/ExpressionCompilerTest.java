@@ -487,6 +487,26 @@ class ExpressionCompilerTest extends CompilerTestBase {
 	}
 
 	@Test
+	void cyclicInnerClassMetadataDoesNotRecurseWhileStubbing() {
+		// Inner class relations of A -> B -> A are a cycle, but are technically valid.
+		JvmClassInfo outer = asmClass("CyclicOuter", ACC_PUBLIC, "java/lang/Object", null, null,
+				cw -> {
+					cw.visitInnerClass("CyclicOuter", "CyclicOuter", "Self", ACC_PUBLIC | ACC_STATIC);
+					cw.visitInnerClass("CyclicOuter$Inner", "CyclicOuter", "Inner", ACC_PUBLIC | ACC_STATIC);
+				});
+		JvmClassInfo inner = asmClass("CyclicOuter$Inner", ACC_PUBLIC, "java/lang/Object", null, null,
+				cw -> cw.visitInnerClass("CyclicOuter", "CyclicOuter$Inner", "Outer", ACC_PUBLIC | ACC_STATIC));
+
+		// Just want to make sure the expression compiler doesn't blow up when it tries to stub the inner class.
+		ExpressionResult result = compileInWorkspace(outer, inner, () -> {
+			ExpressionCompiler assembler = recaf.get(ExpressionCompiler.class);
+			assembler.setClassContext(outer);
+			return compile(assembler, "");
+		});
+		assertSuccess(result);
+	}
+
+	@Test
 	void nestedContextCanResolveSiblingNestedTypes() {
 		compileFull("NestedSiblingContext", """
 				public class NestedSiblingContext {

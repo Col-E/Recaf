@@ -49,6 +49,7 @@ public abstract class ClassStubGenerator {
 	protected final String classSignature;
 	protected Map<String, String> enclosingTypeVariableErasures = Collections.emptyMap();
 	protected GenericSignatureRenderer.ClassSignature renderedClassSignature;
+	private Set<String> visitedInnerClassNames;
 
 	/**
 	 * @param workspace
@@ -504,6 +505,11 @@ public abstract class ClassStubGenerator {
 	 */
 	protected void appendInnerClasses(@Nonnull StringBuilder code,
 	                                  @Nonnull Set<String> excludedNames) throws ExpressionCompileException {
+		Set<String> visitedClassNames = visitedInnerClassNames;
+		if (visitedClassNames == null) {
+			visitedClassNames = new HashSet<>();
+			visitedClassNames.add(className);
+		}
 		Set<String> visited = new HashSet<>();
 		for (InnerClassInfo innerClass : innerClasses) {
 			String innerClassName = innerClass.getInnerClassName();
@@ -528,7 +534,7 @@ public abstract class ClassStubGenerator {
 			if (!isSafeClassName(cleanType(innerClassName)))
 				continue;
 			ClassPathNode innerClassPath = workspace.findClass(innerClassName);
-			if (innerClassPath != null) {
+			if (innerClassPath != null && visitedClassNames.add(innerClassName)) {
 				ClassInfo innerClassInfo = innerClassPath.getValue();
 				ClassStubGenerator generator = new InnerClassStubGenerator(workspace, inheritanceGraph,
 						// Bitwise or the flags together since we need to know if the inner class is static.
@@ -542,6 +548,7 @@ public abstract class ClassStubGenerator {
 						innerClassInfo.getInnerClasses(),
 						innerClassInfo.getSignature()
 				);
+				generator.visitedInnerClassNames = visitedClassNames;
 				generator.setEnclosingTypeVariableErasures((innerClass.getInnerAccess() & Modifier.STATIC) == 0
 						? typeVariableErasures()
 						: Collections.emptyMap());
