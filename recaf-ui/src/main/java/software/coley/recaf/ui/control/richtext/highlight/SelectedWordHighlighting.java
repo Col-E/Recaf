@@ -38,10 +38,17 @@ import java.util.function.Predicate;
 public class SelectedWordHighlighting implements EditorComponent {
 	private static final Logger logger = Logging.get(SelectedWordHighlighting.class);
 	private static final String MATCH_STYLE_CLASS = "selected-word-match";
-	private static final int DEFAULT_MAX_MATCHES = 1_000;
-	private static final int DEFAULT_MAX_MATCHES_PER_LINE = 50;
+	private static final String OVERSIZED_SELECTION_PLACEHOLDER = " "; // Any whitespace char works as a placeholder
+
+	public static final int DEFAULT_MAX_MATCHES = 1_000;
+	public static final int DEFAULT_MAX_MATCHES_PER_LINE = 50;
+	public static final int DEFAULT_MAX_TEXT_LENGTH = 1_000_000;
+	public static final int DEFAULT_MAX_SELECTED_WORD_LENGTH = 100;
+
 	private final int maxMatches;
 	private final int maxMatchesPerLine;
+	private final int maxTextLength;
+	private final int maxWordLength;
 	private final Predicate<String> selectionBlacklist;
 	private List<IntRange> matchRanges = Collections.emptyList();
 	private List<IntRange> styledRanges = Collections.emptyList();
@@ -62,7 +69,7 @@ public class SelectedWordHighlighting implements EditorComponent {
 	 * New highlighter with default match limits.
 	 */
 	public SelectedWordHighlighting() {
-		this(DEFAULT_MAX_MATCHES, DEFAULT_MAX_MATCHES_PER_LINE, Collections.emptySet());
+		this(DEFAULT_MAX_MATCHES, DEFAULT_MAX_MATCHES_PER_LINE, DEFAULT_MAX_TEXT_LENGTH, DEFAULT_MAX_SELECTED_WORD_LENGTH, Collections.emptySet());
 	}
 
 	/**
@@ -74,7 +81,7 @@ public class SelectedWordHighlighting implements EditorComponent {
 	 * 		Max match count per line to allow.
 	 */
 	public SelectedWordHighlighting(int maxMatches, int maxMatchesPerLine) {
-		this(maxMatches, maxMatchesPerLine, Collections.emptySet());
+		this(maxMatches, maxMatchesPerLine, DEFAULT_MAX_TEXT_LENGTH, DEFAULT_MAX_SELECTED_WORD_LENGTH, Collections.emptySet());
 	}
 
 	/**
@@ -84,7 +91,7 @@ public class SelectedWordHighlighting implements EditorComponent {
 	 * 		Words to exclude from selected-word highlighting.
 	 */
 	public SelectedWordHighlighting(@Nonnull Collection<String> selectionBlacklist) {
-		this(DEFAULT_MAX_MATCHES, DEFAULT_MAX_MATCHES_PER_LINE, selectionBlacklist);
+		this(DEFAULT_MAX_MATCHES, DEFAULT_MAX_MATCHES_PER_LINE, DEFAULT_MAX_TEXT_LENGTH, DEFAULT_MAX_SELECTED_WORD_LENGTH, selectionBlacklist);
 	}
 
 	/**
@@ -94,12 +101,17 @@ public class SelectedWordHighlighting implements EditorComponent {
 	 * 		Max match count to allow.
 	 * @param maxMatchesPerLine
 	 * 		Max match count per line to allow.
+	 * @param maxTextLength
+	 * 		Max text length to allow for highlighting.
+	 * @param maxWordLength
+	 * 		Max word length to allow for highlighting.
 	 * @param selectionBlacklist
 	 * 		Words to exclude from selected-word highlighting.
 	 */
 	public SelectedWordHighlighting(int maxMatches, int maxMatchesPerLine,
+	                                int maxTextLength, int maxWordLength,
 	                                @Nonnull Collection<String> selectionBlacklist) {
-		this(maxMatches, maxMatchesPerLine, toBlacklistPredicate(selectionBlacklist));
+		this(maxMatches, maxMatchesPerLine, DEFAULT_MAX_TEXT_LENGTH, DEFAULT_MAX_SELECTED_WORD_LENGTH, toBlacklistPredicate(selectionBlacklist));
 	}
 
 	/**
@@ -109,7 +121,7 @@ public class SelectedWordHighlighting implements EditorComponent {
 	 * 		Predicate returning {@code true} for words to exclude from selected-word highlighting.
 	 */
 	public SelectedWordHighlighting(@Nonnull Predicate<String> selectionBlacklist) {
-		this(DEFAULT_MAX_MATCHES, DEFAULT_MAX_MATCHES_PER_LINE, selectionBlacklist);
+		this(DEFAULT_MAX_MATCHES, DEFAULT_MAX_MATCHES_PER_LINE, DEFAULT_MAX_TEXT_LENGTH, DEFAULT_MAX_SELECTED_WORD_LENGTH, selectionBlacklist);
 	}
 
 	/**
@@ -119,13 +131,20 @@ public class SelectedWordHighlighting implements EditorComponent {
 	 * 		Max match count to allow.
 	 * @param maxMatchesPerLine
 	 * 		Max match count per line to allow.
+	 * @param maxTextLength
+	 * 		Max text length to allow for highlighting.
+	 * @param maxWordLength
+	 * 		Max word length to allow for highlighting.
 	 * @param selectionBlacklist
 	 * 		Predicate returning {@code true} for words to exclude from selected-word highlighting.
 	 */
 	public SelectedWordHighlighting(int maxMatches, int maxMatchesPerLine,
+	                                int maxTextLength, int maxWordLength,
 	                                @Nonnull Predicate<String> selectionBlacklist) {
 		this.maxMatches = maxMatches;
 		this.maxMatchesPerLine = maxMatchesPerLine;
+		this.maxTextLength = maxTextLength;
+		this.maxWordLength = maxWordLength;
 		this.selectionBlacklist = selectionBlacklist;
 	}
 
@@ -177,7 +196,10 @@ public class SelectedWordHighlighting implements EditorComponent {
 		textChangeEventStream.addObserver(textChangeObserver);
 
 		// Do an initial refresh to highlight any pre-existing selected word.
-		updateMatches(editor.getText(), codeArea.getSelectedText(), codeArea.getCaretPosition());
+		if (editor.getTextLength() > maxTextLength)
+			updateMatches("", null, 0);
+		else
+			updateMatches(editor.getText(), getCurrentSelectedText(), codeArea.getCaretPosition());
 	}
 
 	@Override
@@ -385,13 +407,28 @@ public class SelectedWordHighlighting implements EditorComponent {
 	}
 
 	/**
+	 * @return Selected text, or a non-word placeholder for oversized selections.
+	 */
+	@Nonnull
+	private String getCurrentSelectedText() {
+		if (codeArea.getSelection().getLength() > maxWordLength)
+			return OVERSIZED_SELECTION_PLACEHOLDER;
+		return codeArea.getSelectedText();
+	}
+
+	/**
 	 * Restyle any affected ranges due to a change in the selected word or caret position.
 	 */
 	private void refreshSelectedWordHighlights() {
 		if (editor == null || codeArea == null || editor.isTyping() || mouseSelectionInProgress)
 			return;
 
-		List<IntRange> affectedRanges = refreshAndGetAffectedRanges(editor.getText(), codeArea.getSelectedText(), codeArea.getCaretPosition());
+		List<IntRange> affectedRanges;
+		if (editor.getTextLength() > maxTextLength) {
+			affectedRanges = refreshAndGetAffectedRanges("", null, 0);
+		} else {
+			affectedRanges = refreshAndGetAffectedRanges(editor.getText(), getCurrentSelectedText(), codeArea.getCaretPosition());
+		}
 		restyleSelectedWordHighlights(affectedRanges);
 	}
 
@@ -403,7 +440,12 @@ public class SelectedWordHighlighting implements EditorComponent {
 			return;
 
 		List<IntRange> previousStyledRanges = styledRanges;
-		List<IntRange> updatedRanges = findMatchRanges(editor.getText(), codeArea.getSelectedText(), codeArea.getCaretPosition());
+		List<IntRange> updatedRanges;
+		if (editor.getTextLength() > maxTextLength) {
+			updatedRanges = Collections.emptyList();
+		} else {
+			updatedRanges = findMatchRanges(editor.getText(), getCurrentSelectedText(), codeArea.getCaretPosition());
+		}
 		List<IntRange> affectedRanges = mergeRanges(previousStyledRanges, updatedRanges);
 		matchRanges = updatedRanges;
 		styledRanges = updatedRanges;
@@ -444,6 +486,45 @@ public class SelectedWordHighlighting implements EditorComponent {
 		}
 	}
 
+	@Nullable
+	private String getSelectedWord(@Nonnull String text, @Nullable String selectedText, int caret) {
+		if (selectedText != null && selectedText.length() > maxWordLength)
+			return null;
+
+		if (isSelectedWord(selectedText))
+			return selectedText;
+		if (selectedText != null && !selectedText.isEmpty())
+			return null;
+
+		if (text.isEmpty())
+			return null;
+
+		int seed = -1;
+		if (caret < text.length() && isWordChar(text.charAt(caret))) {
+			seed = caret;
+		} else if (caret > 0 && isWordChar(text.charAt(caret - 1))) {
+			seed = caret - 1;
+		}
+		if (seed < 0)
+			return null;
+
+		int start = seed;
+		while (start > 0 && isWordChar(text.charAt(start - 1))) {
+			if (seed - start + 2 > maxWordLength)
+				return null;
+			start--;
+		}
+
+		int end = seed + 1;
+		while (end < text.length() && isWordChar(text.charAt(end))) {
+			if (end - start >= maxWordLength)
+				return null;
+			end++;
+		}
+
+		return text.substring(start, end);
+	}
+
 	@Nonnull
 	private List<IntRange> findMatchRanges(@Nonnull String text, @Nullable String selectedText, int caret) {
 		return findWordMatchRanges(text, selectedText, caret);
@@ -451,55 +532,78 @@ public class SelectedWordHighlighting implements EditorComponent {
 
 	@Nonnull
 	private List<IntRange> findWordMatchRanges(@Nonnull String text, @Nullable String selectedText, int caret) {
+		// Skip if there's too much text, and highlighting would be slow.
+		if (text.length() > maxTextLength)
+			return Collections.emptyList();
+
+		// Find word at current caret position.
 		String selectedWord = getSelectedWord(text, selectedText, caret);
 		if (selectedWord == null || text.isEmpty() || selectionBlacklist.test(selectedWord))
 			return Collections.emptyList();
 
+		// Knuth–Morris–Pratt (KMP) substring search to find all matches of the selected word in the text.
 		List<IntRange> matches = new ArrayList<>();
-		int limit = text.length() - selectedWord.length();
+		int wordLength = selectedWord.length();
 		int maxMatchesLocal = maxMatches;
 		int maxMatchesPerLineLocal = maxMatchesPerLine;
 		int currentLine = 0;
 		int lineMatchCount = 0;
-		int nextLineOffset = text.indexOf('\n');
-		if (nextLineOffset == -1)
-			nextLineOffset = text.length();
-
-		for (int i = 0; i <= limit; ) {
-			int match = text.indexOf(selectedWord, i);
-			if (match < 0)
-				break;
-
-			int end = match + selectedWord.length();
-			if (isWordBoundary(text, match - 1) && isWordBoundary(text, end)) {
-				while (match > nextLineOffset) {
-					currentLine++;
-					lineMatchCount = 0;
-					nextLineOffset = text.indexOf('\n', nextLineOffset + 1);
-					if (nextLineOffset == -1)
-						nextLineOffset = text.length();
-				}
-
-				matches.add(new IntRange(match, end));
-				lineMatchCount++;
-
-				// Prevent bogus inputs from hanging the application by emitting stupidly complex match collections.
-				if (matches.size() > maxMatchesLocal) {
-					logger.warn("Skipping selected-word highlighting, max is {}", maxMatchesLocal);
-					return Collections.emptyList();
-				}
-
-				// As with syntax highlighting, many matches on one long line are more expensive to render than the same
-				// count split across many vertically virtualized lines.
-				if (lineMatchCount > maxMatchesPerLineLocal) {
-					logger.warn("Skipping selected-word highlighting on line {}, max-per-line is {}",
-							currentLine + 1, maxMatchesPerLineLocal);
-					return Collections.emptyList();
-				}
+		int matchedLength = 0;
+		int[] prefixLengths = createPrefixLengths(selectedWord);
+		for (int i = 0; i < text.length(); i++) {
+			char c = text.charAt(i);
+			if (c == '\n') {
+				currentLine++;
+				lineMatchCount = 0;
 			}
-			i = end;
+
+			while (matchedLength > 0 && c != selectedWord.charAt(matchedLength))
+				matchedLength = prefixLengths[matchedLength - 1];
+			if (c == selectedWord.charAt(matchedLength))
+				matchedLength++;
+
+			if (matchedLength == wordLength) {
+				int end = i + 1;
+				int start = end - wordLength;
+				if (isWordBoundary(text, start - 1) && isWordBoundary(text, end)) {
+					matches.add(new IntRange(start, end));
+					lineMatchCount++;
+
+					// Prevent bogus inputs from emitting an overly complex match collection.
+					if (matches.size() > maxMatchesLocal) {
+						logger.warn("Skipping selected-word highlighting, max is {}", maxMatchesLocal);
+						return Collections.emptyList();
+					}
+
+					// As with syntax highlighting, many matches on one long line are more expensive to render than the same
+					// count split across many vertically virtualized lines.
+					if (lineMatchCount > maxMatchesPerLineLocal) {
+						logger.warn("Skipping selected-word highlighting on line {}, max-per-line is {}",
+								currentLine + 1, maxMatchesPerLineLocal);
+						return Collections.emptyList();
+					}
+				}
+
+				matchedLength = prefixLengths[matchedLength - 1];
+			}
 		}
 		return matches;
+	}
+
+	@Nonnull
+	private static int[] createPrefixLengths(@Nonnull String word) {
+		int[] prefixLengths = new int[word.length()];
+		int prefixLength = 0;
+		for (int i = 1; i < word.length(); ) {
+			if (word.charAt(i) == word.charAt(prefixLength)) {
+				prefixLengths[i++] = ++prefixLength;
+			} else if (prefixLength > 0) {
+				prefixLength = prefixLengths[prefixLength - 1];
+			} else {
+				prefixLengths[i++] = 0;
+			}
+		}
+		return prefixLengths;
 	}
 
 	@Nonnull
@@ -578,36 +682,6 @@ public class SelectedWordHighlighting implements EditorComponent {
 		}
 		mergedRanges.add(current);
 		return mergedRanges;
-	}
-
-	@Nullable
-	private static String getSelectedWord(@Nonnull String text, @Nullable String selectedText, int caret) {
-		if (isSelectedWord(selectedText))
-			return selectedText;
-		if (selectedText != null && !selectedText.isEmpty())
-			return null;
-
-		if (text.isEmpty())
-			return null;
-
-		int seed = -1;
-		if (caret < text.length() && isWordChar(text.charAt(caret))) {
-			seed = caret;
-		} else if (caret > 0 && isWordChar(text.charAt(caret - 1))) {
-			seed = caret - 1;
-		}
-		if (seed < 0)
-			return null;
-
-		int start = seed;
-		while (start > 0 && isWordChar(text.charAt(start - 1)))
-			start--;
-
-		int end = seed + 1;
-		while (end < text.length() && isWordChar(text.charAt(end)))
-			end++;
-
-		return text.substring(start, end);
 	}
 
 	private static boolean isSelectedWord(@Nullable String text) {

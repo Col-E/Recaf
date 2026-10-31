@@ -183,6 +183,38 @@ class SelectedWordHighlightingTest {
 	}
 
 	@Test
+	void skipsHighlightingForOverlongCaretWordsAndSelections() {
+		String overlongWord = "a".repeat(SelectedWordHighlighting.DEFAULT_MAX_TEXT_LENGTH + 1);
+		String text = overlongWord + " " + overlongWord;
+		SelectedWordHighlighting highlighting = new SelectedWordHighlighting();
+
+		// Long caret words and long selections are ignored rather than scanned or validated in full.
+		assertEquals(Collections.emptyList(), highlighting.refreshAndGetAffectedRanges(text, "", overlongWord.length() / 2));
+		assertEquals(Collections.emptyList(), highlighting.refreshAndGetAffectedRanges("a a", overlongWord, 0));
+	}
+
+	@Test
+	void skipsHighlightingWhenDocumentLimitIsExceeded() {
+		String text = "word ".repeat(SelectedWordHighlighting.DEFAULT_MAX_TEXT_LENGTH / 5 + 1);
+		SelectedWordHighlighting highlighting = new SelectedWordHighlighting();
+
+		// The input is over the configured scan cap even though it contains valid matches at the beginning.
+		assertEquals(Collections.emptyList(), highlighting.refreshAndGetAffectedRanges(text, "word", 0));
+	}
+
+	@Test
+	void matchesMaximumLengthWordsAcrossNearMatches() {
+		String word = "a".repeat(SelectedWordHighlighting.DEFAULT_MAX_SELECTED_WORD_LENGTH - 1) + "b";
+		String nearMatch = "a".repeat(SelectedWordHighlighting.DEFAULT_MAX_SELECTED_WORD_LENGTH - 1) + "c ";
+		String text = word + " " + nearMatch.repeat(1_000);
+		SelectedWordHighlighting highlighting = new SelectedWordHighlighting();
+
+		// A valid maximum-sized word is still highlighted, while repeated partial matches are rejected.
+		assertEquals(List.of(new IntRange(0, word.length())),
+			highlighting.refreshAndGetAffectedRanges(text, "", 0));
+	}
+
+	@Test
 	void skipsHighlightingWhenGlobalMatchLimitIsExceeded() {
 		String text = "a a a";
 		SelectedWordHighlighting highlighting = new SelectedWordHighlighting(2, 25_000);
