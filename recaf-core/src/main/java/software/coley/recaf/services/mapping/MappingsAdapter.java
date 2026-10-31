@@ -140,7 +140,7 @@ public class MappingsAdapter implements Mappings {
 		// Iterate over the method mappings, and for each mapping,
 		// check if there are any methods in the same override family that would be affected by the same mapping.
 		// If so, add the same mapping for those methods as well.
-		Map<String, Set<InheritanceVertex>> familyCache = new IdentityHashMap<>(); // Thankfully we can get away with identity here.
+		Map<InheritanceVertex, Set<InheritanceVertex>> familyCache = new IdentityHashMap<>(); // Thankfully we can get away with identity here.
 		for (MethodMapping explicitMapping : explicitMappings) {
 			// Skip constructors and static initializers.
 			String methodName = explicitMapping.getOldName();
@@ -160,7 +160,13 @@ public class MappingsAdapter implements Mappings {
 				continue;
 
 			// Iterate over classes in the inheritance family and apply the same mapping to any method with the same signature that is inherited by the owner method.
-			Set<InheritanceVertex> sortedFamily = familyCache.computeIfAbsent(ownerName, o -> inheritanceGraph.getVertexFamily(o, false));
+			Set<InheritanceVertex> sortedFamily = familyCache.get(ownerVertex);
+			if (sortedFamily == null) {
+				sortedFamily = inheritanceGraph.getVertexFamily(ownerName, false);
+				familyCache.put(ownerVertex, sortedFamily);
+				for (InheritanceVertex familyVertex : sortedFamily)
+					familyCache.put(familyVertex, sortedFamily);
+			}
 			for (InheritanceVertex familyVertex : sortedFamily) {
 				// Again, skipping library classes.
 				if (familyVertex.isLibraryVertex())
