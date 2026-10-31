@@ -67,4 +67,48 @@ public class MappingIntermediateTest extends TestBase {
 		assertEquals(newVariableName, adapter.getMappedVariableName(owner, methodName, methodDesc,
 				variableName, variableDesc, 1));
 	}
+
+	@Test
+	void testVariableImportPreservesRecordsForOneMethod() {
+		String owner = "Foo";
+		String methodName = "compute";
+		String methodDesc = "(I)Ljava/lang/String;";
+
+		// Build intermediate mappings with multiple variable entries for the same method.
+		IntermediateMappings intermediate = new IntermediateMappings();
+		intermediate.addVariable(owner, methodName, methodDesc, "I", "count", 1, "amount");
+		intermediate.addVariable(owner, methodName, methodDesc, "Ljava/lang/String;", "message", 2, "text");
+
+		// Import the intermediate mappings into a new adapter.
+		MappingsAdapter adapter = new MappingsAdapter(true, true);
+		adapter.importIntermediate(intermediate);
+
+		// Assert that both variable entries are present and correct.
+		assertEquals("amount", adapter.getMappedVariableName(owner, methodName, methodDesc, "count", "I", 1));
+		assertEquals("text", adapter.getMappedVariableName(owner, methodName, methodDesc, "message", "Ljava/lang/String;", 2));
+		assertNull(adapter.getMappedVariableName(owner, methodName, methodDesc, "count", "I", 2));
+	}
+
+	@Test
+	void testVariableImportDoesNotConfuseOwnerPrefixes() {
+		// Previous bug where entries were added to the in the order of classes in the mapping.
+		// Each class would then iterate over all vars and filter by the class/owner name.
+		// This led to some overwriting of variable entries when one class was a prefix of another class.
+		String shorterOwner = "p/Thing";
+		String longerOwner = "p/ThingExtra";
+		IntermediateMappings intermediate = new IntermediateMappings();
+		intermediate.addVariable(shorterOwner, "method", "()V", "I", "shortLocal", 0, "mappedShort");
+		intermediate.addVariable(longerOwner, "method", "()V", "I", "longLocal", 1, "mappedLong");
+
+		MappingsAdapter adapter = new MappingsAdapter(true, true);
+		adapter.importIntermediate(intermediate);
+
+		// Assert both variable entries are present and correct, and that they do not overwrite each other.
+		assertEquals("mappedShort", adapter.getMappedVariableName(shorterOwner, "method", "()V", "shortLocal", "I", 0));
+		assertEquals("mappedLong", adapter.getMappedVariableName(longerOwner, "method", "()V", "longLocal", "I", 1));
+
+		// With the owners swapped, the variable entries should not be found.
+		assertNull(adapter.getMappedVariableName(shorterOwner, "method", "()V", "longLocal", "I", 1));
+		assertNull(adapter.getMappedVariableName(longerOwner, "method", "()V", "shortLocal", "I", 0));
+	}
 }

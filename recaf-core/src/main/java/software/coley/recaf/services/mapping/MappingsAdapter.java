@@ -97,16 +97,12 @@ public class MappingsAdapter implements Mappings {
 				if (!oldMethodName.equals(newMethodName))
 					addMethod(methodMapping.getOwnerName(), oldMethodName, oldMethodDesc, newMethodName);
 			}
-			for (var entry : mappings.getVariables().entrySet()) {
-				String key = entry.getKey();
-				if (!key.startsWith(className))
-					continue;
-				List<VariableMapping> variablesPerType = entry.getValue();
-				for (VariableMapping variableMapping : variablesPerType) {
-					addVariable(className, variableMapping.getMethodName(), variableMapping.getMethodDesc(),
-							variableMapping.getOldName(), variableMapping.getDesc(), variableMapping.getIndex(),
-							variableMapping.getNewName());
-				}
+		}
+		for (List<VariableMapping> variablesPerMethod : mappings.getVariables().values()) {
+			for (VariableMapping variableMapping : variablesPerMethod) {
+				addVariable(variableMapping.getOwnerName(), variableMapping.getMethodName(), variableMapping.getMethodDesc(),
+						variableMapping.getOldName(), variableMapping.getDesc(), variableMapping.getIndex(),
+						variableMapping.getNewName());
 			}
 		}
 	}
