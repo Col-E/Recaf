@@ -606,6 +606,12 @@ class WorkspaceTreeNodeTest {
 		root.visitResourcePublic(supportingB);
 		assertNotNull(root.getNodeByPath(rootPath.child(supportingB)), "Second supporting resource should have its own node");
 		assertEquals(3, root.getSourceChildren().size(), "Expected distinct tree nodes for primary and both supporting resources");
+
+		// Validate order of resources in the tree is as expected.
+		List<TreeItem<PathNode<?>>> resourceNodes = root.getSourceChildren();
+		assertSame(primary, resourceNodes.get(0).getValue().getValue(), "Primary resource should remain first");
+		assertSame(supportingA, resourceNodes.get(1).getValue().getValue(), "First added resource should remain second");
+		assertSame(supportingB, resourceNodes.get(2).getValue().getValue(), "Second added resource should remain third");
 	}
 
 	/**

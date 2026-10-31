@@ -2,6 +2,7 @@ package software.coley.recaf.ui.control.tree;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import software.coley.collections.Unchecked;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.FileInfo;
@@ -30,6 +31,7 @@ import software.coley.recaf.workspace.model.resource.WorkspaceFileResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -259,20 +261,14 @@ public class WorkspaceRootTreeNode extends WorkspaceTreeNode {
 	 * 		Resource to add to the tree.
 	 */
 	protected void visitResource(@Nonnull WorkspaceResource resource) {
-		ResourcePathNode resourcePath = rootPath.child(resource);
-		if (!shouldIncludeResource(resourcePath, resource))
-			return;
-
-		resource.classBundleStream()
-				.filter(bundle -> shouldIncludeClasses(resourcePath, bundle))
-				.forEach(bundle -> visitClasses(resourcePath, bundle));
-		resource.fileBundleStream()
-				.filter(bundle -> shouldIncludeFiles(resourcePath, bundle))
-				.forEach(bundle -> visitFiles(resourcePath, bundle));
-
-		// Create subtrees for embedded resources
-		if (shouldIncludeEmbeddedResources(resourcePath, resource))
-			visitEmbeddedResources(resourcePath.embeddedChildContainer(), resource);
+		// Build a complete tree of the new resource and insert it into the tree in sorted order.
+		WorkspaceTreeNode resourceNode = buildResourceNode(rootPath.child(resource), resource, true);
+		if (resourceNode != null) {
+			List<WorkspaceTreeNode> children = Unchecked.cast(getSourceChildren());
+			int index = Collections.binarySearch(children, resourceNode);
+			if (index < 0)
+				addPreSortedChild(resourceNode, -(index + 1));
+		}
 	}
 
 	/**
