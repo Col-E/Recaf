@@ -585,6 +585,48 @@ public class EvaluatorTest extends TransformerTestBase {
 	}
 
 	@Test
+	void testRecursiveEvalLimitsCallDepth() {
+		compile("""
+				static int recurse() { return recurse(); }
+				static int deep(int value) { return deep(value + 1); }
+				""");
+
+		// Make an evaluator that only allows a single instruction to be executed.
+		int[] executedInstructions = {0};
+		Evaluator stepLimitedEvaluator = createEvaluator(1);
+		stepLimitedEvaluator.addListener((classNode, methodNode, instruction, frame) -> executedInstructions[0]++);
+
+		// Evaluate the 'recurse' method which is an infinite recursion.
+		// The evaluator should fail due to the instruction limit.
+		EvaluationResult stepLimited = stepLimitedEvaluator.evaluate(CLASS_NAME, "recurse", "()I", null, List.of());
+		assertInstanceOf(EvaluationFailureResult.class, stepLimited);
+		assertTrue(executedInstructions[0] <= 1, "Nested recursion must not exceed the shared one-instruction budget");
+
+		// A more generous evaluator that allows a large number of instructions should be able to evaluate
+		// the 'deep' method which is also an infinite recursion to a configured depth limit.
+		Evaluator depthLimitedEvaluator = createEvaluator(10_000);
+		List<Integer> observedDepths = new ArrayList<>();
+		depthLimitedEvaluator.addListener(new EvaluationListener() {
+			@Override
+			public void onInstruction(@Nullable ClassNode classNode,
+			                          @Nullable MethodNode methodNode,
+			                          @Nonnull AbstractInsnNode instruction,
+			                          @Nonnull ReFrame frame) {
+				// Method-entry depth is observed below.
+			}
+
+			@Override
+			public void onMethodEnter(@Nonnull ClassNode classNode, @Nonnull MethodNode methodNode,
+			                          @Nonnull ReFrame frame, @Nonnull List<ClassMethodPair> stack) {
+				observedDepths.add(stack.size());
+			}
+		});
+		depthLimitedEvaluator.evaluate(CLASS_NAME, "deep", "(I)I", null, List.of(IntValue.of(0)));
+		assertEquals(64, observedDepths.size());
+		assertEquals(64, observedDepths.getLast());
+	}
+
+	@Test
 	void testEvaluationCallbackEnterExit() {
 		// Compile a method that re-enters the same method until the base case returns.
 		compile("""
@@ -2641,12 +2683,22 @@ public class EvaluatorTest extends TransformerTestBase {
 	}
 
 	@Nonnull
+	private Evaluator createEvaluator(int maxSteps) {
+		return createEvaluator(List.of(), maxSteps);
+	}
+
+	@Nonnull
 	private Evaluator createEvaluator(@Nonnull List<ClassMethodPair> callStackSeed) {
+		return createEvaluator(callStackSeed, 1000);
+	}
+
+	@Nonnull
+	private Evaluator createEvaluator(@Nonnull List<ClassMethodPair> callStackSeed, int maxSteps) {
 		JvmClassInfo assembled = get(CLASS_NAME);
 		Workspace workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(assembled));
 		JvmTransformerContext ctx = new JvmTransformerContext(workspace, workspace.getPrimaryResource(), Collections.emptyList());
 		ReInterpreter interpreter = ctx.newInterpreter(new InheritanceGraph(workspace));
-		Evaluator evaluator = new Evaluator(workspace, interpreter, new FieldCacheManager(), 1000, false, false);
+		Evaluator evaluator = new Evaluator(workspace, interpreter, new FieldCacheManager(), maxSteps, false, false);
 		evaluator.setCallStackSeed(callStackSeed);
 		return evaluator;
 	}

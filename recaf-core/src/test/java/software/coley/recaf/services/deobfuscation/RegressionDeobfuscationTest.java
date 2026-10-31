@@ -684,6 +684,33 @@ public class RegressionDeobfuscationTest extends TransformerTestBase {
 		validateNoTransformation(asm, List.of(CallResultInliningTransformer.class));
 	}
 
+	@Test
+	@Timeout(5) // If this runs for 5+ seconds we know we have a recursive call inlining issue.
+	void callInliningRecursiveCycle() {
+		String asm = """
+				.super java/lang/Object
+				.class Example {
+				    .method public static recurse ()I {
+				        code: {
+				        A:
+				            invokestatic Example.recurse ()I
+				            ireturn
+				        B:
+				        }
+				    }
+				    .method public static caller ()I {
+				        code: {
+				        A:
+				            invokestatic Example.recurse ()I
+				            ireturn
+				        B:
+				        }
+				    }
+				}
+				""";
+		validateNoTransformation(asm, List.of(CallResultInliningTransformer.class));
+	}
+
 	/**
 	 * This case has "xyz" always be "1" when read, so it should fold.
 	 */

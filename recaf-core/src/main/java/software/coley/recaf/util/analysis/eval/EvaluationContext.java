@@ -33,6 +33,7 @@ public final class EvaluationContext {
 	final VirtualClock clock;
 	final SimulatedScheduler scheduler;
 	final EvaluationModelRegistry models;
+	final int callStackSeedSize;
 	int stepAllocation;
 	EvaluationModelHeap.ThreadState currentThread;
 
@@ -43,6 +44,7 @@ public final class EvaluationContext {
 	EvaluationContext(@Nonnull Evaluator evaluator, int stepAllocation, @Nullable List<ClassMethodPair> callStackSeed) {
 		this.stepAllocation = stepAllocation;
 		callStack = callStackSeed == null ? new ArrayList<>() : new ArrayList<>(callStackSeed);
+		callStackSeedSize = callStack.size();
 		initializedClasses = new HashSet<>();
 		initializingClasses = new HashSet<>();
 		failedClassInitializers = new HashMap<>();

@@ -69,6 +69,7 @@ import java.util.function.Predicate;
  */
 public class Evaluator {
 	private static final String UNKNOWN_VALUE_REASON = "Encountered unknown value while evaluating branch";
+	private static final int MAX_EVALUATION_CALL_DEPTH = 64;
 
 	private static final Logger logger = Logging.get(Evaluator.class);
 	private static final InstanceFactory instanceFactory = new InstanceFactory();
@@ -90,7 +91,7 @@ public class Evaluator {
 	 * @param fieldCacheManager
 	 * 		Support class for tracking instance data.
 	 * @param maxSteps
-	 * 		Maximum number of steps to allow when evaluating a method.
+	 * 		Maximum number of instructions to execute across a top-level evaluation and its nested calls.
 	 * @param evaluateInternals
 	 * 		Flag to allow evaluation of methods defined by classes of internal resources
 	 * 		<i>(Mainly the {@link RuntimeWorkspaceResource} to facilitate emulating core JDK methods)</i>
@@ -412,6 +413,10 @@ public class Evaluator {
 	                                    @Nullable ObjectValue classInstance,
 	                                    @Nonnull List<ReValue> parameters,
 	                                    @Nonnull EvaluationContext context) throws UnknownValueException {
+		// Cannot exceed max call depth.
+		if (context.callStack.size() - context.callStackSeedSize >= MAX_EVALUATION_CALL_DEPTH)
+			return EvaluationResult.cannotEvaluate("Maximum evaluator call depth exceeded");
+
 		// Active method entry is a JVM class-initialization boundary.
 		if (!methodNode.name.equals("<clinit>")) {
 			EvaluationResult initializationResult = initializeClassIfNeeded(classNode.name, context);
@@ -471,6 +476,7 @@ public class Evaluator {
 		try {
 			AbstractInsnNode pc = instructions.getFirst();
 			while (context.stepAllocation > 0) {
+				context.stepAllocation--;
 				try {
 					// Evaluate the instruction and advance the program counter.
 					AbstractInsnNode executedInstruction = pc;
@@ -506,7 +512,6 @@ public class Evaluator {
 					notifyMethodThrow(classNode, methodNode, frame, e.getExceptionValue(), stack);
 					return new EvaluationThrowsResult(e.getExceptionValue());
 				}
-				context.stepAllocation--;
 			}
 			return EvaluationResult.cannotEvaluate("Method did not yield an value in " + maxSteps + " steps");
 		} finally {
@@ -703,6 +708,7 @@ public class Evaluator {
 		// Handle execution
 		AbstractInsnNode pc = instructionBlock.getFirst();
 		while (context.stepAllocation > 0) {
+			context.stepAllocation--;
 			try {
 				// Evaluate the instruction and advance the program counter.
 				AbstractInsnNode executedInstruction = pc;
@@ -736,7 +742,6 @@ public class Evaluator {
 			} catch (ExceptionHandler.ThrownException e) {
 				return new EvaluationThrowsResult(e.getExceptionValue());
 			}
-			context.stepAllocation--;
 		}
 		return EvaluationResult.cannotEvaluate("Block did not yield an value in " + maxSteps + " steps");
 	}
