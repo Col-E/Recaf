@@ -22,10 +22,7 @@ import java.util.Set;
 import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.objectweb.asm.Opcodes.ACC_ABSTRACT;
-import static org.objectweb.asm.Opcodes.ACC_INTERFACE;
-import static org.objectweb.asm.Opcodes.ACC_PUBLIC;
-import static org.objectweb.asm.Opcodes.V1_8;
+import static org.objectweb.asm.Opcodes.*;
 
 /**
  * Tests for {@link InheritanceGraph} and interactions with {@link MappingApplier}.
@@ -79,6 +76,34 @@ class InheritanceAndRenamingTest extends TestBase {
 	}
 
 	@Test
+	void siblingOverridesShareCommonAncestorFamily() {
+		// interface Parent { void run(); }
+		// interface Left extends Parent  { @Override void run(); }
+		// interface Right extends Parent { @Override void run(); }
+		String parent = "family/Parent";
+		String left = "family/Left";
+		String right = "family/Right";
+		JvmClassInfo[] classes = {
+				createInterfaceWithRun(parent),
+				createInterfaceWithRun(left, parent),
+				createInterfaceWithRun(right, parent)
+		};
+		Workspace workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(classes));
+
+		// Build the graph, and map run to something else.
+		InheritanceGraph graph = new InheritanceGraph(workspace);
+		IntermediateMappings mappings = new IntermediateMappings();
+		mappings.addMethod(left, "()V", "run", "walk");
+
+		// Verify that filling in the method family for one of the siblings also fills in the other sibling and the parent.
+		MappingsAdapter adapter = new MappingsAdapter(true, true);
+		adapter.infillMethodFamilies(mappings, graph);
+		assertEquals("walk", adapter.getMappedMethodName(parent, "run", "()V"));
+		assertEquals("walk", adapter.getMappedMethodName(left, "run", "()V"));
+		assertEquals("walk", adapter.getMappedMethodName(right, "run", "()V"));
+	}
+
+	@Test
 	void verifyLinearInterfaces() {
 		JvmClassInfo[] generatedClasses = IntStream.rangeClosed(1, CLASS_COUNT).mapToObj(i -> {
 			String[] interfaces = i == 1 ? null : new String[]{"I" + (i - 1)};
@@ -129,6 +154,24 @@ class InheritanceAndRenamingTest extends TestBase {
 				assertEquals(i, allParentCount, "Vertex R" + i + " should have " + i + " total (direct + transitive) parents");
 			}
 		}
+	}
+
+	/**
+	 * @param name
+	 * 		Interface name.
+	 * @param parents
+	 * 		Interfaces to implement.
+	 *
+	 * @return Generated interface implementing the given parents with a single abstract method named "run".
+	 */
+	@Nonnull
+	private static JvmClassInfo createInterfaceWithRun(String name, String... parents) {
+		ClassWriter cw = new ClassWriter(0);
+		cw.visit(V1_8, ACC_PUBLIC | ACC_ABSTRACT | ACC_INTERFACE, name, null, "java/lang/Object", parents.length == 0 ? null : parents);
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC | ACC_ABSTRACT, "run", "()V", null, null);
+		mv.visitEnd();
+		cw.visitEnd();
+		return new JvmClassInfoBuilder(cw.toByteArray()).build();
 	}
 
 	/** Small graph extension for counting calls to methods. */

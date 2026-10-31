@@ -158,6 +158,7 @@ public class MappingsAdapter implements Mappings {
 		Map<InheritanceVertex, Map<NameTypePair, List<MethodFamilyEntry>>> familyMethodIndexCache = new IdentityHashMap<>();
 		Map<MethodMappingKey, List<MethodFamilyEntry>> methodFamilyCache = new HashMap<>();
 		Map<MethodMappingKey, String> infilledMethodNames = new HashMap<>();
+		MethodFamilyRelationCache methodFamilyRelations = null;
 		for (MethodMapping explicitMapping : explicitMappings) {
 			// Skip constructors and static initializers.
 			String methodName = explicitMapping.getOldName();
@@ -230,8 +231,10 @@ public class MappingsAdapter implements Mappings {
 				// Gather all family members that match the explicit mapping's name/desc.
 				List<MethodFamilyEntry> candidates = familyMethodIndex.getOrDefault(new NameTypePair(methodName, explicitMapping.getDesc()), List.of());
 				List<MethodFamilyEntry> matchingFamily = new ArrayList<>();
+				if (methodFamilyRelations == null)
+					methodFamilyRelations = new MethodFamilyRelationCache();
 				for (MethodFamilyEntry candidate : candidates) {
-					if (MappingsAdapter.isSameMethodFamily(ownerVertex, ownerInfo, ownerMethod, candidate.vertex(), candidate.ownerInfo(), candidate.method()))
+					if (MappingsAdapter.isSameMethodFamily(ownerVertex, ownerInfo, ownerMethod, candidate.vertex(), candidate.ownerInfo(), candidate.method(), methodFamilyRelations))
 						matchingFamily.add(candidate);
 				}
 				matchingFamily.sort(Comparator.comparing(entry -> entry.vertex().getName()));
@@ -537,21 +540,50 @@ public class MappingsAdapter implements Mappings {
 	                                            @Nonnull InheritanceVertex familyVertex,
 	                                            @Nonnull ClassInfo familyInfo,
 	                                            @Nonnull MethodMember familyMethod) {
+		return isSameMethodFamily(ownerVertex, ownerInfo, ownerMethod, familyVertex, familyInfo, familyMethod, new MethodFamilyRelationCache());
+	}
+
+	/**
+	 * @param ownerVertex
+	 * 		Vertex defining the explicit mapping.
+	 * @param ownerInfo
+	 * 		Class defining the explicit mapping method.
+	 * @param ownerMethod
+	 * 		Explicitly mapped method.
+	 * @param familyVertex
+	 * 		Candidate family vertex to apply the same mapping to.
+	 * @param familyInfo
+	 * 		Class defining the candidate family method.
+	 * @param familyMethod
+	 * 		Candidate family method.
+	 * @param relations Cache of ancestry/descendant relations to avoid repeated graph traversals.
+	 *
+	 * @return {@code true} when both methods belong to the same override/implementation family.
+	 */
+	private static boolean isSameMethodFamily(@Nonnull InheritanceVertex ownerVertex,
+	                                         @Nonnull ClassInfo ownerInfo,
+	                                         @Nonnull MethodMember ownerMethod,
+	                                         @Nonnull InheritanceVertex familyVertex,
+	                                         @Nonnull ClassInfo familyInfo,
+	                                         @Nonnull MethodMember familyMethod,
+	                                         @Nonnull MethodFamilyRelationCache relations) {
 		if (ownerVertex == familyVertex)
 			return true;
 
-		// Direct ancestry: one method is declared on a parent/interface path of the other.
-		if (familyVertex.isParentOf(ownerVertex))
+		// Cache the owner's ancestry and descendant graphs to avoid repeated graph traversals for every family member.
+		Set<InheritanceVertex> ownerParents = relations.parents(ownerVertex);
+		if (ownerParents.contains(familyVertex))
 			return isInheritedMethod(ownerInfo, ownerMethod, familyInfo, familyMethod);
-		if (familyVertex.isChildOf(ownerVertex))
+		Set<InheritanceVertex> ownerChildren = relations.children(ownerVertex);
+		if (ownerChildren.contains(familyVertex))
 			return isInheritedMethod(familyInfo, familyMethod, ownerInfo, ownerMethod);
 
 		// Indirect family members only share a mapping if they both implement/override
 		// a method declared by some common ancestor or interface.
-		Set<InheritanceVertex> ownerParents = ownerVertex.getAllParents();
-		Set<InheritanceVertex> familyParents = familyVertex.getAllParents();
-		for (InheritanceVertex commonParent : ownerParents) {
-			if (!familyParents.contains(commonParent))
+		Iterator<InheritanceVertex> parentIterator = familyVertex.allParents().iterator();
+		while (parentIterator.hasNext()) {
+			InheritanceVertex commonParent = parentIterator.next();
+			if (!ownerParents.contains(commonParent))
 				continue;
 
 			ClassInfo commonInfo = commonParent.getValue();
@@ -565,10 +597,10 @@ public class MappingsAdapter implements Mappings {
 			return true;
 		}
 
-		Set<InheritanceVertex> ownerChildren = ownerVertex.getAllChildren();
-		Set<InheritanceVertex> familyChildren = familyVertex.getAllChildren();
-		for (InheritanceVertex commonChild : ownerChildren) {
-			if (!familyChildren.contains(commonChild))
+		Iterator<InheritanceVertex> childIterator = familyVertex.allChildren().iterator();
+		while (childIterator.hasNext()) {
+			InheritanceVertex commonChild = childIterator.next();
+			if (!ownerChildren.contains(commonChild))
 				continue;
 
 			ClassInfo childInfo = commonChild.getValue();
@@ -822,6 +854,34 @@ public class MappingsAdapter implements Mappings {
 	 * 		Method member.
 	 */
 	private record MethodFamilyEntry(@Nonnull InheritanceVertex vertex, @Nonnull ClassInfo ownerInfo, @Nonnull MethodMember method) {}
+
+	/**
+	 * Lazily caches ancestry and descendant graphs for method family lookups to avoid repeated graph traversals.
+	 */
+	private static final class MethodFamilyRelationCache {
+		private final Map<InheritanceVertex, Set<InheritanceVertex>> parents = new IdentityHashMap<>();
+		private final Map<InheritanceVertex, Set<InheritanceVertex>> children = new IdentityHashMap<>();
+
+		@Nonnull
+		private Set<InheritanceVertex> parents(@Nonnull InheritanceVertex vertex) {
+			Set<InheritanceVertex> result = parents.get(vertex);
+			if (result == null) {
+				result = vertex.getAllParents();
+				parents.put(vertex, result);
+			}
+			return result;
+		}
+
+		@Nonnull
+		private Set<InheritanceVertex> children(@Nonnull InheritanceVertex vertex) {
+			Set<InheritanceVertex> result = children.get(vertex);
+			if (result == null) {
+				result = vertex.getAllChildren();
+				children.put(vertex, result);
+			}
+			return result;
+		}
+	}
 
 	/**
 	 * Caches results of looking up a field/method in parent classes to avoid repeated lookups.
