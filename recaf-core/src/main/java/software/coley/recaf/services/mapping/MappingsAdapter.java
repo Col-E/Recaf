@@ -30,6 +30,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 /**
@@ -46,7 +48,12 @@ import java.util.function.Function;
  * @author Matt Coley
  */
 public class MappingsAdapter implements Mappings {
+	private static final int MAX_HIERARCHY_LOOKUP_CACHE_ENTRIES = 70_000; // Enough to fit a decent sized sample like a vanilla MC client jar.
+	private static final Object NO_HIERARCHY_MAPPING = new Object();
+
 	private final Map<MappingKey, String> mappings = new HashMap<>();
+	private volatile HierarchyLookupCache inheritedFieldLookupCache;
+	private volatile HierarchyLookupCache inheritedMethodLookupCache;
 	private final boolean supportFieldTypeDifferentiation;
 	private final boolean supportVariableTypeDifferentiation;
 	private InheritanceGraph inheritanceGraph;
@@ -302,8 +309,16 @@ public class MappingsAdapter implements Mappings {
 	public String getMappedFieldName(@Nonnull String ownerName, @Nonnull String fieldName, @Nonnull String fieldDesc) {
 		MappingKey key = getFieldKey(ownerName, fieldName, fieldDesc);
 		String mapped = mappings.get(key);
-		if (mapped == null && inheritanceGraph != null)
-			mapped = findInParent(ownerName, parent -> getFieldKey(parent, fieldName, fieldDesc));
+		if (mapped == null && inheritanceGraph != null) {
+			HierarchyLookupCache cache = fieldLookupCache();
+			Object cached = cache.get(key);
+			if (cached == null) {
+				mapped = findInParent(ownerName, parent -> getFieldKey(parent, fieldName, fieldDesc));
+				Object result = mapped == null ? NO_HIERARCHY_MAPPING : mapped;
+				cached = cache.putIfSpace(key, result);
+			}
+			mapped = cached == NO_HIERARCHY_MAPPING ? null : (String) cached;
+		}
 		return mapped;
 	}
 
@@ -312,8 +327,16 @@ public class MappingsAdapter implements Mappings {
 	public String getMappedMethodName(@Nonnull String ownerName, @Nonnull String methodName, @Nonnull String methodDesc) {
 		MappingKey key = getMethodKey(ownerName, methodName, methodDesc);
 		String mapped = mappings.get(key);
-		if (mapped == null && inheritanceGraph != null)
-			mapped = findMethodInParent(ownerName, methodName, methodDesc);
+		if (mapped == null && inheritanceGraph != null) {
+			HierarchyLookupCache cache = methodLookupCache();
+			Object cached = cache.get(key);
+			if (cached == null) {
+				mapped = findMethodInParent(ownerName, methodName, methodDesc);
+				Object result = mapped == null ? NO_HIERARCHY_MAPPING : mapped;
+				cached = cache.putIfSpace(key, result);
+			}
+			mapped = cached == NO_HIERARCHY_MAPPING ? null : (String) cached;
+		}
 		return mapped;
 	}
 
@@ -357,6 +380,38 @@ public class MappingsAdapter implements Mappings {
 	@Override
 	public boolean doesSupportVariableTypeDifferentiation() {
 		return supportVariableTypeDifferentiation;
+	}
+
+	/**
+	 * @return Lookup cache for field mappings that are inherited from parent classes.
+	 */
+	@Nonnull
+	private HierarchyLookupCache fieldLookupCache() {
+		HierarchyLookupCache cache = inheritedFieldLookupCache;
+		if (cache == null) {
+			synchronized (this) {
+				cache = inheritedFieldLookupCache;
+				if (cache == null)
+					inheritedFieldLookupCache = cache = new HierarchyLookupCache();
+			}
+		}
+		return cache;
+	}
+
+	/**
+	 * @return Lookup cache for method mappings that are inherited from parent classes.
+	 */
+	@Nonnull
+	private HierarchyLookupCache methodLookupCache() {
+		HierarchyLookupCache cache = inheritedMethodLookupCache;
+		if (cache == null) {
+			synchronized (this) {
+				cache = inheritedMethodLookupCache;
+				if (cache == null)
+					inheritedMethodLookupCache = cache = new HierarchyLookupCache();
+			}
+		}
+		return cache;
 	}
 
 	/**
@@ -552,6 +607,8 @@ public class MappingsAdapter implements Mappings {
 	 */
 	public void enableHierarchyLookup(@Nonnull InheritanceGraph inheritanceGraph) {
 		this.inheritanceGraph = inheritanceGraph;
+		inheritedFieldLookupCache = null;
+		inheritedMethodLookupCache = null;
 	}
 
 	/**
@@ -593,6 +650,7 @@ public class MappingsAdapter implements Mappings {
 	public void addField(@Nonnull String owner, @Nonnull String originalName, @Nonnull String desc, @Nonnull String renamedName) {
 		if (doesSupportFieldTypeDifferentiation()) {
 			mappings.put(getFieldKey(owner, originalName, desc), renamedName);
+			inheritedFieldLookupCache = null;
 		} else {
 			throw new IllegalStateException("The current mapping implementation does not support " +
 					"field type differentiation");
@@ -616,6 +674,7 @@ public class MappingsAdapter implements Mappings {
 					"specifying field descriptors");
 		} else {
 			mappings.put(getFieldKey(owner, originalName, null), renamedName);
+			inheritedFieldLookupCache = null;
 		}
 	}
 
@@ -633,6 +692,7 @@ public class MappingsAdapter implements Mappings {
 	 */
 	public void addMethod(@Nonnull String owner, @Nonnull String originalName, @Nonnull String desc, @Nonnull String renamedName) {
 		mappings.put(getMethodKey(owner, originalName, desc), renamedName);
+		inheritedMethodLookupCache = null;
 	}
 
 	/**
@@ -762,4 +822,34 @@ public class MappingsAdapter implements Mappings {
 	 * 		Method member.
 	 */
 	private record MethodFamilyEntry(@Nonnull InheritanceVertex vertex, @Nonnull ClassInfo ownerInfo, @Nonnull MethodMember method) {}
+
+	/**
+	 * Caches results of looking up a field/method in parent classes to avoid repeated lookups.
+	 */
+	private static final class HierarchyLookupCache {
+		private final Map<MappingKey, Object> results = new ConcurrentHashMap<>();
+		private final AtomicInteger entryCount = new AtomicInteger();
+
+		@Nullable
+		private Object get(@Nonnull MappingKey key) {
+			return results.get(key);
+		}
+
+		@Nonnull
+		private Object putIfSpace(@Nonnull MappingKey key, @Nonnull Object value) {
+			// Reserve a slot before insertion so concurrent misses cannot exceed the cache limit.
+			int count = entryCount.get();
+			while (count < MAX_HIERARCHY_LOOKUP_CACHE_ENTRIES) {
+				if (entryCount.compareAndSet(count, count + 1)) {
+					Object previous = results.putIfAbsent(key, value);
+					if (previous == null)
+						return value;
+					entryCount.decrementAndGet();
+					return previous;
+				}
+				count = entryCount.get();
+			}
+			return value;
+		}
+	}
 }
