@@ -156,7 +156,6 @@ public class MappingsAdapter implements Mappings {
 		// If so, add the same mapping for those methods as well.
 		Map<InheritanceVertex, Set<InheritanceVertex>> familyCache = new IdentityHashMap<>(); // Thankfully we can get away with identity here.
 		Map<InheritanceVertex, Map<NameTypePair, List<MethodFamilyEntry>>> familyMethodIndexCache = new IdentityHashMap<>();
-		Map<MethodMappingKey, List<MethodFamilyEntry>> methodFamilyCache = new HashMap<>();
 		Map<MethodMappingKey, String> infilledMethodNames = new HashMap<>();
 		MethodFamilyRelationCache methodFamilyRelations = null;
 		for (MethodMapping explicitMapping : explicitMappings) {
@@ -189,67 +188,58 @@ public class MappingsAdapter implements Mappings {
 				}
 
 				// This same method family was already fully infilled by another explicit member.
+				// We don't need to do anything else, as the family has already been enriched with the same mapping.
 				continue;
 			}
 
-			// Gather all methods in the same family as the explicit mapping.
-			List<MethodFamilyEntry> methodFamily = methodFamilyCache.get(explicitKey);
-			if (methodFamily == null) {
-				Set<InheritanceVertex> family = familyCache.get(ownerVertex);
-				if (family == null) {
-					// Gather all vertices in the same family as the explicit mapping owner.
-					family = inheritanceGraph.getVertexFamily(ownerName, false);
-					familyCache.put(ownerVertex, family);
-					for (InheritanceVertex familyVertex : family)
-						familyCache.put(familyVertex, family);
-				}
-
-				// Build a map of method signatures to family members for the given method family.
-				Map<NameTypePair, List<MethodFamilyEntry>> familyMethodIndex = familyMethodIndexCache.get(ownerVertex);
-				if (familyMethodIndex == null) {
-					familyMethodIndex = new HashMap<>();
-					for (InheritanceVertex familyVertex : family) {
-						if (familyVertex.isLibraryVertex())
-							continue;
-
-						ClassInfo familyInfo = familyVertex.getValue();
-						for (MethodMember familyMethod : familyInfo.getMethods()) {
-							Set<String> mappedDescriptors = mappedDescriptorsByName.get(familyMethod.getName());
-							if (mappedDescriptors == null || !mappedDescriptors.contains(familyMethod.getDescriptor()))
-								continue;
-
-							NameTypePair signature = new NameTypePair(familyMethod.getName(), familyMethod.getDescriptor());
-							familyMethodIndex.computeIfAbsent(signature, ignored -> new ArrayList<>())
-									.add(new MethodFamilyEntry(familyVertex, familyInfo, familyMethod));
-						}
-					}
-
-					for (InheritanceVertex familyVertex : family)
-						familyMethodIndexCache.put(familyVertex, familyMethodIndex);
-				}
-
-				// Gather all family members that match the explicit mapping's name/desc.
-				List<MethodFamilyEntry> candidates = familyMethodIndex.getOrDefault(new NameTypePair(methodName, explicitMapping.getDesc()), List.of());
-				List<MethodFamilyEntry> matchingFamily = new ArrayList<>();
-				if (methodFamilyRelations == null)
-					methodFamilyRelations = new MethodFamilyRelationCache();
-				for (MethodFamilyEntry candidate : candidates) {
-					if (MappingsAdapter.isSameMethodFamily(ownerVertex, ownerInfo, ownerMethod, candidate.vertex(), candidate.ownerInfo(), candidate.method(), methodFamilyRelations))
-						matchingFamily.add(candidate);
-				}
-				matchingFamily.sort(Comparator.comparing(entry -> entry.vertex().getName()));
-
-				// Cache the family for later explicit mappings that may be in the same family.
-				methodFamily = matchingFamily;
-				methodFamilyCache.put(explicitKey, methodFamily);
-				for (MethodFamilyEntry familyEntry : methodFamily) {
-					MethodMappingKey familyKey = new MethodMappingKey(familyEntry.ownerInfo().getName(), methodName, explicitMapping.getDesc());
-					methodFamilyCache.put(familyKey, methodFamily);
-				}
+			// This method family has not been infilled yet, so we need to gather all family members and apply the same mapping to them.
+			// Start by gathering the whole family and caching it for later use.
+			Set<InheritanceVertex> family = familyCache.get(ownerVertex);
+			if (family == null) {
+				// Gather all vertices in the same family as the explicit mapping owner.
+				family = inheritanceGraph.getVertexFamily(ownerName, false);
+				familyCache.put(ownerVertex, family);
+				for (InheritanceVertex familyVertex : family)
+					familyCache.put(familyVertex, family);
 			}
 
-			// Apply the mapping once to the whole method family; later explicit entries in that family
-			// can reuse this result without rescanning or rewriting every member.
+			// Build a map of method signatures to family members for the given method family.
+			Map<NameTypePair, List<MethodFamilyEntry>> familyMethodIndex = familyMethodIndexCache.get(ownerVertex);
+			if (familyMethodIndex == null) {
+				familyMethodIndex = new HashMap<>();
+				for (InheritanceVertex familyVertex : family) {
+					if (familyVertex.isLibraryVertex())
+						continue;
+
+					ClassInfo familyInfo = familyVertex.getValue();
+					for (MethodMember familyMethod : familyInfo.getMethods()) {
+						Set<String> mappedDescriptors = mappedDescriptorsByName.get(familyMethod.getName());
+						if (mappedDescriptors == null || !mappedDescriptors.contains(familyMethod.getDescriptor()))
+							continue;
+
+						NameTypePair signature = new NameTypePair(familyMethod.getName(), familyMethod.getDescriptor());
+						familyMethodIndex.computeIfAbsent(signature, ignored -> new ArrayList<>())
+								.add(new MethodFamilyEntry(familyVertex, familyInfo, familyMethod));
+					}
+				}
+
+				// Update cache for all family members.
+				for (InheritanceVertex familyVertex : family)
+					familyMethodIndexCache.put(familyVertex, familyMethodIndex);
+			}
+
+			// Gather all family members that match the explicit mapping's name/desc.
+			List<MethodFamilyEntry> candidates = familyMethodIndex.getOrDefault(new NameTypePair(methodName, explicitMapping.getDesc()), List.of());
+			List<MethodFamilyEntry> methodFamily = new ArrayList<>();
+			if (methodFamilyRelations == null)
+				methodFamilyRelations = new MethodFamilyRelationCache();
+			for (MethodFamilyEntry candidate : candidates) {
+				if (MappingsAdapter.isSameMethodFamily(ownerVertex, ownerInfo, ownerMethod, candidate.vertex(), candidate.ownerInfo(), candidate.method(), methodFamilyRelations))
+					methodFamily.add(candidate);
+			}
+			methodFamily.sort(Comparator.comparing(entry -> entry.vertex().getName()));
+
+			// Apply the mapping once to the whole method family.
 			for (MethodFamilyEntry familyEntry : methodFamily) {
 				String familyOwnerName = familyEntry.ownerInfo().getName();
 				MethodMappingKey familyKey = new MethodMappingKey(familyOwnerName, methodName, explicitMapping.getDesc());

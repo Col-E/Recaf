@@ -402,6 +402,16 @@ class MappingApplierTest extends TestBase {
 	}
 
 	@Test
+	void applyConflictingDuplicateMethodRecordsFailFast() {
+		// Having two mappings for the same method will cause a conflict.
+		String shape = SealedShape.class.getName().replace('.', '/');
+		IntermediateMappings mappings = new IntermediateMappings();
+		mappings.addMethod(shape, "()D", "area", "space");
+		mappings.addMethod(shape, "()D", "area", "cowboy");
+		assertThrows(IllegalStateException.class, () -> mappingApplierService.inCurrentWorkspace().applyToPrimaryResource(mappings));
+	}
+
+	@Test
 	void applyMappingWorksBiDirectional() {
 		String shape = SealedShape.class.getName().replace('.', '/');
 		String circle = SealedCircle.class.getName().replace('.', '/');
