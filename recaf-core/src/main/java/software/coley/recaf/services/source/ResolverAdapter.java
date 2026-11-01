@@ -310,17 +310,22 @@ public class ResolverAdapter extends BasicResolver {
 		LocalVariable matchedVariable = null;
 		for (LocalVariable localVariable : methodMember.getLocalVariables()) {
 			if (localVariable.getName().equals(name)) {
+				// Skip junk variables that don't have valid descriptors.
+				String variableDescriptor = localVariable.getDescriptor();
+				if ("V".equals(variableDescriptor) || (!Types.isPrimitive(variableDescriptor) && (!Types.isValidDesc(variableDescriptor) || variableDescriptor.charAt(0) == '(')))
+					continue;
+
 				// The name matches, so now lets check the descriptor.
 				// This ideally would just be a single 'equals' check, but some decompilers don't emit the same type
 				// as what is in the table. For instance consider: List<String> foo = new ArrayList<>()
 				//  - CFR emits: ArrayList<String> foo = new ArrayList<>()
 				//  - Procyon/Fernflower emit: List<String> foo = new ArrayList<>() as expected
-				if (!localVariable.getDescriptor().equals(descriptor)
+				if (!variableDescriptor.equals(descriptor)
 						&& !Types.isPrimitive(descriptor)
 						&& !Types.isArray(descriptor)) {
 					// Check if the type is a child of the expected type.
 					String mappingType = Type.getType(descriptor).getInternalName();
-					String varType = Type.getType(localVariable.getDescriptor()).getInternalName();
+					String varType = Type.getType(variableDescriptor).getInternalName();
 					ClassEntry mappingEntry = getPool().getClass(mappingType);
 					ClassEntry varEntry = getPool().getClass(varType);
 					if (mappingEntry != null && varEntry != null && varEntry.isAssignableFrom(mappingEntry)) {

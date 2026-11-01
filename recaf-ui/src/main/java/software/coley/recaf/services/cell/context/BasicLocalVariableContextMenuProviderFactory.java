@@ -20,6 +20,7 @@ import software.coley.recaf.services.cell.text.TextProvider;
 import software.coley.recaf.services.cell.text.TextProviderService;
 import software.coley.recaf.services.navigation.Actions;
 import software.coley.recaf.ui.control.ActionMenuItem;
+import software.coley.recaf.util.Types;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.ClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -94,6 +95,8 @@ public class BasicLocalVariableContextMenuProviderFactory extends AbstractContex
 	 */
 	@Nullable
 	private static String objectTypeName(@Nonnull LocalVariable variable) {
+		if (!Types.isValidDesc(variable.getDescriptor()))
+			return null;
 		Type type = Type.getType(variable.getDescriptor());
 		while (type.getSort() == Type.ARRAY)
 			type = type.getElementType();

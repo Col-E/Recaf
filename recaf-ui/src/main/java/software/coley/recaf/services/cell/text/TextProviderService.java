@@ -302,8 +302,12 @@ public class TextProviderService implements Service {
 												@Nonnull LocalVariable variable) {
 		return () -> {
 			String text;
-			Type type = Type.getType(variable.getDescriptor());
+			String descriptor = variable.getDescriptor();
 			String name = formatConfig.filter(variable.getName());
+			if ("V".equals(descriptor) || (!Types.isPrimitive(descriptor) && (!Types.isValidDesc(descriptor) || descriptor.charAt(0) == '(')))
+				return name;
+
+			Type type = Type.getType(descriptor);
 			if (Types.isPrimitive(type)) {
 				text = type.getClassName() + " " + name;
 			} else {
