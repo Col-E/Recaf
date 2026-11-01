@@ -35,7 +35,6 @@ import static org.mockito.Mockito.mock;
 class AssemblerTabCompleterTest extends TestBase {
 	private static final String DALVIK_REFERENCE_SOURCE = """
 			.method public static sample ()V {
-			    registers: 2,
 			    code: {
 			        goto target
 			        new-instance v0 Lsample/Owner;
@@ -53,7 +52,6 @@ class AssemblerTabCompleterTest extends TestBase {
 			""";
 	private static final String DALVIK_CONSTANTS_SOURCE = """
 			.method public static sample ()V {
-			    registers: 1,
 			    code: {
 			        const v0 .enum sample/Owner value I
 			        const v0 .member sample/Owner value I
@@ -66,7 +64,6 @@ class AssemblerTabCompleterTest extends TestBase {
 			""";
 	private static final String DALVIK_SWITCH_SOURCE = """
 			.method public static sample (I)V {
-			    registers: 1,
 			    parameters: { key },
 			    code: {
 			        goto target
@@ -131,7 +128,7 @@ class AssemblerTabCompleterTest extends TestBase {
 
 	@Test
 	void dalvikRegisterOperandsOfferDeclaredRegisters() {
-		// v0 and v1 are declared by the method, v2 is not.
+		// Only v0 is declared in the invoke-static instruction, so only it should be offered.
 		String source = DALVIK_REFERENCE_SOURCE;
 		Workspace workspace = workspaceWithOwner();
 		List<ASTElement> ast = parseDalvikElements(workspace, source);
@@ -140,8 +137,7 @@ class AssemblerTabCompleterTest extends TestBase {
 		int caret = source.indexOf("invoke-static { v0") + "invoke-static { v".length();
 		List<AssemblerCompletion> completions = completionAt(engine, source, ast, caret);
 		assertTrue(hasOperandCompletion(completions, "v0", AssemblerCompletion.OperandKind.REGISTER));
-		assertTrue(hasOperandCompletion(completions, "v1", AssemblerCompletion.OperandKind.REGISTER));
-		assertFalse(hasOperandCompletion(completions, "v2", AssemblerCompletion.OperandKind.REGISTER));
+		assertFalse(hasOperandCompletion(completions, "v1", AssemblerCompletion.OperandKind.REGISTER));
 	}
 
 	@Test
@@ -314,7 +310,6 @@ class AssemblerTabCompleterTest extends TestBase {
 	void dalvikRegisterCandidatesRespectBoundsAndWideIncomingSlots() {
 		ASTMethod method = parseDalvikMethod("""
 				.method public sample (JDLjava/lang/String;)V {
-				    registers: 6,
 				    parameters: { this, wide, precise, text },
 				    code: {
 				        invoke-static { v0, named } sample/Owner.call ()V
@@ -326,38 +321,9 @@ class AssemblerTabCompleterTest extends TestBase {
 		List<String> names = AssemblerOperandCandidates.dalvikRegisterCandidates(
 				method, DalvikTargetContext.INSTANCE, "");
 
-		// Registers v0 through v5 and their p-prefixed forms exist, but v6 does not.
-		for (int i = 0; i < 6; i++) {
-			assertTrue(names.contains("v" + i));
-			assertTrue(names.contains("p" + i));
-		}
-		assertFalse(names.contains("v6"));
-		assertFalse(names.contains("p6"));
-
-		// Parameter names and named registers from the instructions are offered.
+		// Parameter names and named registers from the parameters and instructions are offered.
 		assertTrue(names.contains("this"));
 		assertTrue(names.containsAll(List.of("wide", "precise", "text", "named", "first", "last")));
-	}
-
-	@Test
-	void dalvikRegisterFallbackUsesOnlyObservedNumericRegisters() {
-		// Without a usable registers declaration, only registers seen in instructions are offered.
-		for (String registers : List.of("", "registers: broken,")) {
-			ASTMethod method = parseDalvikMethod("""
-					.method public static sample ()V {
-					    %s
-					    parameters: {},
-					    code: {
-					        invoke-static { v0, v2 } sample/Owner.call ()V
-					        return-void
-					    }
-					}
-					""".formatted(registers));
-			List<String> names = AssemblerOperandCandidates.dalvikRegisterCandidates(
-					method, DalvikTargetContext.INSTANCE, "v");
-			assertTrue(names.containsAll(List.of("v0", "v2")));
-			assertFalse(names.contains("v1"));
-		}
 	}
 
 	@Test
