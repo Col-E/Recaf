@@ -155,11 +155,11 @@ public class DecompilerManager implements Service {
 			// Decompile and cache the results.
 			DecompileResult result = decompiler.decompile(workspace, filteredClass);
 			String decompilation = result.getText();
-			if (decompilation != null && !outputTextFilters.isEmpty()) {
-				// Apply output filters and re-wrap the result with the new output text.
+			if (result.getType() == DecompileResult.ResultType.SUCCESS && decompilation != null && !outputTextFilters.isEmpty()) {
+				// Apply output filters and preserve the result metadata when updating the text.
 				for (OutputTextFilter textFilter : outputTextFilters)
 					decompilation = textFilter.filter(workspace, classInfo, decompilation);
-				result = new DecompileResult(decompilation, result.getConfigHash());
+				result = result.withText(decompilation);
 			}
 			if (doCache)
 				CachedDecompileProperty.set(classInfo, decompiler, result);
