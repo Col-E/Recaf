@@ -267,7 +267,7 @@ public class CfrConfig extends BaseDecompilerConfig {
 					String booleanName = value.name().toLowerCase();
 					map.put(name, booleanName);
 				}
-			} else if (type == Integer.class) {
+			} else if (type == Integer.class || type == int.class) {
 				// Integer option, value is just int
 				Integer value = (Integer) config.getValue();
 				if (value != null) {
