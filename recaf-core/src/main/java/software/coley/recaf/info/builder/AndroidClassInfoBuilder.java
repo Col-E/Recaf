@@ -83,6 +83,8 @@ public class AndroidClassInfoBuilder extends AbstractClassInfoBuilder<AndroidCla
 	 */
 	public AndroidClassInfoBuilder(@Nonnull AndroidClassInfo classInfo) {
 		super(classInfo);
+
+		def = classInfo.getBackingDefinition();
 	}
 
 	/**
