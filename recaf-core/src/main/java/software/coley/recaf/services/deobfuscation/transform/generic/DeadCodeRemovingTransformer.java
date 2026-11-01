@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 
@@ -63,33 +64,53 @@ public class DeadCodeRemovingTransformer implements JvmClassTransformer {
 		if (instructions == null || instructions.size() == 0)
 			return false;
 
-		// Collect try blocks and the instructions within the start-end range (exclusive)
-		List<TryCatch> tryCatches = new ArrayList<>(method.tryCatchBlocks.size());
-		for (TryCatchBlockNode block : method.tryCatchBlocks) {
-			List<AbstractInsnNode> blockInsns = new ArrayList<>();
-			AbstractInsnNode insn = block.start;
-			LabelNode end = block.end;
-			while (insn != null) {
-				insn = insn.getNext();
-				if (insn == end || insn == null)
-					break;
-				blockInsns.add(insn);
-			}
-			tryCatches.add(new TryCatch(block, blockInsns));
+		// Collect all labels that are part of try-catch blocks so they can be preserved even if they are "dead".
+		List<TryCatchBlockNode> tryCatches = method.tryCatchBlocks;
+		Set<AbstractInsnNode> protectedLabels = Collections.newSetFromMap(new IdentityHashMap<>());
+		for (TryCatchBlockNode block : tryCatches) {
+			protectedLabels.add(block.start);
+			protectedLabels.add(block.end);
+			protectedLabels.add(block.handler);
 		}
 
 		boolean dirty = false;
 		try {
 			// Compute which instructions are visited by walking the method's control flow.
 			Set<AbstractInsnNode> visited = Collections.newSetFromMap(new IdentityHashMap<>());
-			List<AbstractInsnNode> flowStarts = new ArrayList<>();
+			List<AbstractInsnNode> flowStarts = new ArrayList<>(tryCatches.size() + 1);
 			flowStarts.add(instructions.getFirst());
-			for (TryCatch tryCatch : tryCatches)
-				flowStarts.add(tryCatch.block.handler);
+			for (TryCatchBlockNode tryCatch : tryCatches)
+				flowStarts.add(tryCatch.handler);
 			visit(visited, flowStarts);
 
-			// Prune any instructions not visited.
+			// Compute a prefix sum of kept instructions so we can determine if
+			// a try-catch block has any executable instructions left after pruning.
 			int end = instructions.size() - 1;
+			int[] keptPrefix = new int[end + 2];
+			Map<LabelNode, Integer> labelIndices = new IdentityHashMap<>();
+			for (int i = 0; i <= end; i++) {
+				AbstractInsnNode insn = instructions.get(i);
+				if (insn instanceof LabelNode label)
+					labelIndices.put(label, i);
+
+				// Keep when the instruction is visited and not a NOP, or is an ending protected label for a try-catch block.
+				// Later usage of 'fixMissingVariableLabels' will add trailing labels back, so removing here would be redundant.
+				boolean keep = visited.contains(insn) && insn.getOpcode() != NOP;
+				if (!keep && (i == end && insn.getType() == AbstractInsnNode.LABEL || insn.getType() == AbstractInsnNode.LABEL && protectedLabels.contains(insn)))
+					keep = true;
+				keptPrefix[i + 1] = keptPrefix[i] + (keep && insn.getOpcode() >= 0 ? 1 : 0);
+			}
+
+			// Determine which try-catch blocks have any executable instructions left after pruning.
+			boolean[] catchHasKeptNode = new boolean[tryCatches.size()];
+			for (int i = 0; i < tryCatches.size(); i++) {
+				TryCatchBlockNode block = tryCatches.get(i);
+				Integer start = labelIndices.get(block.start);
+				Integer finish = labelIndices.get(block.end);
+				catchHasKeptNode[i] = start == null || finish == null || start >= finish || keptPrefix[finish] > keptPrefix[start + 1];
+			}
+
+			// Prune any instructions not visited.
 			for (int i = end; i >= 0; i--) {
 				if (i >= instructions.size())
 					continue;
@@ -97,37 +118,30 @@ public class DeadCodeRemovingTransformer implements JvmClassTransformer {
 				if (insn == null)
 					continue;
 				if (!visited.contains(insn) || insn.getOpcode() == NOP) {
-					// Don't prune the tail label even if it is "dead" because the last method instruction
+					// Don't prune the tail label even if it's "dead" because the last method instruction
 					// is terminal like 'return' or 'athrow'. The label will just get added back automatically
 					// and cause the transform process to loop on repeat.
 					if (i == end && insn.getType() == AbstractInsnNode.LABEL)
 						continue;
 
 					// Keep try-catch labels for now.
-					if (insn.getType() == AbstractInsnNode.LABEL && method.tryCatchBlocks.stream().anyMatch(tryCatch -> {
-						if (insn == tryCatch.start) return true;
-						if (insn == tryCatch.end) return true;
-						return insn == tryCatch.handler;
-					})) continue;
+					if (insn.getType() == AbstractInsnNode.LABEL && protectedLabels.contains(insn))
+						continue;
 
-					// Remove instruction from method.
 					instructions.remove(insn);
-
-					// Remove from any catch block's visited instructions.
-					for (TryCatch tryCatch : tryCatches)
-						tryCatch.visitedInstructions.remove(insn);
-
-					// Mark as dirty.
 					dirty = true;
 				}
 			}
 
-			// If we have removed all the instructions of a try block's start-end range (because they're dead code)
-			// then the try-catch block entry can be removed.
-			for (TryCatch tryCatch : tryCatches) {
-				if (tryCatch.visitedInstructions.isEmpty()) {
-					method.tryCatchBlocks.remove(tryCatch.block);
-				}
+			// Remove entries whose protected range has no executable instructions left after pruning.
+			List<TryCatchBlockNode> keptTryCatches = new ArrayList<>(tryCatches.size());
+			for (int i = 0; i < tryCatches.size(); i++)
+				if (catchHasKeptNode[i])
+					keptTryCatches.add(tryCatches.get(i));
+			if (keptTryCatches.size() != tryCatches.size()) {
+				tryCatches.clear();
+				tryCatches.addAll(keptTryCatches);
+				dirty = true;
 			}
 
 			// Ensure that after dead code removal (or any other transformers not cleaning up)
@@ -217,9 +231,4 @@ public class DeadCodeRemovingTransformer implements JvmClassTransformer {
 				""";
 	}
 
-	record TryCatch(@Nonnull TryCatchBlockNode block, @Nonnull List<AbstractInsnNode> visitedInstructions) {
-		boolean hasInsn(@Nonnull AbstractInsnNode insn) {
-			return visitedInstructions.contains(insn);
-		}
-	}
 }

@@ -3,6 +3,7 @@ package software.coley.recaf.services.deobfuscation;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import software.coley.recaf.services.deobfuscation.transform.generic.DeadCodeRemovingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.DuplicateCatchMergingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.RedundantTryCatchRemovingTransformer;
 import software.coley.recaf.util.RegexUtil;
@@ -64,6 +65,29 @@ public class TryCatchDeobfuscationTest extends TransformerTestBase {
 		validateAfterAssembly(asm, List.of(DuplicateCatchMergingTransformer.class), dis -> {
 			assertEquals(1, StringUtil.count("printStackTrace", dis), "Catch block contents were not merged");
 			assertEquals(5, StringUtil.count("goto", dis), "Expected 5 goto instructions after merging");
+		});
+	}
+
+	@Test
+	void deadCodeRemovalDropsRangesContainingOnlyRemovedNops() {
+		String asm = """
+				.method public static example ()V {
+					exceptions: {
+				       { A, B, C, * }
+				    },
+				    code: {
+				    A:
+				        nop
+				    B:
+				        return
+				    C:
+				        pop
+				        return
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(DeadCodeRemovingTransformer.class), dis -> {
+			assertFalse(dis.contains("exceptions:"));
 		});
 	}
 
