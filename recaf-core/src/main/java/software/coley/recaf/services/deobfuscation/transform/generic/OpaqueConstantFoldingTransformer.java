@@ -385,6 +385,7 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 		}
 		int endIndex = instructions.size() - 1;
 		int unknownState = -1;
+		int sequenceScanBoundary = -1;
 		for (int i = 1; i < endIndex; i++) {
 			AbstractInsnNode instruction = instructions.get(i);
 			int opcode = instruction.getOpcode();
@@ -421,6 +422,10 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 			ReValue resultValue = foldedStringValue != null ? foldedStringValue : isReturn ?
 					frame.getStack(frame.getStackSize() - 1) :
 					nextFrame.getStack(nextFrame.getStackSize() - 1);
+			boolean resultIsKnownButNonEmittable = resultValue.hasKnownValue()
+					&& !(resultValue instanceof IntValue || resultValue instanceof FloatValue
+					|| resultValue instanceof DoubleValue || resultValue instanceof LongValue
+					|| resultValue instanceof StringValue);
 			AbstractInsnNode nextInstruction = instruction.getNext();
 			boolean repeatedUnknownOperation = !resultValue.hasKnownValue()
 					&& !isReturn
@@ -455,11 +460,16 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 					sequence.add(insn);
 
 				// Abort if we've walked backwards into instructions where we observed an unknown stack state.
-				// Arrays are a special case since they can be used to compute values, but the array itself is not known.
-				if (j < unknownState && !ignoreUnknownArrayState) {
-					// Move the unknown state forward since up to this point the stack is unbalanced
-					// and thus this point relies on the prior point.
-					unknownState = i;
+				// Arrays are a special case since they can be used in the computation of final values of some sequence,
+				// but themselves are not completely known values.
+				boolean crossedUnknownState = j < unknownState && !ignoreUnknownArrayState;
+				boolean crossedSequenceScanBoundary = resultIsKnownButNonEmittable && j < sequenceScanBoundary;
+				if (crossedUnknownState || crossedSequenceScanBoundary) {
+					// Move the boundary forward since this point relies on the prior state.
+					if (crossedUnknownState)
+						unknownState = i;
+					if (crossedSequenceScanBoundary)
+						sequenceScanBoundary = i;
 					validSequence = false;
 					break;
 				}
@@ -625,13 +635,20 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 					dirty = true;
 				} else {
 					int stackSize = frame.getStackSize();
+					boolean hasUnknownValue = false;
 					for (int s = 0; s < stackSize; s++) {
 						ReValue stack = frame.getStack(s);
 						if (!stack.hasKnownValue()) {
 							unknownState = i;
+							hasUnknownValue = true;
 							break;
 						}
 					}
+
+					// A known result can still have no emittable replacement (such as an array result).
+					// Keep visiting later instructions, but bound repeated candidates that also produce non-emittable results.
+					if (!hasUnknownValue && topValue.hasKnownValue())
+						sequenceScanBoundary = i;
 				}
 			}
 		}
