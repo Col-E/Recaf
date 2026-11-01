@@ -83,7 +83,7 @@ public class OpenUrlPopup extends RecafStage {
 		});
 		load.disableProperty().bind(input.disabledProperty().or(isInvalidUrl));
 		input.setPromptText("https://example.com/application.jar");
-		input.setOnAction(e -> load.getOnAction().handle(e));
+		input.setOnAction(e -> load.fire());
 
 
 		GridPane layout = new GridPane(8, 8);
