@@ -343,10 +343,10 @@ public class DecompilerManager implements Service {
 				// In most cases we want to pass the class-reader along to the class-writer.
 				// This will allow some operations to be sped up internally by ASM.
 				//
-				// However, we can't do this is we're filtering debug information since it blanket copies all
-				// debug attribute information without checking what the class-reader flags are.
-				// Thus, when we're pruning debug info, we should pass 'null'.
-				ClassReader backing = config.getFilterDebug().getValue() ? null : reader.get();
+				// However, we can't do this if we're filtering debug information since it blanket copies all
+				// debug attribute information without checking what the class-reader flags are. We also need to
+				// avoid it when filtering long exceptions for the same reason.
+				ClassReader backing = config.getFilterDebug().getValue() || config.getFilterLongExceptions().getValue() ? null : reader.get();
 				return new ClassWriter(backing, 0);
 			});
 			ClassVisitor cv = null;
