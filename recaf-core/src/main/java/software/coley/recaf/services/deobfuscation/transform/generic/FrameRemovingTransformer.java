@@ -35,13 +35,14 @@ public class FrameRemovingTransformer implements JvmClassTransformer {
 			for (MethodNode method : node.methods) {
 				InsnList instructions = method.instructions;
 				if (instructions != null) {
-					for (int i = instructions.size() - 1; i > 0; i--) {
+					for (int i = instructions.size() - 1; i >= 0; i--) {
 						AbstractInsnNode insn = instructions.get(i);
 						if (insn instanceof FrameNode)
 							instructions.remove(insn);
 					}
 				}
 			}
+			context.setNode(bundle, initialClassState, node);
 		} else {
 			ClassReader reader = new ClassReader(context.getBytecode(bundle, initialClassState));
 			ClassWriter writer = new ClassWriter(reader, 0);

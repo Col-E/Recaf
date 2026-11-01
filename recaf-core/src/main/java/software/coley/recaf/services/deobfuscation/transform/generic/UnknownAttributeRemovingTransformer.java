@@ -44,6 +44,7 @@ public class UnknownAttributeRemovingTransformer implements JvmClassTransformer 
 				for (RecordComponentNode recordComponent : node.recordComponents)
 					if (recordComponent.attrs != null)
 						recordComponent.attrs.clear();
+			context.setNode(bundle, initialClassState, node);
 		} else {
 			ClassReader reader = new ClassReader(context.getBytecode(bundle, initialClassState));
 			ClassWriter writer = new ClassWriter(reader, 0);
