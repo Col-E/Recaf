@@ -27,8 +27,9 @@ import java.util.function.Supplier;
  */
 public class FxThreadUtil {
 	private static final Executor jfxExecutor = FxThreadUtil::run;
-	private static final List<Runnable> preInitQueue = new ArrayList<>();
-	private static boolean initialized;
+	private static final Object initLock = new Object();
+	private static List<Runnable> preInitQueue = new ArrayList<>();
+	private static volatile boolean initialized;
 
 	/**
 	 * Run action in JavaFX thread.
@@ -42,8 +43,12 @@ public class FxThreadUtil {
 
 		// Hold for later if FX has not been initialized.
 		if (!initialized) {
-			preInitQueue.add(action);
-			return;
+			synchronized (initLock) {
+				if (!initialized) {
+					preInitQueue.add(action);
+					return;
+				}
+			}
 		}
 
 		// Wrap action so that if it fails we don't explode and kill the FX thread.
@@ -123,10 +128,18 @@ public class FxThreadUtil {
 	 * Called by {@link RecafApplication} when it is first initialized.
 	 */
 	public static void onInitialize() {
-		initialized = true;
-		for (Runnable runnable : preInitQueue)
+		List<Runnable> queuedActions;
+		synchronized (initLock) {
+			if (initialized)
+				return;
+
+			queuedActions = preInitQueue;
+			preInitQueue = List.of();
+			initialized = true;
+		}
+
+		for (Runnable runnable : queuedActions)
 			run(runnable);
-		preInitQueue.clear();
 	}
 
 	/**
