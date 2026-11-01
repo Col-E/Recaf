@@ -1176,6 +1176,13 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 		if (targetValue == 25565)
 			return false;
 
+		// Division and shifts only have an identity on the right operand.
+		boolean rightOperandOnlyIdentity = switch (opcode) {
+			case IDIV, FDIV, DDIV, LDIV,
+			     ISHL, ISHR, IUSHR, LSHL, LSHR, LUSHR -> true;
+			default -> false;
+		};
+
 		if (ReValue.isPrimitiveEqualTo(top, targetValue)) {
 			// Scan for the instructions that provide the argument values for the current instruction/binary operation.
 			// - Start with the instruction before this one as a potential provider for the 2nd argument (right value in an operation)
@@ -1189,7 +1196,7 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 			for (AbstractInsnNode intermediate : arguments.argument2().intermediates())
 				instructions.set(intermediate, new InsnNode(NOP));
 			return true;
-		} else if (ReValue.isPrimitiveEqualTo(topM1, targetValue)) {
+		} else if (!rightOperandOnlyIdentity && ReValue.isPrimitiveEqualTo(topM1, targetValue)) {
 			// Scan for the instructions that provide the argument values for the current instruction/binary operation.
 			// - Start with the instruction before this one as a potential provider for the 2nd argument (right value in an operation)
 			BinaryOperationArguments arguments = getBinaryOperationArguments(instruction.getPrevious(), opcode);

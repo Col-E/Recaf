@@ -128,6 +128,150 @@ public class FoldingDeobfuscationTest extends TransformerTestBase {
 	}
 
 	@Test
+	void foldRightOnlyIdentityOperations() {
+		String asm = """
+				.super java/lang/Object
+				.class public Example {
+				    .method public static divideInt (I)I {
+				        parameters: { x },
+				        code: {
+				        A:
+				            iconst_1
+				            iload x
+				            idiv
+				            ireturn
+				        B:
+				        }
+				    }
+				    .method public static divideByZero ()I {
+				        code: {
+				        A:
+				            iconst_0
+				            invokestatic Example.divideInt (I)I
+				            ireturn
+				        B:
+				        }
+				    }
+				    .method public static divideRightInt (I)I {
+				        parameters: { x },
+				        code: {
+				        A:
+				            iload x
+				            iconst_1
+				            idiv
+				            ireturn
+				        B:
+				        }
+				    }
+				    .method public static divideLong (J)J {
+				        parameters: { x },
+				        code: {
+				        A:
+				            lconst_1
+				            lload x
+				            ldiv
+				            lreturn
+				        B:
+				        }
+				    }
+				    .method public static divideFloat (F)F {
+				        parameters: { x },
+				        code: {
+				        A:
+				            fconst_1
+				            fload x
+				            fdiv
+				            freturn
+				        B:
+				        }
+				    }
+				    .method public static divideDouble (D)D {
+				        parameters: { x },
+				        code: {
+				        A:
+				            dconst_1
+				            dload x
+				            ddiv
+				            dreturn
+				        B:
+				        }
+				    }
+				    .method public static shiftLeftInt (I)I {
+				        parameters: { x },
+				        code: {
+				        A:
+				            iconst_0
+				            iload x
+				            ishl
+				            ireturn
+				        B:
+				        }
+				    }
+				    .method public static shiftRightInt (I)I {
+				        parameters: { x },
+				        code: {
+				        A:
+				            iconst_0
+				            iload x
+				            ishr
+				            ireturn
+				        B:
+				        }
+				    }
+				    .method public static shiftUnsignedRightInt (I)I {
+				        parameters: { x },
+				        code: {
+				        A:
+				            iconst_0
+				            iload x
+				            iushr
+				            ireturn
+				        B:
+				        }
+				    }
+				    .method public static shiftLeftLong (I)J {
+				        parameters: { x },
+				        code: {
+				        A:
+				            lconst_0
+				            iload x
+				            lshl
+				            lreturn
+				        B:
+				        }
+				    }
+				    .method public static shiftRightLong (I)J {
+				        parameters: { x },
+				        code: {
+				        A:
+				            lconst_0
+				            iload x
+				            lshr
+				            lreturn
+				        B:
+				        }
+				    }
+				    .method public static shiftUnsignedRightLong (I)J {
+				        parameters: { x },
+				        code: {
+				        A:
+				            lconst_0
+				            iload x
+				            lushr
+				            lreturn
+				        B:
+				        }
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
+			assertThrows(ArithmeticException.class, () -> invokeStatic("Example", "divideByZero", "Example"));
+			for (String opcode : List.of("idiv", "ldiv", "fdiv", "ddiv", "ishl", "ishr", "iushr", "lshl", "lshr", "lushr"))
+				assertEquals(1, StringUtil.count(opcode, dis), "Expected to preserve left-operand " + opcode);
+		});
+	}
+
+	@Test
 	void foldFloatMath() {
 		String asm = """
 				.method public static example ()F {
