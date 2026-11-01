@@ -71,4 +71,27 @@ class MiscDeobfuscationTest extends TransformerTestBase {
 			assertEquals(1, StringUtil.count("final $values [LExample;", dis), "Missing enum $values array mapping");
 		});
 	}
+
+	@Test
+	void enumNameRestorationIgnoresUnrelatedStringAndIndex() {
+		// If the pattern is sorta close, but doesn't actually create a proper enum constant (via the constructor)
+		// then the string const isn't actually an enum name and should be ignored.
+		String asm = """
+				.super java/lang/Enum
+				.class public final enum Example {
+				    .field public static final enum a LExample;
+
+				    .method static <clinit> ()V {
+				        code: {
+				            ldc "BOGUS"
+				            iconst_0
+				            aconst_null
+				            putstatic Example.a LExample;
+				            return
+				        }
+				    }
+				}
+				""";
+		validateNoTransformation(asm, List.of(EnumNameRestorationTransformer.class));
+	}
 }
