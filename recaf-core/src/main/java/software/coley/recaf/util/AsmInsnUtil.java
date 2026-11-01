@@ -703,6 +703,21 @@ public class AsmInsnUtil implements Opcodes {
 	}
 
 	/**
+	 * @param instructions
+	 * 		Instructions to index.
+	 *
+	 * @return Map of instructions to their index in the list.
+	 */
+	@Nonnull
+	public static Map<AbstractInsnNode, Integer> indexInstructions(@Nonnull InsnList instructions) {
+		Map<AbstractInsnNode, Integer> indices = new IdentityHashMap<>(instructions.size());
+		int size = instructions.size();
+		for (int i = 0; i < size; i++)
+			indices.put(instructions.get(i), i);
+		return indices;
+	}
+
+	/**
 	 * @param method
 	 * 		Containing method of the instruction.
 	 * @param insn
