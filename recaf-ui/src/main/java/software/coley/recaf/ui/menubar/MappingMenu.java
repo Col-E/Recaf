@@ -15,6 +15,7 @@ import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.mapping.IntermediateMappings;
 import software.coley.recaf.services.mapping.MappingHelper;
 import software.coley.recaf.services.mapping.aggregate.AggregateMappingManager;
+import software.coley.recaf.services.mapping.aggregate.AggregatedMappingsListener;
 import software.coley.recaf.services.mapping.format.MappingFileFormat;
 import software.coley.recaf.services.mapping.format.MappingFormatManager;
 import software.coley.recaf.services.window.WindowManager;
@@ -103,14 +104,15 @@ public class MappingMenu extends WorkspaceAwareMenu {
 		disableProperty().bind(hasAgentWorkspace.or(hasWorkspace.not()));
 
 		// Disable formats that require field type differentiation if we have aggregate data that does not have differentiation.
-		aggregateMappingManager.addAggregatedMappingsListener(mappings -> {
-			FxThreadUtil.run(() -> {
-				for (var formatItemEntry : formatToExportAsItems.entrySet()) {
-					if (formatItemEntry.getKey().doesSupportFieldTypeDifferentiation())
-						formatItemEntry.getValue().setDisable(mappings.isMissingFieldDescriptors());
-				}
-			});
+		AggregatedMappingsListener aggregateListener = mappings -> FxThreadUtil.run(() -> {
+			for (var formatItemEntry : formatToExportAsItems.entrySet()) {
+				if (formatItemEntry.getKey().doesSupportFieldTypeDifferentiation())
+					formatItemEntry.getValue().setDisable(mappings.isMissingFieldDescriptors());
+			}
 		});
+		if (workspaceManager.hasCurrentWorkspace())
+			aggregateMappingManager.addAggregatedMappingsListener(aggregateListener);
+		workspaceManager.addWorkspaceOpenListener(workspace -> aggregateMappingManager.addAggregatedMappingsListener(aggregateListener));
 		workspaceManager.addWorkspaceCloseListener(closedWorkspace -> {
 			// Re-enable when closing so the next workspace has a clean slate
 			formatToExportAsItems.values().forEach(i -> i.setDisable(false));

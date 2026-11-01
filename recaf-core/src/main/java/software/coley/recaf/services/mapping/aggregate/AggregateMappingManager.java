@@ -54,22 +54,17 @@ public class AggregateMappingManager implements Service {
 		if (aggregatedMappings == null)
 			return;
 		aggregatedMappings.update(newMappings);
-		Unchecked.checkedForEach(aggregateListeners, listener -> listener.onAggregatedMappingsUpdated(getAggregatedMappings()),
-				(listener, t) -> logger.error("Exception thrown when updating aggregate mappings", t));
-	}
-
-	/**
-	 * Clears all mapping information.
-	 */
-	private void clearAggregated() {
-		if (aggregatedMappings == null)
+		AggregatedMappings updatedAggregate = getAggregatedMappings();
+		if (updatedAggregate == null)
 			return;
-		aggregatedMappings.clear();
-		Unchecked.checkedForEach(aggregateListeners, listener -> listener.onAggregatedMappingsUpdated(getAggregatedMappings()),
+		Unchecked.checkedForEach(aggregateListeners, listener -> listener.onAggregatedMappingsUpdated(updatedAggregate),
 				(listener, t) -> logger.error("Exception thrown when updating aggregate mappings", t));
 	}
 
 	/**
+	 * Adds a listener for aggregate mapping updates in the {@link WorkspaceManager#getCurrent() current workspace}.
+	 * Listeners are cleared when the workspace closes and must be re-registered for later opened workspaces.
+	 *
 	 * @param listener
 	 * 		Listener to add.
 	 */
@@ -116,9 +111,11 @@ public class AggregateMappingManager implements Service {
 
 		@Override
 		public void onWorkspaceClosed(@Nonnull Workspace workspace) {
+			AggregatedMappings closedMappings = aggregatedMappings;
 			aggregatedMappings = null;
+			if (closedMappings != null)
+				closedMappings.clear();
 			aggregateListeners.clear();
-			clearAggregated();
 		}
 	}
 }

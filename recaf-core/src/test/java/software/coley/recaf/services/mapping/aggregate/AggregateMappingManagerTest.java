@@ -7,8 +7,11 @@ import software.coley.recaf.services.mapping.IntermediateMappings;
 import software.coley.recaf.test.TestBase;
 import software.coley.recaf.workspace.model.EmptyWorkspace;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 /**
  * Tests for {@link AggregateMappingManager}
@@ -28,6 +31,45 @@ public class AggregateMappingManagerTest extends TestBase {
 	@AfterEach
 	void cleanupPerTest() {
 		workspaceManager.closeCurrent();
+	}
+
+	@Test
+	void testListenersAreClearedOnWorkspaceSwitch() {
+		// Register a listener that counts how many times the aggregate mappings are updated.
+		AtomicInteger updateCount = new AtomicInteger();
+		AggregatedMappingsListener listener = mappings -> updateCount.incrementAndGet();
+		aggregateMappingManager.addAggregatedMappingsListener(listener);
+		try {
+			AggregatedMappings firstWorkspaceMappings = aggregateMappingManager.getAggregatedMappings();
+			assertNotNull(firstWorkspaceMappings);
+
+			// Update the aggregate mappings and validate the listener is called.
+			IntermediateMappings mappings = new IntermediateMappings();
+			mappings.addClass("a", "b");
+			aggregateMappingManager.updateAggregateMappings(mappings);
+			assertEquals(1, updateCount.get());
+			assertEquals("b", firstWorkspaceMappings.getMappedClassName("a"));
+
+			// Close the workspace and open a new one, which should cause the aggregate mappings to be reset.
+			workspaceManager.closeCurrent();
+			assertNull(aggregateMappingManager.getAggregatedMappings());
+			assertNull(firstWorkspaceMappings.getMappedClassName("a"));
+			workspaceManager.setCurrent(EmptyWorkspace.get());
+
+			// The prior workspace's listener is no longer subscribed after the close.
+			AggregatedMappings secondWorkspaceMappings = aggregateMappingManager.getAggregatedMappings();
+			assertNotNull(secondWorkspaceMappings);
+			aggregateMappingManager.updateAggregateMappings(mappings);
+			assertEquals(1, updateCount.get());
+			assertEquals("b", secondWorkspaceMappings.getMappedClassName("a"));
+
+			// Re-registering the listener allows it to observe updates in the new workspace.
+			aggregateMappingManager.addAggregatedMappingsListener(listener);
+			aggregateMappingManager.updateAggregateMappings(mappings);
+			assertEquals(2, updateCount.get());
+		} finally {
+			aggregateMappingManager.removeAggregatedMappingListener(listener);
+		}
 	}
 
 	@Test
