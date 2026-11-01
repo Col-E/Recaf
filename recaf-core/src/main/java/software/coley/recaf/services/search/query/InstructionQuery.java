@@ -33,6 +33,10 @@ public class InstructionQuery implements JvmClassQuery {
 	@Nonnull
 	@Override
 	public JvmClassSearchVisitor visitor(@Nullable JvmClassSearchVisitor delegate) {
+		// Don't want to end up matching every instruction in the whole workspace, that would be silly.
+		if (predicates.isEmpty())
+			return (resultSink, classPath, classInfo) -> {};
+
 		return (resultSink, classPath, classInfo) -> {
 			ClassNode node = new ClassNode();
 			classInfo.getClassReader().accept(node, ClassReader.SKIP_FRAMES);

@@ -173,6 +173,12 @@ public class SearchServiceTest extends TestBase {
 		}
 
 		@Test
+		void testEmptyInsnSearch() {
+			Results results = searchService.search(classesWorkspace, new InstructionQuery(List.of()));
+			assertTrue(results.isEmpty(), "An instruction query without predicates should not match every instruction");
+		}
+
+		@Test
 		void testInsnSearch() {
 			Results results = searchService.search(classesWorkspace, new InstructionQuery(List.of(
 					strMatchProvider.newEqualPredicate("getstatic java/lang/System.out Ljava/io/PrintStream;"),

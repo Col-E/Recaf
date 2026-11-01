@@ -154,6 +154,8 @@ public class InstructionSearchPane extends AbstractSearchPane {
 			// May be null if no such id exists as a predicate, but we filter out nulls anyways.
 			return stringPredicateProvider.newBiStringPredicate(id, search);
 		}).filter(Objects::nonNull).toList();
+		if (predicates.isEmpty())
+			return null;
 		return new InstructionQuery(predicates);
 	}
 
