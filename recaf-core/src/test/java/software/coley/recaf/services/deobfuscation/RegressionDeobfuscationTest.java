@@ -48,7 +48,7 @@ public class RegressionDeobfuscationTest extends TransformerTestBase {
 			.class public super Example {
 			    .field static keys [I
 			    .field static sink I
-
+			
 			    .method static <clinit> ()V {
 			        code: {
 			        A:
@@ -59,7 +59,7 @@ public class RegressionDeobfuscationTest extends TransformerTestBase {
 			        B:
 			        }
 			    }
-
+			
 			    .method static record (I)V {
 			        parameters: { value },
 			        code: {
@@ -70,7 +70,7 @@ public class RegressionDeobfuscationTest extends TransformerTestBase {
 			        B:
 			        }
 			    }
-
+			
 			    .method static arrayStore ()I {
 			        code: {
 			        A:
@@ -89,7 +89,7 @@ public class RegressionDeobfuscationTest extends TransformerTestBase {
 			        B:
 			        }
 			    }
-
+			
 			    .method static fieldStore ()I {
 			        code: {
 			        A:
@@ -104,7 +104,7 @@ public class RegressionDeobfuscationTest extends TransformerTestBase {
 			        B:
 			        }
 			    }
-
+			
 			    .method static argumentCall ()I {
 			        code: {
 			        A:
@@ -685,8 +685,9 @@ public class RegressionDeobfuscationTest extends TransformerTestBase {
 	}
 
 	@Test
-	@Timeout(5) // If this runs for 5+ seconds we know we have a recursive call inlining issue.
+	@Timeout(5)
 	void callInliningRecursiveCycle() {
+		// If this runs for 5+ seconds we know we have a recursive call inlining issue.
 		String asm = """
 				.super java/lang/Object
 				.class Example {
@@ -2245,37 +2246,37 @@ public class RegressionDeobfuscationTest extends TransformerTestBase {
 	@Test
 	void constantFoldingKeepsVoidStaticCallBetweenOperands() {
 		assemble("""
-			.super java/lang/Object
-			.class public super Example {
-			    .field static hits I
-
-			    .method static setupXorKeys ()V {
-			        code: {
-			        A:
-			            getstatic Example.hits I
-			            iconst_1
-			            iadd
-			            putstatic Example.hits I
-			            return
-			        B:
-			        }
-			    }
-
-			    .method static run ()I {
-			        code: {
-			        A:
-			            iconst_1
-			            iconst_1
-			            invokestatic Example.setupXorKeys ()V
-			            iadd
-			            getstatic Example.hits I
-			            iadd
-			            ireturn
-			        B:
-			        }
-			    }
-			}
-			""", true);
+				.super java/lang/Object
+				.class public super Example {
+				    .field static hits I
+				
+				    .method static setupXorKeys ()V {
+				        code: {
+				        A:
+				            getstatic Example.hits I
+				            iconst_1
+				            iadd
+				            putstatic Example.hits I
+				            return
+				        B:
+				        }
+				    }
+				
+				    .method static run ()I {
+				        code: {
+				        A:
+				            iconst_1
+				            iconst_1
+				            invokestatic Example.setupXorKeys ()V
+				            iadd
+				            getstatic Example.hits I
+				            iadd
+				            ireturn
+				        B:
+				        }
+				    }
+				}
+				""", true);
 		assertEquals(3, invokeStatic("Example", "run", "Example"));
 		transformAndApply(List.of(OpaqueConstantFoldingTransformer.class));
 		assertEquals(3, invokeStatic("Example", "run", "Example"));
@@ -2287,39 +2288,39 @@ public class RegressionDeobfuscationTest extends TransformerTestBase {
 	@Test
 	void constantFoldingKeepsPoppedStaticCallBetweenOperands() {
 		assemble("""
-			.super java/lang/Object
-			.class public super Example {
-			    .field static count I
-
-			    .method static next ()I {
-			        code: {
-			        A:
-			            getstatic Example.count I
-			            iconst_1
-			            iadd
-			            dup
-			            putstatic Example.count I
-			            ireturn
-			        B:
-			        }
-			    }
-
-			    .method static run ()I {
-			        code: {
-			        A:
-			            iconst_1
-			            invokestatic Example.next ()I
-			            pop
-			            iconst_1
-			            iadd
-			            getstatic Example.count I
-			            iadd
-			            ireturn
-			        B:
-			        }
-			    }
-			}
-			""", true);
+				.super java/lang/Object
+				.class public super Example {
+				    .field static count I
+				
+				    .method static next ()I {
+				        code: {
+				        A:
+				            getstatic Example.count I
+				            iconst_1
+				            iadd
+				            dup
+				            putstatic Example.count I
+				            ireturn
+				        B:
+				        }
+				    }
+				
+				    .method static run ()I {
+				        code: {
+				        A:
+				            iconst_1
+				            invokestatic Example.next ()I
+				            pop
+				            iconst_1
+				            iadd
+				            getstatic Example.count I
+				            iadd
+				            ireturn
+				        B:
+				        }
+				    }
+				}
+				""", true);
 		assertEquals(3, invokeStatic("Example", "run", "Example"));
 		transformAndApply(List.of(OpaqueConstantFoldingTransformer.class));
 		assertEquals(3, invokeStatic("Example", "run", "Example"));

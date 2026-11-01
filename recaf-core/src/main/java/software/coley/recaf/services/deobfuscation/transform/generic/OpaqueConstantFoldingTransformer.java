@@ -384,6 +384,9 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 			return false;
 		}
 		int endIndex = instructions.size() - 1;
+		if (removeDiscardedSequences(method, instructions, frames, sequence))
+			return true;
+
 		int unknownState = -1;
 		int sequenceScanBoundary = -1;
 		for (int i = 1; i < endIndex; i++) {
@@ -656,6 +659,87 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 	}
 
 	/**
+	 * Removes stack-balanced sequences whose values are discarded by {@code POP} or {@code POP2}.
+	 *
+	 * @param method
+	 * 		Method hosting the instructions.
+	 * @param instructions
+	 * 		Method instructions.
+	 * @param frames
+	 * 		Frames computed for the method.
+	 * @param sequence
+	 * 		Reusable sequence buffer.
+	 *
+	 * @return {@code true} when any sequence was removed.
+	 */
+	private boolean removeDiscardedSequences(@Nonnull MethodNode method,
+	                                         @Nonnull InsnList instructions,
+	                                         @Nonnull Frame<ReValue>[] frames,
+	                                         @Nonnull List<AbstractInsnNode> sequence) {
+		boolean dirty = false;
+		for (int i = instructions.size() - 2; i >= 1; i--) {
+			AbstractInsnNode instruction = instructions.get(i);
+			int terminalOpcode = instruction.getOpcode();
+			if ((terminalOpcode != POP && terminalOpcode != POP2) || !hasKnownDiscardedValues(frames[i], terminalOpcode))
+				continue;
+
+			// Instruction is a POP/POP2 that discards known values.
+			// Walk backwards to find the sequence of instructions that produced those values.
+			boolean validSequence = true;
+			int netStackChange = 0;
+			sequence.clear();
+			int j = i;
+			while (j >= 0) {
+				AbstractInsnNode insn = instructions.get(j);
+				int opcode = insn.getOpcode();
+				if (opcode != NOP && opcode != -1)
+					sequence.add(insn);
+
+				// Abort if we see control flow, side effects, or variable writes. Those are not safe to remove.
+				if (isFlowControl(insn)
+						|| hasUnkeepableSideEffect(insn)
+						|| isSideEffectingProducer(insn)
+						|| isVarStore(opcode)
+						|| insn instanceof IincInsnNode
+						|| insn instanceof FieldInsnNode
+						|| insn instanceof MethodInsnNode
+						|| insn instanceof InvokeDynamicInsnNode
+						|| isArrayStore(opcode)
+						|| opcode == CHECKCAST
+						|| insn.getType() == AbstractInsnNode.LABEL
+						&& hasInboundFlowReferences(method, Collections.singletonList(insn))) {
+					validSequence = false;
+					break;
+				}
+
+				// Abort if we see a POP/POP2 that discards unknown values. Those are not safe to remove either.
+				if ((opcode == POP || opcode == POP2) && !hasKnownDiscardedValues(frames[j], opcode)) {
+					validSequence = false;
+					break;
+				}
+
+				netStackChange += computeInstructionStackDifference(frames, j, insn);
+				j--;
+
+				// A discarded sequence is complete when it restores its incoming stack height.
+				if (netStackChange >= 0)
+					break;
+			}
+			Collections.reverse(sequence);
+
+			// Skip if the completed sequence isn't a viable candidate for removal.
+			if (!validSequence || netStackChange != 0 || sequence.size() < 2 || shouldContinueSequence(sequence, false))
+				continue;
+
+			// Done, nop it.
+			for (AbstractInsnNode item : sequence)
+				instructions.set(item, new InsnNode(NOP));
+			dirty = true;
+		}
+		return dirty;
+	}
+
+	/**
 	 * Attempts to evaluate the given sequence of instructions to find the resulting value.
 	 *
 	 * @param context
@@ -753,6 +837,46 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 
 		instructions.set(instruction, new InsnNode(NOP));
 		return true;
+	}
+
+	/**
+	 * @param frame
+	 * 		The stack frame to inspect.
+	 * @param opcode
+	 * 		The POP/POP2 instruction that discards the top value(s) of the stack.
+	 *
+	 * @return {@code true} when the top value(s) of the stack are known and can be discarded without affecting program semantics.
+	 */
+	private static boolean hasKnownDiscardedValues(@Nullable Frame<ReValue> frame, int opcode) {
+		// Skip if the frame is null (dead code not visited by analyzer) or the stack is empty.
+		if (frame == null || frame.getStackSize() == 0)
+			return false;
+
+		// Check the top value(s) of the stack to see if they are known and can be discarded.
+		int stackSize = frame.getStackSize();
+		ReValue top = frame.getStack(stackSize - 1);
+		if (opcode == POP)
+			return top.getSize() == 1 && isKnownDiscardedValue(top);
+		if (opcode != POP2)
+			return false;
+		if (top.getSize() == 2)
+			return isKnownDiscardedValue(top);
+		if (top.getSize() != 1 || stackSize < 2)
+			return false;
+		ReValue below = frame.getStack(stackSize - 2);
+		return below.getSize() == 1
+				&& isKnownDiscardedValue(top)
+				&& isKnownDiscardedValue(below);
+	}
+
+	/**
+	 * @param value
+	 * 		The value to inspect.
+	 *
+	 * @return {@code true} when the value is known and can be discarded without affecting program semantics.
+	 */
+	private static boolean isKnownDiscardedValue(@Nonnull ReValue value) {
+		return value.hasKnownValue() || value instanceof ObjectValue object && object.isNull();
 	}
 
 	/**
@@ -1189,7 +1313,8 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 	 */
 	private static boolean isSideEffectingProducer(@Nonnull AbstractInsnNode insn) {
 		return switch (insn) {
-			case MethodInsnNode min when min.getOpcode() == INVOKESTATIC -> min.desc.startsWith("()") && !STATIC_METHOD_LOOKUP.hasLookup(min);
+			case MethodInsnNode min when min.getOpcode() == INVOKESTATIC ->
+					min.desc.startsWith("()") && !STATIC_METHOD_LOOKUP.hasLookup(min);
 			case FieldInsnNode fin when fin.getOpcode() == GETSTATIC -> !STATIC_FIELD_LOOKUP.hasLookup(fin);
 			default -> false;
 		};

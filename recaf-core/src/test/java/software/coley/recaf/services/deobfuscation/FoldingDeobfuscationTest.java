@@ -1951,6 +1951,109 @@ public class FoldingDeobfuscationTest extends TransformerTestBase {
 	}
 
 	@Test
+	void foldRedundantArrayAlloc() {
+		// Junk array allocations that are never used should be removed.
+		String asm = """
+				.super java/lang/Object
+				.class public Example {
+				    .method public static example ()I {
+				        code: {
+				        A:
+				            \0
+				            \1
+				            iconst_1
+				            iconst_1
+				            iadd
+				            ireturn
+				        B:
+				        }
+				    }
+				}
+				""".replace("\0", "            iconst_0\n".repeat(1000))
+				.replace("\1", "            anewarray java/lang/Object\n            pop\n".repeat(1000));
+		validateAfterRepeatedAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
+			assertEquals(0, StringUtil.count("anewarray", dis), "Discarded empty-array allocations should be removed");
+			assertEquals(0, StringUtil.count("pop", dis), "The matching array pops should be removed");
+			assertEquals(0, StringUtil.count("iadd", dis), "The iadd operation should be folded");
+			assertTrue(dis.contains("iconst_2"), "The 1 + 1 suffix operation should fold to 2");
+		});
+	}
+
+	@Test
+	void foldRedundantArrayAllocButKeepEffect() {
+		// Variant of the test above in the sense a junk array allocation should get removed.
+		// However, the contributing operations to the array allocation should be kept since they have side effects.
+		String asm = """
+				.super java/lang/Object
+				.class public Example {
+				    .field static counter I
+
+				    .method private static nextSize ()I {
+				        code: {
+				        A:
+				            getstatic Example.counter I
+				            iconst_1
+				            iadd
+				            dup
+				            putstatic Example.counter I
+				            ireturn
+				        B:
+				        }
+				    }
+
+				    .method public static run ()I {
+				        code: {
+				        A:
+				            invokestatic Example.nextSize ()I
+				            anewarray java/lang/Object
+				            pop
+				            getstatic Example.counter I
+				            ireturn
+				        B:
+				        }
+				    }
+				}
+				""";
+		assemble(asm, true);
+		assertEquals(1, invokeStatic("Example", "run", "Example"));
+		transformAndApply(List.of(OpaqueConstantFoldingTransformer.class));
+		assertEquals(1, invokeStatic("Example", "run", "Example"));
+	}
+
+	@Test
+	void foldRedundantOperations() {
+		// Junk math ops that just get thrown away should get removed.
+		String asm = """
+				.super java/lang/Object
+				.class public Example {
+				    .method public static discard ()V {
+				        code: {
+				        A:
+				            iconst_4
+				            iconst_5
+				            iadd
+				            pop
+				            lconst_0
+				            pop2
+				            iconst_1
+				            iconst_2
+				            iadd
+				            iconst_3
+				            pop2
+				            return
+				        B:
+				        }
+				    }
+				}
+				""";
+		validateAfterRepeatedAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
+			assertEquals(0, StringUtil.count("pop2", dis), "Should fold pop2 + contributors");
+			assertEquals(0, StringUtil.count("pop", dis), "Should fold pop + contributors");
+			assertEquals(0, StringUtil.count("iadd", dis), "Should fold iadd + contributors");
+		});
+	}
+
+	@Test
 	void foldOpaqueIfeq() {
 		String asm = """
 				.method public static example ()V {
