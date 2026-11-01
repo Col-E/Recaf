@@ -6,6 +6,7 @@ import jakarta.annotation.Nullable;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Type;
 import software.coley.recaf.RecafConstants;
 import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.info.member.FieldMember;
@@ -50,10 +51,15 @@ public class MemberStubAddingVisitor extends ClassVisitor {
 			String[] exceptions = mm.getThrownTypes().toArray(new String[0]);
 
 			MethodVisitor mv = visitMethod(access, name, desc, signature, exceptions);
-			if (!mm.hasAbstractModifier() || !mm.hasNativeModifier()) {
+			if (!mm.hasAbstractModifier() && !mm.hasNativeModifier()) {
+				int maxLocals = Type.getArgumentsAndReturnSizes(desc) >> 2; // Result is packed, unpack it.
+				if (mm.hasStaticModifier())
+					maxLocals--;
+
 				Label start = new Label();
 				Label end = new Label();
 
+				mv.visitCode();
 				mv.visitLabel(start);
 				mv.visitTypeInsn(NEW, "java/lang/RuntimeException");
 				mv.visitInsn(DUP);
@@ -65,7 +71,9 @@ public class MemberStubAddingVisitor extends ClassVisitor {
 				for (LocalVariable lv : mm.getLocalVariables()) {
 					mv.visitLocalVariable(lv.getName(), lv.getDescriptor(), lv.getSignature(),
 							start, end, lv.getIndex());
+					maxLocals = Math.max(maxLocals, lv.getIndex() + Type.getType(lv.getDescriptor()).getSize());
 				}
+				mv.visitMaxs(3, maxLocals);
 			}
 			mv.visitEnd();
 		}
