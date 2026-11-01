@@ -79,7 +79,6 @@ import static software.coley.recaf.util.AsmInsnUtil.*;
  */
 @Dependent
 public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
-	/** Stable translation key for this transformer. */
 	public static final String IDENTIFIER = "peephole.data.constfold";
 
 	public static final String KEY_INLINE_STRING_CTORS = IDENTIFIER + ".inline-string-ctors";
@@ -402,6 +401,15 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 				continue;
 			}
 
+			// Fold String.toString() independently of the surrounding sequence. The final call in a chain may
+			// otherwise be rejected because an earlier unknown operation made the sequence boundary invalid.
+			Frame<ReValue> frame = frames[i];
+			if (frame != null && isStringToStringCall(instruction)
+					&& foldRedundantStringToString(instructions, instruction, frame)) {
+				dirty = true;
+				continue;
+			}
+
 			// Iterate until we find an instruction that consumes values off the stack as part of an "operation".
 			int sizeConsumed = getSizeConsumed(instruction);
 			if (sizeConsumed == 0 || (opcode >= POP && opcode <= DUP2_X2))
@@ -413,7 +421,6 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 			// Grab the current and next frame for later. We want to pull values from these to determine
 			// if operations on constant inputs can be inlined.
 			// However, a "return" isn't an operation, so we have an edge case handling those.
-			Frame<ReValue> frame = frames[i];
 			if (frame == null)
 				continue;
 			Frame<ReValue> nextFrame = frames[i + 1];
@@ -1068,6 +1075,61 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 	}
 
 	/**
+	 * @param instruction
+	 * 		Instruction to inspect.
+	 *
+	 * @return {@code true} when the instruction is a String.toString() invocation.
+	 */
+	private static boolean isStringToStringCall(@Nonnull AbstractInsnNode instruction) {
+		return instruction instanceof MethodInsnNode method
+				&& method.getOpcode() == INVOKEVIRTUAL
+				&& method.owner.equals("java/lang/String")
+				&& method.name.equals("toString")
+				&& method.desc.equals("()Ljava/lang/String;");
+	}
+
+	/**
+	 * Removes {@code String.toString()} calls.
+	 * <ul>
+	 *     <li>{@code "const".toString()} - Any {@code toString()} is redundant.</li>
+	 *     <li>{@code stringBuiler.toString().toString()} - After the first {@code toString()} the rest are redundant.</li>
+	 *     <li>{@code stringVar.toString().toString()} - After the first {@code toString()} the rest are redundant. The first is still needed since it can NPE.</li>
+	 * </ul>
+	 *
+	 * @param instructions
+	 * 		Instructions to operate on.
+	 * @param instruction
+	 * 		Potential {@code String.toString()} invocation.
+	 * @param frame
+	 * 		The stack frame at the instruction position.
+	 *
+	 * @return {@code true} when the redundant invocation was removed.
+	 */
+	private static boolean foldRedundantStringToString(@Nonnull InsnList instructions,
+	                                                   @Nonnull AbstractInsnNode instruction,
+	                                                   @Nonnull Frame<ReValue> frame) {
+		if (!isStringToStringCall(instruction) || frame.getStackSize() == 0)
+			return false;
+
+		ReValue receiver = frame.getStack(frame.getStackSize() - 1);
+		boolean receiverIsNonNull = receiver instanceof ObjectValue object
+				&& Types.STRING_TYPE.equals(object.type())
+				&& object.isNotNull();
+		AbstractInsnNode producer = getPreviousInsn(instruction, true);
+		boolean producerReturnsNonNullString = producer instanceof MethodInsnNode method
+				&& method.getOpcode() == INVOKEVIRTUAL
+				&& method.name.equals("toString")
+				&& method.desc.equals("()Ljava/lang/String;")
+				&& (method.owner.equals("java/lang/String")
+				|| method.owner.equals("java/lang/StringBuilder"));
+		if (!receiverIsNonNull && !producerReturnsNonNullString)
+			return false;
+
+		instructions.set(instruction, new InsnNode(NOP));
+		return true;
+	}
+
+	/**
 	 * @param instructions
 	 * 		Instructions to operate on.
 	 * @param instruction
@@ -1078,6 +1140,9 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 	 * @return {@code true} when the instruction was a redundant operation that has been folded. Otherwise {@code false}.
 	 */
 	private static boolean foldRedundantOperations(@Nonnull InsnList instructions, @Nonnull AbstractInsnNode instruction, @Nonnull Frame<ReValue> frame) {
+		if (foldRedundantStringToString(instructions, instruction, frame))
+			return true;
+
 		// Skip if this isn't an operation we can support
 		if (frame.getStackSize() < 2)
 			return false;

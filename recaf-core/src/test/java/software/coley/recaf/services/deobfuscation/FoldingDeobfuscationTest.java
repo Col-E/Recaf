@@ -1564,6 +1564,68 @@ public class FoldingDeobfuscationTest extends TransformerTestBase {
 	}
 
 	@Test
+	void foldRepeatedStringToStringCalls() {
+		// Every toString value after the constant is redundant because it just returns the same value.
+		String asm = """
+				.method public static example ()Ljava/lang/String; {
+				    code: {
+				    A:
+				        ldc "value"
+				        invokevirtual java/lang/String.toString ()Ljava/lang/String;
+				        invokevirtual java/lang/String.toString ()Ljava/lang/String;
+				        invokevirtual java/lang/String.toString ()Ljava/lang/String;
+				        areturn
+				    B:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
+			assertEquals(1, StringUtil.count("ldc \"value\"", dis), "Expected to retain the string constant");
+			assertEquals(0, StringUtil.count("java/lang/String.toString", dis), "Expected to remove redundant String.toString calls");
+		});
+
+		// StringBuilder.toString() is essentially the same thing. We get a String, and then any toString() after that is redundant.
+		asm = """
+				.method public static example (Ljava/lang/StringBuilder;)Ljava/lang/String; {
+					parameters: { builder },
+				    code: {
+				    A:
+				        aload builder
+				        invokevirtual java/lang/StringBuilder.toString ()Ljava/lang/String;
+				        invokevirtual java/lang/String.toString ()Ljava/lang/String;
+				        invokevirtual java/lang/String.toString ()Ljava/lang/String;
+				        areturn
+				    B:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
+			assertEquals(1, StringUtil.count("java/lang/StringBuilder.toString", dis), "Expected to retain the initial StringBuilder.toString call");
+			assertEquals(0, StringUtil.count("java/lang/String.toString", dis), "Expected to remove redundant String.toString calls");
+		});
+
+		// The first invocation can throw when the input is null,
+		// so we want to preserve that one, but the rest are redundant and can be removed.
+		asm = """
+				.method public static example (Ljava/lang/String;)Ljava/lang/String; {
+					parameters: { value },
+				    code: {
+				    A:
+				        aload value
+				        invokevirtual java/lang/String.toString ()Ljava/lang/String;
+				        invokevirtual java/lang/String.toString ()Ljava/lang/String;
+				        invokevirtual java/lang/String.toString ()Ljava/lang/String;
+				        areturn
+				    B:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
+			assertEquals(1, StringUtil.count("java/lang/String.toString", dis), "Expected to preserve the potentially throwing first call");
+		});
+	}
+
+	@Test
 	void foldKnownStringLength() {
 		String asm = """
 				.method public static example ()I {
