@@ -51,6 +51,7 @@ import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.RuntimeWorkspaceResource;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -1051,6 +1052,8 @@ public class Evaluator {
 			return null;
 
 		// We have at least one candidate, but we need to find the most specific one.
+		// When there are multiple candidates we will cache assignable supertypes to avoid repeated graph traversal.
+		Map<String, Set<String>> assignableSupertypesByChild = interfaceMethods.size() > 2 ? new HashMap<>() : null;
 		ClassMethodPair selected = null;
 		for (ClassMethodPair candidate : interfaceMethods) {
 			boolean isMostSpecific = true;
@@ -1059,7 +1062,12 @@ public class Evaluator {
 					continue;
 
 				// If the candidate is not assignable to the other, then it is not the most specific.
-				if (!interpreter.isAssignableFrom(candidate.classNode().name, other.classNode().name)) {
+				String candidateName = candidate.classNode().name;
+				String otherName = other.classNode().name;
+				boolean assignable = assignableSupertypesByChild == null
+						? interpreter.isAssignableFrom(candidateName, otherName)
+						: assignableSupertypesByChild.computeIfAbsent(otherName, interpreter::getAssignableSupertypes).contains(candidateName);
+				if (!assignable) {
 					isMostSpecific = false;
 					break;
 				}

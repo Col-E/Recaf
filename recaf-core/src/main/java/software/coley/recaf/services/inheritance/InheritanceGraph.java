@@ -452,6 +452,40 @@ public class InheritanceGraph {
 	}
 
 	/**
+	 * @param child
+	 * 		Child type.
+	 *
+	 * @return Names {@link #isAssignableFrom(String, String) assignable from} the given type, including the type itself.
+	 */
+	@Nonnull
+	public Set<String> getAssignableSupertypes(@Nonnull String child) {
+		Set<String> supertypes = new HashSet<>();
+		supertypes.add(OBJECT);
+		if (OBJECT.equals(child))
+			return supertypes;
+
+		// Preserve the direct hierarchy checks used by isAssignableFrom(), including direct parents not resolvable to a vertex.
+		supertypes.add(child);
+		InheritanceVertex childVertex = getVertex(child);
+		if (childVertex != null) {
+			supertypes.addAll(childVertex.getParentNames());
+			for (InheritanceVertex parent : childVertex.getAllParents()) {
+				supertypes.add(parent.getName());
+				supertypes.addAll(parent.getParentNames());
+			}
+		}
+
+		// isAssignableFrom() also checks whether a known parent vertex has a child with the given name.
+		// This matters when the child type is missing but appears as a direct parent in another class.
+		for (String directChildName : getDirectChildren(child)) {
+			InheritanceVertex directChild = getVertex(directChildName);
+			if (directChild != null)
+				directChild.allParents().map(InheritanceVertex::getName).forEach(supertypes::add);
+		}
+		return supertypes;
+	}
+
+	/**
 	 * @param first
 	 * 		First class name.
 	 * @param second

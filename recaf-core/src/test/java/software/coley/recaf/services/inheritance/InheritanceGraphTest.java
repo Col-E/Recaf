@@ -173,6 +173,36 @@ class InheritanceGraphTest extends TestBase {
 	}
 
 	@Test
+	void getAssignableSupertypesIncludesKnownHierarchyAndMissingChildInference() {
+		// class Child extends MissingParent implements Base {}
+		String baseName = "example/Base";
+		String missingName = "example/MissingParent";
+		String childName = "example/Child";
+		BasicJvmClassBundle classes = new BasicJvmClassBundle();
+		classes.initialPut(TestClassUtils.createClass(baseName, node -> node.superName = "java/lang/Object"));
+		classes.initialPut(TestClassUtils.createClass(childName, node -> {
+			node.superName = missingName;
+			node.interfaces.add(baseName);
+		}));
+
+		// Assert that the graph can infer the missing parent from the child class,
+		// and that the child class is assignable to the missing parent.
+		InheritanceGraph graph = new InheritanceGraph(TestClassUtils.fromBundle(classes));
+		Set<String> assignableFromMissing = graph.getAssignableSupertypes(missingName);
+		for (String candidate : Set.of("java/lang/Object", baseName, missingName, childName, "example/Unrelated"))
+			assertEquals(graph.isAssignableFrom(candidate, missingName), assignableFromMissing.contains(candidate),
+					"Supertype set disagrees with assignability for " + candidate);
+
+		// Simpler case with the Inheritance test classes, where we know the hierarchy is complete and correct.
+		String appleName = Inheritance.Apple.class.getName().replace('.', '/');
+		String edibleName = Inheritance.Edible.class.getName().replace('.', '/');
+		Set<String> appleSupertypes = inheritanceGraph.getAssignableSupertypes(appleName);
+		assertTrue(appleSupertypes.contains(appleName));
+		assertTrue(appleSupertypes.contains(edibleName));
+		assertTrue(appleSupertypes.contains("java/lang/Object"));
+	}
+
+	@Test
 	void getFamilyOfThrowable() {
 		String notFoodExceptionName = Inheritance.NotFoodException.class.getName().replace('.', '/');
 		ClassPathNode classPath = workspace.findJvmClass(notFoodExceptionName);

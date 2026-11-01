@@ -44,6 +44,7 @@ import software.coley.recaf.util.analysis.value.impl.ObjectValueBoxImpl;
 import java.lang.reflect.Array;
 import java.util.List;
 import java.util.OptionalInt;
+import java.util.Set;
 
 /**
  * Interpreter implementation for enhanced value tracking.
@@ -76,6 +77,17 @@ public class ReInterpreter extends Interpreter<ReValue> implements Opcodes {
 	 */
 	public boolean isAssignableFrom(@Nonnull String parent, @Nonnull String child) {
 		return inheritanceGraph.isAssignableFrom(parent, child);
+	}
+
+	/**
+	 * @param child
+	 * 		Internal name of the child type.
+	 *
+	 * @return Names assignable from the child type, including the type itself.
+	 */
+	@Nonnull
+	public Set<String> getAssignableSupertypes(@Nonnull String child) {
+		return inheritanceGraph.getAssignableSupertypes(child);
 	}
 
 	@Nullable

@@ -26,6 +26,7 @@ import software.coley.recaf.util.analysis.value.impl.ThrowableValueImpl;
 import java.lang.reflect.Array;
 import java.util.List;
 import java.util.OptionalInt;
+import java.util.Set;
 import java.util.function.Supplier;
 
 /**
@@ -173,12 +174,26 @@ public class ExceptionHandler {
 		// Check in the current method for a try/catch block that can handle this exception.
 		if (method != null && method.tryCatchBlocks != null) {
 			int sourceIndex = method.instructions.indexOf(source);
+			String exceptionType = object.type().getInternalName();
+			boolean useSupertypeIndex = method.tryCatchBlocks.size() > 1; // Don't bother caching if there's only one block to check.
+			Set<String> exceptionSupertypes = null;
 			for (TryCatchBlockNode block : method.tryCatchBlocks) {
 				int start = method.instructions.indexOf(block.start);
 				int end = method.instructions.indexOf(block.end);
 				if (sourceIndex < start || sourceIndex >= end)
 					continue;
-				if (block.type == null || interpreter.isAssignableFrom(block.type, object.type().getInternalName())) {
+
+				boolean matches = block.type == null;
+				if (!matches) {
+					if (useSupertypeIndex) {
+						if (exceptionSupertypes == null)
+							exceptionSupertypes = interpreter.getAssignableSupertypes(exceptionType);
+						matches = exceptionSupertypes.contains(block.type);
+					} else {
+						matches = interpreter.isAssignableFrom(block.type, exceptionType);
+					}
+				}
+				if (matches) {
 					frame.clearStack();
 					frame.push(exception);
 					return block.handler;
