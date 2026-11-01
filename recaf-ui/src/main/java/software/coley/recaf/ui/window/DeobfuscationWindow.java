@@ -122,6 +122,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
@@ -207,6 +208,10 @@ public class DeobfuscationWindow extends RecafStage {
 
 		beforePreview = new TransformPreview(languageAssociation, textConfig, searchBarProvider, false);
 		afterPreview = new TransformPreview(languageAssociation, textConfig, searchBarProvider, true);
+		addEventHandler(WindowEvent.WINDOW_HIDDEN, event -> {
+			beforePreview.close();
+			afterPreview.close();
+		});
 
 		setupStage1();
 		setupStage2();
@@ -1366,8 +1371,10 @@ public class DeobfuscationWindow extends RecafStage {
 	 * Preview pane capable of disassembly/decompilation for both before and after states.
 	 */
 	private class TransformPreview extends BorderPane {
-		private final Batch deobfuscationBatch = ThreadUtil.batch(ThreadPoolFactory.newSingleThreadExecutor("deobfuscation-preview"));
+		private final ExecutorService deobfuscationExecutor = ThreadPoolFactory.newSingleThreadExecutor("deobfuscation-preview");
+		private final Batch deobfuscationBatch = ThreadUtil.batch(deobfuscationExecutor);
 		private final AtomicInteger previewGeneration = new AtomicInteger();
+		private boolean closed;
 		private final boolean andApply;
 		private final Editor editorDecompile;
 		private final Editor editorAssembly;
@@ -1447,7 +1454,10 @@ public class DeobfuscationWindow extends RecafStage {
 		/**
 		 * Queues a preview refresh, coalescing rapid profile changes into the latest build.
 		 */
-		private void updatePreview() {
+		private synchronized void updatePreview() {
+			if (closed)
+				return;
+
 			// TODO: We can't really stop expensive decompilations, they don't check for interrupts on the current thread
 			//  and we have no good way of force killing them (rip Thread.stop) so the best we can really do is only
 			//  allow one of these tasks to run at a time, with one next 'pending' task.
@@ -1462,6 +1472,21 @@ public class DeobfuscationWindow extends RecafStage {
 					disassemble(generation);
 			});
 			deobfuscationBatch.executeNewest();
+		}
+
+		/**
+		 * Stops preview work and releases resources after closing.
+		 */
+		private synchronized void close() {
+			if (closed)
+				return;
+
+			closed = true;
+			previewGeneration.incrementAndGet();
+			deobfuscationBatch.clear();
+			deobfuscationExecutor.shutdownNow();
+			editorDecompile.close();
+			editorAssembly.close();
 		}
 
 		/**
