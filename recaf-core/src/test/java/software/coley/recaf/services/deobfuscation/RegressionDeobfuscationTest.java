@@ -2420,6 +2420,24 @@ public class RegressionDeobfuscationTest extends TransformerTestBase {
 		assertEquals(42, invokeStatic("SlotGap", "run", "SlotGap"));
 	}
 
+	/** Normalization shouldn't change abstract/native methods, which have no code and thus no variable table. */
+	@Test
+	void variableTableNormalizingSkipsCodeLessMethods() {
+		compileFull("AbstractMethods", """
+				interface AbstractMethods {
+					void invoke(String text, long count);
+				}
+				""");
+		compileFull("NativeMethods", """
+				class NativeMethods {
+					native void invoke(String text, long count);
+				}
+				""");
+		JvmTransformResult result = assertDoesNotThrow(() -> newApplier().transformJvm(List.of(VariableTableNormalizingTransformer.class)));
+		assertTrue(result.getTransformerFailures().isEmpty(), "There were transformation failures");
+		assertTrue(result.getTransformedClasses().isEmpty(), "Abstract methods should not be normalized");
+	}
+
 	/**
 	 * Folding a sequence must not delete array element stores it contains.
 	 */

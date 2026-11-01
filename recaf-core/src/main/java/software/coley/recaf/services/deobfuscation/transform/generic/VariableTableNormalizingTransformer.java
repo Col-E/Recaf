@@ -48,6 +48,9 @@ public class VariableTableNormalizingTransformer implements JvmClassTransformer 
 		String className = initialClassState.getName();
 		ClassNode node = context.getNode(bundle, initialClassState);
 		for (MethodNode method : node.methods) {
+			if (AccessFlag.isAbstract(method.access) || AccessFlag.isNative(method.access))
+				continue;
+
 			Type[] argumentTypes = Type.getMethodType(method.desc).getArgumentTypes();
 			boolean isStatic = AccessFlag.isStatic(method.access);
 			int slot = isStatic ? 0 : 1;
