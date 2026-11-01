@@ -3,7 +3,8 @@ package software.coley.recaf.ui.control.popup;
 import atlantafx.base.controls.Spacer;
 import atlantafx.base.theme.Styles;
 import jakarta.annotation.Nonnull;
-import javafx.beans.value.ObservableValue;
+import javafx.beans.binding.Bindings;
+import javafx.beans.binding.BooleanBinding;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -60,9 +61,12 @@ public class ClassSelectionPopup extends RecafStage {
 		tree.getStyleClass().add("border-muted");
 
 		// Keyboard accept/cancel
-		ObservableValue<Boolean> disable = tree.getSelectionModel().selectedItemProperty().map(i -> !(i.getValue() instanceof ClassPathNode));
+		BooleanBinding disable = Bindings.createBooleanBinding(() -> {
+			TreeItem<PathNode<?>> selectedItem = tree.getSelectionModel().getSelectedItem();
+			return selectedItem == null || !(selectedItem.getValue() instanceof ClassPathNode);
+		}, tree.getSelectionModel().selectedItemProperty());
 		tree.setOnKeyPressed(e -> {
-			if (e.getCode() == KeyCode.ENTER && !disable.getValue()) {
+			if (e.getCode() == KeyCode.ENTER && !disable.get()) {
 				accept();
 			} else if (e.getCode() == KeyCode.ESCAPE) {
 				hide();

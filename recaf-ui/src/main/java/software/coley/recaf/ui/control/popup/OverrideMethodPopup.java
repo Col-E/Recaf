@@ -2,7 +2,8 @@ package software.coley.recaf.ui.control.popup;
 
 import atlantafx.base.controls.Spacer;
 import jakarta.annotation.Nonnull;
-import javafx.beans.value.ObservableValue;
+import javafx.beans.binding.Bindings;
+import javafx.beans.binding.BooleanBinding;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -54,9 +55,12 @@ public class OverrideMethodPopup extends RecafStage {
 		tree.getStyleClass().add("border-muted");
 
 		// Keyboard accept/cancel
-		ObservableValue<Boolean> disable = tree.getSelectionModel().selectedItemProperty().map(i -> !(i.getValue() instanceof ClassMemberPathNode));
+		BooleanBinding disable = Bindings.createBooleanBinding(() -> {
+			TreeItem<PathNode<?>> selectedItem = tree.getSelectionModel().getSelectedItem();
+			return selectedItem == null || !(selectedItem.getValue() instanceof ClassMemberPathNode);
+		}, tree.getSelectionModel().selectedItemProperty());
 		tree.setOnKeyPressed(e -> {
-			if (e.getCode() == KeyCode.ENTER && !disable.getValue()) {
+			if (e.getCode() == KeyCode.ENTER && !disable.get()) {
 				accept(memberConsumer);
 			} else if (e.getCode() == KeyCode.ESCAPE) {
 				hide();
