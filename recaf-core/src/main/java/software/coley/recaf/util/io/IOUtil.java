@@ -414,7 +414,7 @@ public final class IOUtil {
 	@Nullable
 	public static String getExtension(String path) {
 		int dotIndex = path.lastIndexOf('.');
-		if (dotIndex < path.length() - 1) {
+		if (dotIndex > 0 && dotIndex < path.length() - 1) {
 			return path.substring(dotIndex + 1);
 		} else {
 			return null;
