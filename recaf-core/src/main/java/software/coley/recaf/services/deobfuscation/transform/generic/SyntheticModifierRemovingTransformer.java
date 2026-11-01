@@ -55,4 +55,29 @@ public class SyntheticModifierRemovingTransformer implements JvmClassTransformer
 	public String identifier() {
 		return IDENTIFIER;
 	}
+
+	@Nonnull
+	@Override
+	public String beforeExample() {
+		return """
+				class Example {
+				    // Empty class in decompiler.
+				    // All members marked as synthetic by an obfuscator.
+				}
+				""";
+	}
+
+	@Nonnull
+	@Override
+	public String afterExample() {
+		return """
+				class Example {
+					static final int hiddenField = 4;
+				
+				    static void hiddenMethod() {
+				        // ...
+				    }
+				}
+				""";
+	}
 }
