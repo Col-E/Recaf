@@ -95,9 +95,9 @@ import software.coley.recaf.ui.pane.search.InstructionSearchPane;
 import software.coley.recaf.ui.pane.search.MemberDeclarationSearchPane;
 import software.coley.recaf.ui.pane.search.MemberReferenceSearchPane;
 import software.coley.recaf.ui.pane.search.NumberSearchPane;
+import software.coley.recaf.ui.pane.search.SearchResultsPane;
 import software.coley.recaf.ui.pane.search.SimilarClassTablePane;
 import software.coley.recaf.ui.pane.search.SimilarMethodTablePane;
-import software.coley.recaf.ui.pane.search.SearchResultsPane;
 import software.coley.recaf.ui.pane.search.StringSearchPane;
 import software.coley.recaf.ui.pane.search.StringTablePane;
 import software.coley.recaf.util.Animations;
@@ -1833,10 +1833,12 @@ public class Actions implements Service {
 	                          @Nullable String packageName) {
 		JvmClassBundle bundleCopy = new BasicJvmClassBundle();
 		bundle.valuesAsCopy().forEach(cls -> {
-			if (packageName == null && cls.getPackageName() == null)
+			if (packageName == null || packageName.isEmpty()) {
+				if (cls.getPackageName() == null)
+					bundleCopy.put(cls);
+			} else if (cls.getName().startsWith(packageName + "/")) {
 				bundleCopy.put(cls);
-			else if (cls.getName().startsWith(packageName + "/"))
-				bundleCopy.put(cls);
+			}
 		});
 		WorkspaceResource resourceCopy = new WorkspaceResourceBuilder().withJvmClassBundle(bundleCopy).build();
 		Workspace workspaceCopy = new BasicWorkspace(resourceCopy);
@@ -1933,11 +1935,13 @@ public class Actions implements Service {
 	                            @Nonnull FileBundle bundle,
 	                            @Nullable String directoryName) {
 		FileBundle bundleCopy = new BasicFileBundle();
-		bundle.valuesAsCopy().forEach(cls -> {
-			if (directoryName == null && cls.getDirectoryName() == null)
-				bundleCopy.put(cls);
-			else if (cls.getName().startsWith(directoryName + "/"))
-				bundleCopy.put(cls);
+		bundle.valuesAsCopy().forEach(file -> {
+			if (directoryName == null || directoryName.isEmpty()) {
+				if (file.getDirectoryName() == null)
+					bundleCopy.put(file);
+			} else if (file.getName().startsWith(directoryName + "/")) {
+				bundleCopy.put(file);
+			}
 		});
 		WorkspaceResource resourceCopy = new WorkspaceResourceBuilder().withFileBundle(bundleCopy).build();
 		Workspace workspaceCopy = new BasicWorkspace(resourceCopy);
