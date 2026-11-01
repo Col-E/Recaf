@@ -592,7 +592,6 @@ public class BasicInvokeStaticLookup extends BasicLookupUtils implements InvokeS
 		METHODS.put("java/lang/Math.log1p(D)D", (Func_1<DoubleValue>) (a) -> d(Math.log1p(d(a))));
 		METHODS.put("java/lang/Math.toRadians(D)D", (Func_1<DoubleValue>) (a) -> d(Math.toRadians(d(a))));
 		METHODS.put("java/lang/Math.toDegrees(D)D", (Func_1<DoubleValue>) (a) -> d(Math.toDegrees(d(a))));
-		METHODS.put("java/lang/Math.random()D", (Func_0) () -> d(Math.random()));
 		METHODS.put("java/lang/Math.divideExact(II)I", (Func_2<IntValue, IntValue>) (a, b) -> i(Math.divideExact(i(a), i(b))));
 		METHODS.put("java/lang/Math.divideExact(JJ)J", (Func_2<LongValue, LongValue>) (a, b) -> j(Math.divideExact(j(a), j(b))));
 		METHODS.put("java/lang/Math.floorDivExact(JJ)J", (Func_2<LongValue, LongValue>) (a, b) -> j(Math.floorDivExact(j(a), j(b))));
