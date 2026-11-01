@@ -26,6 +26,7 @@ import org.objectweb.asm.tree.TryCatchBlockNode;
 import org.objectweb.asm.tree.TypeInsnNode;
 import org.objectweb.asm.tree.VarInsnNode;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
@@ -502,6 +503,28 @@ class AsmInsnUtilTest {
 		list.add(new LabelNode());
 		list.add(new InsnNode(RETURN));
 		assertSame(list.getLast(), getNextFollowGoto(list.getFirst()));
+	}
+
+	@Test
+	void testGetNextFollowGotoHandlesCycles() {
+		assertTimeoutPreemptively(Duration.ofSeconds(1), () -> {
+			LabelNode selfLoopLabel = new LabelNode();
+			InsnList selfLoop = new InsnList();
+			selfLoop.add(new InsnNode(NOP));
+			selfLoop.add(selfLoopLabel);
+			selfLoop.add(new JumpInsnNode(GOTO, selfLoopLabel));
+			assertNull(getNextFollowGoto(selfLoop.getFirst()));
+
+			LabelNode firstTarget = new LabelNode();
+			LabelNode secondTarget = new LabelNode();
+			InsnList multiGotoLoop = new InsnList();
+			multiGotoLoop.add(new InsnNode(NOP));
+			multiGotoLoop.add(firstTarget);
+			multiGotoLoop.add(new JumpInsnNode(GOTO, secondTarget));
+			multiGotoLoop.add(secondTarget);
+			multiGotoLoop.add(new JumpInsnNode(GOTO, firstTarget));
+			assertNull(getNextFollowGoto(multiGotoLoop.getFirst()));
+		});
 	}
 
 	@Test

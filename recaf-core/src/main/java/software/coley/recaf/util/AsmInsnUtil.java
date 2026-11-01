@@ -657,14 +657,26 @@ public class AsmInsnUtil implements Opcodes {
 	 * 		Instruction to begin from.
 	 *
 	 * @return Next non-metadata instruction, following {@link Opcodes#GOTO} if found.
-	 * Can be {@code null} for no next instruction at the end of a method.
+	 * Can be {@code null} if no next instruction exists or following {@link Opcodes#GOTO}s enters a cycle.
 	 */
 	@Nullable
 	public static AbstractInsnNode getNextFollowGoto(@Nonnull AbstractInsnNode insn) {
 		AbstractInsnNode next = getNextInsn(insn);
+		AbstractInsnNode cycleCheckpoint = next;
+		long cycleCheckpointRange = 1;
+		long stepsSinceCycleCheckpoint = 0;
 		while (next != null && next.getOpcode() == GOTO) {
 			JumpInsnNode jin = (JumpInsnNode) next;
 			next = getNextInsn(jin.label);
+			if (next == null || next.getOpcode() != GOTO)
+				return next;
+			if (next == cycleCheckpoint)
+				return null;
+			if (++stepsSinceCycleCheckpoint == cycleCheckpointRange) {
+				cycleCheckpoint = next;
+				stepsSinceCycleCheckpoint = 0;
+				cycleCheckpointRange <<= 1;
+			}
 		}
 		return next;
 	}
