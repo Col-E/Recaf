@@ -423,6 +423,23 @@ public class Editor extends BorderPane implements Closing {
 	}
 
 	/**
+	 * @param text
+	 * 		Text to set.
+	 * @param caretParagraph
+	 * 		Caret paragraph index.
+	 * @param caretColumn
+	 * 		Caret column index.
+	 */
+	public void setTextAndCaret(@Nonnull String text, int caretParagraph, int caretColumn) {
+		setText(text);
+
+		CodeArea area = getCodeArea();
+		int paragraph = Math.min(caretParagraph, Math.max(0, area.getParagraphs().size() - 1));
+		int column = Math.min(caretColumn, area.getParagraphLength(paragraph));
+		area.moveTo(paragraph, column);
+	}
+
+	/**
 	 * Adds a tab indentation into the given paragraph.
 	 *
 	 * @param paragraph
