@@ -22,6 +22,7 @@ import software.coley.recaf.services.json.GsonProvider;
 import software.coley.recaf.ui.control.BoundLabel;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.search.SearchBar;
+import software.coley.recaf.ui.pane.editing.AbstractDecompilePane;
 import software.coley.recaf.ui.pane.editing.ClassPane;
 import software.coley.recaf.ui.pane.editing.FilePane;
 import software.coley.recaf.ui.pane.editing.jvm.JvmDecompilerPane;
@@ -61,6 +62,7 @@ public class KeybindingConfig extends BasicConfigContainer {
 	private static final String ID_UNDO = "editor.undo";
 	private static final String ID_CLOSE_TAB = "editor.closetab";
 	private static final String ID_RENAME = "editor.rename";
+	private static final String ID_COMMENT = "editor.comment";
 	private static final String ID_GOTO = "editor.goto";
 	private static final String ID_ASSEMBLER = "editor.assembler";
 	private static final String ID_NAVIGATE_BACK = "navigate.back";
@@ -82,6 +84,7 @@ public class KeybindingConfig extends BasicConfigContainer {
 				createBindForPlatform(ID_UNDO, CONTROL, U),
 				createBindForPlatform(ID_CLOSE_TAB, CONTROL, W),
 				createBindForPlatform(ID_RENAME, ALT, R),
+				createBindForPlatform(ID_COMMENT, ALT, N),
 				createBindForPlatform(ID_GOTO, F3),
 				createBindForPlatform(ID_ASSEMBLER, F2),
 				createBindForPlatform(ID_NAVIGATE_BACK, ALT, LEFT),
@@ -185,7 +188,7 @@ public class KeybindingConfig extends BasicConfigContainer {
 	/**
 	 * @return Keybinding for renaming whatever is found at the current caret position.
 	 *
-	 * @see JvmDecompilerPane Usage in decompiler.
+	 * @see AbstractDecompilePane Usage in decompiler.
 	 */
 	@Nonnull
 	public Binding getRename() {
@@ -193,9 +196,19 @@ public class KeybindingConfig extends BasicConfigContainer {
 	}
 
 	/**
+	 * @return Keybinding for commenting whatever is found at the current caret position.
+	 *
+	 * @see AbstractDecompilePane Usage in decompiler.
+	 */
+	@Nonnull
+	public Binding getComment() {
+		return Objects.requireNonNull(bundle.get(ID_COMMENT));
+	}
+
+	/**
 	 * @return Keybinding for navigating to the declaration at the current caret position.
 	 *
-	 * @see JvmDecompilerPane Usage in decompiler.
+	 * @see AbstractDecompilePane Usage in decompiler.
 	 */
 	@Nonnull
 	public Binding getGoto() {

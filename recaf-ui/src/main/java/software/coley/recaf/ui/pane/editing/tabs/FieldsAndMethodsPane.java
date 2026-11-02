@@ -115,6 +115,10 @@ public class FieldsAndMethodsPane extends BorderPane implements ClassNavigable, 
 				TreeItem<PathNode<?>> selectedItem = tree.getSelectionModel().getSelectedItem();
 				if (selectedItem != null)
 					actions.rename(selectedItem.getValue());
+			} else if (keys.getComment().match(e)) {
+				TreeItem<PathNode<?>> selectedItem = tree.getSelectionModel().getSelectedItem();
+				if (selectedItem != null)
+					actions.openCommentEditing(selectedItem.getValue());
 			}
 		});
 

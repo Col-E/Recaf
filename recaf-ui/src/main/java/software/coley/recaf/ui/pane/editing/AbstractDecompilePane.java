@@ -159,6 +159,11 @@ public class AbstractDecompilePane extends BorderPane implements ClassNavigable,
 				AstResolveResult result = contextActionSupport.resolvePosition(editor.getCodeArea().getCaretPosition());
 				if (result != null)
 					actions.rename(result.path());
+			} else if (keys.getComment().match(e)) {
+				// Resolve what the caret position has, then handle comment editing on the generic result.
+				AstResolveResult result = contextActionSupport.resolvePosition(editor.getCodeArea().getCaretPosition());
+				if (result != null)
+					actions.openCommentEditing(result.path());
 			} else if (keys.getGoto().match(e)) {
 				// Resolve what the caret position has, then handle navigating to the resulting path.
 				AstResolveResult result = contextActionSupport.resolvePosition(editor.getCodeArea().getCaretPosition());

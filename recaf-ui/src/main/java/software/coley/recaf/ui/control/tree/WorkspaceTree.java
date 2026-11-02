@@ -58,6 +58,10 @@ public class WorkspaceTree extends PathNodeTree implements WorkspaceCloseListene
 				TreeItem<PathNode<?>> selectedItem = getSelectionModel().getSelectedItem();
 				if (selectedItem != null)
 					actions.rename(selectedItem.getValue());
+			} else if (keys.getComment().match(e)) {
+				TreeItem<PathNode<?>> selectedItem = getSelectionModel().getSelectedItem();
+				if (selectedItem != null)
+					actions.openCommentEditing(selectedItem.getValue());
 			}
 		});
 	}

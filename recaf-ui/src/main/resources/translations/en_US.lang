@@ -226,6 +226,7 @@ bind.editor.find=Find
 bind.editor.goto=Goto
 bind.editor.assembler=Open in assembler
 bind.editor.rename=Rename
+bind.editor.comment=Edit comment
 bind.editor.replace=Replace
 bind.editor.save=Save
 bind.editor.undo=Undo
