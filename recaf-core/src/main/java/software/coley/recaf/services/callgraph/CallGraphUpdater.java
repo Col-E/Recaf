@@ -152,6 +152,14 @@ public class CallGraphUpdater {
 	}
 
 	/**
+	 * @return Map of owner class names to the calls made to them that have not been resolved yet.
+	 */
+	@Nonnull
+	public MultiMap<String, UnresolvedCall, Set<UnresolvedCall>> getUnresolvedReferences() {
+		return unresolvedReferences;
+	}
+
+	/**
 	 * Called when a class is added/updated.
 	 * Removes any unresolved declarations that are now satisfied by the presence of the class.
 	 *
