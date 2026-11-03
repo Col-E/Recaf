@@ -31,6 +31,14 @@ public class IncludeWhitespaceNameFilter extends NameGeneratorFilter {
 	}
 
 	@Override
+	public boolean shouldMapPackage(@Nonnull ClassInfo info) {
+		String packageName = info.getPackageName();
+		if (packageName != null && shouldMap(packageName))
+			return true;
+		return super.shouldMapPackage(info);
+	}
+
+	@Override
 	public boolean shouldMapField(@Nonnull ClassInfo owner, @Nonnull FieldMember field) {
 		if (shouldMap(field))
 			return true;

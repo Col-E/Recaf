@@ -43,6 +43,14 @@ public class IncludeNonJavaIdentifierNameFilter extends NameGeneratorFilter {
 	}
 
 	@Override
+	public boolean shouldMapPackage(@Nonnull ClassInfo info) {
+		String packageName = info.getPackageName();
+		if (packageName != null && isInvalidName(packageName))
+			return true;
+		return super.shouldMapPackage(info);
+	}
+
+	@Override
 	public boolean shouldMapField(@Nonnull ClassInfo owner, @Nonnull FieldMember info) {
 		if (isInvalidName(info.getName()))
 			return true;

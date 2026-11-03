@@ -54,6 +54,11 @@ public class IncludeNameFilter extends NameGeneratorFilter {
 	}
 
 	@Override
+	public boolean shouldMapPackage(@Nonnull ClassInfo info) {
+		return shouldMapClass(info);
+	}
+
+	@Override
 	public boolean shouldMapField(@Nonnull ClassInfo owner, @Nonnull FieldMember field) {
 		if (fieldPredicate != null && fieldPredicate.match(field.getName()))
 			return true;

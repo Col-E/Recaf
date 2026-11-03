@@ -50,6 +50,17 @@ public abstract class NameGeneratorFilter {
 	}
 
 	/**
+	 * @param info Class whose package should be checked.
+	 * @return {@code true} when a remapped class should also be moved to a different package.
+	 */
+	public boolean shouldMapPackage(@Nonnull ClassInfo info) {
+		if (defaultMap)
+			return next == null || next.shouldMapPackage(info);
+		else
+			return next != null && next.shouldMapPackage(info);
+	}
+
+	/**
 	 * @param owner
 	 * 		Class the field is defined in.
 	 * @param field
