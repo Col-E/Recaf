@@ -36,7 +36,7 @@ import software.coley.recaf.path.WorkspacePathNode;
 import software.coley.recaf.services.cell.CellConfigurationService;
 import software.coley.recaf.services.navigation.Actions;
 import software.coley.recaf.services.navigation.Navigable;
-import software.coley.recaf.services.search.CancellableSearchFeedback;
+import software.coley.recaf.services.search.SearchFeedback;
 import software.coley.recaf.services.search.SearchService;
 import software.coley.recaf.services.search.query.Query;
 import software.coley.recaf.services.search.result.Result;
@@ -88,7 +88,7 @@ public abstract class AbstractSearchPane extends BorderPane implements Navigable
 	private boolean focusNextSearchResults;
 	private ActionButton searchOptionsButton;
 	private Popover searchOptionsPopover;
-	private CancellableSearchFeedback lastSearchFeedback;
+	private SearchFeedback lastSearchFeedback;
 
 	/**
 	 * Create the base outline of a search panel capabilities.
@@ -432,7 +432,7 @@ public abstract class AbstractSearchPane extends BorderPane implements Navigable
 		// Run new search.
 		SearchOptions.Snapshot optionsSnapshot = searchOptions.snapshot();
 		Predicate<Result<?>> resultFilter = createResultFilter();
-		CancellableSearchFeedback feedback;
+		SearchFeedback feedback;
 		if (liveResults.get()) {
 			feedback = new LiveOnlySearchFeedback(optionsSnapshot, resultFilter, result -> {
 				if (generation != searchGeneration.get() || isDisabled())
@@ -505,7 +505,7 @@ public abstract class AbstractSearchPane extends BorderPane implements Navigable
 	/**
 	 * Feedback that filters which workspace items are visited.
 	 */
-	private static class FilteringSearchFeedback extends CancellableSearchFeedback {
+	private static class FilteringSearchFeedback extends SearchFeedback {
 		private final SearchOptions.Snapshot optionsSnapshot;
 		private final Predicate<Result<?>> resultFilter;
 

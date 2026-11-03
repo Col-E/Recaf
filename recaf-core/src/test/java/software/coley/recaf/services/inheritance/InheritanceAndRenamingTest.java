@@ -182,6 +182,7 @@ class InheritanceAndRenamingTest extends TestBase {
 			super(workspace);
 		}
 
+		@Nonnull
 		@Override
 		public Set<InheritanceVertex> getVertexFamily(@Nonnull String name, boolean includeObject) {
 			familyLookupCount++;
