@@ -364,6 +364,32 @@ public class Types {
 	}
 
 	/**
+	 * Unlike {@link #isValidDesc(String)}, this accepts primitive descriptors, and rejects method descriptors.
+	 *
+	 * @param desc
+	 * 		Field descriptor to check.
+	 *
+	 * @return {@code true} when the descriptor is a primitive or reference type that ASM can parse.
+	 */
+	public static boolean isValidFieldDesc(@Nullable String desc) {
+		if (desc == null || desc.isEmpty())
+			return false;
+		if (desc.length() == 1)
+			return "ZCBSIFJD".indexOf(desc.charAt(0)) >= 0;
+		return desc.charAt(0) != '(' && isValidDesc(desc);
+	}
+
+	/**
+	 * @param desc
+	 * 		Method descriptor to check.
+	 *
+	 * @return {@code true} when the descriptor is a method type that ASM can parse.
+	 */
+	public static boolean isValidMethodDesc(@Nullable String desc) {
+		return desc != null && desc.startsWith("(") && isValidDesc(desc);
+	}
+
+	/**
 	 * @param type
 	 * 		Type to check.
 	 *
