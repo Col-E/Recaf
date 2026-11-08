@@ -239,50 +239,55 @@ tasks.register('cacheToMavenLocal') {
                     if (!targetFile.exists()) {
                         // Get the repository this component came from
                         def repo = componentRepositories.get(componentKey)
+                        def sourceRepositories = repo?.url ? [repo] : repositoryUrls
 
-                        if (repo) {
-                            def repoUrl = repo.url
-                            def artifactUrl = "${repoUrl}${groupPath}/${name}/${version}/${sourceFileName}"
+                        if (!sourceRepositories.isEmpty()) {
+                            for (sourceRepo in sourceRepositories) {
+                                def repoUrl = sourceRepo.url
+                                def artifactUrl = "${repoUrl}${groupPath}/${name}/${version}/${sourceFileName}"
 
-                            try {
-                                println "Attempting to download ${componentKey} sources from ${repoUrl}..."
-                                def url = new URL(artifactUrl)
-                                def connection = (HttpURLConnection) url.openConnection()
-                                connection.setRequestMethod("GET")
-                                connection.setConnectTimeout(5000)
-                                connection.setReadTimeout(30000)
-                                connection.setInstanceFollowRedirects(true)
+                                try {
+                                    println "Attempting to download ${componentKey} sources from ${repoUrl}..."
+                                    def url = new URL(artifactUrl)
+                                    def connection = (HttpURLConnection) url.openConnection()
+                                    connection.setRequestMethod("GET")
+                                    connection.setConnectTimeout(5000)
+                                    connection.setReadTimeout(30000)
+                                    connection.setInstanceFollowRedirects(true)
 
-                                def responseCode = connection.getResponseCode()
-                                if (responseCode == 200) {
-                                    targetFile.withOutputStream { out ->
-                                        out << connection.getInputStream()
-                                    }
-                                    println "Downloaded ${componentKey} sources from ${repoUrl}"
-                                    resolvedSources.add(componentKey)
-                                } else if (responseCode == 301 || responseCode == 302) {
-                                    // Handle redirects
-                                    def newUrl = connection.getHeaderField("Location")
-                                    println "Redirected to ${newUrl}"
-                                    def redirectConnection = (HttpURLConnection) new URL(newUrl).openConnection()
-                                    redirectConnection.setRequestMethod("GET")
-                                    redirectConnection.setConnectTimeout(5000)
-                                    redirectConnection.setReadTimeout(30000)
-
-                                    if (redirectConnection.getResponseCode() == 200) {
+                                    def responseCode = connection.getResponseCode()
+                                    if (responseCode == 200) {
                                         targetFile.withOutputStream { out ->
-                                            out << redirectConnection.getInputStream()
+                                            out << connection.getInputStream()
                                         }
-                                        println "Downloaded ${componentKey} sources from ${repo.name} (after redirect)"
+                                        println "Downloaded ${componentKey} sources from ${repoUrl}"
                                         resolvedSources.add(componentKey)
+                                        break
+                                    } else if (responseCode == 301 || responseCode == 302) {
+                                        // Handle redirects
+                                        def newUrl = connection.getHeaderField("Location")
+                                        println "Redirected to ${newUrl}"
+                                        def redirectConnection = (HttpURLConnection) new URL(newUrl).openConnection()
+                                        redirectConnection.setRequestMethod("GET")
+                                        redirectConnection.setConnectTimeout(5000)
+                                        redirectConnection.setReadTimeout(30000)
+
+                                        if (redirectConnection.getResponseCode() == 200) {
+                                            targetFile.withOutputStream { out ->
+                                                out << redirectConnection.getInputStream()
+                                            }
+                                            println "Downloaded ${componentKey} sources from ${sourceRepo.name} (after redirect)"
+                                            resolvedSources.add(componentKey)
+                                            break
+                                        } else {
+                                            println "Sources not available for ${componentKey} at ${sourceRepo.name} (HTTP ${redirectConnection.getResponseCode()})"
+                                        }
                                     } else {
-                                        println "Sources not available for ${componentKey} at ${repo.name} (HTTP ${redirectConnection.getResponseCode()})"
+                                        println "Sources not available for ${componentKey} at ${sourceRepo.name} (HTTP ${responseCode})"
                                     }
-                                } else {
-                                    println "Sources not available for ${componentKey} at ${repo.name} (HTTP ${responseCode})"
+                                } catch (Exception e) {
+                                    println "Could not download sources for ${componentKey} from ${sourceRepo.name}: ${e.message}"
                                 }
-                            } catch (Exception e) {
-                                println "Could not download sources for ${componentKey} from ${repo.name}: ${e.message}"
                             }
                         } else {
                             println "Could not determine repository for ${componentKey}, skipping sources download"
