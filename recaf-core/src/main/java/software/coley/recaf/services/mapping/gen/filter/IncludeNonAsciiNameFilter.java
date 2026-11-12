@@ -7,6 +7,7 @@ import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.LocalVariable;
 import software.coley.recaf.info.member.MethodMember;
+import software.coley.recaf.util.StringUtil;
 
 /**
  * Filter that includes names that are outside the standard ASCII range used for normal class/member names.
@@ -63,7 +64,6 @@ public class IncludeNonAsciiNameFilter extends NameGeneratorFilter {
 	}
 
 	private static boolean shouldMap(String name) {
-		return name.codePoints()
-				.anyMatch(code -> (code < 0x21 || code > 0x7A));
+		return !StringUtil.isIdentifierAscii(name);
 	}
 }

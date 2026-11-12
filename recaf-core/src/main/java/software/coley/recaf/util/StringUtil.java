@@ -999,6 +999,59 @@ public class StringUtil {
 	}
 
 	/**
+	 * @param text
+	 * 		Text to check.
+	 *
+	 * @return {@code true} when the text only contains non-control ASCII characters.
+	 */
+	public static boolean isPlainAscii(@Nonnull String text) {
+		for (int i = 0; i < text.length(); i++) {
+			char c = text.charAt(i);
+			if (c < ' ' || c > '~')
+				return false;
+		}
+		return true;
+	}
+
+	/**
+	 * @param text
+	 * 		Text to check.
+	 *
+	 * @return {@code true} when the text is a valid Java identifier and only contains ASCII characters.
+	 */
+	public static boolean isIdentifierAscii(@Nonnull String text) {
+		for (int i = 0; i < text.length(); i++) {
+			char c = text.charAt(i);
+			if (c < '!' || c > 'z')
+				return false;
+		}
+		return true;
+	}
+
+	/**
+	 * Stricter than checking {@link Character#isJavaIdentifierStart(int)} and {@link Character#isJavaIdentifierPart(int)}
+	 * alone since {@link Character#isIdentifierIgnorable(int)} and {@link Character#isISOControl(int)} are also checked.
+	 *
+	 * @param text
+	 * 		Text to check.
+	 *
+	 * @return {@code true} when the text is a single Java identifier.
+	 * It is not empty, starts with an identifier start character, and only continues with identifier part characters.
+	 */
+	public static boolean isJavaIdentifier(@Nonnull String text) {
+		int length = text.length();
+		for (int i = 0; i < length; ) {
+			int codePoint = text.codePointAt(i);
+			if (Character.isISOControl(codePoint) || Character.isIdentifierIgnorable(codePoint))
+				return false;
+			if (i == 0 ? !Character.isJavaIdentifierStart(codePoint) : !Character.isJavaIdentifierPart(codePoint))
+				return false;
+			i += Character.charCount(codePoint);
+		}
+		return length > 0;
+	}
+
+	/**
 	 * @param data
 	 * 		Some data to decode.
 	 *

@@ -124,6 +124,30 @@ public class TypesTest {
 	}
 
 	@Test
+	void testIsValidFieldDesc() {
+		assertTrue(Types.isValidFieldDesc("I"), "primitive field");
+		assertTrue(Types.isValidFieldDesc("[[J"), "array field");
+		assertTrue(Types.isValidFieldDesc("Ljava/lang/String;"), "object field");
+		//
+		assertFalse(Types.isValidFieldDesc("V"), "void is not a field type");
+		assertFalse(Types.isValidFieldDesc("(I)V"), "method type is not a field type");
+		assertFalse(Types.isValidFieldDesc("java/lang/String"), "internal name is invalid");
+		assertFalse(Types.isValidFieldDesc(""), "empty string is invalid");
+		assertFalse(Types.isValidFieldDesc(null), "null is invalid");
+	}
+
+	@Test
+	void testIsValidMethodDesc() {
+		assertTrue(Types.isValidMethodDesc("()V"), "no-argument void method");
+		assertTrue(Types.isValidMethodDesc("([I[[J[[I)Ljava/lang/String;"), "method with array arguments");
+		//
+		assertFalse(Types.isValidMethodDesc("(/)L/;"), "malformed method desc");
+		assertFalse(Types.isValidMethodDesc("I"), "primitive is not a method type");
+		assertFalse(Types.isValidMethodDesc("Ljava/lang/String;"), "object type is not a method type");
+		assertFalse(Types.isValidMethodDesc(null), "null is invalid");
+	}
+
+	@Test
 	void testIsValidSignature() {
 		assertTrue(Types.isValidMethodSignature("()V"));
 		assertTrue(Types.isValidFieldSignature("Ljava/lang/Supplier;"));

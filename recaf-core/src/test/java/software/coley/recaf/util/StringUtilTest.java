@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import software.coley.recaf.test.TestBase;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
@@ -427,6 +426,80 @@ class StringUtilTest {
 		String generated = StringUtil.generateName("abcdefg", 10, 0);
 		assertNotNull(generated);
 		assertEquals(10, generated.length());
+	}
+
+	@Test
+	void testIsPlainAscii() {
+		assertTrue(StringUtil.isPlainAscii("abc"));
+		assertTrue(StringUtil.isPlainAscii("ABC"));
+		assertTrue(StringUtil.isPlainAscii("123"));
+		assertTrue(StringUtil.isPlainAscii("!@#$%^&*()_+-=[]{};':\",./<>?"));
+
+		// Empty has nothing to check, I'm going to air on ASCII being default being less of a problem
+		// in most use cases...
+		assertTrue(StringUtil.isPlainAscii(""));
+
+		// Non-ASCII characters and control characters are not plain ASCII.
+		assertFalse(StringUtil.isPlainAscii("abc\u0000"));
+		assertFalse(StringUtil.isPlainAscii("abc\u001F"));
+		assertFalse(StringUtil.isPlainAscii("abc\u007F"));
+		assertFalse(StringUtil.isPlainAscii("abc\u0080"));
+		assertFalse(StringUtil.isPlainAscii("abc\u009F"));
+		assertFalse(StringUtil.isPlainAscii("abc\u00A0"));
+		assertFalse(StringUtil.isPlainAscii("abc\uD800"));
+		assertFalse(StringUtil.isPlainAscii("abc\uDFFF"));
+		assertFalse(StringUtil.isPlainAscii("abcÿ"));
+		assertFalse(StringUtil.isPlainAscii("abcĀ"));
+	}
+
+	@Test
+	void testIsIdentifierAscii() {
+		// Everything normal names are written with, from '!' to 'z'.
+		assertTrue(StringUtil.isIdentifierAscii("abc"));
+		assertTrue(StringUtil.isIdentifierAscii("Abc_$0"));
+		assertTrue(StringUtil.isIdentifierAscii("a/b/C$D"));
+		assertTrue(StringUtil.isIdentifierAscii("!z"));
+		assertTrue(StringUtil.isIdentifierAscii(""));
+
+		// Plain ASCII that names are not written with.
+		assertFalse(StringUtil.isIdentifierAscii("a b"));
+		assertFalse(StringUtil.isIdentifierAscii("a{"));
+		assertFalse(StringUtil.isIdentifierAscii("a|"));
+		assertFalse(StringUtil.isIdentifierAscii("a}"));
+		assertFalse(StringUtil.isIdentifierAscii("a~"));
+		assertTrue(StringUtil.isPlainAscii("a~"), "Plain ASCII is the wider range");
+
+		// Control and non-ASCII characters.
+		assertFalse(StringUtil.isIdentifierAscii("a\u0000"));
+		assertFalse(StringUtil.isIdentifierAscii("a\t"));
+		assertFalse(StringUtil.isIdentifierAscii("a\u007F"));
+		assertFalse(StringUtil.isIdentifierAscii("a\u00E4"));
+		assertFalse(StringUtil.isIdentifierAscii("\uD83D\uDE00"));
+	}
+
+	@Test
+	void testIsJavaIdentifier() {
+		assertTrue(StringUtil.isJavaIdentifier("a"));
+		assertTrue(StringUtil.isJavaIdentifier("_a1"));
+		assertTrue(StringUtil.isJavaIdentifier("$a"));
+		assertTrue(StringUtil.isJavaIdentifier("class"), "Keywords are still well-formed identifiers");
+		assertTrue(StringUtil.isJavaIdentifier("\u00E4"), "Unicode letters are identifiers");
+		assertTrue(StringUtil.isJavaIdentifier("\uD835\uDC9C"), "Letters outside the BMP are identifiers");
+
+		assertFalse(StringUtil.isJavaIdentifier(""));
+		assertFalse(StringUtil.isJavaIdentifier("1a"), "Digits cannot start an identifier");
+		assertFalse(StringUtil.isJavaIdentifier("a-b"));
+		assertFalse(StringUtil.isJavaIdentifier("a b"));
+		assertFalse(StringUtil.isJavaIdentifier("a/b"));
+		assertFalse(StringUtil.isJavaIdentifier("<init>"));
+		assertFalse(StringUtil.isJavaIdentifier("\uD835"), "A lone surrogate is not an identifier");
+
+		// Control and ignorable characters are identifier parts for Character, but not here.
+		assertTrue(Character.isJavaIdentifierPart('\u0000'));
+		assertFalse(StringUtil.isJavaIdentifier("a\u0000"));
+		assertFalse(StringUtil.isJavaIdentifier("\u0000a"));
+		assertTrue(Character.isJavaIdentifierPart('\u200B'));
+		assertFalse(StringUtil.isJavaIdentifier("a\u200Bb"));
 	}
 
 	@Nested

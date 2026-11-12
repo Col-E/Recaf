@@ -6,12 +6,10 @@ import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.LocalVariable;
 import software.coley.recaf.info.member.MethodMember;
-import software.coley.recaf.util.StringUtil;
 
-import java.util.List;
 import java.util.Set;
 
-import static software.coley.recaf.util.Keywords.getKeywordsWithoutVarSafe;
+import static software.coley.recaf.util.Keywords.*;
 
 /**
  * Filter that includes names that contain <i>(when split by boundary characters)</i> reserved Java keywords.
@@ -32,7 +30,7 @@ public class IncludeKeywordNameFilter extends NameGeneratorFilter {
 	@Override
 	public boolean shouldMapClass(@Nonnull ClassInfo info) {
 		String name = info.getName();
-		if (containsKeyword(name))
+		if (containsClassKeyword(name))
 			return true;
 		return super.shouldMapClass(info);
 	}
@@ -57,21 +55,8 @@ public class IncludeKeywordNameFilter extends NameGeneratorFilter {
 		// Edge case: 'this' is allowed only as local variable slot 0 on non-static methods.
 		if (!declaringMethod.hasStaticModifier() && variable.getIndex() == 0 && "this".equals(variable.getName()))
 			return false;
-		if (containsKeyword(variable.getName()))
+		if (containsVariableKeyword(variable.getName()))
 			return true;
 		return super.shouldMapLocalVariable(owner, declaringMethod, variable);
-	}
-
-	private static boolean containsKeyword(@Nonnull String name) {
-		Set<String> keywords = getKeywordsWithoutVarSafe();
-		String filtered = name.indexOf('-') > 0 ?
-				name.replace("package-info", "package_info").replace("module-info", "module_info") :
-				name;
-		List<String> parts = StringUtil.fastSplitNonIdentifier(filtered);
-		for (String part : parts) {
-			if (keywords.contains(part))
-				return true;
-		}
-		return false;
 	}
 }
