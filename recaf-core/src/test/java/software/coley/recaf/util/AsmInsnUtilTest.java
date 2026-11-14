@@ -25,9 +25,11 @@ import org.objectweb.asm.tree.TableSwitchInsnNode;
 import org.objectweb.asm.tree.TryCatchBlockNode;
 import org.objectweb.asm.tree.TypeInsnNode;
 import org.objectweb.asm.tree.VarInsnNode;
+import software.coley.recaf.util.collect.primitive.Int2ObjectMap;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Objects;
@@ -1101,6 +1103,94 @@ class AsmInsnUtilTest {
 
 		// JSR alone produces a return address for its subroutine.
 		assertProducedSize(1, new JumpInsnNode(JSR, new LabelNode()));
+	}
+
+	@Test
+	void testPopulateSuccessorsExceptionFlow() {
+		MethodNode method = new MethodNode();
+		LabelNode start = new LabelNode();
+		LabelNode end = new LabelNode();
+		LabelNode handler = new LabelNode();
+		method.instructions.add(start);
+		method.instructions.add(new InsnNode(ICONST_0));
+		method.instructions.add(new MethodInsnNode(INVOKESTATIC, "Owner", "call", "()V"));
+		method.instructions.add(end);
+		method.instructions.add(new InsnNode(RETURN));
+		method.instructions.add(handler);
+		method.instructions.add(new InsnNode(ATHROW));
+		method.tryCatchBlocks = new ArrayList<>();
+		method.tryCatchBlocks.add(new TryCatchBlockNode(start, end, handler, null));
+		int handlerIndex = method.instructions.indexOf(handler);
+
+		// The handler should not be reachable from any instruction in the try block if we ignore exception flow.
+		Int2ObjectMap<List<Integer>> none = new Int2ObjectMap<>();
+		populateSuccessors(method, none, ExceptionFlow.NONE);
+		for (int i = 0; i < handlerIndex; i++)
+			assertFalse(none.get(i).contains(handlerIndex));
+
+		// With throwing flow, only the instruction that can throw (the method call) should have the handler as a successor.
+		Int2ObjectMap<List<Integer>> throwing = new Int2ObjectMap<>();
+		populateSuccessors(method, throwing, ExceptionFlow.THROWING);
+		for (int i = 0; i < handlerIndex; i++)
+			assertEquals(i == 2, throwing.get(i).contains(handlerIndex));
+
+		// With covered flow, all instructions in the try block should have the handler as a successor.
+		Int2ObjectMap<List<Integer>> covered = new Int2ObjectMap<>();
+		populateSuccessors(method, covered, ExceptionFlow.COVERED);
+		for (int i = 0; i < method.instructions.indexOf(end); i++)
+			assertTrue(covered.get(i).contains(handlerIndex));
+	}
+
+	@Test
+	void testPopulateSuccessorsSubroutines() {
+		MethodNode method = new MethodNode();
+		LabelNode subroutine = new LabelNode();
+		LabelNode exit = new LabelNode();
+		method.instructions.add(new JumpInsnNode(JSR, subroutine));
+		method.instructions.add(new InsnNode(RETURN));
+		method.instructions.add(subroutine);
+		method.instructions.add(new VarInsnNode(ASTORE, 0));
+		method.instructions.add(new VarInsnNode(RET, 0));
+		method.instructions.add(new JumpInsnNode(GOTO, exit));
+		method.instructions.add(new InsnNode(NOP));
+		method.instructions.add(exit);
+		method.instructions.add(new InsnNode(RETURN));
+
+		Int2ObjectMap<List<Integer>> successors = new Int2ObjectMap<>();
+		populateSuccessors(method, successors, ExceptionFlow.NONE);
+
+		// The JSR instruction should have the subroutine as a successor,
+		// and the RET instruction should have the instruction after the JSR as a successor.
+		assertEquals(List.of(2, 1), successors.get(0));
+		assertTrue(successors.get(4).isEmpty());
+		assertEquals(List.of(7), successors.get(5));
+	}
+
+	@Test
+	void testComputeReachableFromEntries() {
+		Int2ObjectMap<List<Integer>> successors = new Int2ObjectMap<>();
+		successors.put(0, List.of(1));
+		successors.put(1, List.of());
+		successors.put(2, List.of(3));
+		successors.put(3, List.of(4));
+		successors.put(4, List.of());
+
+		// Reachable from the method entry should only include the first two instructions.
+		BitSet fromMethodEntry = computeReachable(5, successors);
+		assertTrue(fromMethodEntry.get(0));
+		assertTrue(fromMethodEntry.get(1));
+		assertFalse(fromMethodEntry.get(2));
+		assertFalse(fromMethodEntry.get(3));
+		assertFalse(fromMethodEntry.get(4));
+
+		// Reachable from the given entry points should include all instructions reachable from those points.
+		BitSet fromEntries = computeReachable(5, successors, 0, 2, -1, 5);
+		assertTrue(fromEntries.get(0));
+		assertTrue(fromEntries.get(1));
+		assertTrue(fromEntries.get(2));
+		assertTrue(fromEntries.get(3));
+		assertTrue(fromEntries.get(4));
+		assertTrue(computeReachable(0, successors).isEmpty());
 	}
 
 	private static void assertConsumedSize(int expected, AbstractInsnNode... instructions) {

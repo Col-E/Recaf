@@ -39,6 +39,7 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
@@ -217,7 +218,7 @@ public class RedundantTryCatchRemovingTransformer implements JvmClassTransformer
 		if (hasUniqueHandler && instructions.size() >= 3) {
 			for (TryCatchBlockNode block : method.tryCatchBlocks) {
 				if (handlerUseCounts.getOrDefault(block.handler, 0) == 1 && instructionIndices.containsKey(block.handler)) {
-					flow = NormalFlow.buildNormalFlow(instructions);
+					flow = NormalFlow.buildNormalFlow(method);
 					break;
 				}
 			}
@@ -287,14 +288,14 @@ public class RedundantTryCatchRemovingTransformer implements JvmClassTransformer
 		if (handlerPosition == null || flow == null)
 			return false; // Didn't compute flow, so we can't check this candidate.
 		int handlerIndex = handlerPosition;
-		boolean[] reachable = flow.reachable;
-		if (reachable[handlerIndex])
+		BitSet reachable = flow.reachable;
+		if (reachable.get(handlerIndex))
 			return false;
 
 		// If any reachable instruction has an edge into the handler, treat the
 		// handler as reachable application code rather than risk deleting a live rethrow.
 		for (int predecessor : flow.predecessors.getOrDefault(handlerIndex, Collections.emptyList()))
-			if (predecessor >= 0 && predecessor < reachable.length && reachable[predecessor])
+			if (predecessor >= 0 && predecessor < instructions.size() && reachable.get(predecessor))
 				return false;
 
 		// Collect the handler body up to its terminating athrow.
@@ -336,12 +337,12 @@ public class RedundantTryCatchRemovingTransformer implements JvmClassTransformer
 		// removing the exception edge would then delete instructions that application flow executes.
 		Set<Integer> body = new HashSet<>(bodyIndices);
 		for (int bodyIndex : bodyIndices) {
-			if (reachable[bodyIndex])
+			if (reachable.get(bodyIndex))
 				return false;
 			for (int predecessor : flow.predecessors.getOrDefault(bodyIndex, Collections.emptyList()))
 				if (predecessor >= 0
-						&& predecessor < reachable.length
-						&& reachable[predecessor]
+						&& predecessor < instructions.size()
+						&& reachable.get(predecessor)
 						&& !body.contains(predecessor))
 					return false;
 		}
@@ -651,7 +652,7 @@ public class RedundantTryCatchRemovingTransformer implements JvmClassTransformer
 		temp.tryCatchBlocks = Collections.emptyList();
 
 		// Populate flow maps without exception edges.
-		AsmInsnUtil.populateFlowMaps(temp, successorMap, predecessorMap, false);
+		AsmInsnUtil.populateFlowMaps(temp, successorMap, predecessorMap, AsmInsnUtil.ExceptionFlow.NONE);
 
 		// Determine entry nodes into the [start, end) range:
 		// any node in range that has a predecessor outside the range, or the range start itself.
@@ -1198,48 +1199,25 @@ public class RedundantTryCatchRemovingTransformer implements JvmClassTransformer
 	/**
 	 * Non-exceptional <i>("normal")</i> control flow summary.
 	 *
-	 * @param successors
-	 * 		Map of instruction indices to their normal successors.
 	 * @param predecessors
 	 * 		Map of instruction indices to their normal predecessors.
 	 * @param reachable
-	 * 		Array of booleans indicating which instructions are reachable by normal control flow.
+	 * 		BitSet of instructions reachable by normal control flow.
 	 */
-	private record NormalFlow(@Nonnull Int2ObjectMap<List<Integer>> successors,
-	                          @Nonnull Int2ObjectMap<List<Integer>> predecessors,
-	                          @Nonnull boolean[] reachable) {
+	private record NormalFlow(@Nonnull Int2ObjectMap<List<Integer>> predecessors, @Nonnull BitSet reachable) {
 		/**
 		 * Builds non-exceptional control-flow maps and entry reachability for reuse by transparent-rethrow checks.
 		 *
-		 * @param instructions
-		 * 		Instructions to analyze.
+		 * @param method
+		 * 		Method to analyze.
 		 */
 		@Nonnull
-		private static NormalFlow buildNormalFlow(@Nonnull InsnList instructions) {
-			// Build normal control-flow edges only (no exception edges) so the reachability walk below
-			// reflects application flow, not the exception edge we are considering removing.
-			Int2ObjectMap<List<Integer>> successors = new Int2ObjectMap<>(instructions.size());
-			Int2ObjectMap<List<Integer>> predecessors = new Int2ObjectMap<>(instructions.size());
-			MethodNode flowMethod = new MethodNode();
-			flowMethod.instructions = instructions;
-			flowMethod.tryCatchBlocks = Collections.emptyList();
-			AsmInsnUtil.populateFlowMaps(flowMethod, successors, predecessors, false);
-
-			// Mark everything application control-flow can reach from the method entry.
-			// Anything reachable must survive the removal of the exception edge, since it is live application code.
-			boolean[] reachable = new boolean[instructions.size()];
-			reachable[0] = true;
-			Deque<Integer> queue = new ArrayDeque<>();
-			queue.add(0);
-			while (!queue.isEmpty()) {
-				int current = queue.removeFirst();
-				for (int next : successors.getOrDefault(current, Collections.emptyList()))
-					if (next >= 0 && next < reachable.length && !reachable[next]) {
-						reachable[next] = true;
-						queue.addLast(next);
-					}
-			}
-			return new NormalFlow(successors, predecessors, reachable);
+		private static NormalFlow buildNormalFlow(@Nonnull MethodNode method) {
+			int size = method.instructions.size();
+			Int2ObjectMap<List<Integer>> successors = new Int2ObjectMap<>(size);
+			Int2ObjectMap<List<Integer>> predecessors = new Int2ObjectMap<>(size);
+			AsmInsnUtil.populateFlowMaps(method, successors, predecessors, AsmInsnUtil.ExceptionFlow.NONE);
+			return new NormalFlow(predecessors, AsmInsnUtil.computeReachable(size, successors));
 		}
 	}
 

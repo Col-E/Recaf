@@ -5,12 +5,9 @@ import jakarta.enterprise.context.Dependent;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InsnList;
-import org.objectweb.asm.tree.JumpInsnNode;
 import org.objectweb.asm.tree.LabelNode;
 import org.objectweb.asm.tree.LocalVariableNode;
-import org.objectweb.asm.tree.LookupSwitchInsnNode;
 import org.objectweb.asm.tree.MethodNode;
-import org.objectweb.asm.tree.TableSwitchInsnNode;
 import org.objectweb.asm.tree.TryCatchBlockNode;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.transform.ClassTransformer;
@@ -18,17 +15,17 @@ import software.coley.recaf.services.transform.JvmClassTransformer;
 import software.coley.recaf.services.transform.JvmTransformerContext;
 import software.coley.recaf.services.transform.TransformationException;
 import software.coley.recaf.util.AsmInsnUtil;
+import software.coley.recaf.util.collect.primitive.Int2ObjectMap;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
 import java.util.Set;
 
 import static org.objectweb.asm.Opcodes.NOP;
@@ -75,13 +72,14 @@ public class DeadCodeRemovingTransformer implements JvmClassTransformer {
 
 		boolean dirty = false;
 		try {
-			// Compute which instructions are visited by walking the method's control flow.
-			Set<AbstractInsnNode> visited = Collections.newSetFromMap(new IdentityHashMap<>());
-			List<AbstractInsnNode> flowStarts = new ArrayList<>(tryCatches.size() + 1);
-			flowStarts.add(instructions.getFirst());
-			for (TryCatchBlockNode tryCatch : tryCatches)
-				flowStarts.add(tryCatch.handler);
-			visit(visited, flowStarts);
+			// Compute which instructions are reachable from the method entry and every exception handler.
+			int size = instructions.size();
+			Int2ObjectMap<List<Integer>> successors = new Int2ObjectMap<>(size);
+			AsmInsnUtil.populateSuccessors(method, successors, AsmInsnUtil.ExceptionFlow.NONE);
+			int[] entries = new int[tryCatches.size() + 1];
+			for (int i = 0; i < tryCatches.size(); i++)
+				entries[i + 1] = instructions.indexOf(tryCatches.get(i).handler);
+			BitSet visited = AsmInsnUtil.computeReachable(size, successors, entries);
 
 			// Compute a prefix sum of kept instructions so we can determine if
 			// a try-catch block has any executable instructions left after pruning.
@@ -95,7 +93,7 @@ public class DeadCodeRemovingTransformer implements JvmClassTransformer {
 
 				// Keep when the instruction is visited and not a NOP, or is an ending protected label for a try-catch block.
 				// Later usage of 'fixMissingVariableLabels' will add trailing labels back, so removing here would be redundant.
-				boolean keep = visited.contains(insn) && insn.getOpcode() != NOP;
+				boolean keep = visited.get(i) && insn.getOpcode() != NOP;
 				if (!keep && (i == end && insn.getType() == AbstractInsnNode.LABEL || insn.getType() == AbstractInsnNode.LABEL && protectedLabels.contains(insn)))
 					keep = true;
 				keptPrefix[i + 1] = keptPrefix[i] + (keep && insn.getOpcode() >= 0 ? 1 : 0);
@@ -117,7 +115,7 @@ public class DeadCodeRemovingTransformer implements JvmClassTransformer {
 				AbstractInsnNode insn = instructions.get(i);
 				if (insn == null)
 					continue;
-				if (!visited.contains(insn) || insn.getOpcode() == NOP) {
+				if (!visited.get(i) || insn.getOpcode() == NOP) {
 					// Don't prune the tail label even if it's "dead" because the last method instruction
 					// is terminal like 'return' or 'athrow'. The label will just get added back automatically
 					// and cause the transform process to loop on repeat.
@@ -155,43 +153,6 @@ public class DeadCodeRemovingTransformer implements JvmClassTransformer {
 			throw new TransformationException("Error encountered when removing dead code", t);
 		}
 		return dirty;
-	}
-
-	private static void visit(@Nonnull Set<AbstractInsnNode> visited, @Nonnull List<AbstractInsnNode> startingPoints) {
-		Queue<AbstractInsnNode> todo = new ArrayDeque<>(startingPoints);
-		while (!todo.isEmpty()) {
-			AbstractInsnNode insn = todo.remove();
-			while (insn != null && visited.add(insn)) {
-				handleNext:
-				{
-					switch (insn.getType()) {
-						case AbstractInsnNode.INSN -> {
-							if (AsmInsnUtil.isTerminalOrAlwaysTakeFlowControl(insn.getOpcode()))
-								break handleNext;
-						}
-						case AbstractInsnNode.JUMP_INSN -> {
-							JumpInsnNode jin = (JumpInsnNode) insn;
-							todo.add(jin.label);
-							if (AsmInsnUtil.isTerminalOrAlwaysTakeFlowControl(jin.getOpcode()))
-								break handleNext;
-						}
-						case AbstractInsnNode.TABLESWITCH_INSN -> {
-							TableSwitchInsnNode tsin = (TableSwitchInsnNode) insn;
-							todo.add(tsin.dflt);
-							todo.addAll(tsin.labels);
-							break handleNext;
-						}
-						case AbstractInsnNode.LOOKUPSWITCH_INSN -> {
-							LookupSwitchInsnNode lsin = (LookupSwitchInsnNode) insn;
-							todo.add(lsin.dflt);
-							todo.addAll(lsin.labels);
-							break handleNext;
-						}
-					}
-					insn = insn.getNext();
-				}
-			}
-		}
 	}
 
 	@Nonnull

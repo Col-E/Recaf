@@ -34,6 +34,7 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashSet;
@@ -106,7 +107,7 @@ public class VariableFoldingTransformer implements JvmClassTransformer {
 
 			// Find locals that are modified in a loop, as they can look constant at a converged frame despite changing on a back edge.
 			Set<Integer> loopModifiedSlots = Collections.emptySet(); // TODO: find the sample loop writes broke then isolate and unit test for findLoopModifiedSlots(instructions, successorMap, predecessorMap);
-			Set<Integer> handlerReachable = findHandlerReachable(method);
+			BitSet handlerReachable = findHandlerReachable(method);
 
 			// Fold in reverse order.
 			Frame<ReValue>[] frames = context.analyze(inheritanceGraph, node, method);
@@ -121,7 +122,7 @@ public class VariableFoldingTransformer implements JvmClassTransformer {
 
 				if (isVarLoad(op) && insn instanceof VarInsnNode vin) {
 					// Handler locals merge exceptional paths that are not represented by normal liveness.
-					if (handlerReachable.contains(i))
+					if (handlerReachable.get(i))
 						continue;
 
 					// Loop-carried locals can look constant at one converged frame despite changing on a back edge.
@@ -544,30 +545,21 @@ public class VariableFoldingTransformer implements JvmClassTransformer {
 	 * @param method
 	 * 		Method to analyze.
 	 *
-	 * @return Set of instruction indices that are reachable from any exception handler.
+	 * @return BitSet of instruction indices that are reachable from any exception handler.
 	 */
 	@Nonnull
-	private static Set<Integer> findHandlerReachable(@Nonnull MethodNode method) {
+	private static BitSet findHandlerReachable(@Nonnull MethodNode method) {
 		if (method.tryCatchBlocks == null || method.tryCatchBlocks.isEmpty())
-			return Collections.emptySet();
+			return new BitSet();
 
 		// Follow only normal edges from each handler so shared post-handler code is treated conservatively.
-		Int2ObjectMap<List<Integer>> successors = new Int2ObjectMap<>();
-		populateFlowMaps(method, successors, new Int2ObjectMap<>(), false);
-		Deque<Integer> pending = new ArrayDeque<>();
-		Set<Integer> reachable = new HashSet<>();
-		for (TryCatchBlockNode block : method.tryCatchBlocks) {
-			int handlerIndex = method.instructions.indexOf(block.handler);
-			if (handlerIndex >= 0 && reachable.add(handlerIndex))
-				pending.addLast(handlerIndex);
-		}
-		while (!pending.isEmpty()) {
-			int current = pending.removeFirst();
-			for (int successor : successors.getOrDefault(current, emptyList()))
-				if (reachable.add(successor))
-					pending.addLast(successor);
-		}
-		return reachable;
+		int size = method.instructions.size();
+		Int2ObjectMap<List<Integer>> successors = new Int2ObjectMap<>(size);
+		populateSuccessors(method, successors, ExceptionFlow.NONE);
+		int[] handlers = new int[method.tryCatchBlocks.size()];
+		for (int i = 0; i < handlers.length; i++)
+			handlers[i] = method.instructions.indexOf(method.tryCatchBlocks.get(i).handler);
+		return computeReachable(size, successors, handlers);
 	}
 
 	/**
@@ -602,7 +594,7 @@ public class VariableFoldingTransformer implements JvmClassTransformer {
 		}
 
 		boolean dirty = false;
-		Set<Integer> handlerReachable = findHandlerReachable(method);
+		BitSet handlerReachable = findHandlerReachable(method);
 		for (int key : accessStates.keys()) {
 			LocalAccessState state = accessStates.get(key);
 			NavigableSet<LocalAccess> writes = state.getWrites();
@@ -655,7 +647,7 @@ public class VariableFoldingTransformer implements JvmClassTransformer {
 			// Track all non-handler reachable reads so we can fold them.
 			List<LocalAccess> foldableReads = new ArrayList<>();
 			for (LocalAccess read : reads) {
-				if (!handlerReachable.contains(read.offset))
+				if (!handlerReachable.get(read.offset))
 					foldableReads.add(read);
 			}
 			if (foldableReads.isEmpty())

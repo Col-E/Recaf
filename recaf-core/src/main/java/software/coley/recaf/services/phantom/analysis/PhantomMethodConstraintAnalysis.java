@@ -78,7 +78,7 @@ public class PhantomMethodConstraintAnalysis {
 
 		// Collect CFG successors so we can propagate state across basic blocks.
 		Int2ObjectMap<List<Integer>> successorMap = new Int2ObjectMap<>(insns.length);
-		AsmInsnUtil.populateFlowMaps(method, successorMap, new Int2ObjectMap<>(), false);
+		AsmInsnUtil.populateSuccessors(method, successorMap, AsmInsnUtil.ExceptionFlow.NONE);
 		Int2ObjectMap<List<ExceptionHandlerEdge>> exceptionHandlerMap = buildExceptionHandlerMap(method, insns, labelIndices);
 
 		// Start with the initial state at the method entry and propagate forward, merging at control flow joins until we reach a fixed point.
