@@ -2029,7 +2029,7 @@ public class FoldingDeobfuscationTest extends TransformerTestBase {
 	}
 
 	@Test
-	void inlineClassInitializedStaticArrayAccess() {
+	void foldClassInitializedStaticArrayAccess() {
 		String asm = """
 				.super java/lang/Object
 				.class Example {
@@ -2073,24 +2073,154 @@ public class FoldingDeobfuscationTest extends TransformerTestBase {
 				""";
 		assemble(asm, true);
 
-		// Default parameters do not initialize static state, so the accessor call will not be inlined.
+		// Default parameters do not initialize static state, so the accessor call will not be folded.
 		JvmTransformResult defaultResult = assertDoesNotThrow(() ->
 				newApplier().transformJvm(List.of(CallResultInliningTransformer.class)));
 		assertTrue(defaultResult.getTransformerFailures().isEmpty(), "There were transformation failures");
 		assertTrue(defaultResult.getTransformedClasses().isEmpty(), "Class initialization must remain disabled by default");
 
-		// When specifying the parameter to evaluate class initializers, the accessor call should be inlined.
+		// When specifying the parameter to evaluate class initializers, the accessor call should be folded.
 		TransformationParameters parameters = new TransformationParameters(Map.of(
 				CallResultInliningTransformer.KEY_EVALUATE_CLASS_INITIALIZERS, true));
 		JvmTransformResult initializedResult = assertDoesNotThrow(() ->
 				newApplier().transformJvm(List.of(CallResultInliningTransformer.class), parameters));
 		assertTrue(initializedResult.getTransformerFailures().isEmpty(), "There were transformation failures");
-		assertEquals(1, initializedResult.getTransformedClasses().size(), "Expected the initialized accessor call to be inlined");
+		assertEquals(1, initializedResult.getTransformedClasses().size(), "Expected the initialized accessor call to be folded");
 
-		// Validate the call gets inlined.
+		// Validate the call gets folded.
 		String disassembly = disassembleTransformed(initializedResult, true);
 		assertEquals(0, StringUtil.count("invokestatic Example.accessor", disassembly));
 		assertEquals(2, StringUtil.count("ldc \"Hello\"", disassembly));
+	}
+
+	@Test
+	void foldDecryptorCallWithArrayFromAnotherCall() {
+		// Mirrors string encryption where the decryptor's byte[] argument is produced by another static method.
+		// The decryptor writes into its argument while it decrypts, so the call must be evaluated against a copy of
+		// the array. Otherwise, the array is decrypted during analysis and again when the call is replaced.
+		String asm = """
+				.super java/lang/Object
+				.class Example {
+					.method public static encrypted ()[B {
+					    code: {
+					    A:
+					        iconst_3
+					        newarray byte
+					        dup
+					        iconst_0
+					        bipush 98
+					        bastore
+					        dup
+					        iconst_1
+					        bipush 67
+					        bastore
+					        dup
+					        iconst_2
+					        bipush 11
+					        bastore
+					        areturn
+					    B:
+					    }
+					}
+
+					.method public static decrypt ([BI)Ljava/lang/String; {
+					    parameters: { data, key },
+					    code: {
+					    A:
+					        iconst_0
+					        istore i
+					    B:
+					        iload i
+					        aload data
+					        arraylength
+					        if_icmpge C
+					        aload data
+					        iload i
+					        aload data
+					        iload i
+					        baload
+					        iload key
+					        ixor
+					        i2b
+					        bastore
+					        iinc i 1
+					        goto B
+					    C:
+					        new java/lang/String
+					        dup
+					        aload data
+					        invokespecial java/lang/String.<init> ([B)V
+					        areturn
+					    D:
+					    }
+					}
+
+					.method public static example ()Ljava/lang/String; {
+					    code: {
+					    A:
+					        invokestatic Example.encrypted ()[B
+					        bipush 42
+					        invokestatic Example.decrypt ([BI)Ljava/lang/String;
+					        areturn
+					    B:
+					    }
+					}
+				}
+				""";
+		validateAfterAssembly(asm, List.of(CallResultInliningTransformer.class), dis -> {
+			assertEquals(1, StringUtil.count("ldc \"Hi!\"", dis), "Expected the decryptor call to fold to the plaintext");
+			assertEquals(0, StringUtil.count("invokestatic Example.decrypt", dis), "Expected the decryptor call to be replaced");
+		});
+	}
+
+	@Test
+	void foldCharBufferToStringFromStaticCall() {
+		String asm = """
+				.super java/lang/Object
+				.class Example {
+					.method public static decode ()Ljava/lang/String; {
+					    code: {
+					    A:
+					        iconst_4
+					        newarray byte
+					        dup
+					        iconst_0
+					        iconst_0
+					        bastore
+					        dup
+					        iconst_1
+					        bipush 72
+					        bastore
+					        dup
+					        iconst_2
+					        iconst_0
+					        bastore
+					        dup
+					        iconst_3
+					        bipush 105
+					        bastore
+					        invokestatic java/nio/ByteBuffer.wrap ([B)Ljava/nio/ByteBuffer;
+					        invokevirtual java/nio/ByteBuffer.asCharBuffer ()Ljava/nio/CharBuffer;
+					        invokevirtual java/nio/CharBuffer.toString ()Ljava/lang/String;
+					        areturn
+					    B:
+					    }
+					}
+
+					.method public static example ()Ljava/lang/String; {
+					    code: {
+					    A:
+					        invokestatic Example.decode ()Ljava/lang/String;
+					        areturn
+					    B:
+					    }
+					}
+				}
+				""";
+		validateAfterAssembly(asm, List.of(CallResultInliningTransformer.class), dis -> {
+			assertEquals(1, StringUtil.count("ldc \"Hi\"", dis), "Expected the CharBuffer call to fold to the decoded text");
+			assertEquals(0, StringUtil.count("invokestatic Example.decode", dis), "Expected the call to be replaced");
+		});
 	}
 
 	@Test

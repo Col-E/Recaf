@@ -30,9 +30,12 @@ import software.coley.recaf.util.analysis.eval.EvaluationYieldResult;
 import software.coley.recaf.util.analysis.eval.Evaluator;
 import software.coley.recaf.util.analysis.eval.FieldCacheManager;
 import software.coley.recaf.util.analysis.lookup.GetStaticLookup;
+import software.coley.recaf.util.analysis.lookup.InvokeStaticLookup;
+import software.coley.recaf.util.analysis.value.ArrayValue;
 import software.coley.recaf.util.analysis.value.DoubleValue;
 import software.coley.recaf.util.analysis.value.LongValue;
 import software.coley.recaf.util.analysis.value.ReValue;
+import software.coley.recaf.util.analysis.value.impl.ArrayValueImpl;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -40,6 +43,7 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -107,6 +111,7 @@ public class CallResultInliningTransformer implements JvmClassTransformer {
 			try {
 				ReAnalyzer analyzer = context.newAnalyzer(inheritanceGraph, node, method);
 				installStaticValueCollector(analyzer.getInterpreter(), staticValueCollector);
+				installWorkspaceStaticLookup(analyzer.getInterpreter(), context, evaluator, fieldCacheManager);
 				frames = analyzer.analyze(node.name, method);
 			} catch (Throwable ex) {
 				// Analysis failed, skip this method.
@@ -136,6 +141,10 @@ public class CallResultInliningTransformer implements JvmClassTransformer {
 					if (!evaluator.canEvaluate(target.methodNode()))
 						continue;
 
+					// Array values are mutable, so we need to copy them before evaluation
+					// to prevent the evaluator from mutating the original values.
+					List<ReValue> evalArgs = prepareArguments(arguments);
+
 					// Reset instance support before each evaluation to prevent state pollution.
 					fieldCacheManager.reset();
 
@@ -143,7 +152,7 @@ public class CallResultInliningTransformer implements JvmClassTransformer {
 					evaluator.setCallStackSeed(List.of(new ClassMethodPair(node, method)));
 
 					// Attempt evaluation. If it yields a value, replace the call with the result.
-					EvaluationResult result = evaluator.evaluate(target.classNode(), target.methodNode(), null, arguments);
+					EvaluationResult result = evaluator.evaluate(target.classNode(), target.methodNode(), null, evalArgs);
 					if (result instanceof EvaluationYieldResult(ReValue retVal)) {
 						AbstractInsnNode replacement = OpaqueConstantFoldingTransformer.toInsn(retVal);
 						if (replacement != null) {
@@ -163,6 +172,32 @@ public class CallResultInliningTransformer implements JvmClassTransformer {
 		}
 		if (dirty)
 			context.setNode(bundle, initialClassState, node);
+	}
+
+	private static void installWorkspaceStaticLookup(@Nonnull ReInterpreter interpreter,
+	                                                 @Nonnull JvmTransformerContext context,
+	                                                 @Nonnull Evaluator evaluator,
+	                                                 @Nonnull FieldCacheManager fieldCacheManager) {
+		InvokeStaticLookup fallback = Objects.requireNonNull(interpreter.getInvokeStaticLookup(), "Interpreter must have a static method lookup to wrap");
+		interpreter.setInvokeStaticLookup(new InvokeStaticLookup() {
+			@Nonnull
+			@Override
+			public ReValue get(@Nonnull MethodInsnNode method, @Nonnull List<? extends ReValue> values) {
+				ClassMethodPair target = context.resolveMethod(method);
+				if (target != null && evaluator.canEvaluate(target.methodNode())) {
+					fieldCacheManager.reset();
+					EvaluationResult result = evaluator.evaluate(target.classNode(), target.methodNode(), null, prepareArguments(values));
+					if (result instanceof EvaluationYieldResult(ReValue retVal))
+						return retVal;
+				}
+				return fallback.get(method, values);
+			}
+
+			@Override
+			public boolean hasLookup(@Nonnull MethodInsnNode method) {
+				return fallback.hasLookup(method);
+			}
+		});
 	}
 
 	private static void installStaticValueCollector(@Nonnull ReInterpreter interpreter,
@@ -191,6 +226,26 @@ public class CallResultInliningTransformer implements JvmClassTransformer {
 				return collector.hasLookup(field) || fallback.hasLookup(field);
 			}
 		});
+	}
+
+	@Nonnull
+	private static List<ReValue> prepareArguments(@Nonnull List<? extends ReValue> values) {
+		List<ReValue> copies = new ArrayList<>(values.size());
+		for (ReValue value : values)
+			copies.add(copyArray(value));
+		return copies;
+	}
+
+	@Nonnull
+	private static ReValue copyArray(@Nonnull ReValue value) {
+		if (value instanceof ArrayValue array && array.getFirstDimensionLength().isPresent()) {
+			int length = array.getFirstDimensionLength().getAsInt();
+			List<ReValue> elements = new ArrayList<>(length);
+			for (int i = 0; i < length; i++)
+				elements.add(copyArray(array.getValue(i)));
+			return new ArrayValueImpl(array.type(), array.nullness(), length, elements::get);
+		}
+		return value;
 	}
 
 	@Nonnull

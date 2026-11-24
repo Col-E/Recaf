@@ -38,6 +38,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -894,6 +895,7 @@ public class InstanceFactory extends BasicLookupUtils {
 		});
 		registerMethodHandler("java/nio/ByteBuffer", "equals", "(Ljava/lang/Object;)Z", (ReFrame frame, ReValue host, ByteBuffer receiver, List<ReValue> args) -> z(receiver.equals(objl((ObjectValue) args.get(0)))));
 		registerMethodHandler("java/nio/ByteBuffer", "toString", "()Ljava/lang/String;", (ReFrame frame, ReValue host, ByteBuffer receiver, List<ReValue> args) -> str(receiver.toString()));
+		registerMethodHandler("java/nio/CharBuffer", "toString", "()Ljava/lang/String;", (ReFrame frame, ReValue host, CharBuffer receiver, List<ReValue> args) -> str(receiver.toString()));
 		registerMethodHandler("java/nio/ByteBuffer", "hashCode", "()I", (ReFrame frame, ReValue host, ByteBuffer receiver, List<ReValue> args) -> i(receiver.hashCode()));
 		registerMethodHandler("java/nio/ByteBuffer", "compareTo", "(Ljava/nio/ByteBuffer;)I", (ReFrame frame, ReValue host, ByteBuffer receiver, List<ReValue> args) -> i(receiver.compareTo(requireRealInstance(args.get(0), ByteBuffer.class))));
 		registerMethodHandler("java/nio/ByteBuffer", "getShort", "()S", (ReFrame frame, ReValue host, ByteBuffer receiver, List<ReValue> args) -> s(receiver.getShort()));
