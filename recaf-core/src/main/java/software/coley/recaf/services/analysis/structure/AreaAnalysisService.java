@@ -768,7 +768,7 @@ public class AreaAnalysisService implements Service {
 				reader.acceptType(visitor);
 			else
 				reader.accept(visitor);
-		} catch (IllegalArgumentException ignored) {
+		} catch (Throwable ignored) {
 			// Ignore malformed generic signatures and fall back to raw descriptors.
 		}
 	}
