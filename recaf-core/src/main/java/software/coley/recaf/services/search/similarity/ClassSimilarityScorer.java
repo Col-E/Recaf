@@ -58,13 +58,18 @@ public class ClassSimilarityScorer {
 	@Nonnull
 	public static ClassComparisonModel buildModel(@Nonnull ClassInfo classInfo) {
 		MethodFingerprinting.Lookup lookup = MethodFingerprinting.lookupFor(classInfo);
-		List<MethodComparisonModel> methods = classInfo.getMethods().stream()
-				.map(method -> MethodComparisonModel.from(method, lookup.fingerprint(method)))
-				.toList();
-		List<FieldComparisonModel> fields = classInfo.getFields().stream()
-				.map(FieldComparisonModel::from)
-				.toList();
-		return new ClassComparisonModel(classInfo, methods, fields);
+
+		List<FieldMember> classFields = classInfo.getFields();
+		List<FieldComparisonModel> fields = new ArrayList<>(classFields.size());
+		for (FieldMember field : classFields)
+			fields.add(FieldComparisonModel.from(field));
+
+		List<MethodMember> classMethods = classInfo.getMethods();
+		List<MethodComparisonModel> methods = new ArrayList<>(classMethods.size());
+		for (MethodMember method : classMethods)
+			methods.add(MethodComparisonModel.from(method, lookup.fingerprint(method)));
+
+		return new ClassComparisonModel(classInfo, fields, methods);
 	}
 
 	/**
@@ -305,7 +310,9 @@ public class ClassSimilarityScorer {
 
 		// Build list of all compatible pairs with their similarity scores so we can consume the best ones first.
 		List<Pair> pairs = new ArrayList<>();
-		for (int i = 0; i < reference.size(); i++) {
+		int maxCandidates = candidate.size();
+		int maxReferences = reference.size();
+		for (int i = 0; i < maxReferences; i++) {
 			T left = reference.get(i);
 			for (int j = 0; j < candidate.size(); j++) {
 				T right = candidate.get(j);
@@ -319,8 +326,8 @@ public class ClassSimilarityScorer {
 
 		// Greedily consume the highest-scoring edges first so each member participates in at most one pair.
 		pairs.sort(Comparator.comparingDouble(Pair::similarity).reversed());
-		boolean[] usedReference = new boolean[reference.size()];
-		boolean[] usedCandidate = new boolean[candidate.size()];
+		boolean[] usedReference = new boolean[maxReferences];
+		boolean[] usedCandidate = new boolean[maxCandidates];
 		double total = 0;
 		int matched = 0;
 		List<PairingMatch<T>> matches = new ArrayList<>();
@@ -339,7 +346,7 @@ public class ClassSimilarityScorer {
 
 		// Penalize any unmatched members.
 		double unmatched = countUnused(usedReference) + countUnused(usedCandidate);
-		double max = Math.max(Math.max(reference.size(), candidate.size()), 1);
+		double max = Math.max(maxReferences, maxCandidates);
 		double similarity = normalize(total / matched);
 		double mismatchPenalty = normalize(unmatched / max);
 		return new PairingResult<>(similarity, mismatchPenalty, List.copyOf(matches));
@@ -397,6 +404,23 @@ public class ClassSimilarityScorer {
 	}
 
 	/**
+	 * Compute similarity between two field models.
+	 *
+	 * @param reference
+	 * 		Reference field model.
+	 * @param candidate
+	 * 		Candidate field model.
+	 *
+	 * @return Normalized similarity score, {@code [0.0, 1.0]}.
+	 */
+	private static double fieldSimilarity(@Nonnull FieldComparisonModel reference, @Nonnull FieldComparisonModel candidate) {
+		double descriptorScore = reference.normalizedDescriptor().equals(candidate.normalizedDescriptor()) ? 1 : 0;
+		double modifierScore = modifierSimilarity(reference.modifierMask(), candidate.modifierMask(),
+				FieldComparisonModel.MODIFIER_FEATURES);
+		return normalize((descriptorScore * FIELD_WEIGHT_DESCRIPTOR) + (modifierScore * FIELD_WEIGHT_MODIFIER));
+	}
+
+	/**
 	 * Compute similarity between two method models.
 	 *
 	 * @param reference
@@ -442,23 +466,6 @@ public class ClassSimilarityScorer {
 	}
 
 	/**
-	 * Compute similarity between two field models.
-	 *
-	 * @param reference
-	 * 		Reference field model.
-	 * @param candidate
-	 * 		Candidate field model.
-	 *
-	 * @return Normalized similarity score, {@code [0.0, 1.0]}.
-	 */
-	private static double fieldSimilarity(@Nonnull FieldComparisonModel reference, @Nonnull FieldComparisonModel candidate) {
-		double descriptorScore = reference.normalizedDescriptor().equals(candidate.normalizedDescriptor()) ? 1 : 0;
-		double modifierScore = modifierSimilarity(reference.modifierMask(), candidate.modifierMask(),
-				FieldComparisonModel.MODIFIER_FEATURES);
-		return normalize((descriptorScore * FIELD_WEIGHT_DESCRIPTOR) + (modifierScore * FIELD_WEIGHT_MODIFIER));
-	}
-
-	/**
 	 * Score parameter similarity for non-fingerprinted method comparison.
 	 *
 	 * @param reference
@@ -486,7 +493,8 @@ public class ClassSimilarityScorer {
 			case EXACT_COUNT_AND_ORDER -> {
 				// Straight forward, check each parameter at each index for exact token matches.
 				int orderedMatches = 0;
-				for (int i = 0; i < Math.min(referenceTokens.size(), candidateTokens.size()); i++)
+				int min = Math.min(referenceTokens.size(), candidateTokens.size());
+				for (int i = 0; i < min; i++)
 					if (referenceTokens.get(i).equals(candidateTokens.get(i)))
 						orderedMatches++;
 				yield referenceTokens.isEmpty() && candidateTokens.isEmpty() ? 1 : orderedMatches / (double) maxCount;
@@ -716,14 +724,14 @@ public class ClassSimilarityScorer {
 	 *
 	 * @param classInfo
 	 * 		Wrapped class.
-	 * @param methods
-	 * 		Comparison models for declared methods.
 	 * @param fields
 	 * 		Comparison models for declared fields.
+	 * @param methods
+	 * 		Comparison models for declared methods.
 	 */
 	public record ClassComparisonModel(@Nonnull ClassInfo classInfo,
-	                                   @Nonnull List<MethodComparisonModel> methods,
-	                                   @Nonnull List<FieldComparisonModel> fields) {}
+	                                   @Nonnull List<FieldComparisonModel> fields,
+	                                   @Nonnull List<MethodComparisonModel> methods) {}
 
 	/**
 	 * Comparison model for methods.
