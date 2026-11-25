@@ -59,8 +59,11 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
@@ -82,6 +85,9 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.zip.DataFormatException;
+import java.util.zip.Deflater;
+import java.util.zip.Inflater;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -1166,6 +1172,144 @@ public class EvaluatorTest extends TransformerTestBase {
 				""", AEADBadTagException.class, Base64.class, Cipher.class, GCMParameterSpec.class, SecretKeySpec.class);
 
 		// Authentication failures must remain catchable evaluated exceptions rather than generic failures.
+		assertIntValue(1, evaluate(compiled, "run", "()I", null, List.of()));
+	}
+
+	@Test
+	void testAesGcmAdditionalAuthenticatedData() {
+		String compiled = compile("""
+				static byte[] crypt(int mode, byte[] data, String aad) throws Exception {
+				    Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+				    cipher.init(mode, new SecretKeySpec(new byte[16], "AES"), new GCMParameterSpec(128, new byte[12]));
+				    cipher.updateAAD(aad.getBytes("UTF-8"));
+				    return cipher.doFinal(data);
+				}
+				static String roundTrip(String text, String aad) throws Exception {
+				    byte[] encrypted = crypt(1, text.getBytes("UTF-8"), aad);
+				    return new String(crypt(2, encrypted, aad), "UTF-8");
+				}
+				static int mismatchedAad() throws Exception {
+				    byte[] encrypted = crypt(1, "payload".getBytes("UTF-8"), "header-a");
+				    try {
+				        crypt(2, encrypted, "header-b");
+				        return 0;
+				    } catch (AEADBadTagException ex) {
+				        return 1;
+				    }
+				}
+				""", AEADBadTagException.class, Cipher.class, GCMParameterSpec.class, SecretKeySpec.class);
+
+		// Data authenticated with additional data must only decrypt when the same additional data is supplied.
+		assertStringValue("payload", evaluate(compiled, "roundTrip", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;", null, List.of(ObjectValue.string("payload"), ObjectValue.string("header"))));
+		assertIntValue(1, evaluate(compiled, "mismatchedAad", "()I", null, List.of()));
+	}
+
+	@Test
+	void testPrimitiveArrayClone() {
+		String compiled = compile("""
+				static int bytes(byte[] input) {
+				    byte[] copy = input.clone();
+				    copy[0] = 9;
+				    return input[0] * 1000 + copy[0] * 100 + copy[1];
+				}
+				static int ints(int[] input) {
+				    int[] copy = input.clone();
+				    copy[0] += 10;
+				    return copy[0] * 100 + input[0];
+				}
+				""");
+
+		// The clone starts with the original contents, and writes to either array should not leak into the other.
+		ArrayValue bytes = new ArrayValueImpl(Type.getType("[B"), Nullness.NOT_NULL, 3, index -> IntValue.of(index + 1));
+		assertIntValue(1902, evaluate(compiled, "bytes", "([B)I", null, List.of(bytes)));
+		ArrayValue ints = new ArrayValueImpl(Type.getType("[I"), Nullness.NOT_NULL, 2, index -> IntValue.of(index + 5));
+		assertIntValue(1505, evaluate(compiled, "ints", "([I)I", null, List.of(ints)));
+	}
+
+	@Test
+	void testCalleeMutationOfModeledCallResult() {
+		String compiled = compile("""
+				static void stamp(byte[] array) { array[0] = 42; }
+				static int slice(byte[] input) {
+				    byte[] part = java.util.Arrays.copyOfRange(input, 1, 3);
+				    stamp(part);
+				    return part[0] * 100 + part[1];
+				}
+				""");
+
+		// The array returned by copyOfRange should be mutable, allowing a write in a downstream method to be visible in the caller.
+		ArrayValue input = new ArrayValueImpl(Type.getType("[B"), Nullness.NOT_NULL, 5, index -> IntValue.of(index + 1));
+		assertIntValue(4203, evaluate(compiled, "slice", "([B)I", null, List.of(input)));
+	}
+
+	@Test
+	void testMessageDigestIsEqual() {
+		String compiled = compile("""
+				static int run() throws Exception {
+				    byte[] a = MessageDigest.getInstance("SHA-256").digest("abc".getBytes("UTF-8"));
+				    byte[] b = MessageDigest.getInstance("SHA-256").digest("abc".getBytes("UTF-8"));
+				    byte[] c = MessageDigest.getInstance("SHA-256").digest("abd".getBytes("UTF-8"));
+				    return (MessageDigest.isEqual(a, b) ? 1 : 0) + (MessageDigest.isEqual(a, c) ? 10 : 0);
+				}
+				""", MessageDigest.class);
+
+		// Equal digests compare equal, and a digest of different input does not.
+		assertIntValue(1, evaluate(compiled, "run", "()I", null, List.of()));
+	}
+
+	@Test
+	void testInflaterDecompression() {
+		String compiled = compile("""
+				static String run(String payload, int bufferSize) throws Exception {
+				    Inflater inflater = new Inflater(true);
+				    inflater.setInput(Base64.getDecoder().decode(payload));
+				    ByteArrayOutputStream out = new ByteArrayOutputStream(16);
+				    byte[] buffer = new byte[bufferSize];
+				    while (!inflater.finished()) {
+				        int count = inflater.inflate(buffer);
+				        if (count == 0 && (inflater.needsInput() || inflater.needsDictionary()))
+				            break;
+				        out.write(buffer, 0, count);
+				    }
+				    int remaining = inflater.getRemaining();
+				    inflater.end();
+				    return out.size() + ":" + remaining + ":" + new String(out.toByteArray(), "UTF-8");
+				}
+				""", Base64.class, ByteArrayOutputStream.class, Inflater.class);
+
+		// Compress some text with raw deflate, which is the form obfuscators typically embed.
+		String text = "Evaluate me. ".repeat(8) + "The end.";
+		byte[] input = text.getBytes(StandardCharsets.UTF_8);
+		Deflater deflater = new Deflater(Deflater.BEST_COMPRESSION, true);
+		deflater.setInput(input);
+		deflater.finish();
+		byte[] compressed = new byte[input.length + 32];
+		int compressedLength = deflater.deflate(compressed);
+		deflater.end();
+		String payload = Base64.getEncoder().encodeToString(Arrays.copyOf(compressed, compressedLength));
+
+		// The output is larger than the buffer, so it takes multiple calls that each write into the same array.
+		// Having every chunk come out intact means the writes to the buffer are visible to the evaluated code.
+		assertStringValue(input.length + ":0:" + text, evaluate(compiled, "run", "(Ljava/lang/String;I)Ljava/lang/String;", null,
+				List.of(ObjectValue.string(payload), IntValue.of(16))));
+	}
+
+	@Test
+	void testInflaterCorruptData() {
+		String compiled = compile("""
+				static int run() throws Exception {
+				    Inflater inflater = new Inflater(true);
+				    inflater.setInput(new byte[]{(byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF});
+				    try {
+				        inflater.inflate(new byte[8]);
+				        return 0;
+				    } catch (DataFormatException ex) {
+				        return 1;
+				    }
+				}
+				""", DataFormatException.class, Inflater.class);
+
+		// Data that is not a deflate stream must be a catchable exception, same as when run for real.
 		assertIntValue(1, evaluate(compiled, "run", "()I", null, List.of()));
 	}
 
