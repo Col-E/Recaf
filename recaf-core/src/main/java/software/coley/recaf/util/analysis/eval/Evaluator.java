@@ -1351,6 +1351,10 @@ public class Evaluator {
 								|| exceptionHandler.isThrowablePrintStackTrace(min))
 							yield true;
 
+						// Cloning of primitive arrays is modeled directly.
+						if (isPrimitiveArrayClone(min))
+							yield true;
+
 						// Check if the method is a known constructor supported by one of the model types.
 						if (min.getOpcode() == INVOKESPECIAL && context.models.supportsConstructor(min))
 							yield true;
@@ -1728,6 +1732,14 @@ public class Evaluator {
 
 						// Get the receiver and check if it's a throwable, in which case we can handle the getStackTrace call.
 						ObjectValue receiver = requireObject(pop());
+						if (isPrimitiveArrayClone(min)
+								&& receiver instanceof ArrayValue array
+								&& array.isNotNull()
+								&& array.getFirstDimensionLength().isPresent()) {
+							// The clone is a distinct mutable array holding the same contents.
+							push(ArrayValueMutableImpl.wrap(new ArrayValueImpl(array.type(), Nullness.NOT_NULL, array.getFirstDimensionLength().getAsInt(), array::getValue)));
+							yield insn.getNext();
+						}
 						if (exceptionHandler.isThrowableGetStackTrace(min) && receiver instanceof ThrowableValue throwable) {
 							// TODO: Not all throwable types fill in the stack trace, we just assume they do here.
 							push(exceptionHandler.createStackTrace(throwable));
@@ -1976,9 +1988,32 @@ public class Evaluator {
 					yield insn.getNext();
 				}
 			};
+
+			// Adapt the result of method and dynamic invocations to ensure that arrays returned by modeled calls
+			// are properly made mutable and shared between caller and callee.
+			if (insn instanceof MethodInsnNode || insn instanceof InvokeDynamicInsnNode)
+				adaptInvocationResult(insn);
+
 			if (next == null)
 				throw NoNextException.INSTANCE;
 			return next;
+		}
+
+		/**
+		 * Replaces the top value on the stack with an adapted version if it is an array and not already mutable.
+		 * Facilitates immutable array values returned from modeled calls being shared between caller and callee.
+		 *
+		 * @param insn
+		 * 		Invocation instruction that was just evaluated.
+		 */
+		private void adaptInvocationResult(@Nonnull AbstractInsnNode insn) {
+			String desc = insn instanceof MethodInsnNode min ? min.desc : ((InvokeDynamicInsnNode) insn).desc;
+			int top = getStackSize() - 1;
+			if (top >= 0
+					&& Type.getReturnType(desc).getSort() == Type.ARRAY
+					&& getStack(top) instanceof ArrayValue array
+					&& !(array instanceof ArrayValueMutableImpl))
+				setStack(top, adaptValue(array));
 		}
 
 		/**
@@ -2105,6 +2140,17 @@ public class Evaluator {
 						return v;
 					})
 					.toList();
+		}
+
+		private static boolean isPrimitiveArrayClone(@Nonnull MethodInsnNode insn) {
+			if (insn.getOpcode() != INVOKEVIRTUAL
+					|| !insn.name.equals("clone")
+					|| !insn.desc.equals("()Ljava/lang/Object;")
+					|| insn.owner.isEmpty()
+					|| insn.owner.charAt(0) != '[')
+				return false;
+			int elementSort = Type.getObjectType(insn.owner).getElementType().getSort();
+			return elementSort != Type.OBJECT && elementSort != Type.ARRAY;
 		}
 	}
 
