@@ -65,6 +65,10 @@ public class Types {
 			"Ljava/lang/Double;",
 			"Ljava/lang/Long;"
 	);
+	/** @see #isValidSignature(String, SignatureContext) */
+	public static final int MAX_SIGNATURE_NESTING = 128;
+	/** @see #isValidSignature(String, SignatureContext) */
+	public static final int MAX_SIGNATURE_TYPE_PARAMETERS = 256;
 
 	/**
 	 * @param desc
@@ -686,6 +690,10 @@ public class Types {
 			return true;
 		if (signature.isEmpty())
 			return false;
+
+		if (exceedsSignatureLimits(signature))
+			return false;
+
 		try {
 			switch (context) {
 				case CLASS -> CheckClassAdapter.checkClassSignature(signature);
@@ -696,6 +704,39 @@ public class Types {
 		} catch (Throwable t) {
 			return false;
 		}
+	}
+
+	/**
+	 * @param signature Signature to check.
+	 * @return {@code true} if the signature exceeds the limits defined by {@link #MAX_SIGNATURE_NESTING} and {@link #MAX_SIGNATURE_TYPE_PARAMETERS}.
+	 */
+	private static boolean exceedsSignatureLimits(@Nonnull String signature) {
+		int nesting = 0;
+		int dimensions = 0;
+		int bounds = 0;
+		for (int i = 0, length = signature.length(); i < length; i++) {
+			char c = signature.charAt(i);
+
+			// Each array dimension wraps the type that follows it, so a long run of them recurses like type arguments do.
+			if (c == '[') {
+				if (nesting + ++dimensions > MAX_SIGNATURE_NESTING)
+					return true;
+				continue;
+			}
+
+			dimensions = 0;
+			if (c == '<') {
+				if (++nesting > MAX_SIGNATURE_NESTING)
+					return true;
+			} else if (c == '>') {
+				if (nesting > 0)
+					nesting--;
+			} else if (c == ':') {
+				if (++bounds > MAX_SIGNATURE_TYPE_PARAMETERS)
+					return true;
+			}
+		}
+		return false;
 	}
 
 	/**

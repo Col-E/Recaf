@@ -164,6 +164,60 @@ public class TypesTest {
 	}
 
 	@Test
+	void testIsValidSignatureAcceptsComplexRealisticSignatures() {
+		// Bounds on multiple type parameters, wildcards, arrays, and nesting, are all fine.
+		assertTrue(Types.isValidClassSignature("<K:Ljava/lang/Object;V::Ljava/lang/Comparable<-TV;>;>" +
+				"Ljava/util/AbstractMap<TK;Ljava/util/List<Ljava/util/Map<TK;[TV;>;>;>;" +
+				"Ljava/util/Map<TK;Ljava/util/List<TV;>;>;"));
+		assertTrue(Types.isValidMethodSignature("<T:Ljava/lang/Object;>(Ljava/util/List<+TT;>;[Ljava/util/Map<TT;*>;)TT;"));
+
+		// Signatures that are generic to a level seen in heavily generic code are also fine.
+		assertTrue(Types.isValidClassSignature(typeParameters(22) + "Ljava/lang/Object;"));
+		assertTrue(Types.isValidFieldSignature(nestedSignature(32)));
+	}
+
+	@Test
+	void testIsValidSignatureRejectsExcessiveNesting() {
+		// Nesting up to the limit is accepted.
+		String atLimit = nestedSignature(Types.MAX_SIGNATURE_NESTING);
+		assertTrue(Types.isValidClassSignature(atLimit));
+		assertTrue(Types.isValidFieldSignature(atLimit));
+		assertTrue(Types.isValidMethodSignature("()" + atLimit));
+
+		// One level deeper is not, regardless of what the signature is used for.
+		String pastLimit = nestedSignature(Types.MAX_SIGNATURE_NESTING + 1);
+		assertFalse(Types.isValidClassSignature(pastLimit), "Class signature nested past the limit");
+		assertFalse(Types.isValidFieldSignature(pastLimit), "Field signature nested past the limit");
+		assertFalse(Types.isValidMethodSignature("()" + pastLimit), "Method signature nested past the limit");
+
+		// The formal type parameters are themselves a level of nesting, so bounds inside them have one less level to work with.
+		assertTrue(Types.isValidClassSignature("<T::" + nestedSignature(Types.MAX_SIGNATURE_NESTING - 1) + ">Ljava/lang/Object;"));
+		assertFalse(Types.isValidClassSignature("<T::" + nestedSignature(Types.MAX_SIGNATURE_NESTING) + ">Ljava/lang/Object;"));
+
+		// Array dimensions nest the type they wrap, and count towards the same limit as the type arguments around them.
+		assertTrue(Types.isValidFieldSignature("[".repeat(Types.MAX_SIGNATURE_NESTING) + "I"));
+		assertFalse(Types.isValidFieldSignature("[".repeat(Types.MAX_SIGNATURE_NESTING + 1) + "I"));
+		String arrayAtLimit = "Ljava/util/List<".repeat(Types.MAX_SIGNATURE_NESTING - 1) + "[I" + ">;".repeat(Types.MAX_SIGNATURE_NESTING - 1);
+		String arrayPastLimit = "Ljava/util/List<".repeat(Types.MAX_SIGNATURE_NESTING - 1) + "[[I" + ">;".repeat(Types.MAX_SIGNATURE_NESTING - 1);
+		assertTrue(Types.isValidFieldSignature(arrayAtLimit));
+		assertFalse(Types.isValidFieldSignature(arrayPastLimit));
+
+		// Many shallow arrays in the same signature are not nested in each other, so they do not add up.
+		assertTrue(Types.isValidMethodSignature("(" + "[I".repeat(Types.MAX_SIGNATURE_NESTING * 2) + ")V"));
+	}
+
+	@Test
+	void testIsValidSignatureRejectsExcessiveTypeParameters() {
+		// Declaring type parameters up to the limit is accepted.
+		assertTrue(Types.isValidClassSignature(typeParameters(Types.MAX_SIGNATURE_TYPE_PARAMETERS) + "Ljava/lang/Object;"));
+		assertTrue(Types.isValidMethodSignature(typeParameters(Types.MAX_SIGNATURE_TYPE_PARAMETERS) + "()V"));
+
+		// One more is not, regardless of whether they are on a class or a method.
+		assertFalse(Types.isValidClassSignature(typeParameters(Types.MAX_SIGNATURE_TYPE_PARAMETERS + 1) + "Ljava/lang/Object;"));
+		assertFalse(Types.isValidMethodSignature(typeParameters(Types.MAX_SIGNATURE_TYPE_PARAMETERS + 1) + "()V"));
+	}
+
+	@Test
 	void testIsReference() {
 		assertTrue(Types.isReference(Type.getType("Ljava/lang/String;")));
 		assertTrue(Types.isReference(Type.getType("[I")));
@@ -258,5 +312,28 @@ public class TypesTest {
 		assertEquals("int", Types.pretty(Type.getType("I")));
 		assertEquals("int[]", Types.pretty(Type.getType("[I")));
 		assertEquals("(int, float) void", Types.pretty(Type.getMethodType("(IF)V")));
+	}
+
+	/**
+	 * @param depth
+	 * 		Number of type argument lists to nest.
+	 *
+	 * @return Signature of a {@code List} nested in itself {@code depth} times, with a {@code String} at the center.
+	 */
+	private static String nestedSignature(int depth) {
+		return "Ljava/util/List<".repeat(depth) + "Ljava/lang/String;" + ">;".repeat(depth);
+	}
+
+	/**
+	 * @param count
+	 * 		Number of type parameters to declare.
+	 *
+	 * @return Formal type parameter section of a signature, with the given number of type parameters.
+	 */
+	private static String typeParameters(int count) {
+		StringBuilder sb = new StringBuilder("<");
+		for (int i = 0; i < count; i++)
+			sb.append('T').append(i).append(":Ljava/lang/Object;");
+		return sb.append('>').toString();
 	}
 }
