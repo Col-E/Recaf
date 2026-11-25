@@ -70,6 +70,7 @@ import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.function.Supplier;
+import java.util.zip.Inflater;
 
 /**
  * Factory for creating real instances of supported types and handling method calls on them.
@@ -1075,6 +1076,7 @@ public class InstanceFactory extends BasicLookupUtils {
 
 		// java.io.ByteArrayOutputStream
 		registerMethodHandler("java/io/ByteArrayOutputStream", "toByteArray", "()[B", (ReFrame frame, ReValue host, ByteArrayOutputStream receiver, List<ReValue> args) -> arrb(receiver.toByteArray()));
+		registerMethodHandler("java/io/ByteArrayOutputStream", "size", "()I", (ReFrame frame, ReValue host, ByteArrayOutputStream receiver, List<ReValue> args) -> i(receiver.size()));
 		registerMethodHandler("java/io/ByteArrayOutputStream", "write", "(I)V", (ReFrame frame, ReValue host, ByteArrayOutputStream receiver, List<ReValue> args) -> {
 			receiver.write(i((IntValue) args.get(0)));
 			return null;
@@ -1131,6 +1133,54 @@ public class InstanceFactory extends BasicLookupUtils {
 		registerMethodHandler("java/security/MessageDigest", "digest", "()[B", (ReFrame frame, ReValue host, MessageDigest receiver, List<ReValue> args) -> arrb(receiver.digest()));
 		registerMethodHandler("java/security/MessageDigest", "digest", "([B)[B", (ReFrame frame, ReValue host, MessageDigest receiver, List<ReValue> args) -> arrb(receiver.digest(arrb(args.get(0)))));
 
+		// java.util.zip.Inflater
+		registerMethodHandler("java/util/zip/Inflater", "setInput", "([B)V", (ReFrame frame, ReValue host, Inflater receiver, List<ReValue> args) -> {
+			receiver.setInput(arrb(args.get(0)));
+			return null;
+		});
+		registerMethodHandler("java/util/zip/Inflater", "setInput", "([BII)V", (ReFrame frame, ReValue host, Inflater receiver, List<ReValue> args) -> {
+			receiver.setInput(arrb(args.get(0)), i((IntValue) args.get(1)), i((IntValue) args.get(2)));
+			return null;
+		});
+		registerMethodHandler("java/util/zip/Inflater", "inflate", "([B)I", (ReFrame frame, ReValue host, Inflater receiver, List<ReValue> args) -> {
+			ReValue destinationValue = args.get(0);
+			byte[] destination = arrb(destinationValue);
+			int inflated;
+			try {
+				inflated = receiver.inflate(destination);
+			} catch (Throwable t) {
+				if (destination != null)
+					replaceByteArrayContents(frame, destinationValue, destination, 0, destination.length);
+				throw t;
+			}
+			replaceByteArrayContents(frame, destinationValue, destination, 0, inflated);
+			return i(inflated);
+		});
+		registerMethodHandler("java/util/zip/Inflater", "inflate", "([BII)I", (ReFrame frame, ReValue host, Inflater receiver, List<ReValue> args) -> {
+			ReValue destinationValue = args.get(0);
+			byte[] destination = arrb(destinationValue);
+			int offset = i((IntValue) args.get(1));
+			int length = i((IntValue) args.get(2));
+			int inflated;
+			try {
+				inflated = receiver.inflate(destination, offset, length);
+			} catch (Throwable t) {
+				if (destination != null)
+					replaceByteArrayContents(frame, destinationValue, destination, offset, length);
+				throw t;
+			}
+			replaceByteArrayContents(frame, destinationValue, destination, offset, inflated);
+			return i(inflated);
+		});
+		registerMethodHandler("java/util/zip/Inflater", "finished", "()Z", (ReFrame frame, ReValue host, Inflater receiver, List<ReValue> args) -> z(receiver.finished()));
+		registerMethodHandler("java/util/zip/Inflater", "needsInput", "()Z", (ReFrame frame, ReValue host, Inflater receiver, List<ReValue> args) -> z(receiver.needsInput()));
+		registerMethodHandler("java/util/zip/Inflater", "needsDictionary", "()Z", (ReFrame frame, ReValue host, Inflater receiver, List<ReValue> args) -> z(receiver.needsDictionary()));
+		registerMethodHandler("java/util/zip/Inflater", "getRemaining", "()I", (ReFrame frame, ReValue host, Inflater receiver, List<ReValue> args) -> i(receiver.getRemaining()));
+		registerMethodHandler("java/util/zip/Inflater", "end", "()V", (ReFrame frame, ReValue host, Inflater receiver, List<ReValue> args) -> {
+			receiver.end();
+			return null;
+		});
+
 		// javax.crypto.Cipher
 		registerMethodHandler("javax/crypto/Cipher", "init", "(ILjava/security/Key;Ljava/security/spec/AlgorithmParameterSpec;)V", (ReFrame frame, ReValue host, Cipher receiver, List<ReValue> args) -> {
 			receiver.init(i((IntValue) args.get(0)), requireRealInstance(args.get(1), Key.class), requireRealInstance(args.get(2), AlgorithmParameterSpec.class));
@@ -1148,6 +1198,10 @@ public class InstanceFactory extends BasicLookupUtils {
 				arrb(receiver.update(arrb(args.get(0)), i((IntValue) args.get(1)), i((IntValue) args.get(2)))));
 		registerMethodHandler("javax/crypto/Cipher", "doFinal", "()[B", (ReFrame frame, ReValue host, Cipher receiver, List<ReValue> args) ->
 				arrb(receiver.doFinal()));
+		registerMethodHandler("javax/crypto/Cipher", "updateAAD", "([B)V", (ReFrame frame, ReValue host, Cipher receiver, List<ReValue> args) -> {
+			receiver.updateAAD(arrb(args.get(0)));
+			return null;
+		});
 
 		// javax.crypto.Mac
 		registerMethodHandler("javax/crypto/Mac", "init", "(Ljava/security/Key;)V", (ReFrame frame, ReValue host, Mac receiver, List<ReValue> args) -> {
@@ -1515,6 +1569,10 @@ public class InstanceFactory extends BasicLookupUtils {
 		// java.io.ByteArrayOutputStream
 		registerMapper(ByteArrayOutputStream.class, "()V", (host, parameters) -> new ByteArrayOutputStream());
 		registerMapper(ByteArrayOutputStream.class, "(I)V", (host, parameters) -> new ByteArrayOutputStream(i((IntValue) parameters.get(0))));
+
+		// java.util.zip.Inflater
+		registerMapper(Inflater.class, "()V", (host, parameters) -> new Inflater());
+		registerMapper(Inflater.class, "(Z)V", (host, parameters) -> new Inflater(z((IntValue) parameters.get(0))));
 
 		// java.util.ArrayList
 		registerMapper(ArrayList.class, "()V", (host, parameters) -> new ArrayList());

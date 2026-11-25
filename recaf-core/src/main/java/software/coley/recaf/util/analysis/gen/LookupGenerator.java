@@ -7,6 +7,7 @@ import software.coley.recaf.util.analysis.lookup.BasicInvokeVirtualLookup;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.Function;
@@ -33,7 +34,8 @@ public class LookupGenerator extends GenUtils {
 			Float.class,
 			Double.class,
 			Number.class,
-			Objects.class
+			Objects.class,
+			MessageDigest.class
 	};
 
 	/**

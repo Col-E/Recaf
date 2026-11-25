@@ -17,6 +17,7 @@ import software.coley.recaf.util.analysis.value.ObjectValue;
 import software.coley.recaf.util.analysis.value.ReValue;
 import software.coley.recaf.util.analysis.value.StringValue;
 
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -76,6 +77,7 @@ public class BasicInvokeStaticLookup extends BasicLookupUtils implements InvokeS
 		system();
 		strings();
 		objects();
+		digests();
 
 		// Primitives
 		booleans();
@@ -131,6 +133,10 @@ public class BasicInvokeStaticLookup extends BasicLookupUtils implements InvokeS
 		METHODS.put("java/util/Objects.isNull(Ljava/lang/Object;)Z", (Func_1<ObjectValue>) (a) -> z(Objects.isNull(obj(a))));
 		METHODS.put("java/util/Objects.nonNull(Ljava/lang/Object;)Z", (Func_1<ObjectValue>) (a) -> z(Objects.nonNull(obj(a))));
 		METHODS.put("java/util/Objects.requireNonNullElse(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", (Func_2<ObjectValue, ObjectValue>) (a, b) -> obj(Objects.requireNonNullElse(obj(a), obj(b))));
+	}
+
+	private static void digests() {
+		METHODS.put("java/security/MessageDigest.isEqual([B[B)Z", (Func_2<ArrayValue, ArrayValue>) (a, b) -> z(MessageDigest.isEqual(arrb(a), arrb(b))));
 	}
 
 	private static void arrays() {
