@@ -50,7 +50,9 @@ import software.coley.recaf.util.visitors.MemberFilteringVisitor;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.RuntimeWorkspaceResource;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -451,7 +453,7 @@ public class Evaluator {
 
 		// For instance methods, initialize the instance fields of the receiver so that they have a known state.
 		if (!AccessFlag.isStatic(methodNode.access) && classInstance instanceof InstancedObjectValue<?>)
-			initializeInstanceFields(classInstance, classNode.name);
+			initializeInstanceFields(classInstance, classNode.name, context);
 
 		// Create initial frame with every slot empty so unused and wide-value slots have valid state.
 		ExecutingFrame frame = new ExecutingFrame(methodNode, context, classNode.name);
@@ -528,29 +530,62 @@ public class Evaluator {
 	 * 		Value to initialize fields for.
 	 * @param allocatedClassName
 	 * 		Internal name of the class that was allocated for the given instance.
+	 * @param context
+	 * 		Evaluation context containing the class-node override snapshot.
 	 */
-	private void initializeInstanceFields(@Nonnull ReValue instance, @Nonnull String allocatedClassName) {
+	private void initializeInstanceFields(@Nonnull ReValue instance, @Nonnull String allocatedClassName,
+	                                      @Nonnull EvaluationContext context) {
 		FieldCache cache = fieldCacheManager.getInstanceFieldCache(instance);
 		Set<String> visited = new HashSet<>();
 		String className = allocatedClassName;
 		while (className != null && visited.add(className)) {
-			ClassPathNode classPath = workspace.findClass(evaluateInternals, className);
-			if (classPath == null)
-				return;
-			JvmClassInfo classInfo = classPath.getValue().asJvmClass();
-			for (FieldMember field : classInfo.getFields()) {
-				if (AccessFlag.isStatic(field.getAccess()))
-					continue;
-				if (!cache.containsField(className, field.getName(), field.getDescriptor())) {
-					try {
-						cache.setField(className, field.getName(), field.getDescriptor(),
-								ReValue.ofTypeDefaultValue(Type.getType(field.getDescriptor())));
-					} catch (Exception ex) {
-						throw new IllegalStateException("Failed to initialize field " + className + '.' + field.getName(), ex);
-					}
-				}
+			// Overrides replace the workspace copy of a class, so they supply both its fields and its parent.
+			String superName;
+			ClassNode override = context.classNodeOverrides.get(className);
+			if (override != null) {
+				for (FieldNode field : override.fields)
+					seedInstanceField(cache, className, field.access, field.name, field.desc);
+
+				superName = override.superName;
+			} else {
+				ClassPathNode classPath = workspace.findClass(evaluateInternals, className);
+				if (classPath == null)
+					return;
+
+				JvmClassInfo classInfo = classPath.getValue().asJvmClass();
+				for (FieldMember field : classInfo.getFields())
+					seedInstanceField(cache, className, field.getAccess(), field.getName(), field.getDescriptor());
+
+				superName = classInfo.getSuperName();
 			}
-			className = classInfo.getSuperName();
+			className = superName;
+		}
+	}
+
+	/**
+	 * Seeds an instance field with its JVM default, unless the cache already has a value for it.
+	 *
+	 * @param cache
+	 * 		Instance field cache to seed.
+	 * @param owner
+	 * 		Internal name of the class declaring the field.
+	 * @param access
+	 * 		Access flags of the field.
+	 * 		Static fields are not part of an instance, so they are skipped.
+	 * @param name
+	 * 		Field name.
+	 * @param desc
+	 * 		Field descriptor.
+	 */
+	private static void seedInstanceField(@Nonnull FieldCache cache, @Nonnull String owner, int access,
+	                                      @Nonnull String name, @Nonnull String desc) {
+		if (AccessFlag.isStatic(access) || cache.containsField(owner, name, desc))
+			return;
+
+		try {
+			cache.setField(owner, name, desc, ReValue.ofTypeDefaultValue(Type.getType(desc)));
+		} catch (Exception ex) {
+			throw new IllegalStateException("Failed to initialize field " + owner + '.' + name, ex);
 		}
 	}
 
@@ -1196,6 +1231,122 @@ public class Evaluator {
 	}
 
 	/**
+	 * Resolves the class that declares the given static method instruction.
+	 *
+	 * @param instruction
+	 * 		Static method instruction to resolve.
+	 * @param context
+	 * 		Evaluation context containing the class-node override snapshot.
+	 *
+	 * @return Name of the first class in the hierarchy that declares the method,
+	 * or {@code null} when none of the classes that we can see declare it.
+	 */
+	@Nullable
+	private String resolveStaticDeclaringClass(@Nonnull MethodInsnNode instruction, @Nonnull EvaluationContext context) {
+		Set<String> visited = null;
+		String className = instruction.owner;
+		while (className != null) {
+			// Check if this class declares the method, and take note of its parent in case it does not.
+			String superName;
+			ClassNode override = context.classNodeOverrides.get(className);
+			if (override != null) {
+				for (MethodNode method : override.methods)
+					if (instruction.name.equals(method.name) && instruction.desc.equals(method.desc))
+						return className;
+				superName = override.superName;
+			} else {
+				ClassPathNode classPath = workspace.findClass(evaluateInternals, className);
+				if (classPath == null)
+					return null;
+				JvmClassInfo classInfo = classPath.getValue().asJvmClass();
+				if (classInfo.getDeclaredMethod(instruction.name, instruction.desc) != null)
+					return className;
+				superName = classInfo.getSuperName();
+			}
+
+			// Move on to the parent.
+			if (visited == null)
+				visited = new HashSet<>();
+			if (!visited.add(className))
+				return null;
+			className = superName;
+		}
+		return null;
+	}
+
+	/**
+	 * Resolves the class that declares the given field instruction.
+	 *
+	 * @param instruction
+	 * 		Field instruction to resolve.
+	 * @param context
+	 * 		Evaluation context containing the class-node override snapshot.
+	 *
+	 * @return Name of the first class or interface in the hierarchy that declares the field,
+	 * or the name used by the instruction when none of the types that we can see declare it.
+	 */
+	@Nonnull
+	private String resolveFieldOwner(@Nonnull FieldInsnNode instruction, @Nonnull EvaluationContext context) {
+		String owner = context.fieldOwners.get(instruction);
+		if (owner == null) {
+			owner = searchFieldOwner(instruction, context);
+			context.fieldOwners.put(instruction, owner);
+		}
+		return owner;
+	}
+
+	/**
+	 * @param instruction
+	 * 		Field instruction to resolve.
+	 * @param context
+	 * 		Evaluation context containing the class-node override snapshot.
+	 *
+	 * @return Result of {@link #resolveFieldOwner(FieldInsnNode, EvaluationContext)} without consulting the cache of earlier results.
+	 */
+	@Nonnull
+	private String searchFieldOwner(@Nonnull FieldInsnNode instruction, @Nonnull EvaluationContext context) {
+		Deque<String> pending = new ArrayDeque<>();
+		Set<String> visited = new HashSet<>();
+		pending.push(instruction.owner);
+		while (!pending.isEmpty()) {
+			String className = pending.pop();
+			if (!visited.add(className))
+				continue;
+
+			// Check if this class declares the field, and take note of its parents in case it does not.
+			String superName;
+			List<String> interfaces;
+			ClassNode override = context.classNodeOverrides.get(className);
+			if (override != null) {
+				for (FieldNode field : override.fields)
+					if (instruction.name.equals(field.name) && instruction.desc.equals(field.desc))
+						return className;
+
+				superName = override.superName;
+				interfaces = override.interfaces;
+			} else {
+				ClassPathNode classPath = workspace.findClass(evaluateInternals, className);
+				if (classPath == null)
+					continue;
+
+				JvmClassInfo classInfo = classPath.getValue().asJvmClass();
+				if (classInfo.getDeclaredField(instruction.name, instruction.desc) != null)
+					return className;
+
+				superName = classInfo.getSuperName();
+				interfaces = classInfo.getInterfaces();
+			}
+
+			if (superName != null)
+				pending.push(superName);
+
+			for (int i = interfaces.size() - 1; i >= 0; i--)
+				pending.push(interfaces.get(i));
+		}
+		return instruction.owner;
+	}
+
+	/**
 	 * Notifies listeners that a workspace method has begun evaluation.
 	 *
 	 * @param classNode
@@ -1552,7 +1703,7 @@ public class Evaluator {
 							push(exceptionHandler.newThrowable(tin.desc, null));
 						} else {
 							InstancedObjectValue<?> instance = new InstancedObjectValue<>(type);
-							initializeInstanceFields(instance, tin.desc);
+							initializeInstanceFields(instance, tin.desc, context);
 							push(instance);
 						}
 						yield insn.getNext();
@@ -1561,15 +1712,18 @@ public class Evaluator {
 				}
 				case GETFIELD -> {
 					if (insn instanceof FieldInsnNode fieldInsn) {
+						// Fields are inherited, so the declaring class can be a parent of the class that the instruction names.
+						String fieldOwner = resolveFieldOwner(fieldInsn, context);
+
 						// Try to get the field value from the instance cache.
 						ReValue receiver = peek();
 						ReValue value = fieldCacheManager.getInstanceFieldCache(receiver)
-								.getField(fieldInsn.owner, fieldInsn.name, fieldInsn.desc);
+								.getField(fieldOwner, fieldInsn.name, fieldInsn.desc);
 						if (value != null) {
 							value = adaptValue(value, v -> {
 								// If the value is adapted, we need to update the cache with the adapted value.
 								fieldCacheManager.getInstanceFieldCache(receiver)
-										.setField(fieldInsn.owner, fieldInsn.name, fieldInsn.desc, v);
+										.setField(fieldOwner, fieldInsn.name, fieldInsn.desc, v);
 							});
 
 							pop(); // Pop receiver
@@ -1585,21 +1739,24 @@ public class Evaluator {
 				}
 				case GETSTATIC -> {
 					if (insn instanceof FieldInsnNode fieldInsn) {
+						// Static fields are also inherited.
+						String fieldOwner = resolveFieldOwner(fieldInsn, context);
+
 						// GETSTATIC is a JVM active-use boundary, so run static initialization before cache lookup.
-						EvaluationResult initializationResult = initializeClassIfNeeded(fieldInsn.owner, context);
+						EvaluationResult initializationResult = initializeClassIfNeeded(fieldOwner, context);
 						if (initializationResult instanceof EvaluationFailureResult failure)
 							throw new NestedEvaluationFailure(failure);
 						if (initializationResult instanceof EvaluationThrowsResult(ReValue exception))
 							yield exceptionHandler.routeException(this, exception, insn);
 
 						// Try to get the field value from the static cache.
-						ReValue value = fieldCacheManager.getStaticFieldCache(fieldInsn.owner)
-								.getField(fieldInsn.owner, fieldInsn.name, fieldInsn.desc);
+						ReValue value = fieldCacheManager.getStaticFieldCache(fieldOwner)
+								.getField(fieldOwner, fieldInsn.name, fieldInsn.desc);
 						if (value != null) {
 							value = adaptValue(value, v -> {
 								// If the value is adapted, we need to update the cache with the adapted value.
-								fieldCacheManager.getStaticFieldCache(fieldInsn.owner)
-										.setField(fieldInsn.owner, fieldInsn.name, fieldInsn.desc, v);
+								fieldCacheManager.getStaticFieldCache(fieldOwner)
+										.setField(fieldOwner, fieldInsn.name, fieldInsn.desc, v);
 							});
 							push(value);
 							yield insn.getNext();
@@ -1621,18 +1778,21 @@ public class Evaluator {
 				case PUTFIELD -> {
 					// Assign the top value to the instance field in the cache.
 					if (insn instanceof FieldInsnNode fin) {
+						String fieldOwner = resolveFieldOwner(fin, context);
 						ReValue value = pop();
 						ReValue receiver = pop();
 						fieldCacheManager.getInstanceFieldCache(receiver)
-								.setField(fin.owner, fin.name, fin.desc, value);
+								.setField(fieldOwner, fin.name, fin.desc, value);
 						yield insn.getNext();
 					}
 					throw new AnalyzerException(insn, "Invalid putfield state");
 				}
 				case PUTSTATIC -> {
 					if (insn instanceof FieldInsnNode fin) {
+						String fieldOwner = resolveFieldOwner(fin, context);
+
 						// PUTSTATIC is a JVM active-use boundary, so run static initialization before caching the write.
-						EvaluationResult initializationResult = initializeClassIfNeeded(fin.owner, context);
+						EvaluationResult initializationResult = initializeClassIfNeeded(fieldOwner, context);
 						if (initializationResult instanceof EvaluationFailureResult failure)
 							throw new NestedEvaluationFailure(failure);
 						if (initializationResult instanceof EvaluationThrowsResult(ReValue exception))
@@ -1640,8 +1800,8 @@ public class Evaluator {
 
 						// Assign the top value to the static field in the cache.
 						ReValue value = pop();
-						fieldCacheManager.getStaticFieldCache(fin.owner)
-								.setField(fin.owner, fin.name, fin.desc, value);
+						fieldCacheManager.getStaticFieldCache(fieldOwner)
+								.setField(fieldOwner, fin.name, fin.desc, value);
 						yield insn.getNext();
 					}
 					throw new AnalyzerException(insn, "Invalid putstatic state");
@@ -1862,7 +2022,15 @@ public class Evaluator {
 				case INVOKESTATIC -> {
 					if (insn instanceof MethodInsnNode min) {
 						// INVOKESTATIC is a JVM active-use boundary, so run static initialization before static dispatch.
-						EvaluationResult initializationResult = initializeClassIfNeeded(min.owner, context);
+						String initializedClass = min.owner;
+						if (evaluateClassInitializers) {
+							// The class that initializes is the one declaring the method,
+							// which may be a parent of the class the instruction names.
+							String declaring = resolveStaticDeclaringClass(min, context);
+							if (declaring != null)
+								initializedClass = declaring;
+						}
+						EvaluationResult initializationResult = initializeClassIfNeeded(initializedClass, context);
 						if (initializationResult instanceof EvaluationFailureResult failure)
 							throw new NestedEvaluationFailure(failure);
 						if (initializationResult instanceof EvaluationThrowsResult(ReValue exception))
@@ -1923,8 +2091,9 @@ public class Evaluator {
 						}
 
 						// Check if the method is defined in the workspace and can be evaluated.
-						if (canEvaluate(min.owner, min.name, min.desc)) {
-							EvaluationResult result = Evaluator.this.evaluate(min.owner, min.name, min.desc, null, valueList, context);
+						String declaringClass = resolveStaticDeclaringClass(min, context);
+						if (declaringClass != null && canEvaluate(declaringClass, min.name, min.desc)) {
+							EvaluationResult result = Evaluator.this.evaluate(declaringClass, min.name, min.desc, null, valueList, context);
 							switch (result) {
 								case EvaluationYieldResult yielded -> {
 									if (isVoid)
@@ -1938,14 +2107,14 @@ public class Evaluator {
 								case EvaluationFailureResult failure -> {
 									// The callee may have already changed the values we passed to it before it failed.
 									// Skipping over it would carry on with a state it never would have left behind.
-									if (Evaluator.this.isWorkspaceClass(min.owner, context))
+									if (Evaluator.this.isWorkspaceClass(declaringClass, context))
 										throw new NestedEvaluationFailure(failure);
 
 									// Otherwise, fallthrough will attempt to handle this.
 								}
 							}
 						} else if (Evaluator.this.isWorkspaceClass(min.owner, context)) {
-							// The workspace defines the callee, but we cannot evaluate it.
+							// The workspace defines the class being called, but we cannot evaluate the method that the call resolves to.
 							// Falling through to the interpreter would have it treat the call as if it had no effect
 							// on the values we pass to it, which is wrong for a callee that modifies an array in place.
 							throw new NestedEvaluationFailure(EvaluationResult.cannotEvaluate(

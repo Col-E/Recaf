@@ -10,18 +10,21 @@ import java.util.Map;
 
 /**
  * Support for tracking field values.
+ * <p>
+ * Values are kept under the class that declares the field. A field can be reached through the name of a subclass,
+ * so a caller must resolve the name it was given to the declaring class before using this.
  *
  * @author Matt Coley
  */
 public class FieldCache {
-	/** Maps owner-qualified field names and descriptors to their values. */
+	/** Maps declaring-class-qualified field names and descriptors to their values. */
 	private final Map<String, ReValue> fields = new HashMap<>();
 
 	/**
 	 * Set a field value.
 	 *
 	 * @param owner
-	 * 		Internal name of the field owner.
+	 * 		Internal name of the class declaring the field.
 	 * @param name
 	 * 		Field name.
 	 * @param desc
@@ -37,7 +40,7 @@ public class FieldCache {
 	 * Get a field value.
 	 *
 	 * @param owner
-	 * 		Internal name of the field owner.
+	 * 		Internal name of the class declaring the field.
 	 * @param name
 	 * 		Field name.
 	 * @param desc
@@ -55,7 +58,7 @@ public class FieldCache {
 	 * Checks whether a field has been assigned a cached value.
 	 *
 	 * @param owner
-	 * 		Internal name of the field owner.
+	 * 		Internal name of the class declaring the field.
 	 * @param name
 	 * 		Field name.
 	 * @param desc

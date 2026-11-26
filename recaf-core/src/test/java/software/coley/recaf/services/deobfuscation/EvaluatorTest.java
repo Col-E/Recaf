@@ -9,9 +9,13 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.FieldInsnNode;
+import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.TypeInsnNode;
+import org.objectweb.asm.tree.VarInsnNode;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.transform.JvmTransformerContext;
@@ -1291,6 +1295,358 @@ public class EvaluatorTest extends TransformerTestBase {
 		EvaluationYieldResult yielded = assertInstanceOf(EvaluationYieldResult.class, evaluateResult(compiled, "run", "(I)I", null, List.of(IntValue.UNKNOWN)));
 		IntValue value = assertInstanceOf(IntValue.class, yielded.value());
 		assertTrue(value.value().isEmpty(), "Result should be unknown, but was: " + value);
+	}
+
+	@Test
+	void testInheritedStaticMethodResolvesThroughSuperclasses() {
+		compileFull("StaticParent", """
+				class StaticParent {
+				    static int twice(int value) { return value * 2; }
+				    static int id() { return 1; }
+				    static void bump(byte[] data) { data[0]++; }
+				}
+				class StaticChild extends StaticParent {
+				    static int id() { return 2; }
+				}
+				class StaticGrandChild extends StaticChild {}
+				""");
+		String compiled = compile("""
+				static int inherited() { return StaticGrandChild.twice(21); }
+				static int hidden() { return StaticGrandChild.id(); }
+				static int inPlace() {
+				    byte[] data = new byte[1];
+				    StaticGrandChild.bump(data);
+				    StaticGrandChild.bump(data);
+				    return data[0];
+				}
+				""");
+
+		// The calls name the subclass, but the methods are declared by its ancestors. The nearest declaration is the one that runs,
+		// and a callee that edits an array in place must still have its changes visible to the caller.
+		JvmClassInfo[] hierarchy = {get("StaticParent"), get("StaticChild"), get("StaticGrandChild")};
+		assertIntValue(42, evaluate(compiled, "inherited", "()I", null, List.of(), hierarchy));
+		assertIntValue(2, evaluate(compiled, "hidden", "()I", null, List.of(), hierarchy));
+		assertIntValue(2, evaluate(compiled, "inPlace", "()I", null, List.of(), hierarchy));
+	}
+
+	@Test
+	void testInheritedStaticMethodInitializesOnlyTheDeclaringClass() {
+		compileFull("InitParent", """
+				class InitParent {
+				    static int VALUE = 7;
+				    static int read() { return VALUE; }
+				}
+				class InitChild extends InitParent {
+				    static int BOOM = fail();
+				    static int fail() { throw new IllegalStateException(); }
+				}
+				""");
+		String compiled = compile("""
+				static int run() { return InitChild.read(); }
+				""");
+
+		// Calling a static method through a subclass only initializes the class that declares it, so the subclass initializer never runs.
+		// It fails here, so evaluating it anyway would change the result.
+		EvaluationResult result = evaluateResult(compiled, "run", "()I", null, List.of(), true, get("InitParent"), get("InitChild"));
+		EvaluationYieldResult yielded = assertInstanceOf(EvaluationYieldResult.class, result);
+		assertIntValue(7, yielded.value());
+	}
+
+	@Test
+	void testStaticMethodHidingAnInheritedOneIsNotSkipped() {
+		compileFull("HiddenParent", """
+				class HiddenParent {
+				    static int id() { return 1; }
+				}
+				class HiddenChild extends HiddenParent {
+				    static native int id();
+				}
+				""");
+		String compiled = compile("""
+				static int run() { return HiddenChild.id(); }
+				""");
+
+		// The call resolves to the child's own version of the method. It cannot be evaluated,
+		// and we must not look past it to the parent's version, which could be.
+		EvaluationFailureResult failure = assertInstanceOf(EvaluationFailureResult.class, evaluateResult(compiled, "run", "()I", null, List.of(), get("HiddenParent"), get("HiddenChild")));
+		assertTrue(failure.reason().contains("HiddenChild.id"), "Failure should name the callee: " + failure.reason());
+	}
+
+	@Test
+	void testInheritedStaticFieldSharesOneValueAcrossNames() {
+		compileFull("StaticFieldParent", """
+				class StaticFieldParent {
+				    static int X;
+				}
+				class StaticFieldChild extends StaticFieldParent {}
+				class StaticFieldGrandChild extends StaticFieldChild {}
+				""");
+		String compiled = compile("""
+				static int overwrittenThroughChild() {
+				    StaticFieldParent.X = 1;
+				    StaticFieldGrandChild.X = 5;
+				    return StaticFieldParent.X;
+				}
+				static int readThroughChild() {
+				    StaticFieldParent.X = 9;
+				    return StaticFieldGrandChild.X;
+				}
+				""");
+
+		// The instructions name the subclass in some places and the class declaring the field in others, but it is one field.
+		// A write through either name has to be seen through the other, instead of each name keeping a value of its own.
+		JvmClassInfo[] hierarchy = {get("StaticFieldParent"), get("StaticFieldChild"), get("StaticFieldGrandChild")};
+		assertIntValue(5, evaluate(compiled, "overwrittenThroughChild", "()I", null, List.of(), hierarchy));
+		assertIntValue(9, evaluate(compiled, "readThroughChild", "()I", null, List.of(), hierarchy));
+	}
+
+	@Test
+	void testInheritedStaticFieldInitializesOnlyTheDeclaringClass() {
+		compileFull("FieldInitParent", """
+				class FieldInitParent {
+				    static int VALUE = 7;
+				}
+				class FieldInitChild extends FieldInitParent {
+				    static int BOOM = fail();
+				    static int fail() { throw new IllegalStateException(); }
+				}
+				""");
+		String compiled = compile("""
+				static int read() { return FieldInitChild.VALUE; }
+				static int write() {
+				    FieldInitChild.VALUE = 3;
+				    return FieldInitParent.VALUE;
+				}
+				""");
+
+		// Using a static field through a subclass only initializes the class that declares it, so the subclass initializer never runs.
+		// It fails here, so evaluating it anyway would change the result. That goes for writes as well as reads.
+		JvmClassInfo[] hierarchy = {get("FieldInitParent"), get("FieldInitChild")};
+
+		EvaluationYieldResult read = assertInstanceOf(EvaluationYieldResult.class, evaluateResult(compiled, "read", "()I", null, List.of(), true, hierarchy));
+		assertIntValue(7, read.value());
+
+		EvaluationYieldResult write = assertInstanceOf(EvaluationYieldResult.class, evaluateResult(compiled, "write", "()I", null, List.of(), true, hierarchy));
+		assertIntValue(3, write.value());
+	}
+
+	@Test
+	void testInheritedStaticFieldResolvesThroughInterfaces() {
+		compileFull("ConstantsBase", """
+				interface ConstantsBase { int[] TABLE = {10, 20, 30}; }
+				interface ConstantsMid extends ConstantsBase {}
+				class ConstantsImpl implements ConstantsMid {}
+				class ConstantsSubImpl extends ConstantsImpl {}
+				""");
+		String compiled = compile("""
+				static int run() { return ConstantsSubImpl.TABLE[1]; }
+				""");
+
+		// Unlike static methods, static fields are inherited from interfaces, and from the parents of those interfaces.
+		// The value comes from the interface declaring the field, which is the only type that has to be initialized to get it.
+		EvaluationYieldResult yielded = assertInstanceOf(EvaluationYieldResult.class,
+				evaluateResult(compiled, "run", "()I", null, List.of(), true,
+						get("ConstantsBase"), get("ConstantsMid"), get("ConstantsImpl"), get("ConstantsSubImpl")));
+		assertIntValue(20, yielded.value());
+	}
+
+	@Test
+	void testInheritedStaticFieldStopsAtTheNearestDeclaration() {
+		compileFull("HidingParent", """
+				class HidingParent { static int X; }
+				class HidingChild extends HidingParent { static int X; }
+				class HidingGrandChild extends HidingChild {}
+				""");
+		String compiled = compile("""
+				static int run() {
+				    HidingParent.X = 1;
+				    HidingChild.X = 2;
+				    return HidingGrandChild.X * 10 + HidingParent.X;
+				}
+				""");
+
+		// The child's field hides the parent's, so the grandchild reaches the child's version and the parent's is left alone.
+		assertIntValue(21, evaluate(compiled, "run", "()I", null, List.of(),
+				get("HidingParent"), get("HidingChild"), get("HidingGrandChild")));
+	}
+
+	@Test
+	void testInheritedStaticFieldSearchesInterfacesBeforeTheSuperclass() {
+		// Create a workspace with the common 'Example' class, and an evaluator that runs class initializers.
+		compile("static int host() { return 0; }");
+		Workspace evaluationWorkspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(get(CLASS_NAME)));
+		JvmTransformerContext context = new JvmTransformerContext(evaluationWorkspace, evaluationWorkspace.getPrimaryResource(), Collections.emptyList());
+		Evaluator evaluator = new Evaluator(evaluationWorkspace, context.newInterpreter(new InheritanceGraph(evaluationWorkspace)), new FieldCacheManager(), 1000, false, true);
+
+		// Both the interface and the superclass declare the field, which javac rejects as ambiguous, so the classes are built by hand.
+		// The JVM looks through the interfaces before the superclass, so the interface's field is the one the implementation reaches.
+		ClassNode iface = syntheticClass("synthetic/OrderedIface", Opcodes.ACC_PUBLIC | Opcodes.ACC_INTERFACE | Opcodes.ACC_ABSTRACT);
+		ClassNode base = syntheticClass("synthetic/OrderedBase", Opcodes.ACC_PUBLIC);
+		ClassNode impl = syntheticClass("synthetic/OrderedImpl", Opcodes.ACC_PUBLIC);
+		iface.fields.add(new FieldNode(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL, "X", "I", null, 11));
+		base.fields.add(new FieldNode(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, "X", "I", null, 22));
+		impl.superName = base.name;
+		impl.interfaces.add(iface.name);
+
+		ClassNode runner = syntheticClass("synthetic/OrderedRunner", Opcodes.ACC_PUBLIC);
+		MethodNode run = new MethodNode(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, "run", "()I", null, null);
+		run.instructions.add(new FieldInsnNode(Opcodes.GETSTATIC, impl.name, "X", "I"));
+		run.instructions.add(new InsnNode(Opcodes.IRETURN));
+		run.maxStack = 1;
+		run.maxLocals = 0;
+		runner.methods.add(run);
+		for (ClassNode node : List.of(iface, base, impl, runner))
+			evaluator.registerClassNodeOverride(node);
+
+		EvaluationYieldResult yielded = assertInstanceOf(EvaluationYieldResult.class, evaluator.evaluate(runner.name, "run", "()I", null, List.of()));
+		assertIntValue(11, yielded.value());
+	}
+
+	@Test
+	void testInheritedInstanceFieldSharesOneValueAcrossNames() {
+		compileFull("InstanceFieldBase", """
+				class InstanceFieldBase {
+				    int x;
+				    int readBase() { return x; }
+				    void writeBase(int value) { x = value; }
+				}
+				class InstanceFieldChild extends InstanceFieldBase {
+				    void writeChild(int value) { x = value; }
+				}
+				class InstanceFieldGrandChild extends InstanceFieldChild {
+				    int readGrandChild() { return x; }
+				}
+				""");
+		String compiled = compile("""
+				static int overwrittenThroughChild() {
+				    InstanceFieldGrandChild object = new InstanceFieldGrandChild();
+				    object.writeBase(1);
+				    object.writeChild(5);
+				    return object.readBase();
+				}
+				static int readThroughGrandChild() {
+				    InstanceFieldGrandChild object = new InstanceFieldGrandChild();
+				    object.writeBase(9);
+				    return object.readGrandChild();
+				}
+				""");
+
+		// The instructions name the subclass in some places and the class declaring the field in others, but it is one field.
+		// A write through either name has to be seen through the other, instead of each name keeping a value of its own.
+		JvmClassInfo[] hierarchy = {get("InstanceFieldBase"), get("InstanceFieldChild"), get("InstanceFieldGrandChild")};
+		assertIntValue(5, evaluate(compiled, "overwrittenThroughChild", "()I", null, List.of(), hierarchy));
+		assertIntValue(9, evaluate(compiled, "readThroughGrandChild", "()I", null, List.of(), hierarchy));
+	}
+
+	@Test
+	void testInheritedInstanceFieldSetByASubclassConstructorIsSeenByTheParent() {
+		compileFull("KeyedBase", """
+				abstract class KeyedBase {
+				    protected int key;
+				    int decode(int value) { return value ^ key; }
+				}
+				class KeyedChild extends KeyedBase {
+				    KeyedChild(int key) { this.key = key; }
+				}
+				""");
+		String compiled = compile("""
+				static int run() { return new KeyedChild(0x5A).decode(0x0F); }
+				""");
+
+		// The constructor stores the key through the name of its own class, and the parent's method reads it through the parent's name.
+		// Reading the field's default instead of the stored key would silently decode with the wrong key.
+		assertIntValue(0x55, evaluate(compiled, "run", "()I", null, List.of(), get("KeyedBase"), get("KeyedChild")));
+	}
+
+	@Test
+	void testInheritedInstanceFieldStopsAtTheNearestDeclaration() {
+		compileFull("ShadowBase", """
+				class ShadowBase {
+				    int x = 1;
+				    int baseX() { return x; }
+				}
+				class ShadowChild extends ShadowBase {
+				    int x = 2;
+				    int childX() { return x; }
+				    int superX() { return super.x; }
+				}
+				class ShadowGrandChild extends ShadowChild {
+				    int grandChildX() { return x; }
+				}
+				""");
+		String compiled = compile("""
+				static int run() {
+				    ShadowGrandChild object = new ShadowGrandChild();
+				    return object.baseX() * 1000 + object.childX() * 100 + object.superX() * 10 + object.grandChildX();
+				}
+				""");
+
+		// The child's field hides the parent's rather than replacing it, so the object has both. Fields are not looked up virtually, so
+		// each access reaches the field its own instruction resolves to, whatever the class of the object is. The grandchild names neither
+		// declaration, and reaches the nearest one, which is the child's.
+		assertIntValue(1212, evaluate(compiled, "run", "()I", null, List.of(), get("ShadowBase"), get("ShadowChild"), get("ShadowGrandChild")));
+	}
+
+	@Test
+	void testOverrideOnlyClassSeedsItsFieldsOnAllocation() {
+		// The class is only known to the evaluator through its override, so there is nothing in the workspace to seed from.
+		ClassNode hidden = syntheticClass("synthetic/Hidden", Opcodes.ACC_PUBLIC);
+		hidden.fields.add(new FieldNode(Opcodes.ACC_PUBLIC, "x", "I", null, null));
+		ClassNode runner = allocateAndRead(hidden.name, hidden.name, "x");
+		Evaluator evaluator = evaluatorWithOverrides(List.of(), hidden, runner);
+
+		// Allocating the class seeds its fields with their defaults, so a read before any write sees zero.
+		EvaluationResult result = evaluator.evaluate(runner.name, "run", "()I", null, List.of());
+		assertIntValue(0, assertInstanceOf(EvaluationYieldResult.class, result).value());
+	}
+
+	@Test
+	void testOverrideSeedsTheFieldsItDeclaresInsteadOfTheWorkspaceCopy() {
+		// The override adds a field that the workspace copy of the class does not have.
+		ClassNode shaped = syntheticClass("synthetic/Shaped", Opcodes.ACC_PUBLIC);
+		shaped.fields.add(new FieldNode(Opcodes.ACC_PUBLIC, "a", "I", null, null));
+		shaped.fields.add(new FieldNode(Opcodes.ACC_PUBLIC, "b", "I", null, null));
+		JvmClassInfo workspaceShaped = TestClassUtils.createClass(shaped.name,
+				node -> node.fields.add(new FieldNode(Opcodes.ACC_PUBLIC, "a", "I", null, null)));
+		ClassNode runner = allocateAndRead(shaped.name, shaped.name, "b");
+		Evaluator evaluator = evaluatorWithOverrides(List.of(workspaceShaped), shaped, runner);
+
+		EvaluationResult result = evaluator.evaluate(runner.name, "run", "()I", null, List.of());
+		assertIntValue(0, assertInstanceOf(EvaluationYieldResult.class, result).value());
+	}
+
+	@Test
+	void testOverrideSeedsTheSuperclassItDeclaresInsteadOfTheWorkspaceCopy() {
+		// The override makes Mid extend OvBase, where the workspace copy of Mid extends WsBase.
+		ClassNode mid = syntheticClass("synthetic/Mid", Opcodes.ACC_PUBLIC);
+		mid.superName = "synthetic/OvBase";
+		JvmClassInfo workspaceMid = TestClassUtils.createClass("synthetic/Mid", node -> node.superName = "synthetic/WsBase");
+		JvmClassInfo wsBase = TestClassUtils.createClass("synthetic/WsBase",
+				node -> node.fields.add(new FieldNode(Opcodes.ACC_PUBLIC, "w", "I", null, null)));
+		JvmClassInfo ovBase = TestClassUtils.createClass("synthetic/OvBase",
+				node -> node.fields.add(new FieldNode(Opcodes.ACC_PUBLIC, "o", "I", null, null)));
+		ClassNode runner = allocateAndRead(mid.name, "synthetic/OvBase", "o");
+		Evaluator evaluator = evaluatorWithOverrides(List.of(workspaceMid, wsBase, ovBase), mid, runner);
+
+		// Nothing runs on the object before it is read, so the parent's field can only be seeded through the override's chain.
+		EvaluationResult result = evaluator.evaluate(runner.name, "run", "()I", null, List.of());
+		assertIntValue(0, assertInstanceOf(EvaluationYieldResult.class, result).value());
+	}
+
+	@Test
+	void testOverrideOnlyReceiverSeedsInstanceFieldDefaults() {
+		ClassNode holder = syntheticClass("synthetic/Holder", Opcodes.ACC_PUBLIC);
+		holder.fields.add(new FieldNode(Opcodes.ACC_PUBLIC, "x", "I", null, null));
+		holder.methods.add(syntheticMethod("read", "()I", Opcodes.ACC_PUBLIC,
+				new VarInsnNode(Opcodes.ALOAD, 0),
+				new FieldInsnNode(Opcodes.GETFIELD, holder.name, "x", "I"),
+				new InsnNode(Opcodes.IRETURN)));
+		Evaluator evaluator = evaluatorWithOverrides(List.of(), holder);
+
+		// The receiver was not allocated by this evaluation, so its fields are seeded when the method is entered.
+		ObjectValue receiver = new InstancedObjectValue<>(Type.getObjectType(holder.name));
+		EvaluationResult result = evaluator.evaluate(holder.name, "read", "()I", receiver, List.of());
+		assertIntValue(0, assertInstanceOf(EvaluationYieldResult.class, result).value());
 	}
 
 	@Test
@@ -2896,6 +3252,62 @@ public class EvaluatorTest extends TransformerTestBase {
 		Evaluator evaluator = new Evaluator(workspace, interpreter, new FieldCacheManager(), maxSteps, false, false);
 		evaluator.setCallStackSeed(callStackSeed);
 		return evaluator;
+	}
+
+	@Nonnull
+	private static ClassNode syntheticClass(@Nonnull String name, int access) {
+		ClassNode node = new ClassNode();
+		node.version = Opcodes.V17;
+		node.access = access;
+		node.name = name;
+		node.superName = "java/lang/Object";
+		return node;
+	}
+
+	@Nonnull
+	private static Evaluator evaluatorWithOverrides(@Nonnull List<JvmClassInfo> workspaceClasses, @Nonnull ClassNode... overrides) {
+		Workspace workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(workspaceClasses.toArray(JvmClassInfo[]::new)));
+		JvmTransformerContext context = new JvmTransformerContext(workspace, workspace.getPrimaryResource(), Collections.emptyList());
+		Evaluator evaluator = new Evaluator(workspace, context.newInterpreter(new InheritanceGraph(workspace)),
+				new FieldCacheManager(), 1000, false, false);
+		for (ClassNode override : overrides)
+			evaluator.registerClassNodeOverride(override);
+		return evaluator;
+	}
+
+	@Nonnull
+	private static MethodNode syntheticMethod(@Nonnull String name, @Nonnull String desc, int access,
+	                                          @Nonnull AbstractInsnNode... instructions) {
+		MethodNode method = new MethodNode(access, name, desc, null, null);
+		for (AbstractInsnNode instruction : instructions)
+			method.instructions.add(instruction);
+		method.maxStack = 2;
+		method.maxLocals = 2;
+		return method;
+	}
+
+	/**
+	 * Builds a class whose {@code run} method allocates the given class and reads one of its {@code int} fields from the new object.
+	 * No constructor runs, so the allocation alone has to provide the field's default. The bytecode is not verifiable, since the
+	 * object is read before any constructor has run, but the evaluator does not verify bytecode.
+	 *
+	 * @param allocated
+	 * 		Internal name of the class to allocate.
+	 * @param owner
+	 * 		Internal name of the class the field is read through.
+	 * @param field
+	 * 		Name of the {@code int} field to read.
+	 *
+	 * @return Class containing the {@code run} method.
+	 */
+	@Nonnull
+	private static ClassNode allocateAndRead(@Nonnull String allocated, @Nonnull String owner, @Nonnull String field) {
+		ClassNode runner = syntheticClass("synthetic/AllocateAndRead", Opcodes.ACC_PUBLIC);
+		runner.methods.add(syntheticMethod("run", "()I", Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,
+				new TypeInsnNode(Opcodes.NEW, allocated),
+				new FieldInsnNode(Opcodes.GETFIELD, owner, field, "I"),
+				new InsnNode(Opcodes.IRETURN)));
+		return runner;
 	}
 
 	@Nonnull

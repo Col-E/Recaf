@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import software.coley.recaf.util.ClassMethodPair;
 import software.coley.recaf.util.analysis.value.ReValue;
@@ -13,6 +14,7 @@ import software.coley.recaf.util.analysis.value.impl.ThrowableValueImpl;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -29,6 +31,7 @@ public final class EvaluationContext {
 	final Map<String, EvaluationResult> failedClassInitializers;
 	final Map<String, ClassNode> classNodeOverrides;
 	final Map<String, ClassNode> workspaceNodeCache;
+	final Map<FieldInsnNode, String> fieldOwners;
 	final EvaluationModelHeap modelHeap;
 	final VirtualClock clock;
 	final SimulatedScheduler scheduler;
@@ -50,6 +53,7 @@ public final class EvaluationContext {
 		failedClassInitializers = new HashMap<>();
 		classNodeOverrides = new HashMap<>(evaluator.getClassNodeOverrides()); // Snapshot overrides so later caller changes cannot switch bytecode halfway through an evaluation.
 		workspaceNodeCache = new HashMap<>(); // Cache, as constant re-reads from the workspace can be expensive.
+		fieldOwners = new IdentityHashMap<>(); // Cache, as finding the class declaring a field takes a workspace lookup for each class searched.
 		modelHeap = new EvaluationModelHeap();
 		clock = new VirtualClock();
 		models = new EvaluationModelRegistry(evaluator);
