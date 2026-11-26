@@ -14,7 +14,9 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import software.coley.observables.ObservableDouble;
-import software.coley.recaf.config.*;
+import software.coley.recaf.config.BasicConfigContainer;
+import software.coley.recaf.config.BasicConfigValue;
+import software.coley.recaf.config.ConfigGroups;
 import software.coley.recaf.services.config.ConfigComponentManager;
 import software.coley.recaf.util.FxThreadUtil;
 
@@ -48,15 +50,15 @@ public class WindowScaleConfig extends BasicConfigContainer {
 			slider.setMajorTickUnit(0.5);
 			slider.setMinorTickCount(1);
 
-			//Live readout of the current setting
-			var readout = new Label();
+			// Live readout of the current setting
+			Label readout = new Label();
 			readout.textProperty().bind(Bindings.createStringBinding(() -> Math.round(slider.getValue() * 100) + "%", slider.valueProperty()));
 			readout.getStyleClass().add(Styles.TEXT_SUBTLE);
 			readout.setMinWidth(Region.USE_PREF_SIZE);
 			readout.setPrefWidth(45);
 			readout.setAlignment(Pos.CENTER_RIGHT);
 
-			//Commit only when not dragging
+			// Commit only when not dragging
 			slider.valueProperty().addListener((_, _, cur) -> {
 				if (!slider.isValueChanging())
 					commitScale(cur.doubleValue());
@@ -79,6 +81,9 @@ public class WindowScaleConfig extends BasicConfigContainer {
 			scale.setValue(clamped);
 	}
 
+	/**
+	 * @return Property for window scale.
+	 */
 	@Nonnull
 	public DoubleProperty scaleProperty() {
 		return scaleProperty;

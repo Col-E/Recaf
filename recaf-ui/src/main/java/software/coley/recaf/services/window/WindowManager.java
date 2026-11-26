@@ -8,6 +8,7 @@ import jakarta.inject.Inject;
 import javafx.beans.property.DoubleProperty;
 import javafx.geometry.Dimension2D;
 import javafx.geometry.Rectangle2D;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
@@ -175,23 +176,15 @@ public class WindowManager implements Service {
 	}
 
 	/**
-	 * Wraps the stage's scene root in a {@link ScalePane}
+	 * Wraps the stage's scene root in a {@link ScalePane}.
+	 *
+	 * @param stage
+	 * 		Stage to apply scaling to.
 	 */
 	private void applyScale(@Nonnull Stage stage) {
 		var scale = scaleConfig.scaleProperty();
 		stage.sceneProperty().addListener((_, _, scene) -> wrapSceneRoot(scene, scale));
 		wrapSceneRoot(stage.getScene(), scale);
-	}
-
-	private static void wrapSceneRoot(@Nullable Scene scene, @Nonnull DoubleProperty scale) {
-		if (scene == null)
-			return;
-
-		var root = scene.getRoot();
-		if (root == null || root instanceof ScalePane)
-			return;
-
-		scene.setRoot(new ScalePane(root, scale));
 	}
 
 	/**
@@ -284,6 +277,25 @@ public class WindowManager implements Service {
 	@Override
 	public WindowManagerConfig getServiceConfig() {
 		return config;
+	}
+
+	/**
+	 * Wraps the scene root in a {@link ScalePane} if it is not already wrapped.
+	 *
+	 * @param scene
+	 * 		Scene to wrap.
+	 * @param scale
+	 * 		Scale property to bind to the scale pane.
+	 */
+	private static void wrapSceneRoot(@Nullable Scene scene, @Nonnull DoubleProperty scale) {
+		if (scene == null)
+			return;
+
+		Parent root = scene.getRoot();
+		if (root == null || root instanceof ScalePane)
+			return;
+
+		scene.setRoot(new ScalePane(root, scale));
 	}
 
 	/**

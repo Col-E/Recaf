@@ -8,6 +8,8 @@ import javafx.scene.transform.Scale;
 
 /**
  * Wraps a child node and scales it by {@code scale} while keeping it sized to fill this pane.
+ *
+ * @author SooStrator
  */
 public class ScalePane extends Pane {
 	private final DoubleProperty scale;
@@ -23,13 +25,13 @@ public class ScalePane extends Pane {
 		this.scale = scale;
 		this.content = content;
 
-		//Pivot so the child grows down/right to fill the window
-		var transform = new Scale();
+		// Pivot so the child grows down/right to fill the window.
+		Scale transform = new Scale();
 		transform.xProperty().bind(scale);
 		transform.yProperty().bind(scale);
 		content.getTransforms().add(transform);
 
-		//Reparent the orphaned root into this pane
+		// Reparent the orphaned root into this pane.
 		getChildren().add(content);
 
 		scale.addListener(o -> requestLayout());
@@ -45,7 +47,7 @@ public class ScalePane extends Pane {
 
 	@Override
 	protected void layoutChildren() {
-		var scale = this.scale.get();
+		double scale = this.scale.get();
 		if (scale <= 0)
 			scale = 1;
 
