@@ -1243,6 +1243,57 @@ public class EvaluatorTest extends TransformerTestBase {
 	}
 
 	@Test
+	void testStaticCalleeThatCannotBeEvaluatedFailsEvaluation() {
+		String compiled = compile("""
+				static native void fill(byte[] data);
+				static int run() {
+				    byte[] data = new byte[1];
+				    fill(data);
+				    return data[0];
+				}
+				""");
+
+		// A native method can never be evaluated, so we cannot know what it does to the array we pass it.
+		// Skipping over the call would carry on with contents that may be wrong, so evaluation must fail instead.
+		EvaluationFailureResult failure = assertInstanceOf(EvaluationFailureResult.class, evaluateResult(compiled, "run", "()I", null, List.of()));
+		assertTrue(failure.reason().contains("fill"), "Failure should name the callee: " + failure.reason());
+	}
+
+	@Test
+	void testStaticCalleeFailingAfterPartialExecutionFailsEvaluation() {
+		String compiled = compile("""
+				static void spin(byte[] data) {
+				    data[0] = 1;
+				    spin(data);
+				}
+				static int run() {
+				    byte[] data = new byte[1];
+				    spin(data);
+				    return data[0];
+				}
+				""");
+
+		// The unbounded recursion runs into the evaluator's call depth limit, long after the callee has changed the array.
+		// That failure must reach the caller instead of being skipped over as if the call had no effect.
+		// The real JVM would throw a StackOverflowError here, so the evaluator must not hand back a value.
+		EvaluationFailureResult failure = assertInstanceOf(EvaluationFailureResult.class, evaluateResult(compiled, "run", "()I", null, List.of()));
+		assertTrue(failure.reason().contains("call depth"), "Failure should be the call depth limit: " + failure.reason());
+	}
+
+	@Test
+	void testStaticLibraryCallWithUnknownArgumentYieldsUnknown() {
+		String compiled = compile("""
+				static int run(int value) { return Math.abs(value); }
+				""");
+
+		// Failing closed only applies to code the workspace defines. Library methods that are not defined by the workspace
+		// have no body for us to skip, so those keep being modeled, with unknown results when their inputs are unknown.
+		EvaluationYieldResult yielded = assertInstanceOf(EvaluationYieldResult.class, evaluateResult(compiled, "run", "(I)I", null, List.of(IntValue.UNKNOWN)));
+		IntValue value = assertInstanceOf(IntValue.class, yielded.value());
+		assertTrue(value.value().isEmpty(), "Result should be unknown, but was: " + value);
+	}
+
+	@Test
 	void testMessageDigestIsEqual() {
 		String compiled = compile("""
 				static int run() throws Exception {

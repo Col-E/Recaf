@@ -946,15 +946,13 @@ public class Evaluator {
 	}
 
 	/**
-	 * Checks whether a class is available through the current evaluation snapshot or the workspace.
-	 *
 	 * @param className
 	 * 		Internal class name to check.
 	 * @param context
 	 * 		Evaluation context containing any class overrides.
 	 * 		Evaluator-scope overrides will be used when passing {@code null}.
 	 *
-	 * @return {@code true} when the class can be resolved.
+	 * @return {@code true} when the class can be resolved from the workspace or an override.
 	 */
 	private boolean hasClass(@Nonnull String className, @Nullable EvaluationContext context) {
 		if (context != null && context.classNodeOverrides.containsKey(className))
@@ -962,6 +960,18 @@ public class Evaluator {
 		if (context == null && classNodeOverrides.containsKey(className))
 			return true;
 		return workspace.findClass(evaluateInternals, className) != null;
+	}
+
+	/**
+	 * @param className
+	 * 		Internal class name to check.
+	 * @param context
+	 * 		Evaluation context containing any class overrides.
+	 *
+	 * @return {@code true} when the class is defined by a non-internal workspace resource, or an override.
+	 */
+	private boolean isWorkspaceClass(@Nonnull String className, @Nonnull EvaluationContext context) {
+		return context.classNodeOverrides.containsKey(className) || workspace.findClass(false, className) != null;
 	}
 
 	/**
@@ -1926,9 +1936,20 @@ public class Evaluator {
 									yield exceptionHandler.routeException(this, thrown.exception(), insn);
 								}
 								case EvaluationFailureResult failure -> {
-									// No-op, fallthrough will attempt to handle this.
+									// The callee may have already changed the values we passed to it before it failed.
+									// Skipping over it would carry on with a state it never would have left behind.
+									if (Evaluator.this.isWorkspaceClass(min.owner, context))
+										throw new NestedEvaluationFailure(failure);
+
+									// Otherwise, fallthrough will attempt to handle this.
 								}
 							}
+						} else if (Evaluator.this.isWorkspaceClass(min.owner, context)) {
+							// The workspace defines the callee, but we cannot evaluate it.
+							// Falling through to the interpreter would have it treat the call as if it had no effect
+							// on the values we pass to it, which is wrong for a callee that modifies an array in place.
+							throw new NestedEvaluationFailure(EvaluationResult.cannotEvaluate(
+									"Invoke-static call could not be evaluated: " + min.owner + '.' + min.name + min.desc));
 						}
 
 						// If the method is not modeled, check if we have a registered lookup for it.
