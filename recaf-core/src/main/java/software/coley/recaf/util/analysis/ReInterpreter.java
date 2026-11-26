@@ -18,8 +18,8 @@ import org.objectweb.asm.tree.TypeInsnNode;
 import org.objectweb.asm.tree.analysis.AnalyzerException;
 import org.objectweb.asm.tree.analysis.Interpreter;
 import org.objectweb.asm.tree.analysis.SimpleVerifier;
-import org.slf4j.Logger;
 import software.coley.recaf.RecafConstants;
+import software.coley.recaf.analytics.logging.DebuggingLogger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.inheritance.InheritanceVertex;
@@ -37,10 +37,14 @@ import software.coley.recaf.util.analysis.value.IntValue;
 import software.coley.recaf.util.analysis.value.LongValue;
 import software.coley.recaf.util.analysis.value.ObjectValue;
 import software.coley.recaf.util.analysis.value.ReValue;
+import software.coley.recaf.util.analysis.value.StringValue;
 import software.coley.recaf.util.analysis.value.UninitializedValue;
+import software.coley.recaf.util.analysis.value.impl.ObjectValueBoxImpl;
 
+import java.lang.reflect.Array;
 import java.util.List;
 import java.util.OptionalInt;
+import java.util.Set;
 
 /**
  * Interpreter implementation for enhanced value tracking.
@@ -49,7 +53,7 @@ import java.util.OptionalInt;
  * @see ReValue Base enhanced value type.
  */
 public class ReInterpreter extends Interpreter<ReValue> implements Opcodes {
-	private static final Logger logger = Logging.get(ReInterpreter.class);
+	private static final DebuggingLogger logger = Logging.get(ReInterpreter.class);
 	private final InheritanceGraph inheritanceGraph;
 	private GetStaticLookup getStaticLookup;
 	private GetFieldLookup getFieldLookup;
@@ -59,6 +63,31 @@ public class ReInterpreter extends Interpreter<ReValue> implements Opcodes {
 	public ReInterpreter(@Nonnull InheritanceGraph inheritanceGraph) {
 		super(RecafConstants.getAsmVersion());
 		this.inheritanceGraph = inheritanceGraph;
+	}
+
+	/**
+	 * Checks assignability using the inheritance graph backing this interpreter.
+	 *
+	 * @param parent
+	 * 		Expected parent type, in internal-name form.
+	 * @param child
+	 * 		Actual child type, in internal-name form.
+	 *
+	 * @return {@code true} when {@code parent} can be assigned from {@code child}.
+	 */
+	public boolean isAssignableFrom(@Nonnull String parent, @Nonnull String child) {
+		return inheritanceGraph.isAssignableFrom(parent, child);
+	}
+
+	/**
+	 * @param child
+	 * 		Internal name of the child type.
+	 *
+	 * @return Names assignable from the child type, including the type itself.
+	 */
+	@Nonnull
+	public Set<String> getAssignableSupertypes(@Nonnull String child) {
+		return inheritanceGraph.getAssignableSupertypes(child);
 	}
 
 	@Nullable
@@ -352,13 +381,28 @@ public class ReInterpreter extends Interpreter<ReValue> implements Opcodes {
 					if (firstDimensionLength.isPresent())
 						return IntValue.of(firstDimensionLength.getAsInt());
 				}
-				return IntValue.UNKNOWN;
+				Object realArray = getInstancedArray(value);
+				return realArray == null ? IntValue.UNKNOWN : IntValue.of(Array.getLength(realArray));
 			case CHECKCAST:
-				Type targetType = Type.getObjectType(((TypeInsnNode) insn).desc);
+				String targetDescriptor = ((TypeInsnNode) insn).desc;
+				Type targetType = targetDescriptor.startsWith("[") ? Type.getType(targetDescriptor) : Type.getObjectType(targetDescriptor);
+				if (value instanceof ObjectValue object && object.isNull())
+					return newValue(targetType, Nullness.NULL);
+				if (value instanceof ObjectValue object && object.hasKnownValue() && isAssignableFrom(targetType, object.type()))
+					return value;
 				if (value instanceof InstancedObjectValue<?> instancedValue && isAssignableFrom(targetType, instancedValue.type()))
 					return value;
 				return newValue(targetType);
 			case INSTANCEOF:
+				if (value instanceof ObjectValue object) {
+					if (object.isNull())
+						return IntValue.VAL_0;
+					if (object.hasKnownValue() || (object.isNotNull() && (value instanceof ArrayValue || value instanceof InstancedObjectValue<?>))) {
+						String descriptor = ((TypeInsnNode) insn).desc;
+						Type target = descriptor.startsWith("[") ? Type.getType(descriptor) : Type.getObjectType(descriptor);
+						return IntValue.of(isAssignableFrom(target, value.type()) ? 1 : 0);
+					}
+				}
 				return IntValue.UNKNOWN;
 			default:
 				throw new AnalyzerException(insn, "Unknown unary op: " + insn.getOpcode());
@@ -368,29 +412,8 @@ public class ReInterpreter extends Interpreter<ReValue> implements Opcodes {
 	@Override
 	public ReValue binaryOperation(@Nonnull AbstractInsnNode insn, @Nonnull ReValue value1, @Nonnull ReValue value2) {
 		switch (insn.getOpcode()) {
-			case IALOAD:
-			case BALOAD:
-			case CALOAD:
-			case SALOAD:
-				if (value1 instanceof ArrayValue array && value2 instanceof IntValue index && index.value().isPresent())
-					return array.getValue(index.value().getAsInt());
-				return IntValue.UNKNOWN;
-			case FALOAD:
-				if (value1 instanceof ArrayValue array && value2 instanceof IntValue index && index.value().isPresent())
-					return array.getValue(index.value().getAsInt());
-				return FloatValue.UNKNOWN;
-			case LALOAD:
-				if (value1 instanceof ArrayValue array && value2 instanceof IntValue index && index.value().isPresent())
-					return array.getValue(index.value().getAsInt());
-				return LongValue.UNKNOWN;
-			case DALOAD:
-				if (value1 instanceof ArrayValue array && value2 instanceof IntValue index && index.value().isPresent())
-					return array.getValue(index.value().getAsInt());
-				return DoubleValue.UNKNOWN;
-			case AALOAD:
-				if (value1 instanceof ArrayValue array && value2 instanceof IntValue index && index.value().isPresent())
-					return array.getValue(index.value().getAsInt());
-				return ObjectValue.VAL_OBJECT_MAYBE_NULL;
+			case IALOAD, BALOAD, CALOAD, SALOAD, FALOAD, LALOAD, DALOAD, AALOAD:
+				return arrayLoad(insn, value1, value2);
 			case IADD:
 				if (value1 instanceof IntValue i1 && value2 instanceof IntValue i2) return i1.add(i2);
 				return IntValue.UNKNOWN;
@@ -521,14 +544,70 @@ public class ReInterpreter extends Interpreter<ReValue> implements Opcodes {
 		}
 	}
 
+	@Nonnull
+	private static ReValue arrayLoad(@Nonnull AbstractInsnNode instruction, @Nonnull ReValue arrayValue,
+	                                 @Nonnull ReValue indexValue) {
+		// Prepare fallback value for array op.
+		int opcode = instruction.getOpcode();
+		ReValue unknown = switch (opcode) {
+			case IALOAD, BALOAD, CALOAD, SALOAD -> IntValue.UNKNOWN;
+			case FALOAD -> FloatValue.UNKNOWN;
+			case LALOAD -> LongValue.UNKNOWN;
+			case DALOAD -> DoubleValue.UNKNOWN;
+			case AALOAD -> ObjectValue.VAL_OBJECT_MAYBE_NULL;
+			default -> throw new IllegalArgumentException("Not an array load opcode: " + opcode);
+		};
+
+		// Need to know the index value to determine the element value.
+		if (!(indexValue instanceof IntValue index) || index.value().isEmpty())
+			return unknown;
+
+		// Check if the value is an array type. If so we can just check the value at the index.
+		int indexValueInt = index.value().getAsInt();
+		if (arrayValue instanceof ArrayValue array) {
+			ReValue element = array.getValue(indexValueInt);
+			return element == null ? unknown : element;
+		}
+
+		// Check if we have an instanced array value. Same idea but with a bit of extra ceremony.
+		Object realArray = getInstancedArray(arrayValue);
+		if (realArray == null)
+			return unknown;
+
+		// Sanity check index.
+		int length = Array.getLength(realArray);
+		if (indexValueInt < 0 || indexValueInt >= length)
+			return unknown;
+
+		// Get the value out of the instanced array and wrap it in a ReValue.
+		Type componentType = Type.getType(realArray.getClass()).getElementType();
+		return getInstancedArrayElement(componentType, Array.get(realArray, indexValueInt), unknown);
+	}
+
 	@Override
 	public ReValue ternaryOperation(@Nonnull AbstractInsnNode insn, @Nonnull ReValue value1, @Nonnull ReValue value2, @Nonnull ReValue value3) {
 		// This method covers the following instructions:
 		//  IASTORE, LASTORE, FASTORE, DASTORE, AASTORE, BASTORE, CASTORE, SASTORE
 		// It will always be an array-store operation.
 		// NOTE: Load operations are handled in 'binaryOperation'
-		if (value1 instanceof ArrayValue array && value2 instanceof IntValue index && index.value().isPresent())
-			return array.setValue(index.value().getAsInt(), value3);
+		if (value2 instanceof IntValue index && index.value().isPresent()) {
+			// Base case for known array values.
+			int indexValue = index.value().getAsInt();
+			if (value1 instanceof ArrayValue array)
+				return array.setValue(indexValue, value3);
+
+			// Alternate case for instanced array values.
+			// We can try to set the value in the backing array.
+			Object realArray = getInstancedArray(value1);
+			if (realArray != null && indexValue >= 0 && indexValue < Array.getLength(realArray)) {
+				try {
+					Type componentType = Type.getType(realArray.getClass()).getElementType();
+					Array.set(realArray, indexValue, getInstancedArrayElement(componentType, value3));
+				} catch (Throwable t) {
+					logger.debugging(l -> l.warn("Failed to set value in instanced array", t));
+				}
+			}
+		}
 		return value1;
 	}
 
@@ -615,10 +694,14 @@ public class ReInterpreter extends Interpreter<ReValue> implements Opcodes {
 			return UninitializedValue.UNINITIALIZED_VALUE;
 
 		// Special case for the type of the "null" literal.
-		if (value1 instanceof ObjectValue ov1 && ov1.isNull())
-			return value2;
-		if (value2 instanceof ObjectValue ov2 && ov2.isNull())
-			return value1;
+		//
+		// A null reference can take the other reference's type, but two typed nulls still need
+		// their types merged. Returning either operand for that case makes the result depend on
+		// work-list order, so cyclic control flow can keep changing a frame forever.
+		boolean value1IsNull = value1 instanceof ObjectValue ov1 && ov1.isNull();
+		boolean value2IsNull = value2 instanceof ObjectValue ov2 && ov2.isNull();
+		if (value1IsNull != value2IsNull)
+			return value1IsNull ? value2 : value1;
 
 		// Convert type1 to its element type and array dimension. Arrays of primitive values are seen as
 		// Object arrays with one dimension less. Hence, the element type is always of Type.OBJECT sort.
@@ -698,9 +781,159 @@ public class ReInterpreter extends Interpreter<ReValue> implements Opcodes {
 		return vertex.getValue().hasInterfaceModifier();
 	}
 
-	private boolean isAssignableFrom(@Nonnull Type type1, @Nonnull Type type2) {
-		String name1 = type1.getInternalName();
-		String name2 = type2.getInternalName();
-		return inheritanceGraph.isAssignableFrom(name1, name2);
+	/**
+	 * Checks assignability for object and array types using the backing inheritance graph.
+	 *
+	 * @param parent
+	 * 		Expected parent type.
+	 * @param child
+	 * 		Actual child type.
+	 *
+	 * @return {@code true} when {@code parent} can be assigned from {@code child}.
+	 */
+	public boolean isAssignableFrom(@Nonnull Type parent, @Nonnull Type child) {
+		if (parent.equals(child))
+			return true;
+
+		// Check for primitive types and void, which are not assignable to anything.
+		int parentSort = parent.getSort();
+		int childSort = child.getSort();
+		if (Types.isPrimitive(parent) || Types.isPrimitive(child) || parentSort == Type.VOID || childSort == Type.VOID)
+			return false;
+
+		// For arrays, we need to check the component types recursively.
+		// The JVM allows Object to be assigned from any array type, but not vice versa.
+		if (parentSort == Type.ARRAY || childSort == Type.ARRAY) {
+			if (parentSort == Type.OBJECT && childSort == Type.ARRAY)
+				return Types.isArraySuperType(parent.getInternalName());
+			if (parentSort != Type.ARRAY || childSort != Type.ARRAY)
+				return false;
+			Type parentComponent = parent.getElementType();
+			Type childComponent = child.getElementType();
+			if (Types.isPrimitive(parentComponent) || Types.isPrimitive(childComponent))
+				return parentComponent.equals(childComponent);
+			return isAssignableFrom(parentComponent, childComponent);
+		}
+
+		// If the types are not arrays, they must be objects to be assignable.
+		if (parentSort != Type.OBJECT || childSort != Type.OBJECT)
+			return false;
+
+		// Check the inheritance graph for assignability of object types.
+		return inheritanceGraph.isAssignableFrom(parent.getInternalName(), child.getInternalName());
+	}
+
+	/**
+	 * @param value
+	 * 		Value that may wrap a host array.
+	 *
+	 * @return Host array backing the value, or {@code null} when the backing array is unavailable.
+	 */
+	@Nullable
+	private static Object getInstancedArray(@Nonnull ReValue value) {
+		if (!(value instanceof InstancedObjectValue<?> instanced) || instanced.type().getSort() != Type.ARRAY)
+			return null;
+		Object realInstance = instanced.getRealInstance();
+		return realInstance != null && realInstance.getClass().isArray() ? realInstance : null;
+	}
+
+	/**
+	 * @param componentType
+	 * 		Array component type.
+	 * @param element
+	 * 		Instanced array element. Can be {@code null} for {@code null} elements.
+	 * @param unknown
+	 * 		Fallback value for unsupported instanced elements.
+	 *
+	 * @return Mapped evaluator element, or {@code unknown} when it cannot be represented.
+	 */
+	@Nonnull
+	private static ReValue getInstancedArrayElement(@Nonnull Type componentType, @Nullable Object element, @Nonnull ReValue unknown) {
+		// Map null elements to null values.
+		if (element == null) {
+			try {
+				ReValue mapped = ReValue.ofType(componentType, Nullness.NULL);
+				return mapped == null ? unknown : mapped;
+			} catch (IllegalValueException ex) {
+				return unknown;
+			}
+		}
+
+		try {
+			// Unbox primitive elements to their corresponding evaluator values.
+			if (componentType.getSort() != Type.OBJECT && componentType.getSort() != Type.ARRAY)
+				return ReValue.ofConstant(element);
+
+			// Wrap and ummap to create an evaluator value for object elements.
+			// Some types like 'String' have their own special case handling.
+			return new InstancedObjectValue<>(element).unmap();
+		} catch (Throwable ignored) {
+			return unknown;
+		}
+	}
+
+	/**
+	 * @param componentType
+	 * 		Array component type.
+	 * @param value
+	 * 		Evaluator value to store.
+	 *
+	 * @return Host instance representation of the value.
+	 *
+	 * @throws IllegalArgumentException
+	 * 		When the evaluator value cannot be represented in the host array.
+	 */
+	@Nullable
+	private static Object getInstancedArrayElement(@Nonnull Type componentType, @Nonnull ReValue value) {
+		// Map null values to null elements.
+		if (value instanceof ObjectValue object && object.isNull()) {
+			if (componentType.getSort() == Type.OBJECT || componentType.getSort() == Type.ARRAY)
+				return null;
+			throw new IllegalArgumentException("Null stored in primitive array");
+		}
+
+		// Map known values to their corresponding host representation.
+		return switch (componentType.getSort()) {
+			case Type.BOOLEAN -> {
+				if (!(value instanceof IntValue intValue) || intValue.value().isEmpty())
+					throw new IllegalArgumentException("Unknown boolean array value");
+				yield intValue.value().getAsInt() != 0;
+			}
+			case Type.CHAR -> (char) knownInt(value);
+			case Type.BYTE -> (byte) knownInt(value);
+			case Type.SHORT -> (short) knownInt(value);
+			case Type.INT -> knownInt(value);
+			case Type.FLOAT -> {
+				if (!(value instanceof FloatValue floatValue) || floatValue.value().isEmpty())
+					throw new IllegalArgumentException("Unknown float array value");
+				yield (float) floatValue.value().getAsDouble();
+			}
+			case Type.LONG -> {
+				if (!(value instanceof LongValue longValue) || longValue.value().isEmpty())
+					throw new IllegalArgumentException("Unknown long array value");
+				yield longValue.value().getAsLong();
+			}
+			case Type.DOUBLE -> {
+				if (!(value instanceof DoubleValue doubleValue) || doubleValue.value().isEmpty())
+					throw new IllegalArgumentException("Unknown double array value");
+				yield doubleValue.value().getAsDouble();
+			}
+			case Type.OBJECT, Type.ARRAY -> {
+				if (value instanceof StringValue stringValue)
+					yield stringValue.getText().orElseThrow(() -> new IllegalArgumentException("Unknown string array value"));
+				if (value instanceof ObjectValueBoxImpl<?> box && box.hasKnownValue())
+					yield box.unbox();
+				if (value instanceof InstancedObjectValue<?> instanced && instanced.getRealInstance() != null)
+					yield instanced.getRealInstance();
+				throw new IllegalArgumentException("Unsupported object array value");
+			}
+			default -> throw new IllegalArgumentException("Unsupported array component type: " + componentType);
+		};
+	}
+
+	private static int knownInt(@Nonnull ReValue value) {
+		if (value instanceof IntValue intValue && intValue.value().isPresent())
+			return intValue.value().getAsInt();
+		throw new IllegalArgumentException("Unknown integer array value");
 	}
 }

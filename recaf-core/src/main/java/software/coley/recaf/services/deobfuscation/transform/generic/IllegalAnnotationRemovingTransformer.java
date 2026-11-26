@@ -20,6 +20,8 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
  */
 @Dependent
 public class IllegalAnnotationRemovingTransformer implements JvmClassTransformer {
+	public static final String IDENTIFIER = "cleanup.illegalanno";
+
 	@Override
 	public void transform(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace,
 	                      @Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle,
@@ -38,8 +40,26 @@ public class IllegalAnnotationRemovingTransformer implements JvmClassTransformer
 
 	@Nonnull
 	@Override
-	public String name() {
-		return "Illegal annotation removal";
+	public String identifier() {
+		return IDENTIFIER;
+	}
+
+	@Nonnull
+	@Override
+	public String beforeExample() {
+		return """
+				@Bogus(void value = "what?") // Annotation with 'void' element type is illegal.
+				class Example {}
+				""";
+	}
+
+	@Nonnull
+	@Override
+	public String afterExample() {
+		return """
+				// Any invalid annotations are removed.
+				class Example {}
+				""";
 	}
 
 	@Override

@@ -9,14 +9,7 @@ import java.util.Collection;
  *
  * @author Matt Coley
  */
-public interface MultiNumberMatcher {
-	/**
-	 * @param keys
-	 * 		Target values to match against.
-	 * @param target
-	 * 		Value to check.
-	 *
-	 * @return {@code true} when the target value matches the key value(s).
-	 */
-	boolean test(@Nonnull Collection<Number> keys, @Nonnull Number target);
+public interface MultiNumberMatcher extends BiMatcher<Collection<Number>, Number> {
+	@Override
+	boolean matches(@Nonnull Collection<Number> keys, @Nonnull Number target);
 }

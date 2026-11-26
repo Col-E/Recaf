@@ -73,7 +73,7 @@ public class MappingGenerator implements Service {
 		if (workspace != null)
 			mappings.enableClassLookup(workspace);
 		SortedMap<String, ClassInfo> classMap = new TreeMap<>();
-		resource.jvmAllClassBundleStreamRecursive()
+		resource.classBundleStreamRecursive()
 				.flatMap(Bundle::stream)
 				.forEach(c -> classMap.putIfAbsent(c.getName(), c));
 

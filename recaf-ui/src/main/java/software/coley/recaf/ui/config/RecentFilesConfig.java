@@ -58,28 +58,111 @@ public class RecentFilesConfig extends BasicConfigContainer {
 	 * 		Workspace to add to {@link #getRecentWorkspaces()}.
 	 */
 	public void addWorkspace(@Nonnull Workspace workspace) {
-		// Only allow serializable workspaces
-		WorkspaceResource primaryResource = workspace.getPrimaryResource();
-		if (!ResourceModel.isSupported(primaryResource))
+		WorkspaceModel source = workspaceModelFor(workspace);
+		if (source == null)
 			return;
 
-		// Wrap to model
-		ResourceModel primary = ResourceModel.from(primaryResource);
+		// Update the list of recent workspaces, removing any existing entry for the same workspace.
+		List<WorkspaceModel> updatedList = new ArrayList<>(recentWorkspaces.getValue());
+		String exportPath = null;
+		for (int i = 0; i < updatedList.size(); i++) {
+			WorkspaceModel existing = updatedList.get(i);
+			if (existing.equalModels(source)) {
+				// This model represents the same workspace, so preserve the export path if it exists.
+				exportPath = existing.exportPath();
+				updatedList.remove(i);
+				break;
+			}
+		}
+		if (maxRecentWorkspaces.getValue() <= 0)
+			return;
+
+		// Prune the list to make room for the new workspace.
+		while (updatedList.size() >= maxRecentWorkspaces.getValue())
+			updatedList.removeLast();
+
+		// Add the workspace, preserving the export path if it was found in a prior entry.
+		updatedList.addFirst(new WorkspaceModel(source.primary(), source.libraries(), exportPath));
+		recentWorkspaces.setValue(updatedList);
+	}
+
+	/**
+	 * Record the successful export path for a workspace.
+	 *
+	 * @param workspace
+	 * 		Workspace exported.
+	 * @param path
+	 * 		Successful output path.
+	 */
+	public void recordWorkspaceExportPath(@Nonnull Workspace workspace, @Nonnull Path path) {
+		WorkspaceModel source = workspaceModelFor(workspace);
+		if (source == null)
+			return;
+
+		// Update the list of recent workspaces with the new export path.
+		String normalizedPath = path.toAbsolutePath().normalize().toString();
+		List<WorkspaceModel> updatedList = new ArrayList<>(recentWorkspaces.getValue());
+		for (int i = 0; i < updatedList.size(); i++) {
+			WorkspaceModel existing = updatedList.get(i);
+			if (existing.equalModels(source)) {
+				// This model represents the same workspace, so update it with the new export path.
+				updatedList.set(i, new WorkspaceModel(source.primary(), source.libraries(), normalizedPath));
+				recentWorkspaces.setValue(updatedList);
+				return;
+			}
+		}
+		if (maxRecentWorkspaces.getValue() <= 0)
+			return;
+
+		// Prune the list to make room for the new workspace.
+		while (updatedList.size() >= maxRecentWorkspaces.getValue())
+			updatedList.removeLast();
+
+		// Add the workspace with the export path, as it was not already in the list.
+		updatedList.addFirst(new WorkspaceModel(source.primary(), source.libraries(), normalizedPath));
+		recentWorkspaces.setValue(updatedList);
+	}
+
+	/**
+	 * @param workspace
+	 * 		Workspace to find an export path for.
+	 *
+	 * @return The latest successful export target path, or {@code null} when the workspace has none
+	 * or the workspace cannot be represented as a recent workspace.
+	 */
+	@Nullable
+	public Path getWorkspaceExportPath(@Nonnull Workspace workspace) {
+		WorkspaceModel source = workspaceModelFor(workspace);
+		if (source == null)
+			return null;
+		for (WorkspaceModel model : recentWorkspaces.getValue())
+			if (model.equalModels(source) && model.exportPath() != null)
+				return Paths.get(model.exportPath());
+		return null;
+	}
+
+	/**
+	 * @param workspace
+	 * 		Workspace to convert to a recent-workspace model.
+	 *
+	 * @return Model of the workspace, or {@code null} when the workspace cannot be modeled.
+	 */
+	@Nullable
+	private WorkspaceModel workspaceModelFor(@Nonnull Workspace workspace) {
+		// Primary resource must be file or directory based, as other types of resources cannot be represented.
+		WorkspaceResource primaryResource = workspace.getPrimaryResource();
+		if (!ResourceModel.isSupported(primaryResource))
+			return null;
+
+		// Collect supporting resources, filtering out any that cannot be represented.
+		// We're going to assume the non-representable resources are generated contents that don't need to be tracked.
 		List<ResourceModel> libraries = workspace.getSupportingResources().stream()
 				.map(ResourceModel::from)
 				.filter(Objects::nonNull)
 				.toList();
-		WorkspaceModel workspaceModel = new WorkspaceModel(primary, libraries);
 
-		// Update recent workspace list, where new items are inserted at the beginning.
-		// Old items are removed near the end.
-		List<WorkspaceModel> updatedList = new ArrayList<>(recentWorkspaces.getValue());
-		if (recentWorkspaces.contains(workspaceModel))
-			updatedList.remove(workspaceModel);
-		while (updatedList.size() >= maxRecentWorkspaces.getValue())
-			updatedList.remove(updatedList.size() - 1);
-		updatedList.add(0, workspaceModel);
-		recentWorkspaces.setValue(updatedList);
+		ResourceModel primary = ResourceModel.from(primaryResource);
+		return new WorkspaceModel(primary, libraries, null);
 	}
 
 	/**
@@ -143,11 +226,15 @@ public class RecentFilesConfig extends BasicConfigContainer {
 	 * 		Primary resource of the workspace.
 	 * @param libraries
 	 * 		Workspace supporting libraries.
+	 * @param exportPath
+	 * 		Latest successful output path, or {@code null} when none was recorded.
 	 *
 	 * @author Matt Coley
 	 * @see ResourceModel
 	 */
-	public record WorkspaceModel(ResourceModel primary, List<ResourceModel> libraries) {
+	public record WorkspaceModel(@Nonnull ResourceModel primary,
+	                             @Nonnull List<ResourceModel> libraries,
+	                             @Nullable String exportPath) {
 		/**
 		 * @return {@code true} when the files still exist at their expected locations.
 		 */
@@ -161,6 +248,16 @@ public class RecentFilesConfig extends BasicConfigContainer {
 					return false;
 			}
 			return true;
+		}
+
+		/**
+		 * @param other
+		 * 		Other workspace model to compare against.
+		 *
+		 * @return {@code true} when the two models represent the same workspace resources, ignoring the export path.
+		 */
+		private boolean equalModels(@Nonnull WorkspaceModel other) {
+			return primary().equals(other.primary()) && libraries().equals(other.libraries());
 		}
 	}
 
@@ -181,20 +278,20 @@ public class RecentFilesConfig extends BasicConfigContainer {
 		 */
 		@Nullable
 		public static ResourceModel from(@Nonnull WorkspaceResource resource) {
-			if (resource instanceof WorkspaceFileResource fileResource) {
-				FileInfo fileInfo = fileResource.getFileInfo();
-				Path inputPath = InputFilePathProperty.get(fileInfo);
-				if (inputPath != null)
-					return new ResourceModel(StringUtil.pathToAbsoluteString(inputPath));
-				return new ResourceModel(fileInfo.getName());
-			} else if (resource instanceof WorkspaceDirectoryResource fileResource) {
-				return new ResourceModel(StringUtil.pathToAbsoluteString(fileResource.getDirectoryPath()));
-			} else if (resource instanceof GeneratedPhantomWorkspaceResource) {
-				// Intentionally left out
-				return null;
-			}
-			throw new UnsupportedOperationException("Cannot serialize content source of type: " +
-					resource.getClass().getName());
+			return switch (resource) {
+				case WorkspaceFileResource fileResource -> {
+					FileInfo fileInfo = fileResource.getFileInfo();
+					Path inputPath = InputFilePathProperty.get(fileInfo);
+					if (inputPath != null)
+						yield new ResourceModel(StringUtil.pathToAbsoluteString(inputPath));
+					yield new ResourceModel(fileInfo.getName());
+				}
+				case WorkspaceDirectoryResource fileResource ->
+						new ResourceModel(StringUtil.pathToAbsoluteString(fileResource.getDirectoryPath()));
+				case GeneratedPhantomWorkspaceResource generatedPhantomWorkspaceResource -> null;
+				default ->
+						throw new UnsupportedOperationException("Cannot serialize content source of type: " + resource.getClass().getName());
+			};
 		}
 
 		/**

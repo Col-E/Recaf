@@ -11,7 +11,9 @@ import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.tutorial.TutorialWorkspaceBuilder;
 import software.coley.recaf.services.window.WindowManager;
 import software.coley.recaf.services.workspace.WorkspaceManager;
+import software.coley.recaf.ui.config.KeybindingConfig;
 import software.coley.recaf.ui.control.FontIconView;
+import software.coley.recaf.ui.window.ConfigWindow;
 import software.coley.recaf.util.DesktopUtil;
 import software.coley.recaf.util.Icons;
 import software.coley.recaf.util.threading.ThreadUtil;
@@ -32,20 +34,24 @@ public class HelpMenu extends Menu {
 	private final TutorialWorkspaceBuilder tutorialWorkspaceBuilder;
 	private final WorkspaceManager workspaceManager;
 	private final WindowManager windowManager;
+	private final KeybindingConfig keybindingConfig;
 
 	@Inject
 	public HelpMenu(@Nonnull WindowManager windowManager,
 	                @Nonnull WorkspaceManager workspaceManager,
-	                @Nonnull TutorialWorkspaceBuilder tutorialWorkspaceBuilder) {
-		this.tutorialWorkspaceBuilder =tutorialWorkspaceBuilder;
+	                @Nonnull TutorialWorkspaceBuilder tutorialWorkspaceBuilder,
+	                @Nonnull KeybindingConfig keybindingConfig) {
+		this.tutorialWorkspaceBuilder = tutorialWorkspaceBuilder;
 		this.workspaceManager = workspaceManager;
 		this.windowManager = windowManager;
+		this.keybindingConfig = keybindingConfig;
 
 		textProperty().bind(getBinding("menu.help"));
 		setGraphic(new FontIconView(CarbonIcons.HELP));
 
 		getItems().add(action("menu.help.sysinfo", CarbonIcons.INFORMATION, this::openSystem));
 		getItems().add(action("menu.help.tutorial", CarbonIcons.PEDESTRIAN_CHILD, this::openTutorial));
+		getItems().add(action("menu.help.shortcuts", CarbonIcons.KEYBOARD, this::openKeyboardShortcuts));
 		getItems().add(action("menu.help.docs", CarbonIcons.NOTEBOOK_REFERENCE, this::openDocumentation));
 		getItems().add(action("menu.help.docsdev", CarbonIcons.NOTEBOOK_REFERENCE, this::openDeveloperDocumentation));
 		getItems().add(action("menu.help.github", CarbonIcons.LOGO_GITHUB, this::openGithub));
@@ -67,6 +73,16 @@ public class HelpMenu extends Menu {
 		Stage systemWindow = windowManager.getSystemInfoWindow();
 		systemWindow.show();
 		systemWindow.requestFocus();
+	}
+
+	/**
+	 * Display the keyboard shortcuts page in the config window.
+	 */
+	private void openKeyboardShortcuts() {
+		ConfigWindow configWindow = windowManager.getConfigWindow();
+		configWindow.selectPage(keybindingConfig);
+		configWindow.show();
+		configWindow.requestFocus();
 	}
 
 	/**

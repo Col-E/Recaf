@@ -155,11 +155,11 @@ public class DecompilerManager implements Service {
 			// Decompile and cache the results.
 			DecompileResult result = decompiler.decompile(workspace, filteredClass);
 			String decompilation = result.getText();
-			if (decompilation != null && !outputTextFilters.isEmpty()) {
-				// Apply output filters and re-wrap the result with the new output text.
+			if (result.getType() == DecompileResult.ResultType.SUCCESS && decompilation != null && !outputTextFilters.isEmpty()) {
+				// Apply output filters and preserve the result metadata when updating the text.
 				for (OutputTextFilter textFilter : outputTextFilters)
 					decompilation = textFilter.filter(workspace, classInfo, decompilation);
-				result = new DecompileResult(decompilation, result.getConfigHash());
+				result = result.withText(decompilation);
 			}
 			if (doCache)
 				CachedDecompileProperty.set(classInfo, decompiler, result);
@@ -343,10 +343,10 @@ public class DecompilerManager implements Service {
 				// In most cases we want to pass the class-reader along to the class-writer.
 				// This will allow some operations to be sped up internally by ASM.
 				//
-				// However, we can't do this is we're filtering debug information since it blanket copies all
-				// debug attribute information without checking what the class-reader flags are.
-				// Thus, when we're pruning debug info, we should pass 'null'.
-				ClassReader backing = config.getFilterDebug().getValue() ? null : reader.get();
+				// However, we can't do this if we're filtering debug information since it blanket copies all
+				// debug attribute information without checking what the class-reader flags are. We also need to
+				// avoid it when filtering long exceptions for the same reason.
+				ClassReader backing = config.getFilterDebug().getValue() || config.getFilterLongExceptions().getValue() ? null : reader.get();
 				return new ClassWriter(backing, 0);
 			});
 			ClassVisitor cv = null;

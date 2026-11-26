@@ -20,6 +20,8 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
  */
 @Dependent
 public class SourceNameRestorationTransformer implements JvmClassTransformer {
+	public static final String IDENTIFIER = "restoration.sourcename";
+
 	@Override
 	public void transform(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace,
 	                      @Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle,
@@ -49,7 +51,24 @@ public class SourceNameRestorationTransformer implements JvmClassTransformer {
 
 	@Nonnull
 	@Override
-	public String name() {
-		return "Source name restoration";
+	public String identifier() {
+		return IDENTIFIER;
+	}
+
+	@Nonnull
+	@Override
+	public String beforeExample() {
+		return """
+				// SourceFile: "Example.java"
+				class A {}
+				""";
+	}
+
+	@Nonnull
+	@Override
+	public String afterExample() {
+		return """
+				class Example {}
+				""";
 	}
 }

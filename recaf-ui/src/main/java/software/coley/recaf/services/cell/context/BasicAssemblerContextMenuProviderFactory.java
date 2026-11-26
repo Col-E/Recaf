@@ -7,17 +7,23 @@ import jakarta.inject.Inject;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Menu;
 import me.darknet.assembler.ast.ASTElement;
+import me.darknet.assembler.ast.primitive.ASTArray;
 import me.darknet.assembler.ast.primitive.ASTIdentifier;
 import me.darknet.assembler.ast.primitive.ASTInstruction;
 import me.darknet.assembler.ast.primitive.ASTLabel;
+import me.darknet.assembler.ast.primitive.ASTNumber;
+import me.darknet.assembler.ast.primitive.ASTObject;
 import me.darknet.assembler.ast.specific.ASTMethod;
+import me.darknet.assembler.instructions.Instruction;
 import me.darknet.assembler.query.AssemblyQueries;
 import me.darknet.assembler.query.AssemblyUtils;
+import me.darknet.assembler.backend.dalvik.DalvikTargetContext;
+import me.darknet.assembler.target.TargetContext;
+import me.darknet.assembler.descriptor.Descriptors;
 import me.darknet.assembler.query.LabelQueryResult;
-import me.darknet.assembler.query.LabelReferenceKind;
-import me.darknet.assembler.query.LabelUsage;
+import me.darknet.assembler.query.MemberReference;
+import me.darknet.assembler.query.SwitchTarget;
 import me.darknet.assembler.query.VariableQueryResult;
-import me.darknet.assembler.query.VariableUsage;
 import me.darknet.assembler.query.resolution.ClassAnnotationResolution;
 import me.darknet.assembler.query.resolution.ClassExtends;
 import me.darknet.assembler.query.resolution.ClassImplements;
@@ -34,7 +40,7 @@ import me.darknet.assembler.query.resolution.Resolution;
 import me.darknet.assembler.query.resolution.TypeReferenceResolution;
 import me.darknet.assembler.query.resolution.VariableDeclarationResolution;
 import me.darknet.assembler.query.resolution.VariableReferenceResolution;
-import me.darknet.assembler.util.JvmOpcodes;
+import me.darknet.assembler.backend.jvm.JvmTargetContext;
 import me.darknet.assembler.util.Location;
 import me.darknet.assembler.util.Range;
 import org.fxmisc.richtext.CodeArea;
@@ -44,6 +50,7 @@ import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.path.AssemblerPathData;
+import software.coley.recaf.path.ClassMemberPathNode;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.IncompletePathException;
 import software.coley.recaf.services.cell.icon.IconProviderService;
@@ -52,29 +59,26 @@ import software.coley.recaf.services.navigation.Actions;
 import software.coley.recaf.ui.control.ActionMenuItem;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.control.richtext.Editor;
+import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.SVG;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.ClassBundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
+import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
 import static org.kordamp.ikonli.carbonicons.CarbonIcons.ARROW_RIGHT;
 import static org.kordamp.ikonli.carbonicons.CarbonIcons.HEALTH_CROSS;
 import static org.kordamp.ikonli.carbonicons.CarbonIcons.LIST_BOXES;
-import static org.objectweb.asm.Opcodes.CHECKCAST;
-import static org.objectweb.asm.Opcodes.IFEQ;
-import static org.objectweb.asm.Opcodes.INSTANCEOF;
-import static org.objectweb.asm.Opcodes.JSR;
-import static org.objectweb.asm.Opcodes.NEW;
-import static software.coley.collections.Unchecked.runnable;
-import static software.coley.recaf.util.Menus.action;
-import static software.coley.recaf.util.Menus.menu;
+import static software.coley.recaf.util.Menus.*;
 
 /**
  * Basic implementation for {@link AssemblerContextMenuProviderFactory}.
@@ -105,8 +109,21 @@ public class BasicAssemblerContextMenuProviderFactory extends AbstractContextMen
 			ContextMenu menu = new ContextMenu();
 			Resolution resolution = assemblerData.resolution();
 			Editor editor = assemblerData.editor();
-			ResolutionMenuFiller<Resolution> filler = fillers.get(resolution.getClass());
-			if (filler != null) filler.accept(this, menu, editor, workspace, resolution);
+			TargetContext targetContext = declaringClass.isAndroidClass()
+					? DalvikTargetContext.INSTANCE
+					: JvmTargetContext.INSTANCE;
+			if (resolution instanceof InstructionResolution instructionResolution) {
+				addInstructionContextMenu(this, menu, editor, workspace, targetContext, instructionResolution);
+			} else if (resolution instanceof VariableDeclarationResolution declaration) {
+				addUsageMenu(menu, editor, variableUsageTargets(declaration.method(), targetContext, declaration.variable().identity().name()));
+			} else if (resolution instanceof VariableReferenceResolution reference) {
+				addUsageMenu(menu, editor, variableUsageTargets(reference.method(), targetContext, reference.usage().name()));
+			} else if (resolution instanceof LabelDeclarationResolution declaration) {
+				addUsageMenu(menu, editor, labelUsageTargets(declaration.method(), targetContext, declaration.label().name()));
+			} else {
+				ResolutionMenuFiller<Resolution> filler = fillers.get(resolution.getClass());
+				if (filler != null) filler.accept(this, menu, editor, workspace, resolution);
+			}
 			if (menu.getItems().isEmpty()) return null;
 			return menu;
 		};
@@ -194,43 +211,6 @@ public class BasicAssemblerContextMenuProviderFactory extends AbstractContextMen
 		register(MethodResolution.class, (provider, menu, editor, workspace, resolution) -> {
 			// No items
 		});
-		register(InstructionResolution.class, (provider, menu, editor, workspace, resolution) -> {
-			// TODO:
-			//  - Different actions for different instructions (only differentiable by instruction name string atm)
-			//  - Convert integer representations (Hex, binary, decimal)
-			//  - Goto declaration for type/field/method references
-			//  - Goto declaration for jump instructions (with case hint)
-			ASTInstruction instruction = resolution.instruction();
-			ASTIdentifier identifier = instruction.identifier();
-			if (identifier != null && identifier.content() != null) {
-				int opcode = JvmOpcodes.opcode(identifier.content());
-				if (opcode >= IFEQ && opcode <= JSR && !instruction.arguments().isEmpty()) {
-					String labelName = instruction.arguments().getLast().content();
-					if (labelName != null)
-						menu.getItems().add(action("menu.goto.label", ARROW_RIGHT, () ->
-								gotoLabelDeclaration(resolution.method(), editor.getCodeArea(), labelName)));
-				} else if (opcode == NEW || opcode == CHECKCAST || opcode == INSTANCEOF) {
-					if (instruction.arguments().getLast() instanceof ASTIdentifier typeIdentifier) {
-						String typeName = typeIdentifier.content();
-						if (typeName != null) {
-							ClassPathNode typePath = workspace.findClass(typeName);
-							if (typePath != null) {
-								// TODO: We want to show the type that is targeted with this, similar to how we have in
-								//  other context menus. This code is also messy and there's probably some abstractions
-								//  we can make to reduce the indentation hell.
-								menu.getItems().add(action("menu.goto.class", ARROW_RIGHT, runnable(() -> provider.actions.gotoDeclaration(typePath))));
-							}
-						}
-					}
-				}
-			}
-		});
-		register(VariableDeclarationResolution.class, (provider, menu, editor, workspace, resolution) ->
-				addUsageMenu(menu, editor, variableUsageTargets(resolution.method(), resolution.variable().identity().name())));
-		register(VariableReferenceResolution.class, (provider, menu, editor, workspace, resolution) ->
-				addUsageMenu(menu, editor, variableUsageTargets(resolution.method(), resolution.usage().name())));
-		register(LabelDeclarationResolution.class, (provider, menu, editor, workspace, resolution) ->
-				addUsageMenu(menu, editor, labelUsageTargets(resolution.method(), resolution.label().name())));
 		register(LabelReferenceResolution.class, (provider, menu, editor, workspace, resolution) -> {
 			String target = resolution.reference().content();
 			if (target != null)
@@ -251,9 +231,150 @@ public class BasicAssemblerContextMenuProviderFactory extends AbstractContextMen
 		});
 	}
 
+	private static void addInstructionContextMenu(@Nonnull AbstractContextMenuProviderFactory provider,
+	                                              @Nonnull ContextMenu menu,
+	                                              @Nonnull Editor editor,
+	                                              @Nonnull Workspace workspace,
+	                                              @Nonnull TargetContext targetContext,
+	                                              @Nonnull InstructionResolution resolution) {
+		ASTInstruction instruction = resolution.instruction();
+		ASTIdentifier identifier = instruction.identifier();
+		String instructionName = identifier == null ? null : identifier.content();
+		if (instructionName == null)
+			return;
+
+		CodeArea area = editor.getCodeArea();
+		ASTElement selectedElement = instruction.pick(area.getCaretPosition());
+		addIntegerConversionActions(menu, area, selectedElement);
+		addMemberReferenceAction(provider, menu, workspace, targetContext, instruction);
+		addTypeReferenceAction(provider, menu, workspace, targetContext, instructionName, instruction);
+		addFlowLabelAction(menu, area, resolution.method(), targetContext, instructionName, instruction);
+		addSwitchTargetActions(menu, area, resolution.method(), targetContext, instruction, selectedElement);
+	}
+
+	private static void addFlowLabelAction(@Nonnull ContextMenu menu, @Nonnull CodeArea area, @Nonnull ASTMethod method,
+	                                       @Nonnull TargetContext targetContext, @Nonnull String instructionName,
+	                                       @Nonnull ASTInstruction instruction) {
+		if (!AssemblyUtils.isBranchInstruction(targetContext, instructionName) || instruction.arguments().isEmpty())
+			return;
+
+		String labelName = instruction.arguments().getLast().content();
+		if (labelName != null) {
+			menu.getItems().add(action("menu.goto.label", ARROW_RIGHT, () ->
+					gotoLabelDeclaration(method, area, labelName)));
+		}
+	}
+
+	private static void addTypeReferenceAction(@Nonnull AbstractContextMenuProviderFactory provider, @Nonnull ContextMenu menu,
+	                                           @Nonnull Workspace workspace, @Nonnull TargetContext targetContext,
+	                                           @Nonnull String instructionName, @Nonnull ASTInstruction instruction) {
+		if (!AssemblyUtils.isTypeReferenceInstruction(targetContext, instructionName))
+			return;
+
+		Instruction<?> definition = targetContext.instructions().get(instructionName);
+		if (definition == null)
+			return;
+		int argumentIndex = definition.typeReferenceOperandIndex();
+		if (argumentIndex < 0 || argumentIndex >= instruction.arguments().size())
+			return;
+
+		String typeName = Descriptors.internalName(instruction.arguments().get(argumentIndex).content());
+		if (typeName == null)
+			return;
+
+		ClassPathNode typePath = workspace.findClass(typeName);
+		ActionMenuItem gotoAction = action("menu.goto.class", ARROW_RIGHT, () -> {
+			try {
+				provider.actions.gotoDeclaration(Objects.requireNonNull(typePath));
+			} catch (IncompletePathException ex) {
+				logger.error("Cannot go to class due to incomplete path", ex);
+			}
+		});
+		if (typePath == null) gotoAction.setDisable(true);
+		menu.getItems().add(gotoAction);
+	}
+
+	private static void addMemberReferenceAction(@Nonnull AbstractContextMenuProviderFactory provider, @Nonnull ContextMenu menu,
+	                                             @Nonnull Workspace workspace, @Nonnull TargetContext targetContext,
+	                                             @Nonnull ASTInstruction instruction) {
+		// TODO: Fix "Go to method" for invoke-polymorphic.
+		if (instruction.identifier() != null && instruction.identifier().content().startsWith("invoke-polymorphic"))
+			return;
+
+		MemberReference memberReference = AssemblyUtils.resolveMemberReference(targetContext, instruction);
+		if (memberReference == null)
+			return;
+
+		ClassMemberPathNode memberPath = resolveMemberPath(workspace, memberReference);
+		String key = memberReference.isMethod() ? "menu.goto.method" : "menu.goto.field";
+		ActionMenuItem gotoAction = action(key, ARROW_RIGHT, () -> {
+			try {
+				provider.actions.gotoDeclaration(Objects.requireNonNull(memberPath));
+			} catch (IncompletePathException ex) {
+				logger.error("Cannot go to member due to incomplete path", ex);
+			}
+		});
+		if (memberPath == null) gotoAction.setDisable(true);
+		menu.getItems().add(gotoAction);
+	}
+
+	private static void addIntegerConversionActions(@Nonnull ContextMenu menu, @Nonnull CodeArea area,
+	                                                @Nullable ASTElement selectedElement) {
+		if (!(selectedElement instanceof ASTNumber number) || number.isFloatingPoint())
+			return;
+
+		String content = number.content();
+		Number value = number.number();
+		if (content == null || value == null)
+			return;
+
+		long longValue = value.longValue();
+		boolean wide = content.endsWith("L") || content.endsWith("l") || value instanceof Long;
+		int currentRadix = integerLiteralRadix(content);
+		if (currentRadix != 10)
+			menu.getItems().add(actionLiteral("Convert to decimal (%s)".formatted(formatIntegerLiteral(longValue, wide, 10)),
+					ARROW_RIGHT, () -> replaceAstText(area, number, formatIntegerLiteral(longValue, wide, 10))));
+		if (currentRadix != 16)
+			menu.getItems().add(actionLiteral("Convert to hex (%s)".formatted(formatIntegerLiteral(longValue, wide, 16)),
+					ARROW_RIGHT, () -> replaceAstText(area, number, formatIntegerLiteral(longValue, wide, 16))));
+		if (currentRadix != 2)
+			menu.getItems().add(actionLiteral("Convert to binary (%s)".formatted(formatIntegerLiteral(longValue, wide, 2)),
+					ARROW_RIGHT, () -> replaceAstText(area, number, formatIntegerLiteral(longValue, wide, 2))));
+	}
+
+	private static void addSwitchTargetActions(@Nonnull ContextMenu menu, @Nonnull CodeArea area, @Nonnull ASTMethod method,
+	                                           @Nonnull TargetContext targetContext, @Nonnull ASTInstruction instruction,
+	                                           @Nullable ASTElement selectedElement) {
+		List<MenuSwitchTarget> targets = AssemblyUtils.resolveSwitchTargets(targetContext, instruction).stream()
+				.map(target -> new MenuSwitchTarget(target, describeSwitchTarget(target)))
+				.toList();
+		if (targets.isEmpty())
+			return;
+
+		if (selectedElement != null) {
+			for (MenuSwitchTarget target : targets) {
+				if (target.matches(selectedElement)) {
+					menu.getItems().add(action("menu.goto.label", ARROW_RIGHT, () ->
+							gotoLabelDeclaration(method, area, target.labelName())));
+					break;
+				}
+			}
+		}
+
+		Menu switchMenu = new Menu();
+		switchMenu.textProperty().bind(Lang.getBinding("menu.goto.switch.title"));
+		switchMenu.setGraphic(new FontIconView(ARROW_RIGHT));
+		for (MenuSwitchTarget target : targets) {
+			switchMenu.getItems().add(actionLiteral(target.description(), ARROW_RIGHT, () ->
+					gotoLabelDeclaration(method, area, target.labelName())));
+		}
+		menu.getItems().add(switchMenu);
+	}
+
 	@Nonnull
-	private static List<UsageTarget> variableUsageTargets(@Nonnull ASTMethod method, @Nonnull String variableName) {
-		VariableQueryResult queryResult = AssemblyQueries.variables(method);
+	private static List<UsageTarget> variableUsageTargets(@Nonnull ASTMethod method, @Nonnull TargetContext targetContext,
+	                                                      @Nonnull String variableName) {
+		VariableQueryResult queryResult = AssemblyQueries.variables(method, targetContext);
 		return queryResult.usagesOf(variableName).stream()
 				.sorted(Comparator.comparing(usage -> usage.reference().location()))
 				.map(usage -> new UsageTarget(
@@ -272,8 +393,9 @@ public class BasicAssemblerContextMenuProviderFactory extends AbstractContextMen
 	}
 
 	@Nonnull
-	private static List<UsageTarget> labelUsageTargets(@Nonnull ASTMethod method, @Nonnull String labelName) {
-		LabelQueryResult queryResult = AssemblyQueries.labels(method);
+	private static List<UsageTarget> labelUsageTargets(@Nonnull ASTMethod method, @Nonnull TargetContext targetContext,
+	                                                   @Nonnull String labelName) {
+		LabelQueryResult queryResult = AssemblyQueries.labels(method, targetContext);
 		return queryResult.usagesOf(labelName).stream()
 				.sorted(Comparator.comparing(usage -> usage.reference().location()))
 				.map(usage -> new UsageTarget(
@@ -330,7 +452,81 @@ public class BasicAssemblerContextMenuProviderFactory extends AbstractContextMen
 			gotoAstElement(area, label);
 	}
 
+	private static void replaceAstText(@Nonnull CodeArea area, @Nonnull ASTElement element, @Nonnull String replacement) {
+		Range range = element.range();
+		area.replaceText(range.start(), range.end(), replacement);
+	}
+
+	@Nullable
+	static ClassMemberPathNode resolveMemberPath(@Nonnull Workspace workspace, @Nonnull MemberReference reference) {
+		ClassPathNode ownerPath = workspace.findClass(reference.owner());
+		return ownerPath == null ? null : ownerPath.child(reference.name(), reference.descriptor());
+	}
+
+	@Nonnull
+	private static String describeSwitchTarget(@Nonnull SwitchTarget target) {
+		return "default".equals(target.context())
+				? "Default -> " + target.labelName()
+				: "Case " + target.context() + " -> " + target.labelName();
+	}
+
+	private static int integerLiteralRadix(@Nonnull String content) {
+		int offset = content.startsWith("-") || content.startsWith("+") ? 1 : 0;
+		if (content.regionMatches(true, offset, "0x", 0, 2))
+			return 16;
+		if (content.regionMatches(true, offset, "0b", 0, 2))
+			return 2;
+		return 10;
+	}
+
+	@Nonnull
+	private static String formatIntegerLiteral(long value, boolean wide, int radix) {
+		BigInteger magnitude = BigInteger.valueOf(value).abs();
+		String sign = value < 0 ? "-" : "";
+		String text = switch (radix) {
+			case 16 -> sign + "0x" + magnitude.toString(16).toUpperCase(Locale.ROOT);
+			case 2 -> sign + "0b" + magnitude.toString(2);
+			default -> Long.toString(value);
+		};
+		return wide ? text + 'L' : text;
+	}
+
+	/**
+	 * A usage of a variable or label.
+	 *
+	 * @param description
+	 * 		Text to show in the menu for the usage.
+	 * @param element
+	 * 		Element that is the usage.
+	 * @param iconPath
+	 * 		Optional icon path for the usage type.
+	 */
 	private record UsageTarget(@Nonnull String description, @Nonnull ASTElement element, @Nullable String iconPath) {}
+
+	/**
+	 * A resolved switch branch paired with the text its menu item shows.
+	 *
+	 * @param target
+	 * 		Branch resolved by JASM.
+	 * @param description
+	 * 		Menu text for the branch.
+	 */
+	private record MenuSwitchTarget(@Nonnull SwitchTarget target, @Nonnull String description) {
+		@Nonnull
+		String labelName() {
+			return target.labelName();
+		}
+
+		@Nonnull
+		String context() {
+			return target.context();
+		}
+
+		private boolean matches(@Nonnull ASTElement element) {
+			return element == target.contextElement() || element == target.labelElement() ||
+					context().equals(element.content()) || labelName().equals(element.content());
+		}
+	}
 
 	/**
 	 * @param <R>

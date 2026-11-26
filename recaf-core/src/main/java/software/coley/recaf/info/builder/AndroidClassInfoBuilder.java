@@ -21,6 +21,7 @@ import me.darknet.dex.tree.definitions.constant.HandleConstant;
 import me.darknet.dex.tree.definitions.constant.IntConstant;
 import me.darknet.dex.tree.definitions.constant.LongConstant;
 import me.darknet.dex.tree.definitions.constant.MemberConstant;
+import me.darknet.dex.tree.definitions.constant.MethodTypeConstant;
 import me.darknet.dex.tree.definitions.constant.NullConstant;
 import me.darknet.dex.tree.definitions.constant.ShortConstant;
 import me.darknet.dex.tree.definitions.constant.StringConstant;
@@ -64,10 +65,10 @@ public class AndroidClassInfoBuilder extends AbstractClassInfoBuilder<AndroidCla
 	}
 
 	/**
-	 * Create a builder with data pulled from the given dex class definition.
+	 * Create a builder with data pulled from the given DEX class definition.
 	 *
 	 * @param def
-	 * 		Dex class definition to pull data from.
+	 * 		DEX class definition to pull data from.
 	 */
 	public AndroidClassInfoBuilder(@Nonnull ClassDefinition def) {
 		super();
@@ -82,10 +83,12 @@ public class AndroidClassInfoBuilder extends AbstractClassInfoBuilder<AndroidCla
 	 */
 	public AndroidClassInfoBuilder(@Nonnull AndroidClassInfo classInfo) {
 		super(classInfo);
+
+		def = classInfo.getBackingDefinition();
 	}
 
 	/**
-	 * @return Wrapped dex class, if any. Used as a source for information when adapted from.
+	 * @return Wrapped DEX class, if any. Used as a source for information when adapted from.
 	 *
 	 * @see #adaptFrom(ClassDefinition) Where this value is set.
 	 */
@@ -228,6 +231,7 @@ public class AndroidClassInfoBuilder extends AbstractClassInfoBuilder<AndroidCla
 			case ShortConstant constant -> constant.value();
 			case StringConstant constant -> constant.value();
 			case TypeConstant constant -> Type.getType(constant.type().descriptor());
+			case MethodTypeConstant constant -> UNMAPPED_CONSTANT_VALUE;
 		};
 	}
 }

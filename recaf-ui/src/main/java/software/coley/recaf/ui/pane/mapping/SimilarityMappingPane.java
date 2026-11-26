@@ -63,7 +63,7 @@ import software.coley.recaf.services.mapping.matching.SimilarityMappingOptions;
 import software.coley.recaf.services.mapping.matching.SimilarityMappingService;
 import software.coley.recaf.services.mapping.matching.SimilarityMappingsReport;
 import software.coley.recaf.services.navigation.Actions;
-import software.coley.recaf.services.search.CancellableSearchFeedback;
+import software.coley.recaf.services.search.SearchFeedback;
 import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.ui.config.WorkspaceExplorerConfig;
 import software.coley.recaf.ui.control.ActionButton;
@@ -127,7 +127,7 @@ public class SimilarityMappingPane extends StackPane {
 	private ActionButton optionsButton;
 	private Popover optionsPopover;
 	private Runnable applyCallback;
-	private CancellableSearchFeedback activeFeedback;
+	private SearchFeedback activeFeedback;
 
 	@Inject
 	public SimilarityMappingPane(@Nonnull WorkspaceManager workspaceManager,
@@ -414,7 +414,7 @@ public class SimilarityMappingPane extends StackPane {
 		cancelActiveAnalysis();
 
 		// Setup feedback for future cancellation and mark as generating before starting async work.
-		CancellableSearchFeedback feedback = new CancellableSearchFeedback();
+		SearchFeedback feedback = new SearchFeedback();
 		activeFeedback = feedback;
 		generating.set(true);
 

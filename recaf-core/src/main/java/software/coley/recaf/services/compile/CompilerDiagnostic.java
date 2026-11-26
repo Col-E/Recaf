@@ -1,6 +1,7 @@
 package software.coley.recaf.services.compile;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 
 /**
  * Simple compiler feedback wrapper.
@@ -15,10 +16,13 @@ import jakarta.annotation.Nonnull;
  * 		Message detailing the problem.
  * @param level
  * 		Diagnostic problem level.
+ * @param sourceName
+ * 		Internal name of the compilation unit that produced the diagnostic, or {@code null} when unknown.
  *
  * @author Matt Coley
  */
-public record CompilerDiagnostic(int line, int column, int length, @Nonnull String message, @Nonnull Level level) {
+public record CompilerDiagnostic(int line, int column, int length, @Nonnull String message, @Nonnull Level level,
+								 @Nullable String sourceName) {
 	/**
 	 * @param line
 	 * 		New line number.
@@ -27,7 +31,7 @@ public record CompilerDiagnostic(int line, int column, int length, @Nonnull Stri
 	 */
 	@Nonnull
 	public CompilerDiagnostic withLine(int line) {
-		return new CompilerDiagnostic(line, column, length, message, level);
+		return new CompilerDiagnostic(line, column, length, message, level, sourceName);
 	}
 
 	@Override

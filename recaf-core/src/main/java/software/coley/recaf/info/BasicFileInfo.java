@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.builder.FileInfoBuilder;
 import software.coley.recaf.info.properties.Property;
 import software.coley.recaf.info.properties.PropertyContainer;
+import software.coley.recaf.info.properties.builtin.OriginalFileHashesProperty;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -56,7 +57,9 @@ public class BasicFileInfo implements FileInfo {
 		if (o == null) return false;
 		if (o instanceof FileInfo other) {
 			if (!name.equals(other.getName())) return false;
-			return Arrays.equals(rawContent, other.getRawContent());
+			int hash = OriginalFileHashesProperty.hash(this);
+			int hashOther = OriginalFileHashesProperty.hash(other);
+			return hash == hashOther;
 		}
 		return false;
 	}
@@ -64,7 +67,8 @@ public class BasicFileInfo implements FileInfo {
 	@Override
 	public int hashCode() {
 		int result = name.hashCode();
-		result = 31 * result + Arrays.hashCode(rawContent);
+		int contentHashCode = OriginalFileHashesProperty.hash(this);
+		result = 31 * result + contentHashCode;
 		return result;
 	}
 

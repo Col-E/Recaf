@@ -1,8 +1,10 @@
 package software.coley.recaf.ui.control.popup;
 
 import atlantafx.base.controls.Spacer;
+import atlantafx.base.theme.Styles;
 import jakarta.annotation.Nonnull;
-import javafx.beans.value.ObservableValue;
+import javafx.beans.binding.Bindings;
+import javafx.beans.binding.BooleanBinding;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -22,9 +24,11 @@ import software.coley.recaf.ui.config.WorkspaceExplorerConfig;
 import software.coley.recaf.ui.control.ActionButton;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.control.PathNodeTree;
+import software.coley.recaf.ui.control.tree.TreeFiltering;
 import software.coley.recaf.ui.control.tree.TreeItems;
 import software.coley.recaf.ui.control.tree.WorkspaceRootTreeNode;
 import software.coley.recaf.ui.control.tree.WorkspaceTreeCell;
+import software.coley.recaf.ui.control.tree.WorkspaceTreeFilterPane;
 import software.coley.recaf.ui.window.RecafScene;
 import software.coley.recaf.ui.window.RecafStage;
 import software.coley.recaf.util.FxThreadUtil;
@@ -46,13 +50,6 @@ public class ClassSelectionPopup extends RecafStage {
 	private final Consumer<ClassPathNode> classPathConsumer;
 	private final PathNodeTree tree;
 
-	/**
-	 * @param actions
-	 * @param configurationService
-	 * @param explorerConfig
-	 * @param workspace
-	 * @param classPathConsumer
-	 */
 	@SuppressWarnings("all")
 	public ClassSelectionPopup(@Nonnull Actions actions, @Nonnull CellConfigurationService configurationService,
 	                           @Nonnull WorkspaceExplorerConfig explorerConfig, @Nonnull Workspace workspace,
@@ -64,9 +61,12 @@ public class ClassSelectionPopup extends RecafStage {
 		tree.getStyleClass().add("border-muted");
 
 		// Keyboard accept/cancel
-		ObservableValue<Boolean> disable = tree.getSelectionModel().selectedItemProperty().map(i -> !(i.getValue() instanceof ClassPathNode));
+		BooleanBinding disable = Bindings.createBooleanBinding(() -> {
+			TreeItem<PathNode<?>> selectedItem = tree.getSelectionModel().getSelectedItem();
+			return selectedItem == null || !(selectedItem.getValue() instanceof ClassPathNode);
+		}, tree.getSelectionModel().selectedItemProperty());
 		tree.setOnKeyPressed(e -> {
-			if (e.getCode() == KeyCode.ENTER && !disable.getValue()) {
+			if (e.getCode() == KeyCode.ENTER && !disable.get()) {
 				accept();
 			} else if (e.getCode() == KeyCode.ESCAPE) {
 				hide();
@@ -85,11 +85,16 @@ public class ClassSelectionPopup extends RecafStage {
 		TreeItems.recurseOpen(rootItem);
 		tree.setRoot(rootItem);
 
+		WorkspaceTreeFilterPane filterPane = new WorkspaceTreeFilterPane(tree);
+		filterPane.getStyleClass().remove(WorkspaceTreeFilterPane.PANE_STYLE_CLASS);
+		filterPane.getTextField().getStyleClass().remove(WorkspaceTreeFilterPane.TEXT_STYLE_CLASS);
+		TreeFiltering.install(filterPane.getTextField(), tree);
+
 		Button acceptButton = new ActionButton(new FontIconView(CHECKMARK, Color.LAWNGREEN), this::accept);
 		Button cancelButton = new ActionButton(new FontIconView(CLOSE, Color.RED), this::hide);
 		acceptButton.disableProperty().bind(disable);
 		HBox buttons = new HBox(acceptButton, new Spacer(), cancelButton);
-		VBox layout = new VBox(tree, buttons);
+		VBox layout = new VBox(filterPane, tree, buttons);
 		layout.setSpacing(10);
 		layout.setAlignment(Pos.TOP_CENTER);
 		layout.setPadding(new Insets(10));

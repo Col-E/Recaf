@@ -4,6 +4,9 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import software.coley.recaf.workspace.model.Workspace;
 
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -15,7 +18,7 @@ import java.util.Objects;
 public class JavacArguments {
 	// Primary inputs
 	private final String className;
-	private final String classSource;
+	private final Map<String, String> classSources;
 	// Options
 	private final String classPath;
 	private final int versionTarget;
@@ -45,8 +48,38 @@ public class JavacArguments {
 	public JavacArguments(@Nonnull String className, @Nonnull String classSource,
 						  @Nullable String classPath, int versionTarget, int downsampleTarget,
 						  boolean debugVariables, boolean debugLineNumbers, boolean debugSourceName) {
+		this(className, Collections.singletonMap(className, classSource),
+				classPath, versionTarget, downsampleTarget,
+				debugVariables, debugLineNumbers, debugSourceName);
+	}
+
+	/**
+	 * @param className
+	 * 		Internal name of the primary class being compiled.
+	 * @param classSources
+	 * 		Sources of all classes to compile, keyed by internal name.
+	 * @param classPath
+	 * 		Classpath to use with compiler.
+	 * @param versionTarget
+	 * 		Java version to target.
+	 * @param downsampleTarget
+	 * 		Java version to target via down sampling. Negative to disable downs sampling.
+	 * @param debugVariables
+	 * 		Debug flag to include variable info.
+	 * @param debugLineNumbers
+	 * 		Debug flag to include line number info.
+	 * @param debugSourceName
+	 * 		Debug flag to include source file name.
+	 */
+	public JavacArguments(@Nonnull String className, @Nonnull Map<String, String> classSources,
+						  @Nullable String classPath, int versionTarget, int downsampleTarget,
+						  boolean debugVariables, boolean debugLineNumbers, boolean debugSourceName) {
 		this.className = className;
-		this.classSource = classSource;
+		if (classSources.isEmpty())
+			throw new IllegalArgumentException("Class sources must not be empty");
+		if (!classSources.containsKey(className))
+			throw new IllegalArgumentException("Class sources must contain the primary class: " + className);
+		this.classSources = classSources;
 		this.classPath = classPath;
 		this.versionTarget = versionTarget;
 		this.downsampleTarget = downsampleTarget;
@@ -88,11 +121,19 @@ public class JavacArguments {
 	}
 
 	/**
-	 * @return Source of the class.
+	 * @return Source of the primary class.
 	 */
 	@Nonnull
 	public String getClassSource() {
-		return classSource;
+		return Objects.requireNonNull(classSources.get(className));
+	}
+
+	/**
+	 * @return Sources of all classes to compile, keyed by internal name.
+	 */
+	@Nonnull
+	public Map<String, String> getClassSources() {
+		return classSources;
 	}
 
 	/**
@@ -150,14 +191,14 @@ public class JavacArguments {
 		if (debugLineNumbers != other.debugLineNumbers) return false;
 		if (debugSourceName != other.debugSourceName) return false;
 		if (!className.equals(other.className)) return false;
-		if (!classSource.equals(other.classSource)) return false;
+		if (!classSources.equals(other.classSources)) return false;
 		return Objects.equals(classPath, other.classPath);
 	}
 
 	@Override
 	public int hashCode() {
 		int result = className.hashCode();
-		result = 31 * result + classSource.hashCode();
+		result = 31 * result + classSources.hashCode();
 		result = 31 * result + (classPath != null ? classPath.hashCode() : 0);
 		result = 31 * result + versionTarget;
 		result = 31 * result + (debugVariables ? 1 : 0);

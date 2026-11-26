@@ -29,27 +29,28 @@ public interface StringValue extends ObjectValue {
 	 * @param otherValue
 	 * 		Value to check against.
 	 *
-	 * @return {@code true} when the known value is equal to the given value.
+	 * @return {@code true} when this value is known to equal the given value.
+	 * {@code false} is returned when the value is unknown or known to differ.
 	 */
 	default boolean isEqualTo(@Nullable String otherValue) {
-		if (getText().isPresent())
-			return false;
-		if (otherValue == null && getText().isEmpty())
-			return true;
-		return getText().get().equals(otherValue);
+		Optional<String> text = getText();
+		return text.map(s -> s.equals(otherValue))
+				.orElseGet(() -> otherValue == null && isNull());
 	}
 
 	/**
 	 * @param otherValue
 	 * 		Value to check against.
 	 *
-	 * @return {@code true} when the known value is not equal to the given value.
+	 * @return {@code true} when this value is known to differ from the given value.
+	 * {@code false} is returned when the value is unknown or known to equal.
 	 */
 	default boolean isNotEqualTo(@Nullable String otherValue) {
-		if (getText().isPresent())
-			return false;
-		if (otherValue == null && getText().isEmpty())
-			return false;
-		return !getText().get().equals(otherValue);
+		Optional<String> text = getText();
+		if (text.isPresent())
+			return !text.get().equals(otherValue);
+		if (otherValue == null)
+			return isNotNull();
+		return isNull();
 	}
 }

@@ -17,6 +17,8 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.ClassMember;
+import software.coley.recaf.info.member.LocalVariable;
+import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.ui.control.ActionButton;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.window.RecafScene;
@@ -278,6 +280,29 @@ public class NamePopup extends RecafStage {
 		// Bind conflict property
 		String descriptor = member.getDescriptor();
 		nameConflict.bind(nameInput.textProperty().map(name -> declaringClass.getDeclaredMethod(name, descriptor) != null));
+		accept.disableProperty().bind(isIllegalValue.or(nameConflict));
+		output.visibleProperty().bind(nameConflict);
+		return this;
+	}
+
+	/**
+	 * @param declaringMethod
+	 * 		Method the variable is declared in.
+	 * 		Used to check for name overlap.
+	 * @param variable
+	 * 		Current variable info.
+	 *
+	 * @return Self.
+	 */
+	@Nonnull
+	public NamePopup forVariableRename(@Nonnull MethodMember declaringMethod, @Nonnull LocalVariable variable) {
+		titleProperty().bind(Lang.getBinding("dialog.title.rename-variable"));
+		output.textProperty().bind(Lang.getBinding("dialog.header.rename-variable-error"));
+
+		// Bind conflict property
+		int index = variable.getIndex();
+		nameConflict.bind(nameInput.textProperty().map(name -> declaringMethod.getLocalVariables().stream()
+				.anyMatch(other -> other.getIndex() != index && other.getName().equals(name))));
 		accept.disableProperty().bind(isIllegalValue.or(nameConflict));
 		output.visibleProperty().bind(nameConflict);
 		return this;

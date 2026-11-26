@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.Handle;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import software.coley.recaf.info.ClassInfo;
@@ -12,6 +13,7 @@ import software.coley.recaf.info.properties.builtin.ThrowableProperty;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.inheritance.InheritanceGraphService;
+import software.coley.recaf.services.transform.CollectionTransformer;
 import software.coley.recaf.services.transform.JvmClassTransformer;
 import software.coley.recaf.services.transform.JvmTransformerContext;
 import software.coley.recaf.services.transform.TransformationException;
@@ -30,7 +32,9 @@ import java.util.Set;
  * @author Matt Coley
  */
 @Dependent
-public class ExceptionCollectionTransformer implements JvmClassTransformer, Opcodes {
+public class ExceptionCollectionTransformer implements JvmClassTransformer, CollectionTransformer, Opcodes {
+	public static final String IDENTIFIER = "peephole.data.exceptioncollect";
+
 	private final Set<String> thrownExceptions = new HashSet<>();
 	private final InheritanceGraphService graphService;
 	private InheritanceGraph inheritanceGraph;
@@ -60,31 +64,64 @@ public class ExceptionCollectionTransformer implements JvmClassTransformer, Opco
 					@Override
 					public void visitTypeInsn(int opcode, String type) {
 						// Collect "new T" where "T" is a throwable type.
-						if (opcode != NEW)
-							return;
-						ClassPathNode path = workspace.findClass(false, type);
-						if (path == null)
-							return;
-						if (ThrowableProperty.get(path.getValue()) || inheritanceGraph.isAssignableFrom("java/lang/Throwable", type)) {
-							// The constructed type is an exception type,
-							// so we should add it and all parents to the known thrown types.
-							ClassInfo exInfo = path.getValue();
-							while (thrownExceptions.add(exInfo.getName()) && exInfo.getSuperName() != null) {
-								path = workspace.findClass(false, exInfo.getSuperName());
-								if (path == null)
-									break;
-							}
-						}
+						if (opcode == NEW)
+							collectConstructed(workspace, type);
+					}
+
+					@Override
+					public void visitInvokeDynamicInsn(String name, String descriptor, Handle bootstrapMethodHandle, Object... bootstrapMethodArguments) {
+						// Constructor references like "T::new" have no "new T" instruction in the referencing method.
+						for (Object argument : bootstrapMethodArguments)
+							collectConstructorHandle(workspace, argument);
+					}
+
+					@Override
+					public void visitLdcInsn(Object value) {
+						collectConstructorHandle(workspace, value);
 					}
 				};
 			}
 		}, ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG);
 	}
 
+	/**
+	 * @param workspace
+	 * 		Workspace to look up types in.
+	 * @param value
+	 * 		Constant value, which may be a handle to a constructor.
+	 */
+	private void collectConstructorHandle(@Nonnull Workspace workspace, @Nonnull Object value) {
+		if (value instanceof Handle handle && handle.getTag() == H_NEWINVOKESPECIAL)
+			collectConstructed(workspace, handle.getOwner());
+	}
+
+	/**
+	 * @param workspace
+	 * 		Workspace to look up types in.
+	 * @param type
+	 * 		Name of a type that is constructed somewhere.
+	 */
+	private void collectConstructed(@Nonnull Workspace workspace, @Nonnull String type) {
+		ClassPathNode path = workspace.findClass(false, type);
+		if (path == null)
+			return;
+		if (ThrowableProperty.get(path.getValue()) || inheritanceGraph.isAssignableFrom("java/lang/Throwable", type)) {
+			// The constructed type is an exception type,
+			// so we should add it and all parents to the known thrown types.
+			ClassInfo exInfo = path.getValue();
+			while (thrownExceptions.add(exInfo.getName()) && exInfo.getSuperName() != null) {
+				path = workspace.findClass(false, exInfo.getSuperName());
+				if (path == null)
+					break;
+				exInfo = path.getValue();
+			}
+		}
+	}
+
 	@Nonnull
 	@Override
-	public String name() {
-		return "Exception metadata collection";
+	public String identifier() {
+		return IDENTIFIER;
 	}
 
 	/**

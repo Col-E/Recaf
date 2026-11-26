@@ -68,6 +68,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -89,12 +90,22 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 	                      @Nonnull CellConfigurationService configurationService) {
 		super(WindowManager.WIN_QUICK_NAV);
 
-		OneToOneContentPane<ClassPathNode> classContent = new OneToOneContentPane<>(actions, this, () -> {
+		// Giant chunk of code, ought to clean this up later.
+		Supplier<Stream<ClassPathNode>> classProvider = () -> {
 			if (!workspaceManager.hasCurrentWorkspace())
 				return Stream.empty();
 			return workspaceManager.getCurrent().classesStream(false);
-		}, classPath -> classPath.getValue().getName(), cell -> {
-			ClassPathNode classPath = cell.getItem();
+		};
+		Function<ClassPathNode, String> classTextMapper = classPath -> classPath.getValue().getSimpleName();
+		ContainmentMatcher<ClassPathNode> classTextMatcher = (classPath, search, caseSensitive) -> {
+			String text = search.indexOf('/') >= 0 ?
+					classPath.getValue().getName() :
+					classPath.getValue().getSimpleName();
+			if (!caseSensitive)
+				text = text.toLowerCase();
+			return text.contains(search);
+		};
+		BiConsumer<ListCell<?>, ClassPathNode> renderClass = (cell, classPath) -> {
 			DirectoryPathNode packagePath = Objects.requireNonNull(classPath.getParent());
 			String packageName = packagePath.getValue();
 			packageName = formatConfig.filterEscape(packageName);
@@ -118,8 +129,12 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 			cell.setGraphic(box);
 
 			cell.setOnMouseClicked(configurationService.contextMenuHandlerOf(cell, classPath, ContextSource.REFERENCE));
-		});
-		OneToOneContentPane<ClassMemberPathNode> memberContent = new OneToOneContentPane<>(actions, this, () -> {
+		};
+		Consumer<ListCell<ClassPathNode>> classRenderer = cell -> renderClass.accept(cell, cell.getItem());
+		OneToOneContentPane<ClassPathNode> classContent = new OneToOneContentPane<>(actions, this,
+				classProvider, classTextMapper, classTextMatcher, classRenderer);
+
+		Supplier<Stream<ClassMemberPathNode>> memberProvider = () -> {
 			if (!workspaceManager.hasCurrentWorkspace())
 				return Stream.empty();
 			return workspaceManager.getCurrent().classesStream(false).flatMap(p -> {
@@ -128,8 +143,9 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 				Stream<ClassMemberPathNode> methods = classInfo.getMethods().stream().map(p::child);
 				return Stream.concat(fields, methods);
 			});
-		}, classMemberPath -> classMemberPath.getValue().getName(), cell -> {
-			ClassMemberPathNode memberPath = cell.getItem();
+		};
+		Function<ClassMemberPathNode, String> memberTextMapper = classMemberPath -> classMemberPath.getValue().getName();
+		BiConsumer<ListCell<?>, ClassMemberPathNode> renderMember = (cell, memberPath) -> {
 			ClassPathNode classPath = Objects.requireNonNull(memberPath.getParent());
 
 			Label memberDisplay = new Label();
@@ -148,13 +164,18 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 			cell.setGraphic(box);
 
 			cell.setOnMouseClicked(configurationService.contextMenuHandlerOf(cell, memberPath, ContextSource.REFERENCE));
-		});
-		OneToOneContentPane<FilePathNode> fileContent = new OneToOneContentPane<>(actions, this, () -> {
+		};
+		Consumer<ListCell<ClassMemberPathNode>> memberRenderer = cell -> renderMember.accept(cell, cell.getItem());
+		OneToOneContentPane<ClassMemberPathNode> memberContent = new OneToOneContentPane<>(actions, this,
+				memberProvider, memberTextMapper, memberRenderer);
+
+		Supplier<Stream<FilePathNode>> fileProvider = () -> {
 			if (!workspaceManager.hasCurrentWorkspace())
 				return Stream.empty();
 			return workspaceManager.getCurrent().filesStream();
-		}, filePath -> filePath.getValue().getName(), cell -> {
-			FilePathNode filePath = cell.getItem();
+		};
+		Function<FilePathNode, String> fileTextMapper = filePath -> filePath.getValue().getName();
+		BiConsumer<ListCell<?>, FilePathNode> renderFile = (cell, filePath) -> {
 			DirectoryPathNode directoryPath = Objects.requireNonNull(filePath.getParent());
 			String directoryName = directoryPath.getValue();
 			directoryName = formatConfig.filterEscape(directoryName);
@@ -177,22 +198,28 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 			cell.setGraphic(box);
 
 			cell.setOnMouseClicked(configurationService.contextMenuHandlerOf(cell, filePath, ContextSource.REFERENCE));
-		});
-		OneToManyContentPane<FilePathNode, LineNumberPathNode> textContent = new OneToManyContentPane<>(actions, this, () -> {
+		};
+		Consumer<ListCell<FilePathNode>> fileRenderer = cell -> renderFile.accept(cell, cell.getItem());
+		OneToOneContentPane<FilePathNode> fileContent = new OneToOneContentPane<>(actions, this,
+				fileProvider, fileTextMapper, fileRenderer);
+
+		Supplier<Stream<FilePathNode>> textProvider = () -> {
 			if (!workspaceManager.hasCurrentWorkspace())
 				return Stream.empty();
 			return workspaceManager.getCurrent().filesStream()
 					.filter(f -> f.getValue().isTextFile());
-		}, filePath -> {
+		};
+		Function<FilePathNode, Stream<LineNumberPathNode>> lineUnroller = filePath -> {
 			TextFileInfo textFile = filePath.getValue().asTextFile();
 			int lineCount = StringUtil.count('\n', textFile.getText());
 			return IntStream.rangeClosed(1, lineCount).mapToObj(filePath::child);
-		}, lineNumberPath -> {
+		};
+		Function<LineNumberPathNode, String> lineTextMapper = lineNumberPath -> {
 			int index = lineNumberPath.getValue().intValue() - 1;
 			String[] lines = lineNumberPath.getParent().getValue().asTextFile().getTextLines();
 			return lines[index];
-		}, cell -> {
-			LineNumberPathNode linePath = cell.getItem();
+		};
+		BiConsumer<ListCell<?>, LineNumberPathNode> renderLine = (cell, linePath) -> {
 			FilePathNode filePath = linePath.getParent();
 			TextFileInfo textFile = filePath.getValue().asTextFile();
 			int line = linePath.getValue().intValue();
@@ -213,12 +240,15 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 			cell.setGraphic(box);
 
 			cell.setOnMouseClicked(configurationService.contextMenuHandlerOf(cell, filePath, ContextSource.REFERENCE));
-		});
-		OneToOneContentPane<? extends PathNode<?>> commentContent = new OneToOneContentPane<>(actions, this, () -> {
+		};
+		Consumer<ListCell<LineNumberPathNode>> lineRenderer = cell -> renderLine.accept(cell, cell.getItem());
+		OneToManyContentPane<FilePathNode, LineNumberPathNode> textContent = new OneToManyContentPane<>(actions, this,
+				textProvider, lineUnroller, lineTextMapper, lineRenderer);
+
+		Supplier<Stream<PathNode<?>>> commentProvider = () -> {
 			if (!workspaceManager.hasCurrentWorkspace())
 				return Stream.empty();
 
-			Workspace current = workspaceManager.getCurrent();
 			WorkspaceComments comments = commentManager.getCurrentWorkspaceComments();
 			if (comments == null)
 				return Stream.empty();
@@ -243,13 +273,14 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 			}
 
 			return paths.stream();
-		}, path -> {
+		};
+		Function<PathNode<?>, String> commentTextMapper = path -> {
 			WorkspaceComments comments = commentManager.getCurrentWorkspaceComments();
 			if (comments == null)
 				return null;
 			return comments.getComment(path);
-		}, cell -> {
-			PathNode<?> path = cell.getItem();
+		};
+		BiConsumer<ListCell<?>, PathNode<?>> renderComment = (cell, path) -> {
 			WorkspaceComments comments = commentManager.getCurrentWorkspaceComments();
 			String comment = (comments == null ? "" : comments.getComment(path));
 			if (comment == null)
@@ -272,10 +303,40 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 			cell.setGraphic(box);
 
 			cell.setOnMouseClicked(configurationService.contextMenuHandlerOf(cell, path, ContextSource.REFERENCE));
+		};
+		Consumer<ListCell<PathNode<?>>> commentRenderer = cell -> renderComment.accept(cell, cell.getItem());
+		OneToOneContentPane<PathNode<?>> commentContent = new OneToOneContentPane<>(actions, this,
+				commentProvider, commentTextMapper, commentRenderer);
+
+		AllContentPane allContent = new AllContentPane(actions, this, () -> Stream.of(
+				classProvider.get().map(path -> new QuickNavResult(QuickNavResultType.CLASS, path, classTextMapper.apply(path))),
+				memberProvider.get().map(path -> new QuickNavResult(QuickNavResultType.MEMBER, path, memberTextMapper.apply(path))),
+				fileProvider.get().map(path -> new QuickNavResult(QuickNavResultType.FILE, path, fileTextMapper.apply(path))),
+				textProvider.get().flatMap(path -> lineUnroller.apply(path)
+						.map(linePath -> new QuickNavResult(QuickNavResultType.TEXT, linePath, lineTextMapper.apply(linePath)))),
+				commentProvider.get().map(path -> new QuickNavResult(QuickNavResultType.COMMENT, path, commentTextMapper.apply(path)))
+		).flatMap(Function.identity()), cell -> {
+			QuickNavResult result = cell.getItem();
+			switch (result.type()) {
+				case CLASS -> renderClass.accept(cell, (ClassPathNode) result.path());
+				case MEMBER -> renderMember.accept(cell, (ClassMemberPathNode) result.path());
+				case FILE -> renderFile.accept(cell, (FilePathNode) result.path());
+				case TEXT -> renderLine.accept(cell, (LineNumberPathNode) result.path());
+				case COMMENT -> renderComment.accept(cell, result.path());
+			}
+		}, (result, search, caseSensitive) -> {
+			if (result.type() == QuickNavResultType.CLASS)
+				return classTextMatcher.matches((ClassPathNode) result.path(), search, caseSensitive);
+
+			String text = result.text();
+			if (!caseSensitive && text != null)
+				text = text.toLowerCase();
+			return contains(text, search);
 		});
-		List<ContentPaneBase> contentPanes = List.of(classContent, memberContent, fileContent, textContent, commentContent);
+		List<ContentPaneBase> contentPanes = List.of(allContent, classContent, memberContent, fileContent, textContent, commentContent);
 		contentPanes.forEach(workspaceManager::addWorkspaceCloseListener);
 
+		BoundTab tabAll = new BoundTab(Lang.getBinding("dialog.quicknav.tab.all"), new FontIconView(CarbonIcons.SEARCH), allContent);
 		BoundTab tabClasses = new BoundTab(Lang.getBinding("dialog.quicknav.tab.classes"), Icons.getIconView(Icons.CLASS), classContent);
 		BoundTab tabMembers = new BoundTab(Lang.getBinding("dialog.quicknav.tab.members"), Icons.getIconView(Icons.FIELD_N_METHOD), memberContent);
 		BoundTab tabFiles = new BoundTab(Lang.getBinding("dialog.quicknav.tab.files"), new FontIconView(CarbonIcons.DOCUMENT), fileContent);
@@ -283,7 +344,7 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 		BoundTab tabCommented = new BoundTab(Lang.getBinding("dialog.quicknav.tab.commented"), new FontIconView(CarbonIcons.CHAT), commentContent);
 
 		TabPane tabs = new TabPane();
-		tabs.getTabs().addAll(tabClasses, tabMembers, tabFiles, tabText, tabCommented);
+		tabs.getTabs().addAll(tabAll, tabClasses, tabMembers, tabFiles, tabText, tabCommented);
 		tabs.getTabs().forEach(tab -> tab.setClosable(false));
 
 		// Add event filter to handle closing the window when escape is pressed.
@@ -305,7 +366,10 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 		setMinWidth(300);
 		setMinHeight(300);
 		setScene(new RecafScene(tabs, 750, 550));
+	}
 
+	private static boolean contains(@Nullable String text, @Nonnull String search) {
+		return text != null && text.contains(search);
 	}
 
 	/**
@@ -346,6 +410,67 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 	}
 
 	/**
+	 * Quick-nav result type for the combined tab.
+	 */
+	private enum QuickNavResultType {
+		CLASS,
+		MEMBER,
+		FILE,
+		TEXT,
+		COMMENT
+	}
+
+	/**
+	 * Quick-nav result wrapper for the combined tab.
+	 *
+	 * @param type
+	 * 		Result category.
+	 * @param path
+	 * 		Path to navigate to.
+	 * @param text
+	 * 		Text to search against.
+	 */
+	private record QuickNavResult(@Nonnull QuickNavResultType type,
+	                              @Nonnull PathNode<?> path,
+	                              @Nullable String text) implements Comparable<QuickNavResult> {
+		@Override
+		public int compareTo(@Nonnull QuickNavResult other) {
+			int cmp = type.compareTo(other.type);
+			if (cmp == 0)
+				cmp = path.compareTo(other.path);
+			if (cmp == 0)
+				cmp = Comparator.nullsFirst(String::compareTo).compare(text, other.text);
+			return cmp;
+		}
+	}
+
+	/**
+	 * Item matcher for plain-text containment searches.
+	 *
+	 * @param <T>
+	 * 		Item type.
+	 */
+	@FunctionalInterface
+	private interface ContainmentMatcher<T> {
+		boolean matches(@Nonnull T item, @Nonnull String search, boolean caseSensitive);
+	}
+
+	/**
+	 * Pane for displaying all supported quick-nav results.
+	 */
+	private static class AllContentPane extends ContentPaneBase {
+		private AllContentPane(@Nonnull Actions actions,
+		                       @Nonnull Stage stage,
+		                       @Nonnull Supplier<Stream<QuickNavResult>> valueProvider,
+		                       @Nonnull Consumer<ListCell<QuickNavResult>> renderCell,
+		                       @Nonnull ContainmentMatcher<QuickNavResult> containmentMatcher) {
+			super(new PathResultsPane<>(actions, stage, QuickNavResult::path, renderCell));
+			setSearchBar(new OneToOneNavSearchBar<>(Unchecked.cast(results), valueProvider, QuickNavResult::text, containmentMatcher));
+			setCenter(results);
+		}
+	}
+
+	/**
 	 * Pane for displaying results that come from a one-to-one lookup.
 	 *
 	 * @param <T>
@@ -357,8 +482,17 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 		                            @Nonnull Supplier<Stream<T>> valueProvider,
 		                            @Nonnull Function<T, String> valueTextMapper,
 		                            @Nonnull Consumer<ListCell<T>> renderCell) {
-			super(new PathResultsPane<>(actions, stage, renderCell));
-			setSearchBar(new OneToOneNavSearchBar<>(Unchecked.cast(results), valueProvider, valueTextMapper));
+			this(actions, stage, valueProvider, valueTextMapper, null, renderCell);
+		}
+
+		private OneToOneContentPane(@Nonnull Actions actions,
+		                            @Nonnull Stage stage,
+		                            @Nonnull Supplier<Stream<T>> valueProvider,
+		                            @Nonnull Function<T, String> valueTextMapper,
+		                            @Nullable ContainmentMatcher<T> containmentMatcher,
+		                            @Nonnull Consumer<ListCell<T>> renderCell) {
+			super(new PathResultsPane<>(actions, stage, item -> item, renderCell));
+			setSearchBar(new OneToOneNavSearchBar<>(Unchecked.cast(results), valueProvider, valueTextMapper, containmentMatcher));
 			setCenter(results);
 		}
 	}
@@ -378,7 +512,7 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 		                             @Nonnull Function<T, Stream<R>> valueUnroller,
 		                             @Nonnull Function<R, String> valueTextMapper,
 		                             @Nonnull Consumer<ListCell<R>> renderCell) {
-			super(new PathResultsPane<>(actions, stage, renderCell));
+			super(new PathResultsPane<>(actions, stage, item -> item, renderCell));
 			setSearchBar(new OneToManyNavSearchBar<>(Unchecked.cast(results), valueProvider, valueUnroller, valueTextMapper));
 			setCenter(results);
 		}
@@ -390,13 +524,16 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 	 * @param <T>
 	 * 		Result type.
 	 */
-	private static class PathResultsPane<T extends PathNode<?>> extends BorderPane {
+	private static class PathResultsPane<T> extends BorderPane {
 		private static final PseudoClass PSEUDO_HOVER = PseudoClass.getPseudoClass("hover");
 		private final ObservableList<T> list = FXCollections.observableArrayList();
 		private final VirtualFlow<T, Cell<T, Node>> flow;
+		private final Function<T, PathNode<?>> pathMapper;
 
 		private PathResultsPane(@Nonnull Actions actions, @Nonnull Stage stage,
+		                        @Nonnull Function<T, PathNode<?>> pathMapper,
 		                        @Nonnull Consumer<ListCell<T>> renderCell) {
+			this.pathMapper = pathMapper;
 			flow = VirtualFlow.createVertical(list, initial -> new ResultCell(initial, actions, stage, renderCell));
 			setCenter(new VirtualizedScrollPane<>(flow));
 			list.addListener((InvalidationListener) e -> {
@@ -428,7 +565,7 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 					try {
 						T item = cell.getItem();
 						if (item != null) {
-							actions.gotoDeclaration(item);
+							actions.gotoDeclaration(pathMapper.apply(item));
 							stage.hide();
 						}
 					} catch (IncompletePathException ex) {
@@ -538,7 +675,7 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 	 * @param <R>
 	 * 		Result type.
 	 */
-	private abstract static class NavSearchBarBase<T extends PathNode<?>, R extends PathNode<?>> extends AbstractSearchBar {
+	private abstract static class NavSearchBarBase<T, R extends Comparable<? super R>> extends AbstractSearchBar {
 		protected final PathResultsPane<R> results;
 		protected final Supplier<Stream<T>> valueProvider;
 
@@ -629,14 +766,28 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 	 * @param <T>
 	 * 		Input/result type.
 	 */
-	private static class OneToOneNavSearchBar<T extends PathNode<?>> extends NavSearchBarBase<T, T> {
+	private static class OneToOneNavSearchBar<T extends Comparable<? super T>> extends NavSearchBarBase<T, T> {
 		private final Function<T, String> valueTextMapper;
+		private final ContainmentMatcher<T> containmentMatcher;
 
 		private OneToOneNavSearchBar(@Nonnull PathResultsPane<T> results,
 		                             @Nonnull Supplier<Stream<T>> valueProvider,
 		                             @Nonnull Function<T, String> valueTextMapper) {
+			this(results, valueProvider, valueTextMapper, null);
+		}
+
+		private OneToOneNavSearchBar(@Nonnull PathResultsPane<T> results,
+		                             @Nonnull Supplier<Stream<T>> valueProvider,
+		                             @Nonnull Function<T, String> valueTextMapper,
+		                             @Nullable ContainmentMatcher<T> containmentMatcher) {
 			super(results, valueProvider);
 			this.valueTextMapper = valueTextMapper;
+			this.containmentMatcher = containmentMatcher == null ? (item, search, caseSensitive) -> {
+				String text = valueTextMapper.apply(item);
+				if (!caseSensitive && text != null)
+					text = text.toLowerCase();
+				return QuickNavWindow.contains(text, search);
+			} : containmentMatcher;
 		}
 
 		@Override
@@ -654,20 +805,13 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 		@Override
 		protected void containmentSearch(@Nonnull String search, @Nonnull List<T> results) {
 			// Modify the text/search for case-insensitive searches.
-			Function<T, String> localValueTextMapper;
-			if (!caseSensitivity.get()) {
+			if (!caseSensitivity.get())
 				search = search.toLowerCase();
-				localValueTextMapper = valueTextMapper.andThen(String::toLowerCase);
-			} else {
-				localValueTextMapper = valueTextMapper;
-			}
 
 			String finalSearch = search;
+			boolean caseSensitive = caseSensitivity.get();
 			valueProvider.get().forEach(item -> {
-				String text = localValueTextMapper.apply(item);
-				if (text == null)
-					return;
-				if (text.contains(finalSearch))
+				if (containmentMatcher.matches(item, finalSearch, caseSensitive))
 					results.add(item);
 			});
 		}
@@ -710,17 +854,15 @@ public class QuickNavWindow extends AbstractIdentifiableStage {
 
 		@Override
 		protected void containmentSearch(@Nonnull String search, @Nonnull List<R> results) {
+			if (!caseSensitivity.get())
+				search = search.toLowerCase();
+			String finalSearch = search;
 			valueProvider.get().forEach(item -> {
 				valueUnroller.apply(item).forEach(mappedItem -> {
 					String text = valueTextMapper.apply(mappedItem);
-					if (text == null)
-						return;
-					String localSearch = search;
-					if (!caseSensitivity.get()) {
+					if (!caseSensitivity.get() && text != null)
 						text = text.toLowerCase();
-						localSearch = localSearch.toLowerCase();
-					}
-					if (text.contains(localSearch))
+					if (QuickNavWindow.contains(text, finalSearch))
 						results.add(mappedItem);
 				});
 			});

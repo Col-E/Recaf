@@ -7,9 +7,12 @@ import software.coley.recaf.services.deobfuscation.transform.generic.GotoInlinin
 import software.coley.recaf.services.deobfuscation.transform.generic.OpaqueConstantFoldingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.OpaquePredicateFoldingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.VariableFoldingTransformer;
+import software.coley.recaf.services.transform.JvmTransformResult;
+import software.coley.recaf.services.transform.TransformationParameters;
 import software.coley.recaf.util.StringUtil;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -121,6 +124,150 @@ public class FoldingDeobfuscationTest extends TransformerTestBase {
 			assertEquals(0, StringUtil.count("ishr", dis));
 			assertEquals(0, StringUtil.count("iushr", dis));
 			assertEquals(1, StringUtil.count("iload x", dis));
+		});
+	}
+
+	@Test
+	void foldRightOnlyIdentityOperations() {
+		String asm = """
+				.super java/lang/Object
+				.class public Example {
+				    .method public static divideInt (I)I {
+				        parameters: { x },
+				        code: {
+				        A:
+				            iconst_1
+				            iload x
+				            idiv
+				            ireturn
+				        B:
+				        }
+				    }
+				    .method public static divideByZero ()I {
+				        code: {
+				        A:
+				            iconst_0
+				            invokestatic Example.divideInt (I)I
+				            ireturn
+				        B:
+				        }
+				    }
+				    .method public static divideRightInt (I)I {
+				        parameters: { x },
+				        code: {
+				        A:
+				            iload x
+				            iconst_1
+				            idiv
+				            ireturn
+				        B:
+				        }
+				    }
+				    .method public static divideLong (J)J {
+				        parameters: { x },
+				        code: {
+				        A:
+				            lconst_1
+				            lload x
+				            ldiv
+				            lreturn
+				        B:
+				        }
+				    }
+				    .method public static divideFloat (F)F {
+				        parameters: { x },
+				        code: {
+				        A:
+				            fconst_1
+				            fload x
+				            fdiv
+				            freturn
+				        B:
+				        }
+				    }
+				    .method public static divideDouble (D)D {
+				        parameters: { x },
+				        code: {
+				        A:
+				            dconst_1
+				            dload x
+				            ddiv
+				            dreturn
+				        B:
+				        }
+				    }
+				    .method public static shiftLeftInt (I)I {
+				        parameters: { x },
+				        code: {
+				        A:
+				            iconst_0
+				            iload x
+				            ishl
+				            ireturn
+				        B:
+				        }
+				    }
+				    .method public static shiftRightInt (I)I {
+				        parameters: { x },
+				        code: {
+				        A:
+				            iconst_0
+				            iload x
+				            ishr
+				            ireturn
+				        B:
+				        }
+				    }
+				    .method public static shiftUnsignedRightInt (I)I {
+				        parameters: { x },
+				        code: {
+				        A:
+				            iconst_0
+				            iload x
+				            iushr
+				            ireturn
+				        B:
+				        }
+				    }
+				    .method public static shiftLeftLong (I)J {
+				        parameters: { x },
+				        code: {
+				        A:
+				            lconst_0
+				            iload x
+				            lshl
+				            lreturn
+				        B:
+				        }
+				    }
+				    .method public static shiftRightLong (I)J {
+				        parameters: { x },
+				        code: {
+				        A:
+				            lconst_0
+				            iload x
+				            lshr
+				            lreturn
+				        B:
+				        }
+				    }
+				    .method public static shiftUnsignedRightLong (I)J {
+				        parameters: { x },
+				        code: {
+				        A:
+				            lconst_0
+				            iload x
+				            lushr
+				            lreturn
+				        B:
+				        }
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
+			assertThrows(ArithmeticException.class, () -> invokeStatic("Example", "divideByZero", "Example"));
+			for (String opcode : List.of("idiv", "ldiv", "fdiv", "ddiv", "ishl", "ishr", "iushr", "lshl", "lshr", "lushr"))
+				assertEquals(1, StringUtil.count(opcode, dis), "Expected to preserve left-operand " + opcode);
 		});
 	}
 
@@ -925,6 +1072,24 @@ public class FoldingDeobfuscationTest extends TransformerTestBase {
 	}
 
 	@Test
+	void opaqueCast() {
+		String asm = """
+				.method public static example ()Ljava/lang/String; {
+				    code: {
+				    A:
+				        ldc "foo"
+				        checkcast java/lang/String
+				        areturn
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
+			assertEquals(0, StringUtil.count("checkcast", dis), "Expected to remove the redundant string cast");
+			assertEquals(1, StringUtil.count("ldc \"foo\"", dis), "Expected to retain the string constant");
+		});
+	}
+
+	@Test
 	void foldDoubleDup2X1() {
 		String asm = """
 				.method public static example (I)I {
@@ -1543,6 +1708,172 @@ public class FoldingDeobfuscationTest extends TransformerTestBase {
 	}
 
 	@Test
+	void foldRepeatedStringToStringCalls() {
+		// Every toString value after the constant is redundant because it just returns the same value.
+		String asm = """
+				.method public static example ()Ljava/lang/String; {
+				    code: {
+				    A:
+				        ldc "value"
+				        invokevirtual java/lang/String.toString ()Ljava/lang/String;
+				        invokevirtual java/lang/String.toString ()Ljava/lang/String;
+				        invokevirtual java/lang/String.toString ()Ljava/lang/String;
+				        areturn
+				    B:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
+			assertEquals(1, StringUtil.count("ldc \"value\"", dis), "Expected to retain the string constant");
+			assertEquals(0, StringUtil.count("java/lang/String.toString", dis), "Expected to remove redundant String.toString calls");
+		});
+
+		// StringBuilder.toString() is essentially the same thing. We get a String, and then any toString() after that is redundant.
+		asm = """
+				.method public static example (Ljava/lang/StringBuilder;)Ljava/lang/String; {
+					parameters: { builder },
+				    code: {
+				    A:
+				        aload builder
+				        invokevirtual java/lang/StringBuilder.toString ()Ljava/lang/String;
+				        invokevirtual java/lang/String.toString ()Ljava/lang/String;
+				        invokevirtual java/lang/String.toString ()Ljava/lang/String;
+				        areturn
+				    B:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
+			assertEquals(1, StringUtil.count("java/lang/StringBuilder.toString", dis), "Expected to retain the initial StringBuilder.toString call");
+			assertEquals(0, StringUtil.count("java/lang/String.toString", dis), "Expected to remove redundant String.toString calls");
+		});
+
+		// The first invocation can throw when the input is null,
+		// so we want to preserve that one, but the rest are redundant and can be removed.
+		asm = """
+				.method public static example (Ljava/lang/String;)Ljava/lang/String; {
+					parameters: { value },
+				    code: {
+				    A:
+				        aload value
+				        invokevirtual java/lang/String.toString ()Ljava/lang/String;
+				        invokevirtual java/lang/String.toString ()Ljava/lang/String;
+				        invokevirtual java/lang/String.toString ()Ljava/lang/String;
+				        areturn
+				    B:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
+			assertEquals(1, StringUtil.count("java/lang/String.toString", dis), "Expected to preserve the potentially throwing first call");
+		});
+	}
+
+	@Test
+	void foldKnownStringLength() {
+		String asm = """
+				.method public static example ()I {
+				    code: {
+				    A:
+				        ldc "Hello"
+				        invokevirtual java/lang/String.length ()I
+				        ireturn
+				    B:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
+			assertEquals(1, StringUtil.count("iconst_5", dis), "Expected to fold to constant length");
+			assertEquals(0, StringUtil.count("ldc \"Hello\"", dis), "Expected to fold away string");
+		});
+	}
+
+	@Test
+	void foldKnownStringContentsIntoConst() {
+		// new String(new byte[] {72, 101, 108, 108, 111});  --> "Hello"
+		String asm = """
+				.method public static example ()Ljava/lang/String; {
+				    code: {
+				    A:
+				        new java/lang/String
+				        dup
+				        iconst_5
+				        newarray byte
+				        dup
+				        iconst_0
+				        bipush 72
+				        bastore
+				        dup
+				        iconst_1
+				        bipush 101
+				        bastore
+				        dup
+				        iconst_2
+				        bipush 108
+				        bastore
+				        dup
+				        iconst_3
+				        bipush 108
+				        bastore
+				        dup
+				        iconst_4
+				        bipush 111
+				        bastore
+				        invokespecial java/lang/String.<init> ([B)V
+				        areturn
+				    B:
+				    }
+				}
+				""";
+		assemble(asm, false);
+
+		JvmTransformResult defaultResult = assertDoesNotThrow(() -> newApplier().transformJvm(List.of(OpaqueConstantFoldingTransformer.class)));
+		assertTrue(defaultResult.getTransformerFailures().isEmpty(), "Expected no transformation failures");
+		assertTrue(defaultResult.getTransformedClasses().isEmpty(), "Expected String constructor folding to be disabled by default");
+
+		TransformationParameters parameters = new TransformationParameters(Map.of(
+				OpaqueConstantFoldingTransformer.KEY_INLINE_STRING_CTORS, true
+		));
+		JvmTransformResult result = assertDoesNotThrow(() -> newApplier().transformJvm(List.of(OpaqueConstantFoldingTransformer.class), parameters));
+		String dis = disassembleTransformed(result, false);
+		assertEquals(1, StringUtil.count("ldc \"Hello\"", dis), "Expected to fold to constant string");
+		assertEquals(0, StringUtil.count("new java/lang/String", dis), "Expected to remove String allocation");
+		assertEquals(0, StringUtil.count("java/lang/String.<init>", dis), "Expected to remove String constructor");
+	}
+
+	@Test
+	void foldKnownStringContentsForConstructorOverloads() {
+		compile("""
+				public static String fromString() { return new String("original"); }
+				public static String fromChars() { return new String(new char[]{'C', 'h', 'a', 'r'}); }
+				public static String fromCharSlice() { return new String(new char[]{'x', 's', 'l', 'i', 'c', 'e', 'y'}, 1, 5); }
+				public static String fromCodePoints() { return new String(new int[]{72, 105}, 0, 2); }
+				public static String fromHibyte() { return new String(new byte[]{'D'}, 0); }
+				public static String fromHibyteSlice() { return new String(new byte[]{'x', 'S'}, 0, 1, 1); }
+				public static String fromNamedCharset() throws java.io.UnsupportedEncodingException { return new String(new byte[]{'N', 'o'}, "UTF-8"); }
+				public static String fromNamedCharsetSlice() throws java.io.UnsupportedEncodingException { return new String(new byte[]{'x', 'R', 'g'}, 1, 2, "UTF-8"); }
+				public static String fromCharset() { return new String(new byte[]{'C', 's'}, java.nio.charset.StandardCharsets.UTF_8); }
+				public static String fromCharsetSlice() { return new String(new byte[]{'x', 'C', 'r'}, 1, 2, java.nio.charset.StandardCharsets.UTF_8); }
+				public static String fromByteSlice() { return new String(new byte[]{'x', 'e', 'y'}, 1, 1); }
+				public static String fromBytes() { return new String(new byte[]{'B', 'y'}); }
+				
+				// Keep these since they are invalid or unknown and we don't want to fold them
+				public static String fromUnknownBytes(byte[] bytes) { return new String(bytes); }
+				public static String fromInvalidCharSlice() { return new String(new char[]{'x'}, 1, 1); }
+				""");
+
+		TransformationParameters parameters = new TransformationParameters(Map.of(
+				OpaqueConstantFoldingTransformer.KEY_INLINE_STRING_CTORS, true
+		));
+		JvmTransformResult result = assertDoesNotThrow(() -> newApplier().transformJvm(List.of(OpaqueConstantFoldingTransformer.class), parameters));
+		assertTrue(result.getTransformerFailures().isEmpty(), "Expected no transformation failures");
+		String dis = disassembleTransformed(result, true);
+		for (String expected : List.of("original", "Char", "slice", "Hi", "D", "S", "No", "Rg", "Cs", "Cr", "e", "By"))
+			assertEquals(1, StringUtil.count("ldc " + '"' + expected + '"', dis), "Expected to fold constructor result: " + expected);
+		assertEquals(2, StringUtil.count("java/lang/String.<init>", dis), "Expected unknown or invalid constructors to remain");
+	}
+
+	@Test
 	void foldCharArrayIntoStringFromValueOf() {
 		String asm = """
 				.method public static example ()Ljava/lang/String; {
@@ -1698,6 +2029,201 @@ public class FoldingDeobfuscationTest extends TransformerTestBase {
 	}
 
 	@Test
+	void foldClassInitializedStaticArrayAccess() {
+		String asm = """
+				.super java/lang/Object
+				.class Example {
+					.field private static final values [Ljava/lang/String;
+				
+					.method static <clinit> ()V {
+					    code: {
+					    A:
+					        iconst_1
+					        anewarray java/lang/String
+					        dup
+					        iconst_0
+					        ldc "Hello"
+					        aastore
+					        putstatic Example.values [Ljava/lang/String;
+					        return
+					    B:
+					    }
+					}
+				
+					.method static accessor ()Ljava/lang/String; {
+					    code: {
+					    A:
+					        getstatic Example.values [Ljava/lang/String;
+					        iconst_0
+					        aaload
+					        areturn
+					    B:
+					    }
+					}
+				
+					.method static example ()Ljava/lang/String; {
+					    code: {
+					    A:
+					        invokestatic Example.accessor ()Ljava/lang/String;
+					        areturn
+					    B:
+					    }
+					}
+				}
+				""";
+		assemble(asm, true);
+
+		// Default parameters do not initialize static state, so the accessor call will not be folded.
+		JvmTransformResult defaultResult = assertDoesNotThrow(() ->
+				newApplier().transformJvm(List.of(CallResultInliningTransformer.class)));
+		assertTrue(defaultResult.getTransformerFailures().isEmpty(), "There were transformation failures");
+		assertTrue(defaultResult.getTransformedClasses().isEmpty(), "Class initialization must remain disabled by default");
+
+		// When specifying the parameter to evaluate class initializers, the accessor call should be folded.
+		TransformationParameters parameters = new TransformationParameters(Map.of(
+				CallResultInliningTransformer.KEY_EVALUATE_CLASS_INITIALIZERS, true));
+		JvmTransformResult initializedResult = assertDoesNotThrow(() ->
+				newApplier().transformJvm(List.of(CallResultInliningTransformer.class), parameters));
+		assertTrue(initializedResult.getTransformerFailures().isEmpty(), "There were transformation failures");
+		assertEquals(1, initializedResult.getTransformedClasses().size(), "Expected the initialized accessor call to be folded");
+
+		// Validate the call gets folded.
+		String disassembly = disassembleTransformed(initializedResult, true);
+		assertEquals(0, StringUtil.count("invokestatic Example.accessor", disassembly));
+		assertEquals(2, StringUtil.count("ldc \"Hello\"", disassembly));
+	}
+
+	@Test
+	void foldDecryptorCallWithArrayFromAnotherCall() {
+		// Mirrors string encryption where the decryptor's byte[] argument is produced by another static method.
+		// The decryptor writes into its argument while it decrypts, so the call must be evaluated against a copy of
+		// the array. Otherwise, the array is decrypted during analysis and again when the call is replaced.
+		String asm = """
+				.super java/lang/Object
+				.class Example {
+					.method public static encrypted ()[B {
+					    code: {
+					    A:
+					        iconst_3
+					        newarray byte
+					        dup
+					        iconst_0
+					        bipush 98
+					        bastore
+					        dup
+					        iconst_1
+					        bipush 67
+					        bastore
+					        dup
+					        iconst_2
+					        bipush 11
+					        bastore
+					        areturn
+					    B:
+					    }
+					}
+
+					.method public static decrypt ([BI)Ljava/lang/String; {
+					    parameters: { data, key },
+					    code: {
+					    A:
+					        iconst_0
+					        istore i
+					    B:
+					        iload i
+					        aload data
+					        arraylength
+					        if_icmpge C
+					        aload data
+					        iload i
+					        aload data
+					        iload i
+					        baload
+					        iload key
+					        ixor
+					        i2b
+					        bastore
+					        iinc i 1
+					        goto B
+					    C:
+					        new java/lang/String
+					        dup
+					        aload data
+					        invokespecial java/lang/String.<init> ([B)V
+					        areturn
+					    D:
+					    }
+					}
+
+					.method public static example ()Ljava/lang/String; {
+					    code: {
+					    A:
+					        invokestatic Example.encrypted ()[B
+					        bipush 42
+					        invokestatic Example.decrypt ([BI)Ljava/lang/String;
+					        areturn
+					    B:
+					    }
+					}
+				}
+				""";
+		validateAfterAssembly(asm, List.of(CallResultInliningTransformer.class), dis -> {
+			assertEquals(1, StringUtil.count("ldc \"Hi!\"", dis), "Expected the decryptor call to fold to the plaintext");
+			assertEquals(0, StringUtil.count("invokestatic Example.decrypt", dis), "Expected the decryptor call to be replaced");
+		});
+	}
+
+	@Test
+	void foldCharBufferToStringFromStaticCall() {
+		String asm = """
+				.super java/lang/Object
+				.class Example {
+					.method public static decode ()Ljava/lang/String; {
+					    code: {
+					    A:
+					        iconst_4
+					        newarray byte
+					        dup
+					        iconst_0
+					        iconst_0
+					        bastore
+					        dup
+					        iconst_1
+					        bipush 72
+					        bastore
+					        dup
+					        iconst_2
+					        iconst_0
+					        bastore
+					        dup
+					        iconst_3
+					        bipush 105
+					        bastore
+					        invokestatic java/nio/ByteBuffer.wrap ([B)Ljava/nio/ByteBuffer;
+					        invokevirtual java/nio/ByteBuffer.asCharBuffer ()Ljava/nio/CharBuffer;
+					        invokevirtual java/nio/CharBuffer.toString ()Ljava/lang/String;
+					        areturn
+					    B:
+					    }
+					}
+
+					.method public static example ()Ljava/lang/String; {
+					    code: {
+					    A:
+					        invokestatic Example.decode ()Ljava/lang/String;
+					        areturn
+					    B:
+					    }
+					}
+				}
+				""";
+		validateAfterAssembly(asm, List.of(CallResultInliningTransformer.class), dis -> {
+			assertEquals(1, StringUtil.count("ldc \"Hi\"", dis), "Expected the CharBuffer call to fold to the decoded text");
+			assertEquals(0, StringUtil.count("invokestatic Example.decode", dis), "Expected the call to be replaced");
+		});
+	}
+
+	@Test
 	void foldRedundant1DIntArray() {
 		String asm = """
 				.method public static example ()I {
@@ -1757,6 +2283,109 @@ public class FoldingDeobfuscationTest extends TransformerTestBase {
 		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class, VariableFoldingTransformer.class), dis -> {
 			assertEquals(0, StringUtil.count("array", dis), "Expected to fold redundant array");
 			assertEquals(1, StringUtil.count("iconst_5", dis), "Expected to fold to 5");
+		});
+	}
+
+	@Test
+	void foldRedundantArrayAlloc() {
+		// Junk array allocations that are never used should be removed.
+		String asm = """
+				.super java/lang/Object
+				.class public Example {
+				    .method public static example ()I {
+				        code: {
+				        A:
+				            \0
+				            \1
+				            iconst_1
+				            iconst_1
+				            iadd
+				            ireturn
+				        B:
+				        }
+				    }
+				}
+				""".replace("\0", "            iconst_0\n".repeat(1000))
+				.replace("\1", "            anewarray java/lang/Object\n            pop\n".repeat(1000));
+		validateAfterRepeatedAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
+			assertEquals(0, StringUtil.count("anewarray", dis), "Discarded empty-array allocations should be removed");
+			assertEquals(0, StringUtil.count("pop", dis), "The matching array pops should be removed");
+			assertEquals(0, StringUtil.count("iadd", dis), "The iadd operation should be folded");
+			assertTrue(dis.contains("iconst_2"), "The 1 + 1 suffix operation should fold to 2");
+		});
+	}
+
+	@Test
+	void foldRedundantArrayAllocButKeepEffect() {
+		// Variant of the test above in the sense a junk array allocation should get removed.
+		// However, the contributing operations to the array allocation should be kept since they have side effects.
+		String asm = """
+				.super java/lang/Object
+				.class public Example {
+				    .field static counter I
+
+				    .method private static nextSize ()I {
+				        code: {
+				        A:
+				            getstatic Example.counter I
+				            iconst_1
+				            iadd
+				            dup
+				            putstatic Example.counter I
+				            ireturn
+				        B:
+				        }
+				    }
+
+				    .method public static run ()I {
+				        code: {
+				        A:
+				            invokestatic Example.nextSize ()I
+				            anewarray java/lang/Object
+				            pop
+				            getstatic Example.counter I
+				            ireturn
+				        B:
+				        }
+				    }
+				}
+				""";
+		assemble(asm, true);
+		assertEquals(1, invokeStatic("Example", "run", "Example"));
+		transformAndApply(List.of(OpaqueConstantFoldingTransformer.class));
+		assertEquals(1, invokeStatic("Example", "run", "Example"));
+	}
+
+	@Test
+	void foldRedundantOperations() {
+		// Junk math ops that just get thrown away should get removed.
+		String asm = """
+				.super java/lang/Object
+				.class public Example {
+				    .method public static discard ()V {
+				        code: {
+				        A:
+				            iconst_4
+				            iconst_5
+				            iadd
+				            pop
+				            lconst_0
+				            pop2
+				            iconst_1
+				            iconst_2
+				            iadd
+				            iconst_3
+				            pop2
+				            return
+				        B:
+				        }
+				    }
+				}
+				""";
+		validateAfterRepeatedAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
+			assertEquals(0, StringUtil.count("pop2", dis), "Should fold pop2 + contributors");
+			assertEquals(0, StringUtil.count("pop", dis), "Should fold pop + contributors");
+			assertEquals(0, StringUtil.count("iadd", dis), "Should fold iadd + contributors");
 		});
 	}
 
@@ -2372,6 +3001,144 @@ public class FoldingDeobfuscationTest extends TransformerTestBase {
 	}
 
 	@Test
+	void foldVarAcrossFlow() {
+		// Simple control flow between a single constant store and a single read of the same variable.
+		// Yeah, if you swap the block order, the folding will not work, but this is a simple showcase of the transformer.
+		// Combine this with goto-inlining/opaque-predicate-folding for more complex control flow support.
+		String asm = """
+				.method public static example ()I {
+				    code: {
+				    A:
+				        bipush 42
+				        goto STORE
+				    STORE:
+				        istore value
+				        goto READ
+				    READ:
+				        iload value
+				        ireturn
+				    END:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(VariableFoldingTransformer.class), dis -> {
+			assertFalse(dis.contains("istore value"), "The single constant store should become dead after folding");
+			assertFalse(dis.contains("iload value"), "The integer load should be replaced with its constant producer");
+			assertTrue(dis.contains("bipush 42"), "The integer constant should remain at the folded read");
+		});
+
+		asm = """
+				.method public static example ()F {
+				    code: {
+				    A:
+				        ldc 1.5F
+				        goto STORE
+				    STORE:
+				        fstore value
+				        goto READ
+				    READ:
+				        fload value
+				        freturn
+				    END:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(VariableFoldingTransformer.class), dis -> {
+			assertFalse(dis.contains("fstore value"), "The single constant store should become dead after folding");
+			assertFalse(dis.contains("fload value"), "The float load should be replaced with its constant producer");
+			assertTrue(dis.contains("ldc 1.5F"), "The float constant should remain at the folded read");
+		});
+
+		asm = """
+				.method public static example ()J {
+				    code: {
+				    A:
+				        ldc 123456789L
+				        goto STORE
+				    STORE:
+				        lstore value
+				        goto READ
+				    READ:
+				        lload value
+				        lreturn
+				    END:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(VariableFoldingTransformer.class), dis -> {
+			assertFalse(dis.contains("lstore value"), "The single constant store should become dead after folding");
+			assertFalse(dis.contains("lload value"), "The long load should be replaced with its constant producer");
+			assertTrue(dis.contains("ldc 123456789L"), "The long constant should remain at the folded read");
+		});
+
+		asm = """
+				.method public static example ()D {
+				    code: {
+				    A:
+				        ldc 3.25
+				        goto STORE
+				    STORE:
+				        dstore value
+				        goto READ
+				    READ:
+				        dload value
+				        dreturn
+				    END:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(VariableFoldingTransformer.class), dis -> {
+			assertFalse(dis.contains("dstore value"), "The single constant store should become dead after folding");
+			assertFalse(dis.contains("dload value"), "The double load should be replaced with its constant producer");
+			assertTrue(dis.contains("ldc 3.25"), "The double constant should remain at the folded read");
+		});
+
+		asm = """
+				.method public static example ()Ljava/lang/String; {
+				    code: {
+				    A:
+				        ldc "folded"
+				        goto STORE
+				    STORE:
+				        astore value
+				        goto READ
+				    READ:
+				        aload value
+				        areturn
+				    END:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(VariableFoldingTransformer.class), dis -> {
+			assertFalse(dis.contains("astore value"), "The single constant store should become dead after folding");
+			assertFalse(dis.contains("aload value"), "The string load should be replaced with its constant producer");
+			assertTrue(dis.contains("ldc \"folded\""), "The string constant should remain at the folded read");
+		});
+
+		asm = """
+				.method public static example ()Ljava/lang/Object; {
+				    code: {
+				    A:
+				        aconst_null
+				        goto STORE
+				    STORE:
+				        astore value
+				        goto READ
+				    READ:
+				        aload value
+				        areturn
+				    END:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(VariableFoldingTransformer.class), dis -> {
+			assertFalse(dis.contains("astore value"), "The single constant store should become dead after folding");
+			assertFalse(dis.contains("aload value"), "The null load should be replaced with its constant producer");
+			assertTrue(dis.contains("aconst_null"), "The null constant should remain at the folded read");
+		});
+	}
+
+	@Test
 	void foldVarWithRedundantCopyVariable() {
 		String asm = """
 				.method public example ()I {
@@ -2655,7 +3422,7 @@ public class FoldingDeobfuscationTest extends TransformerTestBase {
 				        iconst_0
 				        istore a
 				        iinc a 4
-						iload a
+					    iload a
 				        ireturn
 				    B:
 				    }
@@ -2693,6 +3460,145 @@ public class FoldingDeobfuscationTest extends TransformerTestBase {
 			assertEquals(0, StringUtil.count("iadd", dis), "Expected to remove redundant iadd");
 			assertEquals(0, StringUtil.count("iload", dis), "Expected to inline redundant iload");
 			assertEquals(1, StringUtil.count("iconst_4", dis), "Expected to have single iconst_4");
+		});
+	}
+
+	@Test
+	void foldUnusedVariablesAfterConstantFolding() {
+		String asm = """
+				.method public static example ()I {
+				    exceptions: { { TRY, END, HANDLER, Ljava/lang/RuntimeException; } },
+				    code: {
+				    TRY:
+				        iconst_0
+				        istore dead
+				        iinc dead 1
+				        iinc dead 2
+				        iload dead
+				        iconst_1
+				        iadd
+				    END:
+				        ireturn
+				    HANDLER:
+				        pop
+				        iconst_m1
+				        ireturn
+				    FINISH:
+				    }
+				}
+				""";
+
+		// Baseline expectation is 4
+		assemble(asm, false);
+		assertEquals(4, invokeStatic(CLASS_NAME, "example", CLASS_NAME));
+
+		// First apply opaque constant folding to remove the iadd and iload, leaving only the iinc and istore.
+		// These leftovers aren't used any more but are not the responsibility of the constant folding transformer to remove.
+		transformAndApply(List.of(OpaqueConstantFoldingTransformer.class));
+		String opaqueDisassembly = disassemble(false);
+		assertEquals(0, StringUtil.count("iload", opaqueDisassembly), opaqueDisassembly);
+		assertEquals(0, StringUtil.count("iadd", opaqueDisassembly), opaqueDisassembly);
+		assertTrue(StringUtil.count("istore", opaqueDisassembly) > 0, opaqueDisassembly);
+		assertTrue(StringUtil.count("iinc", opaqueDisassembly) > 0, opaqueDisassembly);
+		assertEquals(4, invokeStatic(CLASS_NAME, "example", CLASS_NAME));
+
+		// The variable folding transformer however does have the responsibility to remove these leftover variable writes, and will do so.
+		transformAndApply(List.of(VariableFoldingTransformer.class));
+		String finalDisassembly = disassemble(false);
+		assertEquals(0, StringUtil.count("istore", finalDisassembly), finalDisassembly);
+		assertEquals(0, StringUtil.count("iinc", finalDisassembly), finalDisassembly);
+		assertEquals(0, StringUtil.count("iload", finalDisassembly), finalDisassembly);
+		assertEquals(4, invokeStatic(CLASS_NAME, "example", CLASS_NAME));
+	}
+
+	@Test
+	void foldUnusedVariablesPreservesEffects() {
+		// The 'example()' method calls two methods that increment a static counter.
+		// Folding unused variables should not remove the method calls, as they have side effects.
+		compileFull(CLASS_NAME, """
+				class Example {
+				    static int calls;
+				    static long produce() { calls++; return 1L; }
+				    static int throwing() { calls++; throw new IllegalStateException(); }
+				    static int example() {
+				        try {
+				            long unusedLong = produce();
+				            int unusedInt = throwing();
+				        } catch (IllegalStateException ignored) {
+				        }
+				        return calls;
+				    }
+				}
+				""");
+		assertEquals(2, invokeStatic(CLASS_NAME, "example", CLASS_NAME));
+		transformAndApply(List.of(VariableFoldingTransformer.class));
+
+		// The variable folding transformer will remove the unused variable writes,
+		// but it will not remove the side-effecting method calls that produced those values.
+		// The disassembly should show that the method calls are still present, but the variable stores are gone.
+		String disassembly = disassemble(false);
+		assertEquals(0, StringUtil.count("lstore", disassembly), disassembly);
+		assertEquals(0, StringUtil.count("istore", disassembly), disassembly);
+		assertEquals(0, StringUtil.count("astore", disassembly), disassembly);
+		assertTrue(disassembly.contains("invokestatic Example.produce ()J"), disassembly);
+		assertTrue(disassembly.contains("invokestatic Example.throwing ()I"), disassembly);
+		assertTrue(disassembly.contains("pop2"), disassembly);
+		assertEquals(2, invokeStatic(CLASS_NAME, "example", CLASS_NAME));
+	}
+
+	@Test
+	void foldUnusedVariablesWithEmptyProtectedCopyChain() {
+		// A bunch of intermediate variables are written to, but never read from in a try {...} range.
+		// After folding, the try range should be empty, thus it should also be removed.
+		// The final result is the 2+2 return outside the try range.
+		String asm = """
+				.super java/lang/Object
+				.class public super Example {
+				    .method public static example (I)I {
+				        parameters: { seed },
+				        exceptions: { { TRY, END, HANDLER, Ljava/lang/RuntimeException; } },
+				        code: {
+				        TRY:
+				            iload seed
+				            istore source
+				            iload source
+				            istore middle
+				            iload middle
+				            istore unused
+				            iinc unused 1
+				        END:
+				            iconst_2
+				            iconst_2
+				            iadd
+				            ireturn
+				        HANDLER:
+				            pop
+				            iconst_m1
+				            ireturn
+				        FINISH:
+				        }
+				    }
+				    .method public static run ()I {
+				        code: {
+				        A:
+				            bipush 7
+				            invokestatic Example.example (I)I
+				            ireturn
+				        B:
+				        }
+				    }
+				}
+				""";
+		assemble(asm, true);
+		assertEquals(4, invokeStatic(CLASS_NAME, "run", CLASS_NAME));
+
+		// The redundant variable usage should all be gone, and the try-catch range should be removed as well.
+		validateAfterAssembly(asm, List.of(VariableFoldingTransformer.class, OpaqueConstantFoldingTransformer.class), dis -> {
+			assertEquals(0, StringUtil.count("iload", dis), dis);
+			assertEquals(0, StringUtil.count("istore", dis), dis);
+			assertEquals(0, StringUtil.count("iinc", dis), dis);
+			assertFalse(dis.contains("exceptions:"), dis);
+			assertEquals(4, invokeStatic(CLASS_NAME, "run", CLASS_NAME));
 		});
 	}
 

@@ -24,6 +24,8 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
  */
 @Dependent
 public class UnknownAttributeRemovingTransformer implements JvmClassTransformer {
+	public static final String IDENTIFIER = "cleanup.unknownattr";
+
 	@Override
 	public void transform(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace,
 	                      @Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle,
@@ -42,6 +44,7 @@ public class UnknownAttributeRemovingTransformer implements JvmClassTransformer 
 				for (RecordComponentNode recordComponent : node.recordComponents)
 					if (recordComponent.attrs != null)
 						recordComponent.attrs.clear();
+			context.setNode(bundle, initialClassState, node);
 		} else {
 			ClassReader reader = new ClassReader(context.getBytecode(bundle, initialClassState));
 			ClassWriter writer = new ClassWriter(reader, 0);
@@ -52,8 +55,8 @@ public class UnknownAttributeRemovingTransformer implements JvmClassTransformer 
 
 	@Nonnull
 	@Override
-	public String name() {
-		return "Unknown attribute removal";
+	public String identifier() {
+		return IDENTIFIER;
 	}
 
 	@Override

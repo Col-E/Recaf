@@ -9,7 +9,6 @@ import software.coley.recaf.services.transform.JvmClassTransformer;
 import software.coley.recaf.services.transform.JvmTransformerContext;
 import software.coley.recaf.services.transform.TransformationException;
 import software.coley.recaf.util.visitors.DuplicateAnnotationRemovingVisitor;
-import software.coley.recaf.util.visitors.IllegalAnnotationRemovingVisitor;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -21,6 +20,8 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
  */
 @Dependent
 public class DuplicateAnnotationRemovingTransformer implements JvmClassTransformer {
+	public static final String IDENTIFIER = "cleanup.duplicateanno";
+
 	@Override
 	public void transform(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace,
 	                      @Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle,
@@ -39,8 +40,28 @@ public class DuplicateAnnotationRemovingTransformer implements JvmClassTransform
 
 	@Nonnull
 	@Override
-	public String name() {
-		return "Duplicate annotation removal";
+	public String identifier() {
+		return IDENTIFIER;
+	}
+
+	@Nonnull
+	@Override
+	public String beforeExample() {
+		return """
+				@Foo
+				@Foo // Redundant copies after the first are invalid.
+				@Foo
+				class Example {}
+				""";
+	}
+
+	@Nonnull
+	@Override
+	public String afterExample() {
+		return """
+				@Foo
+				class Example {}
+				""";
 	}
 
 	@Override

@@ -12,6 +12,24 @@ import java.io.IOException;
  */
 public interface ClassPatcher {
 	/**
+	 * Pre-processing stage before ASM reads the bytecode.
+	 *
+	 * @param name
+	 * 		Name given by user for logging purposes.
+	 * @param code
+	 * 		Input bytecode.
+	 *
+	 * @return Output filtered bytecode, or {@code null} if no filtering was needed.
+	 *
+	 * @throws IOException
+	 * 		When an exception patching the bytecode occurs.
+	 */
+	@Nullable
+	byte[] prefilter(@Nullable String name, @Nonnull byte[] code) throws IOException;
+
+	/**
+	 * Patches the bytecode to be compliant with ASM.
+	 *
 	 * @param name
 	 * 		Name given by user for logging purposes.
 	 * @param code

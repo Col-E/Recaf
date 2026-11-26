@@ -10,7 +10,7 @@ import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.builder.JvmClassInfoBuilder;
 import software.coley.recaf.info.properties.BasicPropertyContainer;
 import software.coley.recaf.util.ClasspathUtil;
-import software.coley.recaf.util.IOUtil;
+import software.coley.recaf.util.io.IOUtil;
 import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;

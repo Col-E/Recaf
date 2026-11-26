@@ -73,6 +73,7 @@ public class MemberDeclarationSearchPane extends AbstractMemberSearchPane {
 		return row + 1;
 	}
 
+	@Nonnull
 	@Override
 	protected Predicate<Result<?>> createResultFilter() {
 		boolean fields = includeFields.get();
@@ -95,12 +96,12 @@ public class MemberDeclarationSearchPane extends AbstractMemberSearchPane {
 	}
 
 	private void setupFilterListeners() {
-		includeFields.addListener((ob, old, cur) -> search());
-		includeMethods.addListener((ob, old, cur) -> search());
-		includeStatic.addListener((ob, old, cur) -> search());
-		includeNonStatic.addListener((ob, old, cur) -> search());
-		includeFinal.addListener((ob, old, cur) -> search());
-		includeNonFinal.addListener((ob, old, cur) -> search());
+		includeFields.addListener((ob, old, cur) -> searchLive());
+		includeMethods.addListener((ob, old, cur) -> searchLive());
+		includeStatic.addListener((ob, old, cur) -> searchLive());
+		includeNonStatic.addListener((ob, old, cur) -> searchLive());
+		includeFinal.addListener((ob, old, cur) -> searchLive());
+		includeNonFinal.addListener((ob, old, cur) -> searchLive());
 	}
 
 	@Nonnull

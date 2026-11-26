@@ -22,6 +22,8 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
  */
 @Dependent
 public class IllegalVarargsRemovingTransformer implements JvmClassTransformer {
+	public static final String IDENTIFIER = "cleanup.illegalvarargs";
+
 	@Override
 	public void transform(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace,
 	                      @Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle,
@@ -52,8 +54,8 @@ public class IllegalVarargsRemovingTransformer implements JvmClassTransformer {
 
 	@Nonnull
 	@Override
-	public String name() {
-		return "Illegal varargs removal";
+	public String identifier() {
+		return IDENTIFIER;
 	}
 
 	@Override

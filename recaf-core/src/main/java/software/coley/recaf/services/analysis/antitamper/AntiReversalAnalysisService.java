@@ -84,6 +84,31 @@ public class AntiReversalAnalysisService implements Service {
 		throw new IllegalArgumentException("Unknown analyzer type: " + analyzerType.getName());
 	}
 
+	/**
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Resource to analyze.
+	 * @param analyzer
+	 * 		Analyzer to execute.
+	 * @param <R>
+	 * 		Result type.
+	 *
+	 * @return Analyzer result.
+	 *
+	 * @throws IllegalArgumentException
+	 * 		When the analyzer is not registered.
+	 */
+	@Nonnull
+	public <R extends AntiReversalAnalysisResult> R analyze(@Nonnull Workspace workspace,
+	                                                        @Nonnull WorkspaceResource resource,
+	                                                        @Nonnull AntiReversalAnalyzer<R> analyzer) {
+		for (AntiReversalAnalyzer<?> registeredAnalyzer : analyzers)
+			if (registeredAnalyzer.getServiceId().equals(analyzer.getServiceId()))
+				return castAndAnalyze(registeredAnalyzer, workspace, resource);
+		throw new IllegalArgumentException("Unknown analyzer: " + analyzer.getServiceId());
+	}
+
 	@Nonnull
 	@Override
 	public String getServiceId() {

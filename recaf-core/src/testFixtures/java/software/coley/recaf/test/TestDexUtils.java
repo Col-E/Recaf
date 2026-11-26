@@ -15,7 +15,7 @@ import java.util.function.Consumer;
 import static org.objectweb.asm.Opcodes.ACC_PUBLIC;
 
 /**
- * Various test utils for dex class and method creation.
+ * Various test utils for DEX class and method creation.
  *
  * @author Matt Coley
  */

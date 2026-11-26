@@ -21,6 +21,7 @@ import software.coley.recaf.workspace.model.resource.ResourceAndroidClassListene
 import software.coley.recaf.workspace.model.resource.ResourceJvmClassListener;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
@@ -137,6 +138,15 @@ public class CallGraph {
 	                                       @Nonnull Consumer<ClassInfo> consumer) {
 		for (ClassInfo classInfo : bundle.values())
 			consumer.accept(classInfo);
+	}
+
+	/**
+	 * @return Calls made from methods in the workspace to methods that could not be resolved.
+	 * A call stops being unresolved once its target is present in the workspace.
+	 */
+	@Nonnull
+	public List<UnresolvedCall> getUnresolvedCalls() {
+		return updater.getUnresolvedReferences().values().toList();
 	}
 
 	/**

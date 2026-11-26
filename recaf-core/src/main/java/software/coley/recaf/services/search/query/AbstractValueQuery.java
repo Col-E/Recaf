@@ -313,7 +313,7 @@ public abstract class AbstractValueQuery implements AndroidClassQuery, JvmClassQ
 	}
 
 	/**
-	 * Visits constants in dex structures.
+	 * Visits constants in DEX structures.
 	 */
 	private class DexConstantValueVisitor extends DexConstantVisitor {
 		private final ResultSink resultSink;

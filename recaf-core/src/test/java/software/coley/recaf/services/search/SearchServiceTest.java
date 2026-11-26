@@ -20,6 +20,7 @@ import me.darknet.dex.tree.type.Types;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.objectweb.asm.Type;
 import software.coley.recaf.info.BasicTextFileInfo;
 import software.coley.recaf.info.annotation.AnnotationInfo;
 import software.coley.recaf.info.builder.TextFileInfoBuilder;
@@ -28,6 +29,7 @@ import software.coley.recaf.path.AndroidInstructionPathNode;
 import software.coley.recaf.path.AnnotationPathNode;
 import software.coley.recaf.path.CatchPathNode;
 import software.coley.recaf.path.ClassMemberPathNode;
+import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.JvmInstructionPathNode;
 import software.coley.recaf.path.LocalVariablePathNode;
 import software.coley.recaf.path.PathNode;
@@ -40,6 +42,22 @@ import software.coley.recaf.services.search.query.NumberQuery;
 import software.coley.recaf.services.search.query.Query;
 import software.coley.recaf.services.search.query.ReferenceQuery;
 import software.coley.recaf.services.search.query.StringQuery;
+import software.coley.recaf.services.search.query.structure.ClassQuery;
+import software.coley.recaf.services.search.query.structure.ClassQueryBuilder;
+import software.coley.recaf.services.search.query.structure.CountConstraint;
+import software.coley.recaf.services.search.query.structure.FieldMatcher;
+import software.coley.recaf.services.search.query.structure.FieldMatcherBuilder;
+import software.coley.recaf.services.search.query.structure.InsnMatcher;
+import software.coley.recaf.services.search.query.structure.ListMatcher;
+import software.coley.recaf.services.search.query.structure.MethodMatcher;
+import software.coley.recaf.services.search.query.structure.MethodMatcherBuilder;
+import software.coley.recaf.services.search.query.structure.android.AnyDexInsnMatcher;
+import software.coley.recaf.services.search.query.structure.android.DexNewInstanceInstructionMatcher;
+import software.coley.recaf.services.search.query.structure.jvm.JvmDebugInfoMatcher;
+import software.coley.recaf.services.search.query.structure.jvm.JvmFieldInsnNodeMatcher;
+import software.coley.recaf.services.search.query.structure.jvm.JvmLdcInsnNodeMatcher;
+import software.coley.recaf.services.search.query.structure.jvm.JvmMethodInsnNodeMatcher;
+import software.coley.recaf.services.search.result.ClassReferenceResult;
 import software.coley.recaf.services.search.result.MemberDeclarationResult;
 import software.coley.recaf.services.search.result.Result;
 import software.coley.recaf.services.search.result.Results;
@@ -152,6 +170,12 @@ public class SearchServiceTest extends TestBase {
 
 			results = searchService.search(classesWorkspace, new StringQuery(strMatchProvider.newPartialRegexPredicate("\\w+\\s\\w+")));
 			assertEquals(1, results.size());
+		}
+
+		@Test
+		void testEmptyInsnSearch() {
+			Results results = searchService.search(classesWorkspace, new InstructionQuery(List.of()));
+			assertTrue(results.isEmpty(), "An instruction query without predicates should not match every instruction");
 		}
 
 		@Test
@@ -458,6 +482,7 @@ public class SearchServiceTest extends TestBase {
 			code.setDebugInfo(new DebugInformation(
 					List.of(),
 					List.of(),
+					List.of(),
 					List.of(new DebugInformation.LocalVariable(0, "local", targetType, null, begin, end))
 			));
 			me.darknet.dex.tree.definitions.MethodMember method = newDexMethod("probe", "()V", ACC_PUBLIC | ACC_STATIC, code);
@@ -540,6 +565,150 @@ public class SearchServiceTest extends TestBase {
 			));
 			assertEquals(1, nestedAnnotationResults.size());
 			assertInstanceOf(AnnotationPathNode.class, nestedAnnotationResults.getFirst().getPath());
+		}
+	}
+
+	@Nested
+	class Structure {
+		@Test
+		void testStructureQueryAndListBoundaries() {
+			// We'll make a query for just one field + the equals method from AccessibleFields.
+			String owner = AccessibleFields.class.getName().replace('.', '/');
+			FieldMatcher field = new FieldMatcherBuilder()
+					.name("CONSTANT_FIELD")
+					.type(Type.INT_TYPE)
+					.initialValue(16)
+					.annotations(ListMatcher.empty())
+					.accessFlags(ACC_PUBLIC, ACC_STATIC, ACC_FINAL)
+					.build();
+			MethodMatcher equals = new MethodMatcherBuilder()
+					.name("equals")
+					.returnType(Type.BOOLEAN_TYPE)
+					.accessFlags(ACC_PUBLIC)
+					.exactParameters(Type.getType(Object.class))
+					.build();
+			ClassQuery query = new ClassQueryBuilder()
+					.name(owner)
+					.accessFlags(ACC_PUBLIC)
+					.fields(field)
+					.methods(equals)
+					.build();
+
+			// We should get just one match, and it should be the AccessibleFields class.
+			Results results = searchService.search(classesWorkspace, query);
+			assertEquals(1, results.size());
+			if (results.getFirst() instanceof ClassReferenceResult result) {
+				assertInstanceOf(ClassPathNode.class, result.getPath());
+				assertEquals(owner, result.getValue().name());
+			} else {
+				fail("Expected ClassReferenceResult");
+			}
+
+			// If we change the field query's initial value, we should get no matches.
+			ClassQuery nearMiss = new ClassQueryBuilder()
+					.name(owner)
+					.accessFlags(ACC_PUBLIC)
+					.fields(new FieldMatcherBuilder()
+							.name("CONSTANT_FIELD")
+							.type(Type.INT_TYPE)
+							.initialValue(17)
+							.annotations(ListMatcher.empty())
+							.accessFlags(ACC_PUBLIC, ACC_STATIC, ACC_FINAL)
+							.build())
+					.methods(equals)
+					.build();
+			assertTrue(searchService.search(classesWorkspace, nearMiss).isEmpty());
+		}
+
+		@Test
+		void testStructureInstructionSequence() {
+			// We'll make a query to look for the 'hello world' print in the HelloWorld.main method.
+			String owner = HelloWorld.class.getName().replace('.', '/');
+			MethodMatcher main = new MethodMatcherBuilder()
+					.name("main")
+					.instructions(List.of(
+							InsnMatcher.ANY, // Match any prefix
+							JvmFieldInsnNodeMatcher.exact(GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;"),
+							InsnMatcher.ANY, // Intermediate matching
+							JvmLdcInsnNodeMatcher.exact("Hello world"),
+							InsnMatcher.ANY, // Intermediate matching
+							JvmMethodInsnNodeMatcher.exact(INVOKEVIRTUAL, "java/io/PrintStream", "println", "(Ljava/lang/String;)V"),
+							InsnMatcher.ANY // Match any suffix
+					), CountConstraint.atLeast(3))
+					.build();
+			ClassQuery query = new ClassQueryBuilder()
+					.name(owner)
+					.accessFlags(ACC_PUBLIC)
+					.methods(main)
+					.build();
+
+			// Should get just one match, and it should be the HelloWorld class which contains the pattern.
+			Results results = searchService.search(classesWorkspace, query);
+			assertEquals(1, results.size());
+			if (results.getFirst() instanceof ClassReferenceResult result) {
+				assertInstanceOf(ClassPathNode.class, result.getPath());
+				assertEquals(owner, result.getValue().name());
+			} else {
+				fail("Expected ClassReferenceResult");
+			}
+		}
+
+		@Test
+		void testAndroidStructureInstructionSearch() {
+			String owner = "demo/AndroidStructure";
+			InstanceType allocatedType = Types.instanceTypeFromInternalName("demo/Allocated");
+			Code code = new Code(0, 0, 1);
+			code.addInstruction(new NewInstanceInstruction(0, allocatedType));
+			code.addInstruction(new ReturnInstruction());
+			Workspace workspace = fromBundle(fromClasses(newAndroidClass(owner,
+					newDexMethod("create", "()V", ACC_PUBLIC | ACC_STATIC, code))));
+
+			// Find the DEX method that allocates the requested type.
+			MethodMatcher create = new MethodMatcherBuilder()
+					.name("create")
+					.instructions(
+							DexNewInstanceInstructionMatcher.exact(0, allocatedType.descriptor()),
+							AnyDexInsnMatcher.INSTANCE)
+					.build();
+			ClassQuery query = new ClassQueryBuilder().name(owner).methods(create).build();
+			Results results = searchService.search(workspace, query);
+			assertEquals(1, results.size());
+			ClassReferenceResult result = assertInstanceOf(ClassReferenceResult.class, results.getFirst());
+			assertEquals(owner, result.getValue().name());
+
+			// A different allocation type should not match.
+			MethodMatcher nearMiss = new MethodMatcherBuilder()
+					.name("create")
+					.instructions(
+							DexNewInstanceInstructionMatcher.exact(0, "demo/Other"),
+							AnyDexInsnMatcher.INSTANCE)
+					.build();
+			ClassQuery nearMissQuery = new ClassQueryBuilder().name(owner).methods(nearMiss).build();
+			assertTrue(searchService.search(workspace, nearMissQuery).isEmpty());
+		}
+
+		@Test
+		void testJvmStructureLocalVariableSearch() {
+			String owner = HelloWorld.class.getName().replace('.', '/');
+			MethodMatcher main = new MethodMatcherBuilder()
+					.name("main")
+					.debugInfo(JvmDebugInfoMatcher.local(0, "args", "[Ljava/lang/String;"))
+					.build();
+			ClassQuery query = new ClassQueryBuilder().name(owner).methods(main).build();
+
+			// Find the JVM method using its local-variable debug table.
+			Results results = searchService.search(classesWorkspace, query);
+			assertEquals(1, results.size());
+			ClassReferenceResult result = assertInstanceOf(ClassReferenceResult.class, results.getFirst());
+			assertEquals(owner, result.getValue().name());
+
+			// A different local descriptor should not match.
+			MethodMatcher nearMiss = new MethodMatcherBuilder()
+					.name("main")
+					.debugInfo(JvmDebugInfoMatcher.local(0, "args", "Ljava/lang/String;"))
+					.build();
+			ClassQuery nearMissQuery = new ClassQueryBuilder().name(owner).methods(nearMiss).build();
+			assertTrue(searchService.search(classesWorkspace, nearMissQuery).isEmpty());
 		}
 	}
 }

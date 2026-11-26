@@ -2,7 +2,7 @@ package software.coley.recaf.services.search.query;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
-import me.darknet.assembler.printer.JvmPrinterUtil;
+import me.darknet.assembler.backend.jvm.printer.JvmPrinterUtil;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -33,6 +33,10 @@ public class InstructionQuery implements JvmClassQuery {
 	@Nonnull
 	@Override
 	public JvmClassSearchVisitor visitor(@Nullable JvmClassSearchVisitor delegate) {
+		// Don't want to end up matching every instruction in the whole workspace, that would be silly.
+		if (predicates.isEmpty())
+			return (resultSink, classPath, classInfo) -> {};
+
 		return (resultSink, classPath, classInfo) -> {
 			ClassNode node = new ClassNode();
 			classInfo.getClassReader().accept(node, ClassReader.SKIP_FRAMES);

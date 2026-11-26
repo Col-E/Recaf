@@ -22,6 +22,6 @@ public interface AndroidClassSearchVisitor extends SearchVisitor {
 	 * 		Class to visit.
 	 */
 	void visit(@Nonnull ResultSink resultSink,
-			   @Nonnull ClassPathNode classPath,
-			   @Nonnull AndroidClassInfo classInfo);
+	           @Nonnull ClassPathNode classPath,
+	           @Nonnull AndroidClassInfo classInfo);
 }

@@ -152,6 +152,7 @@ public abstract class CompletionPopup<T> {
 		completionPopupFocuser = new CompletionPopupFocuser(this);
 		completionPopupUpdater = new CompletionPopupUpdater<>(completer, this);
 
+		area.addEventFilter(KeyEvent.KEY_TYPED, completionPopupUpdater);
 		area.addEventFilter(KeyEvent.KEY_RELEASED, completionPopupUpdater);
 		area.addEventFilter(KeyEvent.KEY_TYPED, completionPopupFocuser);
 
@@ -178,8 +179,10 @@ public abstract class CompletionPopup<T> {
 	public void uninstall() {
 		CodeArea localArea = area;
 		if (localArea != null) {
-			if (completionPopupUpdater != null)
+			if (completionPopupUpdater != null) {
+				localArea.removeEventFilter(KeyEvent.KEY_TYPED, completionPopupUpdater);
 				localArea.removeEventFilter(KeyEvent.KEY_RELEASED, completionPopupUpdater);
+			}
 			if (completionPopupFocuser != null)
 				localArea.removeEventFilter(KeyEvent.KEY_TYPED, completionPopupFocuser);
 		}
@@ -366,12 +369,38 @@ public abstract class CompletionPopup<T> {
 		if (localSelected != null) {
 			selected = null;
 			String toComplete = textifier.toText(localSelected);
-			return complete(partialText, toComplete);
+			return complete(partialText, localSelected, toComplete);
 		}
 
 		return false;
 	}
 
+	/**
+	 * Completes the current text with a selected value.
+	 *
+	 * @param partialText
+	 * 		Current text to complete.
+	 * @param selected
+	 * 		Selected completion value.
+	 * @param fullText
+	 * 		Text represented by the selected value.
+	 *
+	 * @return {@code true} on successful completion.
+	 */
+	protected boolean complete(@Nonnull String partialText, @Nonnull T selected, @Nonnull String fullText) {
+		return complete(partialText, fullText);
+	}
+
+	/**
+	 * Completes the current text with a selected value.
+	 *
+	 * @param partialText
+	 * 		Current text to complete.
+	 * @param fullText
+	 * 		Text represented by the selected value.
+	 *
+	 * @return {@code true} on successful completion.
+	 */
 	protected boolean complete(@Nonnull String partialText, @Nonnull String fullText) {
 		// Skip if the partial text (the current line) does not represent a substring of the text to complete (the full text)
 		if (!fullText.startsWith(partialText)) {
@@ -400,6 +429,32 @@ public abstract class CompletionPopup<T> {
 		// Insert the rest of the text.
 		String remainingWordText = fullText.substring(partialText.length());
 		area.insertText(area.getCaretPosition(), remainingWordText);
+
+		// Show completion centered on the screen if it is off-screen.
+		if (area.getCaretBounds().isEmpty())
+			area.showParagraphAtCenter(area.getCurrentParagraph());
+
+		return true;
+	}
+
+	/**
+	 * Replaces the exact text before the caret with a completion instead of appending its suffix.
+	 *
+	 * @param partialText
+	 * 		Text to replace immediately before the caret.
+	 * @param fullText
+	 * 		Replacement text.
+	 *
+	 * @return {@code true} if the text before the caret matched and was replaced.
+	 */
+	protected boolean completeByReplacingPartialText(@Nonnull String partialText, @Nonnull String fullText) {
+		int end = area.getCaretPosition();
+		int start = end - partialText.length();
+		if (start < 0 || !area.getText(start, end).equals(partialText))
+			return false;
+
+		area.replaceText(start, end, fullText);
+		area.moveTo(start + fullText.length());
 
 		// Show completion centered on the screen if it is off-screen.
 		if (area.getCaretBounds().isEmpty())

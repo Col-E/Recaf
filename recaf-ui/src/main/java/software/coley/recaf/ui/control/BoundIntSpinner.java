@@ -3,6 +3,7 @@ package software.coley.recaf.ui.control;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.Property;
 import javafx.scene.control.Spinner;
 import javafx.scene.control.SpinnerValueFactory;
 import javafx.scene.control.TextFormatter;
@@ -35,6 +36,7 @@ public class BoundIntSpinner extends Spinner<Integer> implements Tooltipable {
 	 * @param max
 	 * 		Property max value.
 	 */
+	@SuppressWarnings({"rawtypes", "unchecked"})
 	public BoundIntSpinner(@Nonnull IntegerProperty value, int min, int max) {
 		final int initialValue = value.get();
 		final String initialValueStr = Integer.toString(initialValue);
@@ -44,7 +46,7 @@ public class BoundIntSpinner extends Spinner<Integer> implements Tooltipable {
 		setMaxWidth(Double.MAX_VALUE);
 		getEditor().setText(initialValueStr);
 		getEditor().setTextFormatter(new TextFormatter<>(new IntegerStringConverter(), initialValue, BoundIntSpinner::handleChange));
-		value.bind(valueProperty());
+		getValueFactory().valueProperty().bindBidirectional((Property) value);
 	}
 
 	@Nullable

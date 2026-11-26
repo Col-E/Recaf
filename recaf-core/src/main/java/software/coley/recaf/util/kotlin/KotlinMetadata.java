@@ -163,7 +163,7 @@ public class KotlinMetadata {
 	 * @param visitor
 	 * 		Metadata visitor which has visited a class file.
 	 *
-	 * @return Data extracted from visitor.
+	 * @return Data extracted from visitor, or {@code null} when unavailable or malformed.
 	 */
 	@Nullable
 	protected static KotlinMetadata extractMetadata(@Nonnull KotlinMetadataVisitor visitor) {
@@ -178,6 +178,8 @@ public class KotlinMetadata {
 			byte[] data1Decoded = BitEncoding.decodeBytes(data1);
 			ByteArrayInputStream data1Stream = new ByteArrayInputStream(data1Decoded);
 			JvmProtoBuf.StringTableTypes types = JvmProtoBuf.StringTableTypes.parseDelimitedFrom(data1Stream, EXTENSIONS);
+			if (types == null || !hasValidStringTable(types, data2.length))
+				return null;
 
 			// Wrap with "d2" so the human-readable names can be extracted
 			MetadataNameResolver resolver = new MetadataNameResolver(types, data2);
@@ -205,6 +207,25 @@ public class KotlinMetadata {
 				logger.warn("Kotlin @Metadata 'd1' format failed to parse", ex);
 			return null;
 		}
+	}
+
+	/**
+	 * @param types
+	 * 		String-table record definitions.
+	 * @param stringCount
+	 * 		Number of strings supplied by the metadata.
+	 *
+	 * @return {@code true} when every record has a positive range and the total expansion fits within the strings.
+	 */
+	private static boolean hasValidStringTable(@Nonnull JvmProtoBuf.StringTableTypes types, int stringCount) {
+		int remaining = stringCount;
+		for (JvmProtoBuf.StringTableTypes.Record record : types.getRecordList()) {
+			int range = record.getRange();
+			if (range <= 0 || range > remaining)
+				return false;
+			remaining -= range;
+		}
+		return true;
 	}
 
 	/**

@@ -8,8 +8,7 @@ import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.services.source.ResolverAdapter;
-import software.coley.recaf.ui.control.richtext.suggest.java.lookups.MemberLookup;
-import software.coley.recaf.ui.control.richtext.suggest.java.lookups.VisibleTypeLookup;
+import software.coley.recaf.ui.control.richtext.suggest.typeindex.TypeCandidate;
 import software.coley.sourcesolver.model.ClassModel;
 import software.coley.sourcesolver.model.CompilationUnitModel;
 import software.coley.sourcesolver.model.Model;
@@ -31,7 +30,6 @@ import software.coley.sourcesolver.resolve.result.Resolutions;
  */
 public class ReceiverResolver {
 	private static final Logger logger = Logging.get(ReceiverResolver.class);
-	private final VisibleTypeLookup visibleTypeLookup = new VisibleTypeLookup();
 
 	/**
 	 * Attempt to resolve the receiver at the caret position.
@@ -86,7 +84,7 @@ public class ReceiverResolver {
 			if (chainedReceiver != null)
 				return chainedReceiver;
 
-			TypeCandidate visibleType = visibleTypeLookup.resolveVisibleTypeReference(session, receiverText);
+			TypeCandidate visibleType = session.resolveVisibleType(receiverText);
 			if (visibleType != null) {
 				ClassEntry classEntry = pool.getClass(visibleType.internalName());
 				if (classEntry != null)
@@ -194,7 +192,7 @@ public class ReceiverResolver {
 		}
 
 		// Check if the identifier is a visible type reference.
-		TypeCandidate visibleType = visibleTypeLookup.resolveVisibleTypeReference(session, receiverText);
+		TypeCandidate visibleType = session.resolveVisibleType(receiverText);
 		if (visibleType != null) {
 			ClassEntry classEntry = pool.getClass(visibleType.internalName());
 			if (classEntry != null)
@@ -240,7 +238,7 @@ public class ReceiverResolver {
 			return null;
 
 		// Look for a visible field in the received class with the given name.
-		FieldEntry field = MemberLookup.findVisibleField(classEntry, session.currentClassEntry(pool), memberName,
+		FieldEntry field = JavaCompletionSession.findVisibleField(classEntry, session.currentClassEntry(pool), memberName,
 				session.currentPackageName(), receiver.mode());
 		if (field == null)
 			return null;

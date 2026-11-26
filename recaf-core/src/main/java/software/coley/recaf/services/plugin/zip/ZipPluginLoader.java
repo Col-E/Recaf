@@ -20,7 +20,7 @@ import software.coley.recaf.services.plugin.PluginException;
 import software.coley.recaf.services.plugin.PluginInfo;
 import software.coley.recaf.services.plugin.PluginLoader;
 import software.coley.recaf.services.plugin.PreparedPlugin;
-import software.coley.recaf.util.IOUtil;
+import software.coley.recaf.util.io.IOUtil;
 import software.coley.recaf.util.io.ByteSource;
 
 import java.io.BufferedReader;

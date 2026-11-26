@@ -13,8 +13,10 @@ import software.coley.recaf.services.compile.CompilerResult;
 import software.coley.recaf.services.compile.JavacArguments;
 import software.coley.recaf.services.compile.JavacArgumentsBuilder;
 import software.coley.recaf.services.compile.JavacCompiler;
-import software.coley.recaf.services.plugin.CdiClassAllocator;
+import software.coley.recaf.services.plugin.AllocationException;
+import software.coley.recaf.services.plugin.SharedCdiClassAllocator;
 import software.coley.recaf.util.CancelSignal;
+import software.coley.recaf.util.ClassDefiner;
 import software.coley.recaf.util.ReflectUtil;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
 
@@ -42,11 +44,11 @@ public class JavacScriptEngine implements ScriptEngine {
 	private final ExecutorService compilePool = ThreadPoolFactory.newSingleThreadExecutor("script-compiler");
 	private final ExecutorService runPool = ThreadPoolFactory.newCachedThreadPool("script-runner");
 	private final JavacCompiler compiler;
-	private final CdiClassAllocator allocator;
+	private final SharedCdiClassAllocator allocator;
 	private final ScriptEngineConfig config;
 
 	@Inject
-	public JavacScriptEngine(JavacCompiler compiler, CdiClassAllocator allocator, ScriptEngineConfig config) {
+	public JavacScriptEngine(JavacCompiler compiler, SharedCdiClassAllocator allocator, ScriptEngineConfig config) {
 		this.compiler = compiler;
 		this.allocator = allocator;
 		this.config = config;
@@ -93,9 +95,10 @@ public class JavacScriptEngine implements ScriptEngine {
 	@Nonnull
 	private ScriptResult handleExecute(@Nonnull GenerateResult result) {
 		if (result.cls() != null) {
+			Object instance = null;
 			try {
 				logger.debugging(l -> l.info("Allocating script instance"));
-				Object instance = allocator.instance(result.cls());
+				instance = allocator.instance(result.cls());
 				Method run = ReflectUtil.getDeclaredMethod(instance.getClass(), "run");
 				run.setAccessible(true);
 				run.invoke(instance);
@@ -113,6 +116,13 @@ public class JavacScriptEngine implements ScriptEngine {
 				logger.error("Failed to execute script", ex);
 				return new ScriptResult(result.diagnostics(), ex);
 			} finally {
+				if (instance != null) {
+					try {
+						allocator.release(instance);
+					} catch (AllocationException ex) {
+						logger.error("Failed to release script instance", ex);
+					}
+				}
 				try {
 					result.resetStop();
 				} catch (IllegalStateException ex) {
@@ -167,7 +177,7 @@ public class JavacScriptEngine implements ScriptEngine {
 		AugmentedSourceUnit prepared = ScriptSourceAugmentation.augmentStandardClass(source);
 		if (prepared == null)
 			return new ScriptTemplate.Failed(List.of(
-					new CompilerDiagnostic(-1, -1, 0, "Could not determine name of class", CompilerDiagnostic.Level.ERROR)));
+					new CompilerDiagnostic(-1, -1, 0, "Could not determine name of class", CompilerDiagnostic.Level.ERROR, null)));
 		return generate(prepared);
 	}
 
@@ -198,8 +208,11 @@ public class JavacScriptEngine implements ScriptEngine {
 		CompilerResult result = compiler.compile(args, null, null);
 		List<CompilerDiagnostic> diagnostics = mapDiagnostics(src.source(), result.getDiagnostics());
 		if (result.wasSuccess()) {
-			Map<String, byte[]> classes = result.getCompilations().entrySet().stream()
-					.collect(Collectors.toMap(e -> e.getKey().replace('/', '.'), e -> postProcessClass(e.getValue())));
+			Map<String, byte[]> rawClasses = result.getCompilations().entrySet().stream()
+					.collect(Collectors.toMap(e -> e.getKey().replace('/', '.'), Map.Entry::getValue));
+			ClassDefiner resolver = new ClassDefiner(rawClasses);
+			Map<String, byte[]> classes = rawClasses.entrySet().stream()
+					.collect(Collectors.toMap(Map.Entry::getKey, e -> postProcessClass(resolver, e.getValue())));
 			injectClasses(classes);
 			return new ScriptTemplate.Generated(className.replace('/', '.'), Map.copyOf(classes), diagnostics);
 		}
@@ -207,9 +220,15 @@ public class JavacScriptEngine implements ScriptEngine {
 	}
 
 	@Nonnull
-	private byte[] postProcessClass(@Nonnull byte[] classBytes) {
+	private byte[] postProcessClass(@Nonnull ClassLoader resolver, @Nonnull byte[] classBytes) {
 		ClassReader cr = new ClassReader(classBytes);
-		ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
+		ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS) {
+			@Override
+			protected ClassLoader getClassLoader() {
+				// Resolve generated types from the compilation rather than the application loader.
+				return resolver;
+			}
+		};
 		cr.accept(new InsertCancelSignalVisitor(cw), ClassReader.EXPAND_FRAMES);
 		return cw.toByteArray();
 	}

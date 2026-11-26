@@ -11,7 +11,6 @@ import software.coley.recaf.workspace.model.resource.AndroidApiResource;
 import software.coley.recaf.workspace.model.resource.RuntimeWorkspaceResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -26,10 +25,10 @@ public class BasicWorkspace implements Workspace {
 	private static final Logger logger = Logging.get(BasicWorkspace.class);
 	private final List<WorkspaceModificationListener> modificationListeners = new CopyOnWriteArrayList<>();
 	private final WorkspaceResource primary;
-	private final List<WorkspaceResource> supporting = new ArrayList<>();
+	private final List<WorkspaceResource> supporting = new CopyOnWriteArrayList<>();
 	private final List<WorkspaceResource> internal;
-	private List<WorkspaceResource> cachedAllResourcesNoInternal;
-	private List<WorkspaceResource> cachedAllResources;
+	private volatile List<WorkspaceResource> cachedAllResourcesNoInternal;
+	private volatile List<WorkspaceResource> cachedAllResources;
 
 	/**
 	 * @param primary

@@ -22,6 +22,6 @@ public interface FileSearchVisitor extends SearchVisitor {
 	 * 		File to visit.
 	 */
 	void visit(@Nonnull ResultSink resultSink,
-			   @Nonnull FilePathNode filePath,
-			   @Nonnull FileInfo fileInfo);
+	           @Nonnull FilePathNode filePath,
+	           @Nonnull FileInfo fileInfo);
 }

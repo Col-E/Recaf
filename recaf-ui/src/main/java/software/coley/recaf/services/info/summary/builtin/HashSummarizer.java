@@ -102,7 +102,7 @@ public class HashSummarizer implements ResourceSummarizer {
 
 		// Create TableView
 		TableView<HashEntry> tableView = new TableView<>();
-		tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+		tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
 		tableView.setFixedCellSize(40);
 
 		// Create columns

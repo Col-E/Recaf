@@ -5,6 +5,7 @@ import jakarta.annotation.Nullable;
 import regexodus.Matcher;
 import software.coley.recaf.util.collect.primitive.Int2IntMap;
 import software.coley.recaf.util.collect.primitive.IntList;
+import software.coley.recaf.util.io.ByteHeaderUtil;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -814,6 +815,38 @@ public class StringUtil {
 	}
 
 	/**
+	 * @param text
+	 * 		Text to check.
+	 * @param prefixes
+	 * 		Array of prefixes to check for.
+	 *
+	 * @return {@code true} when the text starts with any of the given prefixes.
+	 */
+	public static boolean startsWithAny(@Nonnull String text, @Nonnull String... prefixes) {
+		for (String prefix : prefixes) {
+			if (text.startsWith(prefix))
+				return true;
+		}
+		return false;
+	}
+
+	/**
+	 * @param text
+	 * 		Text to check.
+	 * @param prefixes
+	 * 		List of prefixes to check for.
+	 *
+	 * @return {@code true} when the text starts with any of the given prefixes.
+	 */
+	public static boolean startsWithAny(@Nonnull String text, @Nonnull List<String> prefixes) {
+		for (String prefix : prefixes) {
+			if (text.startsWith(prefix))
+				return true;
+		}
+		return false;
+	}
+
+	/**
 	 * @param args
 	 * 		Input arguments.
 	 *
@@ -963,6 +996,59 @@ public class StringUtil {
 		while (sb.length() < length)
 			sb.append(alphabet.charAt(r.nextInt(alphabet.length())));
 		return sb.toString();
+	}
+
+	/**
+	 * @param text
+	 * 		Text to check.
+	 *
+	 * @return {@code true} when the text only contains non-control ASCII characters.
+	 */
+	public static boolean isPlainAscii(@Nonnull String text) {
+		for (int i = 0; i < text.length(); i++) {
+			char c = text.charAt(i);
+			if (c < ' ' || c > '~')
+				return false;
+		}
+		return true;
+	}
+
+	/**
+	 * @param text
+	 * 		Text to check.
+	 *
+	 * @return {@code true} when the text is a valid Java identifier and only contains ASCII characters.
+	 */
+	public static boolean isIdentifierAscii(@Nonnull String text) {
+		for (int i = 0; i < text.length(); i++) {
+			char c = text.charAt(i);
+			if (c < '!' || c > 'z')
+				return false;
+		}
+		return true;
+	}
+
+	/**
+	 * Stricter than checking {@link Character#isJavaIdentifierStart(int)} and {@link Character#isJavaIdentifierPart(int)}
+	 * alone since {@link Character#isIdentifierIgnorable(int)} and {@link Character#isISOControl(int)} are also checked.
+	 *
+	 * @param text
+	 * 		Text to check.
+	 *
+	 * @return {@code true} when the text is a single Java identifier.
+	 * It is not empty, starts with an identifier start character, and only continues with identifier part characters.
+	 */
+	public static boolean isJavaIdentifier(@Nonnull String text) {
+		int length = text.length();
+		for (int i = 0; i < length; ) {
+			int codePoint = text.codePointAt(i);
+			if (Character.isISOControl(codePoint) || Character.isIdentifierIgnorable(codePoint))
+				return false;
+			if (i == 0 ? !Character.isJavaIdentifierStart(codePoint) : !Character.isJavaIdentifierPart(codePoint))
+				return false;
+			i += Character.charCount(codePoint);
+		}
+		return length > 0;
 	}
 
 	/**

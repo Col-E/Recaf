@@ -78,7 +78,7 @@ public class ClassReferenceSearchPane extends AbstractSearchPane {
 		EventStreams.changesOf(typeValue)
 				.or(EventStreams.changesOf(typePredicateId))
 				.reduceSuccessions(Collections::singletonList, Lists::add, Duration.ofMillis(Editor.MEDIUM_DELAY_MS))
-				.addObserver(unused -> search());
+				.addObserver(unused -> searchLive());
 
 		setInputs(input);
 	}

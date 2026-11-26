@@ -15,6 +15,7 @@ public class BasicJvmClassInfo extends BasicClassInfo implements JvmClassInfo {
 	private final byte[] bytecode;
 	private final int version;
 	private ClassReader reader;
+	private int hash;
 
 	/**
 	 * @param builder
@@ -62,10 +63,11 @@ public class BasicJvmClassInfo extends BasicClassInfo implements JvmClassInfo {
 
 	@Override
 	public int hashCode() {
+		if (hash != 0) return hash;
 		int result = super.hashCode();
 		result = 31 * result + Arrays.hashCode(bytecode);
 		result = 31 * result + version;
-		return result;
+		return hash = result;
 	}
 
 	@Override

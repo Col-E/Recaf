@@ -34,6 +34,19 @@ public class Int2ObjectMap<V> extends AbstractIntKeyMap {
 	}
 
 	/**
+	 * New map with the same contents as another map.
+	 *
+	 * @param other
+	 * 		Map to copy.
+	 */
+	public Int2ObjectMap(@Nonnull Int2ObjectMap<V> other) {
+		super(other.size());
+
+		values = new Object[keys.length];
+		other.forEach(this::put);
+	}
+
+	/**
 	 * @param consumer
 	 * 		Consumer to accept all key-value pairs in the map.
 	 */

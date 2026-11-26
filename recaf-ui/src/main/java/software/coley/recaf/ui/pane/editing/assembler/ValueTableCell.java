@@ -4,7 +4,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import javafx.collections.ObservableList;
 import javafx.scene.control.TableCell;
-import me.darknet.assembler.compile.analysis.Value;
+import me.darknet.assembler.analysis.Value;
 import software.coley.recaf.util.EscapeUtil;
 
 import java.util.Objects;

@@ -40,8 +40,6 @@ import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.member.ClassMember;
-import software.coley.recaf.path.ClassMemberPathNode;
-import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.IncompletePathException;
 import software.coley.recaf.path.PathNode;
 import software.coley.recaf.path.PathNodes;
@@ -49,7 +47,7 @@ import software.coley.recaf.path.WorkspacePathNode;
 import software.coley.recaf.services.cell.CellConfigurationService;
 import software.coley.recaf.services.navigation.Actions;
 import software.coley.recaf.services.navigation.Navigable;
-import software.coley.recaf.services.search.CancellableSearchFeedback;
+import software.coley.recaf.services.search.SearchFeedback;
 import software.coley.recaf.services.search.SearchService;
 import software.coley.recaf.services.search.match.StringPredicate;
 import software.coley.recaf.services.search.match.StringPredicateProvider;
@@ -115,7 +113,7 @@ public class StringTablePane extends BorderPane implements Navigable {
 	private final StringProperty stringValue = new SimpleStringProperty("");
 	private ActionButton searchOptionsButton;
 	private Popover searchOptionsPopover;
-	private CancellableSearchFeedback lastSearchFeedback;
+	private SearchFeedback lastSearchFeedback;
 	private int searchGeneration;
 
 	@Inject
@@ -541,7 +539,7 @@ public class StringTablePane extends BorderPane implements Navigable {
 		}
 	}
 
-	private static class TableSearchFeedback extends CancellableSearchFeedback {
+	private static class TableSearchFeedback extends SearchFeedback {
 		private final SearchOptions.Snapshot optionsSnapshot;
 		private final int minLength;
 		private final int maxLength;

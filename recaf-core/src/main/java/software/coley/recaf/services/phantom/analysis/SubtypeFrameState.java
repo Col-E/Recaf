@@ -2,11 +2,11 @@ package software.coley.recaf.services.phantom.analysis;
 
 import jakarta.annotation.Nonnull;
 import org.objectweb.asm.tree.analysis.Frame;
+import software.coley.recaf.util.collect.primitive.Int2ObjectMap;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 
 /**
  * Minimal recreation of {@link Frame} for subtype relationship inference in {@link PhantomMethodConstraintAnalysis}.
@@ -15,7 +15,7 @@ import java.util.Map;
  * @see SubtypeValue
  */
 public class SubtypeFrameState {
-	private final Map<Integer, SubtypeValue> locals;
+	private final Int2ObjectMap<SubtypeValue> locals;
 	private final List<SubtypeValue> stack;
 
 	/**
@@ -24,8 +24,8 @@ public class SubtypeFrameState {
 	 * @param stack
 	 * 		Operand stack state.
 	 */
-	public SubtypeFrameState(@Nonnull Map<Integer, SubtypeValue> locals, @Nonnull List<SubtypeValue> stack) {
-		this.locals = new HashMap<>(locals);
+	public SubtypeFrameState(@Nonnull Int2ObjectMap<SubtypeValue> locals, @Nonnull List<SubtypeValue> stack) {
+		this.locals = new Int2ObjectMap<>(locals);
 		this.stack = new ArrayList<>(stack);
 	}
 
@@ -33,7 +33,7 @@ public class SubtypeFrameState {
 	 * @return Mutable local state.
 	 */
 	@Nonnull
-	public Map<Integer, SubtypeValue> getLocals() {
+	public Int2ObjectMap<SubtypeValue> getLocals() {
 		return locals;
 	}
 
@@ -56,27 +56,43 @@ public class SubtypeFrameState {
 
 	/**
 	 * @param other
+	 * 		Other state to compare against.
+	 *
+	 * @return {@code true} when both states carry operand stacks of different, non-empty heights.
+	 * Such states cannot be merged, see {@link #merge(SubtypeFrameState)}.
+	 */
+	public boolean stackHeightsConflict(@Nonnull SubtypeFrameState other) {
+		return !stack.isEmpty() && !other.stack.isEmpty() && stack.size() != other.stack.size();
+	}
+
+	/**
+	 * @param other
 	 * 		Incoming state to merge.
+	 * 		Must not {@link #stackHeightsConflict(SubtypeFrameState) conflict} with this state.
 	 *
 	 * @return Merged state.
 	 */
 	@Nonnull
 	public SubtypeFrameState merge(@Nonnull SubtypeFrameState other) {
-		Map<Integer, SubtypeValue> mergedLocals = new HashMap<>(locals);
-		for (Map.Entry<Integer, SubtypeValue> entry : other.locals.entrySet())
-			mergedLocals.merge(entry.getKey(), entry.getValue(), SubtypeValue::merge);
+		if (stackHeightsConflict(other))
+			throw new IllegalStateException("Cannot merge operand stacks of different heights");
+
+		Int2ObjectMap<SubtypeValue> mergedLocals = new Int2ObjectMap<>(locals);
+		other.locals.forEach((index, value) -> {
+			Objects.requireNonNull(value, "Cannot merge null local variable value");
+			SubtypeValue existing = mergedLocals.get(index);
+			mergedLocals.put(index, existing == null ? value : SubtypeValue.merge(existing, value));
+		});
 
 		List<SubtypeValue> mergedStack;
-		if (stack.size() == other.stack.size()) {
-			mergedStack = new ArrayList<>(stack.size());
-			for (int i = 0; i < stack.size(); i++)
-				mergedStack.add(SubtypeValue.merge(stack.get(i), other.stack.get(i)));
-		} else if (stack.isEmpty()) {
+		if (stack.isEmpty()) {
 			mergedStack = new ArrayList<>(other.stack);
 		} else if (other.stack.isEmpty()) {
 			mergedStack = new ArrayList<>(stack);
 		} else {
-			mergedStack = new ArrayList<>();
+			mergedStack = new ArrayList<>(stack.size());
+			for (int i = 0; i < stack.size(); i++)
+				mergedStack.add(SubtypeValue.merge(stack.get(i), other.stack.get(i)));
 		}
 
 		return new SubtypeFrameState(mergedLocals, mergedStack);

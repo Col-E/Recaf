@@ -51,7 +51,7 @@ public enum InvokeKind {
 			case Invoke.VIRTUAL, Invoke.POLYMORPHIC -> VIRTUAL;
 			case Invoke.INTERFACE -> INTERFACE;
 			case Invoke.SUPER -> SUPER;
-			default -> throw new IllegalArgumentException("Unsupported dex invoke opcode: " + opcode);
+			default -> throw new IllegalArgumentException("Unsupported DEX invoke opcode: " + opcode);
 		};
 	}
 }

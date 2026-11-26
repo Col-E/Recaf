@@ -15,6 +15,7 @@ public class VariableMappingKey extends AbstractMappingKey {
 	private final String methodDesc;
 	private final String variableName;
 	private final String variableDesc;
+	private final int variableIndex;
 
 	/**
 	 * @param owner
@@ -27,13 +28,58 @@ public class VariableMappingKey extends AbstractMappingKey {
 	 * 		Variable name.
 	 * @param variableDesc
 	 * 		Variable descriptor.
+	 * @param variableIndex
+	 * 		Variable index.
 	 */
-	public VariableMappingKey(String owner, String methodName, String methodDesc, String variableName, String variableDesc) {
+	public VariableMappingKey(String owner, String methodName, String methodDesc, String variableName, String variableDesc, int variableIndex) {
 		this.owner = owner;
 		this.methodName = methodName;
 		this.methodDesc = methodDesc;
 		this.variableName = variableName;
 		this.variableDesc = variableDesc;
+		this.variableIndex = variableIndex;
+	}
+
+	/**
+	 * @return Class owner.
+	 */
+	public String getOwner() {
+		return owner;
+	}
+
+	/**
+	 * @return Method name.
+	 */
+	public String getMethodName() {
+		return methodName;
+	}
+
+	/**
+	 * @return Method descriptor.
+	 */
+	public String getMethodDesc() {
+		return methodDesc;
+	}
+
+	/**
+	 * @return Variable name.
+	 */
+	public String getVariableName() {
+		return variableName;
+	}
+
+	/**
+	 * @return Variable descriptor.
+	 */
+	public String getVariableDesc() {
+		return variableDesc;
+	}
+
+	/**
+	 * @return Variable index.
+	 */
+	public int getVariableIndex() {
+		return variableIndex;
 	}
 
 	@Nonnull
@@ -66,17 +112,18 @@ public class VariableMappingKey extends AbstractMappingKey {
 		return owner.equals(that.owner) && methodName.equals(that.methodName)
 				&& Objects.equals(methodDesc, that.methodDesc)
 				&& variableName.equals(that.variableName)
-				&& Objects.equals(variableDesc, that.variableDesc);
+				&& Objects.equals(variableDesc, that.variableDesc)
+				&& variableIndex == that.variableIndex;
 	}
-
 
 	@Override
 	public int hashCode() {
 		int result = owner.hashCode();
 		result = 31 * result + methodName.hashCode();
 		result = 31 * result + Objects.hashCode(methodDesc);
-		result = 31 * result + variableName.hashCode();
+		result = 31 * result + Objects.hashCode(variableName);
 		result = 31 * result + Objects.hashCode(variableDesc);
+		result = 31 * result + Integer.hashCode(variableIndex);
 		return result;
 	}
 }

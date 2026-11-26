@@ -3,13 +3,13 @@ package software.coley.recaf.ui.control.richtext.suggest.java;
 import com.google.common.annotations.VisibleForTesting;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
-import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.model.PlainTextChange;
 import software.coley.recaf.services.cell.CellConfigurationService;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.suggest.CompletionPopup;
+import software.coley.recaf.ui.control.richtext.suggest.CompletionResolver;
 import software.coley.recaf.ui.control.richtext.suggest.TabCompleter;
 import software.coley.recaf.ui.control.richtext.suggest.TabCompletionConfig;
 import software.coley.recaf.ui.control.richtext.suggest.java.providers.IdentifierCompletionProvider;
@@ -17,7 +17,8 @@ import software.coley.recaf.ui.control.richtext.suggest.java.providers.ImportCom
 import software.coley.recaf.ui.control.richtext.suggest.java.providers.MemberCompletionProvider;
 import software.coley.recaf.ui.control.richtext.suggest.java.providers.PackageCompletionProvider;
 import software.coley.recaf.ui.control.richtext.suggest.java.providers.TypeCompletionProvider;
-import software.coley.recaf.ui.control.richtext.suggest.java.typeindex.JavaTypeIndexService;
+import software.coley.recaf.ui.control.richtext.suggest.ranking.CompletionRanker;
+import software.coley.recaf.ui.control.richtext.suggest.typeindex.TypeIndexService;
 
 import java.util.List;
 
@@ -26,12 +27,12 @@ import java.util.List;
  *
  * @author Matt Coley
  */
-public class JavaTabCompleter implements TabCompleter<JavaCompletion> {
+public class JavaTabCompleter implements TabCompleter<JavaCompletion>, CompletionResolver<JavaCompletion> {
 	private final JavaCompletionContext contextActionSupport;
-	private final JavaTypeIndexService typeIndexService;
+	private final TypeIndexService typeIndexService;
 	private final JavaLexicalContextParser lexicalContextParser;
 	private final JavaCompletionEngine completionEngine;
-	private final JavaCompletionRanker completionRanker;
+	private final CompletionRanker<JavaCompletion> completionRanker;
 	private final CellConfigurationService configurationService;
 	private final TabCompletionConfig config;
 	private CompletionPopup<JavaCompletion> completionPopup;
@@ -40,14 +41,14 @@ public class JavaTabCompleter implements TabCompleter<JavaCompletion> {
 
 	public JavaTabCompleter(@Nonnull JavaCompletionContext contextActionSupport,
 	                        @Nonnull CellConfigurationService configurationService,
-	                        @Nonnull JavaTypeIndexService typeIndexService,
+	                        @Nonnull TypeIndexService typeIndexService,
 	                        @Nonnull TabCompletionConfig config) {
 		this(contextActionSupport, configurationService, typeIndexService, config, createEngineAndRanker(config));
 	}
 
 	private JavaTabCompleter(@Nonnull JavaCompletionContext contextActionSupport,
 	                         @Nonnull CellConfigurationService configurationService,
-	                         @Nonnull JavaTypeIndexService typeIndexService,
+	                         @Nonnull TypeIndexService typeIndexService,
 	                         @Nonnull TabCompletionConfig config,
 	                         @Nonnull CompletionImplementation completionImplementation) {
 		this(contextActionSupport,
@@ -61,10 +62,10 @@ public class JavaTabCompleter implements TabCompleter<JavaCompletion> {
 	}
 
 	private JavaTabCompleter(@Nonnull JavaCompletionContext contextActionSupport,
-	                         @Nonnull JavaTypeIndexService typeIndexService,
+	                         @Nonnull TypeIndexService typeIndexService,
 	                         @Nonnull JavaLexicalContextParser lexicalContextParser,
 	                         @Nonnull JavaCompletionEngine completionEngine,
-	                         @Nonnull JavaCompletionRanker completionRanker,
+	                         @Nonnull CompletionRanker<JavaCompletion> completionRanker,
 	                         @Nullable CompletionPopup<JavaCompletion> completionPopup,
 	                         @Nonnull CellConfigurationService configurationService,
 	                         @Nonnull TabCompletionConfig config) {
@@ -99,6 +100,16 @@ public class JavaTabCompleter implements TabCompleter<JavaCompletion> {
 				area == null ? -1 : area.getCaretPosition()), context);
 	}
 
+	@Nonnull
+	@Override
+	public List<JavaCompletion> resolve(@Nonnull String source, int caret) {
+		if (!contextActionSupport.isCompletionAvailable() || caret < 0 || caret > source.length())
+			return List.of();
+
+		JavaLexicalContext context = lexicalContextParser.parse(source, caret);
+		return completionEngine.compute(new JavaCompletionSession(contextActionSupport, typeIndexService, caret), context);
+	}
+
 	@Override
 	public void onFineTextUpdate(@Nonnull PlainTextChange changes) {
 		recomputeContext();
@@ -110,8 +121,8 @@ public class JavaTabCompleter implements TabCompleter<JavaCompletion> {
 	}
 
 	@Override
-	public boolean isSpecialCompletableKeyCode(@Nullable KeyCode code) {
-		return code == KeyCode.SEMICOLON;
+	public boolean isSpecialCompletableCharacter(char character) {
+		return character == ';';
 	}
 
 	@Override
@@ -179,7 +190,7 @@ public class JavaTabCompleter implements TabCompleter<JavaCompletion> {
 	 */
 	@Nonnull
 	private static CompletionImplementation createEngineAndRanker(@Nonnull TabCompletionConfig config) {
-		JavaCompletionRanker ranker = new JavaCompletionRanker(config);
+		CompletionRanker<JavaCompletion> ranker = JavaCompletionRanking.create(config);
 		return new CompletionImplementation(
 				new JavaCompletionEngine(config, ranker,
 						new MemberCompletionProvider(),
@@ -200,5 +211,5 @@ public class JavaTabCompleter implements TabCompleter<JavaCompletion> {
 	 * 		Completion ranker to use for sorting completions.
 	 */
 	private record CompletionImplementation(@Nonnull JavaCompletionEngine engine,
-	                                        @Nonnull JavaCompletionRanker ranker) {}
+	                                        @Nonnull CompletionRanker<JavaCompletion> ranker) {}
 }

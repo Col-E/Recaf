@@ -19,7 +19,7 @@ import software.coley.recaf.services.callgraph.CallSite;
 import software.coley.recaf.services.callgraph.InvokeKind;
 
 /**
- * Android dex scanner for method call sites.
+ * Android DEX scanner for method call sites.
  *
  * @author Matt Coley
  */
@@ -72,7 +72,7 @@ public class AndroidMethodCallScanner implements MethodCallScanner {
 	}
 
 	/**
-	 * Local extension point for dex invoke-custom handling.
+	 * Local extension point for DEX invoke-custom handling.
 	 *
 	 * @param callingMethod
 	 * 		Method containing the custom invoke.

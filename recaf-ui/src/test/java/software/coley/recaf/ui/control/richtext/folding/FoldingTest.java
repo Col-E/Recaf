@@ -5,12 +5,20 @@ import javafx.scene.Scene;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.stage.Stage;
+import org.fxmisc.richtext.model.StyleSpan;
+import org.fxmisc.richtext.model.StyleSpans;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import software.coley.recaf.ui.BaseFxTest;
 import software.coley.recaf.ui.control.richtext.Editor;
+import software.coley.recaf.ui.control.richtext.highlight.SelectedWordHighlighting;
+import software.coley.recaf.util.IntRange;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -77,6 +85,47 @@ class FoldingTest extends BaseFxTest {
 
 			editor.unfoldParagraphs(1);
 			assertFalse(editor.getCodeArea().getUndoManager().isUndoAvailable(), "Unfold operations should not be undoable");
+		});
+	}
+
+	@Test
+	void testSelectedWordHighlightingDoesNotAffectUndoHistory() {
+		onEditor("foo foo", editor -> {
+			// Add word highlighting to ensure that the style is applied to the text.
+			editor.setSelectedWordHighlighting(new SelectedWordHighlighting());
+			editor.getCodeArea().moveTo(1);
+			editor.getCodeArea().getUndoManager().forgetHistory();
+
+			// Delete a character to ensure that the style is applied to the text.
+			editor.getCodeArea().deleteText(0, 1);
+			assertEquals("oo foo", editor.getText());
+			
+			// Undo the deletion, which should be undoable.
+			assertTrue(editor.getCodeArea().getUndoManager().undo());
+			assertEquals("foo foo", editor.getText());
+
+			// A second undo would normally be the style change, but we don't want those to be undoable.
+			// We should have checks in the editor preventing this, so this should be false.
+			assertFalse(editor.getCodeArea().getUndoManager().isUndoAvailable(),
+				"Selected-word restyles should not be undoable");
+		});
+	}
+
+	@Test
+	void testSelectedWordHighlightingTracksRapidDeletion() {
+		String text = "foo foo blah foo padding padding";
+		onEditor(text, editor -> {
+			var codeArea = editor.getCodeArea();
+			codeArea.moveTo(1);
+			editor.setSelectedWordHighlighting(new SelectedWordHighlighting());
+
+			// Delete the first word and its trailing space, then force a style update before the debounce fires.
+			for (int i = 0; i < 4; i++)
+				codeArea.deleteText(0, 1);
+			assertEquals("foo blah foo padding padding", editor.getText());
+			editor.setStyleSpans(0, StyleSpans.singleton(Collections.emptyList(), editor.getTextLength()));
+
+			assertEquals(List.of(new IntRange(0, 3), new IntRange(9, 12)), selectedWordRanges(editor));
 		});
 	}
 
@@ -156,6 +205,18 @@ class FoldingTest extends BaseFxTest {
 		});
 	}
 
+	private List<IntRange> selectedWordRanges(Editor editor) {
+		List<IntRange> ranges = new ArrayList<>();
+		int position = 0;
+		for (StyleSpan<Collection<String>> span : editor.getCodeArea().getStyleSpans(0, editor.getTextLength())) {
+			int end = position + span.getLength();
+			if (span.getStyle().contains("selected-word-match"))
+				ranges.add(new IntRange(position, end));
+			position = end;
+		}
+		return ranges;
+	}
+
 	private void fireKey(Editor editor, KeyCode code, boolean shift) {
 		editor.getCodeArea().fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", code, shift, false, false, false));
 	}
@@ -174,7 +235,6 @@ class FoldingTest extends BaseFxTest {
 			try {
 				Editor editor = new Editor();
 				stage.setScene(new Scene(editor, 400, 300));
-				stage.show();
 				editor.setText(text);
 				action.accept(editor);
 			} catch (Throwable t) {

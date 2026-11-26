@@ -25,7 +25,7 @@ import software.coley.recaf.ui.window.RecafScene;
 import software.coley.recaf.ui.window.RecafStage;
 import software.coley.recaf.util.ErrorDialogs;
 import software.coley.recaf.util.FxThreadUtil;
-import software.coley.recaf.util.IOUtil;
+import software.coley.recaf.util.io.IOUtil;
 import software.coley.recaf.util.Icons;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.workspace.PathExportingManager;

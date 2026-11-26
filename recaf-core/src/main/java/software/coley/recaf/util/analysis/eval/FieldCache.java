@@ -10,16 +10,21 @@ import java.util.Map;
 
 /**
  * Support for tracking field values.
+ * <p>
+ * Values are kept under the class that declares the field. A field can be reached through the name of a subclass,
+ * so a caller must resolve the name it was given to the declaring class before using this.
  *
  * @author Matt Coley
  */
 public class FieldCache {
-	/** Maps field names/types to their values. */
+	/** Maps declaring-class-qualified field names and descriptors to their values. */
 	private final Map<String, ReValue> fields = new HashMap<>();
 
 	/**
 	 * Set a field value.
 	 *
+	 * @param owner
+	 * 		Internal name of the class declaring the field.
 	 * @param name
 	 * 		Field name.
 	 * @param desc
@@ -27,28 +32,48 @@ public class FieldCache {
 	 * @param value
 	 * 		Value to set.
 	 */
-	public void setField(@Nonnull String name, @Nonnull String desc, @Nonnull ReValue value) {
-		fields.put(getKey(name, desc), value);
+	public void setField(@Nonnull String owner, @Nonnull String name, @Nonnull String desc, @Nonnull ReValue value) {
+		fields.put(getKey(owner, name, desc), value);
 	}
 
 	/**
 	 * Get a field value.
 	 *
+	 * @param owner
+	 * 		Internal name of the class declaring the field.
 	 * @param name
 	 * 		Field name.
 	 * @param desc
 	 * 		Field descriptor.
 	 *
-	 * @return Value of the field, or {@code null} if no value is known.
-	 * An actual {@code null} value is represented by {@link ObjectValue#VAL_OBJECT_NULL}.
+	 * @return Value of the field, or {@code null} if the field is absent.
+	 * A known {@code null} value is stored as {@link ObjectValue#VAL_OBJECT_NULL}.
 	 */
 	@Nullable
-	public ReValue getField(@Nonnull String name, @Nonnull String desc) {
-		return fields.get(getKey(name, desc));
+	public ReValue getField(@Nonnull String owner, @Nonnull String name, @Nonnull String desc) {
+		return fields.get(getKey(owner, name, desc));
+	}
+
+	/**
+	 * Checks whether a field has been assigned a cached value.
+	 *
+	 * @param owner
+	 * 		Internal name of the class declaring the field.
+	 * @param name
+	 * 		Field name.
+	 * @param desc
+	 * 		Field descriptor.
+	 *
+	 * @return {@code true} when the cache contains the field.
+	 */
+	public boolean containsField(@Nonnull String owner, @Nonnull String name, @Nonnull String desc) {
+		return fields.containsKey(getKey(owner, name, desc));
 	}
 
 	@Nonnull
-	private static String getKey(@Nonnull String name, @Nonnull String desc) {
-		return name + "." + desc;
+	private static String getKey(@Nonnull String owner, @Nonnull String name, @Nonnull String desc) {
+		// Key includes the owner to address potential name shadowing.
+		return owner + "." + name + "." + desc;
 	}
 }
+

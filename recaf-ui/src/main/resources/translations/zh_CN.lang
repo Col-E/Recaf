@@ -302,6 +302,7 @@ dialog.conv.title.expression=数字表达式
 
 ## Quick nav
 dialog.quicknav=快速导航
+dialog.quicknav.tab.all=全部
 dialog.quicknav.tab.classes=类
 dialog.quicknav.tab.members=成员
 dialog.quicknav.tab.files=文件

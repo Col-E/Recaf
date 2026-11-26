@@ -141,9 +141,9 @@ public class ExitDebugLoggingHook {
 						System.out.println(" - Location:          " + url);
 					} else {
 						System.out.println(" - Location (likely): " + url);
-						do {
-							System.out.println(" - Location (seen):   " + url);
-						} while (iterator.hasNext());
+						while (iterator.hasNext()) {
+							System.out.println(" - Location (seen):   " + iterator.next());
+						}
 					}
 				}
 			} catch (Exception ex) {

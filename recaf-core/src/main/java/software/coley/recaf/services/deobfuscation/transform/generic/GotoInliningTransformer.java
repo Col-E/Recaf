@@ -19,6 +19,7 @@ import software.coley.recaf.services.transform.ClassTransformer;
 import software.coley.recaf.services.transform.JvmClassTransformer;
 import software.coley.recaf.services.transform.JvmTransformerContext;
 import software.coley.recaf.services.transform.TransformationException;
+import software.coley.recaf.services.transform.TransformationParameter;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -40,8 +41,19 @@ import static software.coley.recaf.util.AsmInsnUtil.*;
  */
 @Dependent
 public class GotoInliningTransformer implements JvmClassTransformer {
-	private static final int CATCH_VISIT_COUNT = 100;
-	private static final boolean DO_WE_CARE_ABOUT_BACKWARDS_SWITCH_FLOW = false;
+	public static final String IDENTIFIER = "peephole.flow.gotoinline";
+	public static final String KEY_BACKWARDS_SWITCH_FLOW = IDENTIFIER + ".backwards-switch-flow";
+
+	private static final boolean DEFAULT_BACKWARDS_SWITCH_FLOW = false;
+	private static final TransformationParameter<Boolean> BACKWARDS_SWITCH_FLOW_PARAMETER =
+			new TransformationParameter<>(KEY_BACKWARDS_SWITCH_FLOW, boolean.class, DEFAULT_BACKWARDS_SWITCH_FLOW);
+
+	private boolean backwardsSwitchFlow;
+
+	@Override
+	public void setup(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace) {
+		backwardsSwitchFlow = context.getParameters().getBoolean(KEY_BACKWARDS_SWITCH_FLOW, DEFAULT_BACKWARDS_SWITCH_FLOW);
+	}
 
 	@Override
 	public void transform(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace,
@@ -218,8 +230,9 @@ public class GotoInliningTransformer implements JvmClassTransformer {
 
 						int targetOp = target.getOpcode();
 
-						// TODO: Maybe remove this? Need to do more research into when it complains.
-						if (DO_WE_CARE_ABOUT_BACKWARDS_SWITCH_FLOW) {
+						// TODO: Look into cases where this is used more.
+						//  - Currently busts some decompilers, but should be valid to inline. Need to test more.
+						if (backwardsSwitchFlow) {
 							// There are some weird cases where you're not allowed to jump backwards in switch instructions,
 							// so it's better to abort if we see them so that we do not move them around in an illegal way.
 							if (targetOp == TABLESWITCH || targetOp == LOOKUPSWITCH)
@@ -308,8 +321,45 @@ public class GotoInliningTransformer implements JvmClassTransformer {
 
 	@Nonnull
 	@Override
-	public String name() {
-		return "Goto inlining";
+	public String identifier() {
+		return IDENTIFIER;
+	}
+
+	@Nonnull
+	@Override
+	public String beforeExample() {
+		return """
+				// Its not possible to use proper Java source to model pushing values onto the stack,
+				// but the idea is that what should be a simple linear flow gets shuffled around.
+				goto c;
+				a:
+				  ldc "Hello world"
+				  goto d;
+				b:
+				  invokevirtual java/io/PrintStream.println (Ljava/lang/String;)V
+				  return;
+				c:
+				  getstatic java/lang/System.out Ljava/io/PrintStream;
+				  goto a;
+				d:
+				  goto b;
+				""";
+	}
+
+	@Nonnull
+	@Override
+	public String afterExample() {
+		return """
+				// Without the goto instructions, the flow is linear and easy to follow.
+				System.out.println("Hello world");
+				return;
+				""";
+	}
+
+	@Nonnull
+	@Override
+	public List<TransformationParameter<?>> getParameterDefinitions() {
+		return List.of(BACKWARDS_SWITCH_FLOW_PARAMETER);
 	}
 
 	/**

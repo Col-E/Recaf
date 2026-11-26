@@ -115,7 +115,6 @@ public class CellConfigurationService implements Service {
 		//  (METHOD)
 		//   - CatchPathNode
 		//   - InstructionPathNode
-		//   - LocalVariablePathNode
 		//   - ThrowsPathNode
 	}
 
@@ -684,6 +683,17 @@ public class CellConfigurationService implements Service {
 	}
 
 	/**
+	 * @param value
+	 * 		Constant value to create a context menu for.
+	 *
+	 * @return Context-menu for the constant value.
+	 */
+	@Nullable
+	public ContextMenu contextMenuOfConstant(@Nonnull Object value) {
+		return contextMenuService.getConstantContextMenuProvider(value).makeMenu();
+	}
+
+	/**
 	 * @param source
 	 * 		Origin source of the cell, for context menu specialization.
 	 * @param item
@@ -745,6 +755,27 @@ public class CellConfigurationService implements Service {
 
 			ClassMember member = memberNode.getValue();
 			return contextMenuService.getClassMemberContextMenuProvider(source, workspace, resource, bundle, classInfo, member).makeMenu();
+		} else if (item instanceof LocalVariablePathNode variablePath) {
+			ClassBundle<? extends ClassInfo> bundle = variablePath.getValueOfType(ClassBundle.class);
+			if (bundle == null) {
+				logger.error("Local var path node missing bundle section: {}", item);
+				return null;
+			}
+
+			ClassInfo classInfo = variablePath.getValueOfType(ClassInfo.class);
+			if (classInfo == null) {
+				logger.error("Local var path node missing class section: {}", item);
+				return null;
+			}
+
+			MethodMember method = variablePath.getValueOfType(MethodMember.class);
+			if (method == null) {
+				logger.error("Local var path node missing method section: {}", item);
+				return null;
+			}
+
+			LocalVariable variable = variablePath.getValue();
+			return contextMenuService.getLocalVariableContextMenuProvider(source, workspace, resource, bundle, classInfo, method, variable).makeMenu();
 		} else if (item instanceof DirectoryPathNode directoryPath) {
 			Bundle<?> bundle = directoryPath.getValueOfType(Bundle.class);
 			if (bundle == null) {

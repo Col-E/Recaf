@@ -1,12 +1,14 @@
 package software.coley.recaf.services.deobfuscation.transform.generic;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
@@ -19,14 +21,21 @@ import software.coley.recaf.services.transform.ClassTransformer;
 import software.coley.recaf.services.transform.JvmClassTransformer;
 import software.coley.recaf.services.transform.JvmTransformerContext;
 import software.coley.recaf.services.transform.TransformationException;
+import software.coley.recaf.services.transform.TransformationParameter;
+import software.coley.recaf.util.ClassMethodPair;
+import software.coley.recaf.util.analysis.ReAnalyzer;
+import software.coley.recaf.util.analysis.ReInterpreter;
 import software.coley.recaf.util.analysis.eval.EvaluationResult;
 import software.coley.recaf.util.analysis.eval.EvaluationYieldResult;
-import software.coley.recaf.util.analysis.eval.FieldCacheManager;
 import software.coley.recaf.util.analysis.eval.Evaluator;
+import software.coley.recaf.util.analysis.eval.FieldCacheManager;
+import software.coley.recaf.util.analysis.lookup.GetStaticLookup;
+import software.coley.recaf.util.analysis.lookup.InvokeStaticLookup;
+import software.coley.recaf.util.analysis.value.ArrayValue;
 import software.coley.recaf.util.analysis.value.DoubleValue;
 import software.coley.recaf.util.analysis.value.LongValue;
 import software.coley.recaf.util.analysis.value.ReValue;
-import software.coley.recaf.util.collect.primitive.Object2IntMap;
+import software.coley.recaf.util.analysis.value.impl.ArrayValueImpl;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -34,6 +43,7 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -43,13 +53,20 @@ import java.util.Set;
  */
 @Dependent
 public class CallResultInliningTransformer implements JvmClassTransformer {
-	private final static int MAX_STEPS = 20_000; // TODO: Make configurable
+	public static final String IDENTIFIER = "peephole.data.callinline";
+	public static final String KEY_MAX_STEPS = IDENTIFIER + ".max-steps";
+	public static final String KEY_EVALUATE_CLASS_INITIALIZERS = IDENTIFIER + ".evaluate-class-initializers";
+
+	private static final int DEFAULT_MAX_STEPS = 20_000;
+	private static final boolean DEFAULT_EVALUATE_CLASS_INITIALIZERS = false;
+	private static final TransformationParameter<Integer> MAX_STEPS_PARAMETER =
+			new TransformationParameter<>(KEY_MAX_STEPS, int.class, DEFAULT_MAX_STEPS);
+	private static final TransformationParameter<Boolean> EVALUATE_CLASS_INITIALIZERS_PARAMETER =
+			new TransformationParameter<>(KEY_EVALUATE_CLASS_INITIALIZERS, boolean.class, DEFAULT_EVALUATE_CLASS_INITIALIZERS);
+
 	private final InheritanceGraphService graphService;
-	private final Object2IntMap<String> canBeEvaluatedMap = new Object2IntMap<>();
-	private final FieldCacheManager fieldCacheManager = new FieldCacheManager();
 
 	private InheritanceGraph inheritanceGraph;
-	private Evaluator evaluator;
 
 	@Inject
 	public CallResultInliningTransformer(@Nonnull InheritanceGraphService graphService) {
@@ -59,7 +76,6 @@ public class CallResultInliningTransformer implements JvmClassTransformer {
 	@Override
 	public void setup(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace) {
 		inheritanceGraph = graphService.getOrCreateInheritanceGraph(workspace);
-		evaluator = new Evaluator(workspace, context.newInterpreter(inheritanceGraph), new FieldCacheManager(), MAX_STEPS, false);
 	}
 
 	@Override
@@ -69,13 +85,38 @@ public class CallResultInliningTransformer implements JvmClassTransformer {
 		boolean dirty = false;
 		String className = initialClassState.getName();
 		ClassNode node = context.getNode(bundle, initialClassState);
+		StaticValueCollectionTransformer staticValueCollector = context.getOptionalTransformer(StaticValueCollectionTransformer.class);
+
+		// The transformer instance is shared across classes transformed in parallel, so the evaluator
+		// and its field cache must be scoped to this invocation rather than stored as instance state.
+		// We used to have a shared evaluator + cache, but that caused issues with the parallel evaluation
+		// of multiple classes, where the field cache would be polluted by other threads.
+		int maxSteps = context.getParameters().getInt(KEY_MAX_STEPS, DEFAULT_MAX_STEPS);
+		boolean evaluateClassInitializers = context.getParameters().getBoolean(KEY_EVALUATE_CLASS_INITIALIZERS, DEFAULT_EVALUATE_CLASS_INITIALIZERS);
+		FieldCacheManager fieldCacheManager = new FieldCacheManager();
+
+		// If we have the static value collection transformer active we want to pull values from it when evaluating static fields.
+		// So we'll create a lookup wrapper that bundles both the static value collection and the default lookup together.
+		ReInterpreter evaluatorInterpreter = context.newInterpreter(inheritanceGraph);
+		installStaticValueCollector(evaluatorInterpreter, staticValueCollector);
+
+		Evaluator evaluator = new Evaluator(workspace, evaluatorInterpreter, fieldCacheManager, maxSteps, false, evaluateClassInitializers);
 		for (MethodNode method : node.methods) {
 			// Skip if abstract.
 			InsnList instructions = method.instructions;
 			if (instructions == null)
 				continue;
 
-			Frame<ReValue>[] frames = context.analyze(inheritanceGraph, node, method);
+			Frame<ReValue>[] frames;
+			try {
+				ReAnalyzer analyzer = context.newAnalyzer(inheritanceGraph, node, method);
+				installStaticValueCollector(analyzer.getInterpreter(), staticValueCollector);
+				installWorkspaceStaticLookup(analyzer.getInterpreter(), context, evaluator, fieldCacheManager);
+				frames = analyzer.analyze(node.name, method);
+			} catch (Throwable ex) {
+				// Analysis failed, skip this method.
+				continue;
+			}
 			for (int i = instructions.size() - 1; i >= 0; i--) {
 				AbstractInsnNode insn = instructions.get(i);
 				if (insn.getOpcode() == Opcodes.INVOKESTATIC && insn instanceof MethodInsnNode min) {
@@ -89,19 +130,29 @@ public class CallResultInliningTransformer implements JvmClassTransformer {
 					for (int j = 0; j < methodType.getArgumentCount(); j++)
 						arguments.addFirst(frame.getStack(frame.getStackSize() - 1 - j));
 
-					// All arguments must have known values.
-					if (arguments.stream().anyMatch(v -> !v.hasKnownValue()))
+					// Either we need zero arguments, or all arguments that have known values.
+					if (!arguments.isEmpty() && arguments.stream().anyMatch(v -> !v.hasKnownValue()))
 						continue;
 
 					// Target method must be able to be evaluated.
-					if (!canEvaluate(min))
+					ClassMethodPair target = context.resolveMethod(min);
+					if (target == null)
 						continue;
+					if (!evaluator.canEvaluate(target.methodNode()))
+						continue;
+
+					// Array values are mutable, so we need to copy them before evaluation
+					// to prevent the evaluator from mutating the original values.
+					List<ReValue> evalArgs = prepareArguments(arguments);
 
 					// Reset instance support before each evaluation to prevent state pollution.
 					fieldCacheManager.reset();
 
+					// Seed the call stack so trace-dependent operations can be evaluated at depth [1].
+					evaluator.setCallStackSeed(List.of(new ClassMethodPair(node, method)));
+
 					// Attempt evaluation. If it yields a value, replace the call with the result.
-					EvaluationResult result = evaluator.evaluate(min.owner, min.name, min.desc, null, arguments);
+					EvaluationResult result = evaluator.evaluate(target.classNode(), target.methodNode(), null, evalArgs);
 					if (result instanceof EvaluationYieldResult(ReValue retVal)) {
 						AbstractInsnNode replacement = OpaqueConstantFoldingTransformer.toInsn(retVal);
 						if (replacement != null) {
@@ -123,6 +174,80 @@ public class CallResultInliningTransformer implements JvmClassTransformer {
 			context.setNode(bundle, initialClassState, node);
 	}
 
+	private static void installWorkspaceStaticLookup(@Nonnull ReInterpreter interpreter,
+	                                                 @Nonnull JvmTransformerContext context,
+	                                                 @Nonnull Evaluator evaluator,
+	                                                 @Nonnull FieldCacheManager fieldCacheManager) {
+		InvokeStaticLookup fallback = Objects.requireNonNull(interpreter.getInvokeStaticLookup(), "Interpreter must have a static method lookup to wrap");
+		interpreter.setInvokeStaticLookup(new InvokeStaticLookup() {
+			@Nonnull
+			@Override
+			public ReValue get(@Nonnull MethodInsnNode method, @Nonnull List<? extends ReValue> values) {
+				ClassMethodPair target = context.resolveMethod(method);
+				if (target != null && evaluator.canEvaluate(target.methodNode())) {
+					fieldCacheManager.reset();
+					EvaluationResult result = evaluator.evaluate(target.classNode(), target.methodNode(), null, prepareArguments(values));
+					if (result instanceof EvaluationYieldResult(ReValue retVal))
+						return retVal;
+				}
+				return fallback.get(method, values);
+			}
+
+			@Override
+			public boolean hasLookup(@Nonnull MethodInsnNode method) {
+				return fallback.hasLookup(method);
+			}
+		});
+	}
+
+	private static void installStaticValueCollector(@Nonnull ReInterpreter interpreter,
+	                                                @Nullable StaticValueCollectionTransformer collector) {
+		// Static value collector transformer isn't active.
+		if (collector == null)
+			return;
+
+		// If the interpreter has no existing lookup, we can just set the collector as the lookup.
+		GetStaticLookup fallback = interpreter.getGetStaticLookup();
+		if (fallback == null) {
+			interpreter.setGetStaticLookup(collector);
+			return;
+		}
+
+		// Combine both the collector and the existing lookup so the evaluator can benefit from both.
+		interpreter.setGetStaticLookup(new GetStaticLookup() {
+			@Nonnull
+			@Override
+			public ReValue get(@Nonnull FieldInsnNode field) {
+				return collector.hasLookup(field) ? collector.get(field) : fallback.get(field);
+			}
+
+			@Override
+			public boolean hasLookup(@Nonnull FieldInsnNode field) {
+				return collector.hasLookup(field) || fallback.hasLookup(field);
+			}
+		});
+	}
+
+	@Nonnull
+	private static List<ReValue> prepareArguments(@Nonnull List<? extends ReValue> values) {
+		List<ReValue> copies = new ArrayList<>(values.size());
+		for (ReValue value : values)
+			copies.add(copyArray(value));
+		return copies;
+	}
+
+	@Nonnull
+	private static ReValue copyArray(@Nonnull ReValue value) {
+		if (value instanceof ArrayValue array && array.getFirstDimensionLength().isPresent()) {
+			int length = array.getFirstDimensionLength().getAsInt();
+			List<ReValue> elements = new ArrayList<>(length);
+			for (int i = 0; i < length; i++)
+				elements.add(copyArray(array.getValue(i)));
+			return new ArrayValueImpl(array.type(), array.nullness(), length, elements::get);
+		}
+		return value;
+	}
+
 	@Nonnull
 	@Override
 	public Set<Class<? extends ClassTransformer>> recommendedSuccessors() {
@@ -133,14 +258,31 @@ public class CallResultInliningTransformer implements JvmClassTransformer {
 
 	@Nonnull
 	@Override
-	public String name() {
-		return "Call result inlining";
+	public String identifier() {
+		return IDENTIFIER;
 	}
 
-	private boolean canEvaluate(@Nonnull MethodInsnNode min) {
-		String key = min.owner + "." + min.name + min.desc;
-		synchronized (canBeEvaluatedMap) {
-			return canBeEvaluatedMap.computeIfAbsent(key, k -> evaluator.canEvaluate(min.owner, min.name, min.desc) ? 1 : 0) != 0;
-		}
+	@Nonnull
+	@Override
+	public String beforeExample() {
+		return """
+				// Assuming 'xor(String, int)' is a static method, and the inputs are known
+				// the result is also effectively known, so the call can be replaced with the result.
+				return xor("Idmmn!vnsme", 0x010101);
+				""";
+	}
+
+	@Nonnull
+	@Override
+	public String afterExample() {
+		return """
+				return "Hello world";
+				""";
+	}
+
+	@Nonnull
+	@Override
+	public List<TransformationParameter<?>> getParameterDefinitions() {
+		return List.of(MAX_STEPS_PARAMETER, EVALUATE_CLASS_INITIALIZERS_PARAMETER);
 	}
 }

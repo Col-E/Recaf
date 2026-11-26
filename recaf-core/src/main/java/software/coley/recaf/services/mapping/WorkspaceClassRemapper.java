@@ -3,6 +3,7 @@ package software.coley.recaf.services.mapping;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
@@ -51,7 +52,7 @@ public class WorkspaceClassRemapper extends ClassRemapper {
 						remappedDescriptor,
 						remapper.mapSignature(signature, false),
 						exceptions == null ? null : remapper.mapTypes(exceptions));
-		return mv == null ? null : new VariableRenamingMethodVisitor(className, name, descriptor, mv, workspaceRemapper);
+		return mv == null ? null : new VariableRenamingMethodVisitor(className, name, descriptor, access, mv, workspaceRemapper);
 	}
 
 	@Override
@@ -76,13 +77,31 @@ public class WorkspaceClassRemapper extends ClassRemapper {
 		private final String methodOwner;
 		private final String methodName;
 		private final String methodDesc;
+		private final Type[] argumentTypes;
+		private int parameterIndex;
+		private int parameterSlot;
 
 		public VariableRenamingMethodVisitor(@Nonnull String methodOwner, @Nonnull String methodName, @Nonnull String methodDesc,
-		                                     @Nullable MethodVisitor mv, @Nonnull Remapper remapper) {
+		                                     int methodAccess, @Nullable MethodVisitor mv, @Nonnull Remapper remapper) {
 			super(RecafConstants.getAsmVersion(), mv, remapper);
 			this.methodOwner = methodOwner;
 			this.methodName = methodName;
 			this.methodDesc = methodDesc;
+			this.argumentTypes = Type.getArgumentTypes(methodDesc);
+			this.parameterSlot = (methodAccess & org.objectweb.asm.Opcodes.ACC_STATIC) == 0 ? 1 : 0;
+		}
+
+		@Override
+		public void visitParameter(@Nullable String name, int access) {
+			if (parameterIndex < argumentTypes.length) {
+				Type argumentType = argumentTypes[parameterIndex++];
+				String mappedName = workspaceRemapper.mapVariableName(methodOwner, methodName, methodDesc,
+						name, argumentType.getDescriptor(), parameterSlot);
+				parameterSlot += argumentType.getSize();
+				super.visitParameter(mappedName, access);
+			} else {
+				super.visitParameter(name, access);
+			}
 		}
 
 		@Override

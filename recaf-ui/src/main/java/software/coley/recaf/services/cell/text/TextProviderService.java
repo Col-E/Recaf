@@ -3,8 +3,9 @@ package software.coley.recaf.services.cell.text;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import me.darknet.assembler.printer.DalvikCodePrinter;
-import me.darknet.assembler.printer.JvmPrinterUtil;
+import me.darknet.assembler.backend.dalvik.compile.analysis.DalvikConstantTypeResolver;
+import me.darknet.assembler.backend.dalvik.printer.DalvikCodePrinter;
+import me.darknet.assembler.backend.jvm.printer.JvmPrinterUtil;
 import me.darknet.assembler.printer.PrintContext;
 import me.darknet.dex.tree.definitions.instructions.Instruction;
 import me.darknet.dex.tree.simulation.ExecutionEngine;
@@ -268,7 +269,8 @@ public class TextProviderService implements Service {
 			PrintContext.CodePrint ctx = new PrintContext.CodePrint(new PrintContext<>(" "));
 			DalvikCodePrinter printer = new DalvikCodePrinter(ctx,
 					new LazyMap<>(new HashMap<>(), v -> "v" + v),
-					new LazyMap<>(new HashMap<>(), v -> "L" + v));
+					new LazyMap<>(new HashMap<>(), v -> "L" + v),
+					new LazyMap<>(new HashMap<>(), v -> DalvikConstantTypeResolver.ResolvedType.UNKNOWN));
 			ExecutionEngine.execute(printer, insn);
 			String text = ctx.toString().replace('\n', ' ').trim();
 			return formatConfig.filterMaxLength(text);
@@ -300,12 +302,21 @@ public class TextProviderService implements Service {
 												@Nonnull LocalVariable variable) {
 		return () -> {
 			String text;
-			Type type = Type.getType(variable.getDescriptor());
+			String descriptor = variable.getDescriptor();
 			String name = formatConfig.filter(variable.getName());
+			if ("V".equals(descriptor) || (!Types.isPrimitive(descriptor) && (!Types.isValidDesc(descriptor) || descriptor.charAt(0) == '(')))
+				return name;
+
+			Type type = Type.getType(descriptor);
 			if (Types.isPrimitive(type)) {
 				text = type.getClassName() + " " + name;
 			} else {
-				text = formatConfig.filterShorten(type.getClassName()) + " " + name;
+				if (type.getSort() == Type.ARRAY) {
+					String elementName = type.getElementType().getInternalName();
+					text = formatConfig.filter(elementName) + "[]".repeat(type.getDimensions()) + " " + name;
+				} else {
+					text = formatConfig.filter(type.getInternalName()) + " " + name;
+				}
 			}
 			return formatConfig.filterMaxLength(text);
 		};

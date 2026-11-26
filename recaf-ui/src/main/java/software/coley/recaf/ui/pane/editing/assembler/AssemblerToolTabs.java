@@ -9,6 +9,7 @@ import me.darknet.assembler.compiler.ClassResult;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.path.PathNode;
+import software.coley.recaf.services.assembler.SnippetTarget;
 import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
 import software.coley.recaf.ui.control.richtext.Editor;
@@ -35,6 +36,8 @@ public class AssemblerToolTabs implements AssemblerAstConsumer, AssemblerBuildCo
 	private final Instance<JvmExpressionCompilerPane> jvmExpressionCompilerPaneProvider;
 	private final Instance<SnippetsPane> snippetPaneProvider;
 	private final Instance<ControlFlowLines> controlFlowLineProvider;
+	private final Instance<DalvikRegistersPane> dalvikRegistersPaneProvider;
+	private final Instance<DalvikAnalysisPane> dalvikAnalysisPaneProvider;
 	private final List<Navigable> children = new CopyOnWriteArrayList<>();
 	private AssemblerPane owner;
 	private PathNode<?> path;
@@ -44,12 +47,16 @@ public class AssemblerToolTabs implements AssemblerAstConsumer, AssemblerBuildCo
 	                         @Nonnull Instance<JvmVariablesPane> jvmVariablesPaneProvider,
 	                         @Nonnull Instance<JvmExpressionCompilerPane> jvmExpressionCompilerPaneProvider,
 	                         @Nonnull Instance<SnippetsPane> snippetPaneProvider,
-	                         @Nonnull Instance<ControlFlowLines> controlFlowLineProvider) {
+	                         @Nonnull Instance<ControlFlowLines> controlFlowLineProvider,
+	                         @Nonnull Instance<DalvikRegistersPane> dalvikRegistersPaneProvider,
+	                         @Nonnull Instance<DalvikAnalysisPane> dalvikAnalysisPaneProvider) {
 		this.jvmStackAnalysisPaneProvider = jvmStackAnalysisPaneProvider;
 		this.jvmVariablesPaneProvider = jvmVariablesPaneProvider;
 		this.jvmExpressionCompilerPaneProvider = jvmExpressionCompilerPaneProvider;
 		this.snippetPaneProvider = snippetPaneProvider;
 		this.controlFlowLineProvider = controlFlowLineProvider;
+		this.dalvikRegistersPaneProvider = dalvikRegistersPaneProvider;
+		this.dalvikAnalysisPaneProvider = dalvikAnalysisPaneProvider;
 	}
 
 	/**
@@ -69,6 +76,7 @@ public class AssemblerToolTabs implements AssemblerAstConsumer, AssemblerBuildCo
 			JvmVariablesPane variablesPane = jvmVariablesPaneProvider.get();
 			JvmExpressionCompilerPane expressionPane = jvmExpressionCompilerPaneProvider.get();
 			SnippetsPane snippetsPane = snippetPaneProvider.get();
+			snippetsPane.setTarget(SnippetTarget.JVM);
 			ControlFlowLines controlFlowLines = controlFlowLineProvider.get();
 			children.addAll(Arrays.asList(stackAnalysisPane, variablesPane, expressionPane, snippetsPane, controlFlowLines));
 			FxThreadUtil.run(() -> {
@@ -81,6 +89,18 @@ public class AssemblerToolTabs implements AssemblerAstConsumer, AssemblerBuildCo
 			});
 		} else if (classInPath.isAndroidClass()) {
 			// Create contents for Android classes
+			DalvikRegistersPane registersPane = dalvikRegistersPaneProvider.get();
+			DalvikAnalysisPane analysisPane = dalvikAnalysisPaneProvider.get();
+			SnippetsPane snippetsPane = snippetPaneProvider.get();
+			snippetsPane.setTarget(SnippetTarget.DALVIK);
+			ControlFlowLines controlFlowLines = controlFlowLineProvider.get();
+			children.addAll(Arrays.asList(registersPane, analysisPane, snippetsPane, controlFlowLines));
+			FxThreadUtil.run(() -> {
+				owner.clearSideTabs();
+				owner.addSideTab(Lang.getBinding("assembler.registers.title"), CarbonIcons.LIST_BOXES, registersPane);
+				owner.addSideTab(Lang.getBinding("assembler.analysis.title"), CarbonIcons.VIEW_NEXT, analysisPane);
+				owner.addSideTab(Lang.getBinding("assembler.snippets.title"), CarbonIcons.BOOK, snippetsPane);
+			});
 		}
 	}
 
@@ -94,7 +114,7 @@ public class AssemblerToolTabs implements AssemblerAstConsumer, AssemblerBuildCo
 	}
 
 	@Override
-	public void consumeClass(@Nonnull ClassResult result,
+	public void consumeClass(@Nonnull ClassResult<?> result,
 	                         @Nonnull ClassInfo classInfo) {
 		for (Navigable navigableChild : getNavigableChildren())
 			if (navigableChild instanceof AssemblerBuildConsumer consumer)

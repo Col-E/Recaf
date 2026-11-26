@@ -24,6 +24,8 @@ import software.coley.recaf.workspace.model.bundle.ClassBundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
+import java.util.function.Predicate;
+
 import static org.kordamp.ikonli.carbonicons.CarbonIcons.*;
 
 /**
@@ -72,7 +74,6 @@ public class BasicPackageContextMenuProviderFactory extends AbstractContextMenuP
 						popup.show();
 					});
 
-
 					jvmBuilder.directoryItem("menu.export.package", EXPORT, actions::exportPackage);
 				}
 
@@ -99,7 +100,7 @@ public class BasicPackageContextMenuProviderFactory extends AbstractContextMenuP
 				DecompileAllPopup popup = decompileAllPaneProvider.get();
 				popup.addEventFilter(WindowEvent.WINDOW_HIDDEN, e -> decompileAllPaneProvider.destroy(popup));
 				popup.setTargetBundle(bundle);
-				popup.setNamePredicate(name -> name.startsWith(packageName));
+				popup.setNamePredicate(packageNamePredicate(packageName));
 				popup.show();
 			});
 
@@ -108,5 +109,13 @@ public class BasicPackageContextMenuProviderFactory extends AbstractContextMenuP
 
 			return menu;
 		};
+	}
+
+	@Nonnull
+	private static Predicate<String> packageNamePredicate(@Nonnull String packageName) {
+		if (packageName.isEmpty())
+			return name -> name.indexOf('/') < 0;
+		String packagePrefix = packageName + "/";
+		return name -> name.startsWith(packagePrefix);
 	}
 }

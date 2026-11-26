@@ -161,6 +161,24 @@ class PrimitiveCollectionsTest {
 		}
 
 		@Test
+		void copyPreservesEntries() {
+			Int2ObjectMap<String> original = new Int2ObjectMap<>(2);
+			original.put(0, "zero");
+			original.put(16, "sixteen");
+			original.put(32, "thirty-two");
+
+			Int2ObjectMap<String> copy = new Int2ObjectMap<>(original);
+
+			assertEquals(3, copy.size());
+			assertEquals("zero", copy.get(0));
+			assertEquals("sixteen", copy.get(16));
+			assertEquals("thirty-two", copy.get(32));
+
+			copy.put(0, "updated");
+			assertEquals("zero", original.get(0));
+		}
+
+		@Test
 		void equality() {
 			Int2ObjectMap<String> map1 = new Int2ObjectMap<>(4);
 			Int2ObjectMap<String> map2 = new Int2ObjectMap<>(4);

@@ -3,7 +3,7 @@ package software.coley.recaf.services.plugin;
 import jakarta.annotation.Nonnull;
 
 /**
- * Wrapper exception for any potential error thrown by the implementation logic of a {@link ClassAllocator}
+ * Wrapper exception for failures while allocating or releasing an instance through a {@link CdiClassAllocator}.
  *
  * @author Matt Coley
  */
@@ -12,9 +12,9 @@ public class AllocationException extends Exception {
 
 	/**
 	 * @param type
-	 * 		Type that failed to be allocated.
+	 * 		Type whose allocation or release cleanup failed.
 	 * @param cause
-	 * 		Reason for allocation failure.
+	 * 		Reason for allocation or cleanup failure.
 	 */
 	public AllocationException(@Nonnull Class<?> type, @Nonnull Throwable cause) {
 		super(cause);
@@ -22,7 +22,7 @@ public class AllocationException extends Exception {
 	}
 
 	/**
-	 * @return Type that failed to be allocated.
+	 * @return Type whose allocation or cleanup failed.
 	 */
 	@Nonnull
 	public Class<?> getType() {

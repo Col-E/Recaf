@@ -17,6 +17,7 @@ import software.coley.recaf.util.analysis.value.ObjectValue;
 import software.coley.recaf.util.analysis.value.ReValue;
 import software.coley.recaf.util.analysis.value.StringValue;
 
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -76,6 +77,7 @@ public class BasicInvokeStaticLookup extends BasicLookupUtils implements InvokeS
 		system();
 		strings();
 		objects();
+		digests();
 
 		// Primitives
 		booleans();
@@ -120,8 +122,8 @@ public class BasicInvokeStaticLookup extends BasicLookupUtils implements InvokeS
 		METHODS.put("java/util/Objects.checkIndex(JJ)J", (Func_2<LongValue, LongValue>) (a, b) -> j(Objects.checkIndex(j(a), j(b))));
 		METHODS.put("java/util/Objects.hashCode(Ljava/lang/Object;)I", (Func_1<ObjectValue>) (a) -> i(Objects.hashCode(obj(a))));
 		METHODS.put("java/util/Objects.hash([Ljava/lang/Object;)I", (Func_1<ArrayValue>) (a) -> i(Objects.hash(arrobj(a))));
-		METHODS.put("java/util/Objects.requireNonNull(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;", (Func_2<ObjectValue, StringValue>) (a, b) -> obj(Objects.requireNonNull(obj(a), str(b))));
-		METHODS.put("java/util/Objects.requireNonNull(Ljava/lang/Object;)Ljava/lang/Object;", (Func_1<ObjectValue>) (a) -> obj(Objects.requireNonNull(obj(a))));
+		METHODS.put("java/util/Objects.requireNonNull(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;", (Func_2<ObjectValue, ObjectValue>) (a, b) -> obj((Object) obj(Objects.requireNonNull(a.isNull() ? null : a, str(b)))));
+		METHODS.put("java/util/Objects.requireNonNull(Ljava/lang/Object;)Ljava/lang/Object;", (Func_1<ObjectValue>) (a) -> obj((Object) obj(Objects.requireNonNull(a.isNull() ? null : a))));
 		METHODS.put("java/util/Objects.checkFromToIndex(JJJ)J", (Func_3<LongValue, LongValue, LongValue>) (a, b, c) -> j(Objects.checkFromToIndex(j(a), j(b), j(c))));
 		METHODS.put("java/util/Objects.checkFromToIndex(III)I", (Func_3<IntValue, IntValue, IntValue>) (a, b, c) -> i(Objects.checkFromToIndex(i(a), i(b), i(c))));
 		METHODS.put("java/util/Objects.checkFromIndexSize(III)I", (Func_3<IntValue, IntValue, IntValue>) (a, b, c) -> i(Objects.checkFromIndexSize(i(a), i(b), i(c))));
@@ -131,6 +133,10 @@ public class BasicInvokeStaticLookup extends BasicLookupUtils implements InvokeS
 		METHODS.put("java/util/Objects.isNull(Ljava/lang/Object;)Z", (Func_1<ObjectValue>) (a) -> z(Objects.isNull(obj(a))));
 		METHODS.put("java/util/Objects.nonNull(Ljava/lang/Object;)Z", (Func_1<ObjectValue>) (a) -> z(Objects.nonNull(obj(a))));
 		METHODS.put("java/util/Objects.requireNonNullElse(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", (Func_2<ObjectValue, ObjectValue>) (a, b) -> obj(Objects.requireNonNullElse(obj(a), obj(b))));
+	}
+
+	private static void digests() {
+		METHODS.put("java/security/MessageDigest.isEqual([B[B)Z", (Func_2<ArrayValue, ArrayValue>) (a, b) -> z(MessageDigest.isEqual(arrb(a), arrb(b))));
 	}
 
 	private static void arrays() {
@@ -592,7 +598,6 @@ public class BasicInvokeStaticLookup extends BasicLookupUtils implements InvokeS
 		METHODS.put("java/lang/Math.log1p(D)D", (Func_1<DoubleValue>) (a) -> d(Math.log1p(d(a))));
 		METHODS.put("java/lang/Math.toRadians(D)D", (Func_1<DoubleValue>) (a) -> d(Math.toRadians(d(a))));
 		METHODS.put("java/lang/Math.toDegrees(D)D", (Func_1<DoubleValue>) (a) -> d(Math.toDegrees(d(a))));
-		METHODS.put("java/lang/Math.random()D", (Func_0) () -> d(Math.random()));
 		METHODS.put("java/lang/Math.divideExact(II)I", (Func_2<IntValue, IntValue>) (a, b) -> i(Math.divideExact(i(a), i(b))));
 		METHODS.put("java/lang/Math.divideExact(JJ)J", (Func_2<LongValue, LongValue>) (a, b) -> j(Math.divideExact(j(a), j(b))));
 		METHODS.put("java/lang/Math.floorDivExact(JJ)J", (Func_2<LongValue, LongValue>) (a, b) -> j(Math.floorDivExact(j(a), j(b))));

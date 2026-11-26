@@ -48,7 +48,7 @@ import software.coley.recaf.ui.control.richtext.problem.ProblemTracking;
 import software.coley.recaf.ui.control.richtext.search.SearchBar;
 import software.coley.recaf.ui.control.richtext.suggest.TabCompletionConfig;
 import software.coley.recaf.ui.control.richtext.suggest.java.JavaTabCompleter;
-import software.coley.recaf.ui.control.richtext.suggest.java.typeindex.JavaTypeIndexService;
+import software.coley.recaf.ui.control.richtext.suggest.typeindex.TypeIndexService;
 import software.coley.recaf.ui.control.richtext.suggest.java.ScriptJavaCompletionSupport;
 import software.coley.recaf.ui.window.RecafScene;
 import software.coley.recaf.util.Animations;
@@ -89,7 +89,7 @@ public class ScriptManagerPane extends BorderPane {
 	private final Instance<SearchBar> searchBarProvider;
 	private final Instance<ScriptJavaCompletionSupport> scriptCompletionSupportProvider;
 	private final CellConfigurationService cellConfigurationService;
-	private final JavaTypeIndexService javaTypeIndexService;
+	private final TypeIndexService typeIndexService;
 	private final TabCompletionConfig tabCompletionConfig;
 
 	@Inject
@@ -100,7 +100,7 @@ public class ScriptManagerPane extends BorderPane {
 	                         @Nonnull FileTypeSyntaxAssociationService languageAssociation,
 	                         @Nonnull WindowFactory windowFactory,
 	                         @Nonnull CellConfigurationService cellConfigurationService,
-	                         @Nonnull JavaTypeIndexService javaTypeIndexService,
+	                         @Nonnull TypeIndexService typeIndexService,
 	                         @Nonnull TabCompletionConfig tabCompletionConfig,
 	                         @Nonnull RecafDirectoriesConfig directories,
 	                         @Nonnull KeybindingConfig keys,
@@ -114,7 +114,7 @@ public class ScriptManagerPane extends BorderPane {
 		this.scriptRunController = scriptRunController;
 		this.languageAssociation = languageAssociation;
 		this.cellConfigurationService = cellConfigurationService;
-		this.javaTypeIndexService = javaTypeIndexService;
+		this.typeIndexService = typeIndexService;
 		this.tabCompletionConfig = tabCompletionConfig;
 		this.directories = directories;
 		this.keys = keys;
@@ -240,7 +240,7 @@ public class ScriptManagerPane extends BorderPane {
 			completionSupport.install(editor);
 			if (tabCompletionConfig.isEnabledInJavaSource())
 				editor.setTabCompleter(new JavaTabCompleter(completionSupport,
-						cellConfigurationService, javaTypeIndexService, tabCompletionConfig));
+						cellConfigurationService, typeIndexService, tabCompletionConfig));
 
 			// Add extra components
 			searchBar.install(editor);

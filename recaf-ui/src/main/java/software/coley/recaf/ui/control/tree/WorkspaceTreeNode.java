@@ -92,11 +92,31 @@ public class WorkspaceTreeNode extends FilterableTreeItem<PathNode<?>> implement
 			return this;
 
 		// Check all children for a match, regardless of the current filter.
-		for (TreeItem<PathNode<?>> child : getSourceChildren())
-			if (path.isDescendantOf(child.getValue()) && child instanceof WorkspaceTreeNode childNode)
+		for (TreeItem<PathNode<?>> child : getSourceChildren()) {
+			PathNode<?> childPath = child.getValue();
+			if (child instanceof WorkspaceTreeNode childNode && (path.isDescendantOf(childPath) || hasPathAncestor(path, childPath)))
 				return childNode.getNodeByPath(path);
+		}
 
 		return null;
+	}
+
+	/**
+	 * @param path
+	 * 		Path to check.
+	 * @param candidate
+	 * 		Candidate ancestor path.
+	 *
+	 * @return {@code true} when the candidate is an ancestor of the path.
+	 */
+	private static boolean hasPathAncestor(@Nonnull PathNode<?> path, @Nonnull PathNode<?> candidate) {
+		PathNode<?> ancestor = path.getParent();
+		while (ancestor != null) {
+			if (ancestor.equals(candidate))
+				return true;
+			ancestor = ancestor.getParent();
+		}
+		return false;
 	}
 
 	/**

@@ -2,8 +2,8 @@ package software.coley.recaf.util;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
-import me.darknet.assembler.printer.JvmPrinterUtil;
-import me.darknet.assembler.util.JvmOpcodes;
+import me.darknet.assembler.backend.jvm.printer.JvmPrinterUtil;
+import me.darknet.assembler.backend.jvm.util.JvmOpcodes;
 import me.darknet.dex.tree.definitions.code.Code;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
@@ -147,6 +147,20 @@ public class AsmInsnUtil implements Opcodes {
 	 * @param op
 	 * 		Instruction opcode.
 	 *
+	 * @return {@code true} when it is any integer binary operation.
+	 */
+	public static boolean isIntBinaryOperation(int op) {
+		return switch (op) {
+			case IADD, ISUB, IMUL, IDIV, IREM,
+			     ISHL, ISHR, IUSHR, IAND, IOR, IXOR -> true;
+			default -> false;
+		};
+	}
+
+	/**
+	 * @param op
+	 * 		Instruction opcode.
+	 *
 	 * @return {@code true} when it is any variable storing instruction.
 	 */
 	public static boolean isVarStore(int op) {
@@ -191,7 +205,8 @@ public class AsmInsnUtil implements Opcodes {
 			case Type.FLOAT -> new VarInsnNode(FLOAD, index);
 			case Type.DOUBLE -> new VarInsnNode(DLOAD, index);
 			case Type.LONG -> new VarInsnNode(LLOAD, index);
-			default -> new VarInsnNode(ALOAD, index);
+			case Type.ARRAY, Type.OBJECT -> new VarInsnNode(ALOAD, index);
+			default -> throw new IllegalArgumentException("Unsupported variable type sort: " + typeSort);
 		};
 	}
 
@@ -205,13 +220,66 @@ public class AsmInsnUtil implements Opcodes {
 	 */
 	@Nonnull
 	public static VarInsnNode createVarStore(int index, @Nonnull Type variableType) {
-		return switch (variableType.getSort()) {
+		return createVarStore(index, variableType.getSort());
+	}
+
+	/**
+	 * @param index
+	 * 		Variable index.
+	 * @param typeSort
+	 * 		Variable type sort.
+	 *
+	 * @return Store instruction for variable type at the given index.
+	 */
+	public static VarInsnNode createVarStore(int index, int typeSort) {
+		return switch (typeSort) {
 			case Type.BOOLEAN, Type.CHAR, Type.BYTE, Type.SHORT, Type.INT -> new VarInsnNode(ISTORE, index);
 			case Type.FLOAT -> new VarInsnNode(FSTORE, index);
 			case Type.DOUBLE -> new VarInsnNode(DSTORE, index);
 			case Type.LONG -> new VarInsnNode(LSTORE, index);
-			default -> new VarInsnNode(ASTORE, index);
+			case Type.ARRAY, Type.OBJECT -> new VarInsnNode(ASTORE, index);
+			default -> throw new IllegalArgumentException("Unsupported variable type sort: " + typeSort);
 		};
+	}
+
+	/**
+	 * @param opcode
+	 * 		Instruction opcode.
+	 *
+	 * @return {@code true} when the opcode loads one array element.
+	 */
+	public static boolean isArrayLoad(int opcode) {
+		return switch (opcode) {
+			case IALOAD, LALOAD, FALOAD, DALOAD,
+			     AALOAD, BALOAD, CALOAD, SALOAD -> true;
+			default -> false;
+		};
+	}
+
+	/**
+	 * @param opcode
+	 * 		Instruction opcode.
+	 *
+	 * @return {@code true} when the opcode stores one array element.
+	 */
+	public static boolean isArrayStore(int opcode) {
+		return switch (opcode) {
+			case IASTORE, LASTORE, FASTORE, DASTORE,
+			     AASTORE, BASTORE, CASTORE, SASTORE -> true;
+			default -> false;
+		};
+	}
+
+	/**
+	 * @param instruction
+	 * 		Instruction to check.
+	 *
+	 * @return {@code true} when the instruction pushes a two-slot long value.
+	 */
+	public static boolean isWideConstant(@Nonnull AbstractInsnNode instruction) {
+		return instruction.getOpcode() == Opcodes.LCONST_0
+				|| instruction.getOpcode() == Opcodes.LCONST_1
+				|| instruction instanceof LdcInsnNode ldc && ldc.cst instanceof Long;
 	}
 
 	/**
@@ -302,6 +370,138 @@ public class AsmInsnUtil implements Opcodes {
 		if (op == LDC && ((LdcInsnNode) insn).cst instanceof Integer)
 			return true;
 		return (op >= ICONST_M1 && op <= ICONST_5) || op == SIPUSH || op == BIPUSH;
+	}
+
+	/**
+	 * @param insn
+	 * 		Instruction to check.
+	 *
+	 * @return Value of the constant {@code int} pushed onto the stack by the instruction.
+	 *
+	 * @throws IllegalArgumentException
+	 * 		When the instruction does not push a constant {@code int} value.
+	 */
+	public static int getConstIntValue(@Nonnull AbstractInsnNode insn) {
+		int op = insn.getOpcode();
+		if (op == LDC && ((LdcInsnNode) insn).cst instanceof Integer)
+			return (Integer) ((LdcInsnNode) insn).cst;
+		if (op >= ICONST_M1 && op <= ICONST_5)
+			return op - ICONST_0;
+		if (op == SIPUSH || op == BIPUSH)
+			return ((IntInsnNode) insn).operand;
+		throw new IllegalArgumentException("Instruction is not a constant int value: " + JvmPrinterUtil.toString(insn));
+	}
+
+	/**
+	 * @param insn
+	 * 		Instruction to check.
+	 *
+	 * @return Value of the constant {@code float} pushed onto the stack by the instruction.
+	 *
+	 * @throws IllegalArgumentException
+	 * 		When the instruction does not push a constant {@code float} value.
+	 */
+	public static float getConstFloatValue(@Nonnull AbstractInsnNode insn) {
+		int op = insn.getOpcode();
+		if (op == LDC && ((LdcInsnNode) insn).cst instanceof Float)
+			return (Float) ((LdcInsnNode) insn).cst;
+		if (op == FCONST_0)
+			return 0;
+		if (op == FCONST_1)
+			return 1;
+		if (op == FCONST_2)
+			return 2;
+		throw new IllegalArgumentException("Instruction is not a constant float value: " + JvmPrinterUtil.toString(insn));
+	}
+
+	/**
+	 * @param insn
+	 * 		Instruction to check.
+	 *
+	 * @return Value of the constant {@code long} pushed onto the stack by the instruction.
+	 *
+	 * @throws IllegalArgumentException
+	 * 		When the instruction does not push a constant {@code long} value.
+	 */
+	public static long getConstLongValue(@Nonnull AbstractInsnNode insn) {
+		int op = insn.getOpcode();
+		if (op == LDC && ((LdcInsnNode) insn).cst instanceof Long)
+			return (Long) ((LdcInsnNode) insn).cst;
+		if (op == LCONST_0)
+			return 0;
+		if (op == LCONST_1)
+			return 1;
+		throw new IllegalArgumentException("Instruction is not a constant long value: " + JvmPrinterUtil.toString(insn));
+	}
+
+	/**
+	 * @param insn
+	 * 		Instruction to check.
+	 *
+	 * @return Value of the constant {@code double} pushed onto the stack by the instruction.
+	 *
+	 * @throws IllegalArgumentException
+	 * 		When the instruction does not push a constant {@code double} value.
+	 */
+	public static double getConstDoubleValue(@Nonnull AbstractInsnNode insn) {
+		int op = insn.getOpcode();
+		if (op == LDC && ((LdcInsnNode) insn).cst instanceof Double)
+			return (Double) ((LdcInsnNode) insn).cst;
+		if (op == DCONST_0)
+			return 0;
+		if (op == DCONST_1)
+			return 1;
+		throw new IllegalArgumentException("Instruction is not a constant double value: " + JvmPrinterUtil.toString(insn));
+	}
+
+	/**
+	 * @param insn
+	 * 		Instruction to check.
+	 *
+	 * @return Value of the constant {@link Number} pushed onto the stack by the instruction.
+	 *
+	 * @throws IllegalArgumentException
+	 * 		When the instruction does not push a constant {@link Number} value.
+	 */
+	@Nonnull
+	public static Number getConstNumberValue(@Nonnull AbstractInsnNode insn) {
+		int op = insn.getOpcode();
+		if (op >= ICONST_M1 && op <= ICONST_5) return op - ICONST_0;
+		if (op == SIPUSH || op == BIPUSH) return ((IntInsnNode) insn).operand;
+		if (op == FCONST_0) return 0f;
+		if (op == FCONST_1) return 1f;
+		if (op == FCONST_2) return 2f;
+		if (op == LCONST_0) return 0L;
+		if (op == LCONST_1) return 1L;
+		if (op == DCONST_0) return 0d;
+		if (op == DCONST_1) return 1d;
+		if (op == LDC) {
+			Object cst = ((LdcInsnNode) insn).cst;
+			if (cst instanceof Number n)
+				return n;
+		}
+		throw new IllegalArgumentException("Instruction is not a constant number value: " + JvmPrinterUtil.toString(insn));
+	}
+
+	/**
+	 * @param insn
+	 * 		Instruction to check.
+	 *
+	 * @return {@code true} when the instruction pushes a constant value equal to zero.
+	 */
+	public static boolean isConstZero(@Nonnull AbstractInsnNode insn) {
+		int op = insn.getOpcode();
+		if (op >= ICONST_M1 && op <= ICONST_5) return op - ICONST_0 == 0;
+		if (op == SIPUSH || op == BIPUSH) return ((IntInsnNode) insn).operand == 0;
+		if (op == FCONST_0) return true;
+		if (op == LCONST_0) return true;
+		if (op == DCONST_0) return true;
+		if (op == LDC) {
+			Object cst = ((LdcInsnNode) insn).cst;
+			if (cst instanceof Number n)
+				return n.doubleValue() == 0;
+		}
+		return false;
 	}
 
 	/**
@@ -565,8 +765,22 @@ public class AsmInsnUtil implements Opcodes {
 	 */
 	@Nullable
 	public static AbstractInsnNode getPreviousInsn(@Nonnull AbstractInsnNode insn) {
+		return getPreviousInsn(insn, false);
+	}
+
+	/**
+	 * @param insn
+	 * 		Instruction to begin from.
+	 * @param skipNop
+	 *        {@code true} to skip {@link Opcodes#NOP} instructions, {@code false} to include them.
+	 *
+	 * @return Previous non-metadata instruction.
+	 * Can be {@code null} for no previous instruction at the start of a method.
+	 */
+	@Nullable
+	public static AbstractInsnNode getPreviousInsn(@Nonnull AbstractInsnNode insn, boolean skipNop) {
 		AbstractInsnNode prev = insn.getPrevious();
-		while (prev != null && isMetaData(prev))
+		while (prev != null && (isMetaData(prev) || (skipNop && prev.getOpcode() == NOP)))
 			prev = prev.getPrevious();
 		return prev;
 	}
@@ -576,14 +790,26 @@ public class AsmInsnUtil implements Opcodes {
 	 * 		Instruction to begin from.
 	 *
 	 * @return Next non-metadata instruction, following {@link Opcodes#GOTO} if found.
-	 * Can be {@code null} for no next instruction at the end of a method.
+	 * Can be {@code null} if no next instruction exists or following {@link Opcodes#GOTO}s enters a cycle.
 	 */
 	@Nullable
 	public static AbstractInsnNode getNextFollowGoto(@Nonnull AbstractInsnNode insn) {
 		AbstractInsnNode next = getNextInsn(insn);
+		AbstractInsnNode cycleCheckpoint = next;
+		long cycleCheckpointRange = 1;
+		long stepsSinceCycleCheckpoint = 0;
 		while (next != null && next.getOpcode() == GOTO) {
 			JumpInsnNode jin = (JumpInsnNode) next;
 			next = getNextInsn(jin.label);
+			if (next == null || next.getOpcode() != GOTO)
+				return next;
+			if (next == cycleCheckpoint)
+				return null;
+			if (++stepsSinceCycleCheckpoint == cycleCheckpointRange) {
+				cycleCheckpoint = next;
+				stepsSinceCycleCheckpoint = 0;
+				cycleCheckpointRange <<= 1;
+			}
 		}
 		return next;
 	}
@@ -619,6 +845,21 @@ public class AsmInsnUtil implements Opcodes {
 			list.add(t);
 		}
 		return list;
+	}
+
+	/**
+	 * @param instructions
+	 * 		Instructions to index.
+	 *
+	 * @return Map of instructions to their index in the list.
+	 */
+	@Nonnull
+	public static Map<AbstractInsnNode, Integer> indexInstructions(@Nonnull InsnList instructions) {
+		Map<AbstractInsnNode, Integer> indices = new IdentityHashMap<>(instructions.size());
+		int size = instructions.size();
+		for (int i = 0; i < size; i++)
+			indices.put(instructions.get(i), i);
+		return indices;
 	}
 
 	/**
@@ -680,8 +921,21 @@ public class AsmInsnUtil implements Opcodes {
 		int op = insn.getOpcode();
 		if (op == ATHROW) // Obvious case
 			return true;
-		if (insn instanceof MethodInsnNode) // Method calls can throw.
+		if (insn instanceof MethodInsnNode || insn instanceof InvokeDynamicInsnNode) // Calls can throw.
 			return true;
+
+		// Type resolution and allocation instructions can throw before their normal result is available.
+		//  - NEW triggering class resolution, <clinit> fails, etc.
+		if (op == NEW || op == ANEWARRAY || op == NEWARRAY || op == MULTIANEWARRAY ||
+				op == CHECKCAST || op == INSTANCEOF)
+			return true;
+
+		// TODO: Additional cases?
+		//   - Field access triggering class resolution, <clinit> fails, etc.
+		//   - Ldc of type/handle triggering class resolution
+		//   - Question is if this would be too broad of a check and cause transformers to become overly aggressive/convservative (depending on use case).
+		//     - See: canThrowForPhantomAnalysis (and update its comments) if we come back to this.
+
 		// NullPointerException
 		return op == GETFIELD || op == PUTFIELD || op == ARRAYLENGTH ||
 				// NullPointerException, ArrayIndexOutOfBoundsException
@@ -767,7 +1021,7 @@ public class AsmInsnUtil implements Opcodes {
 	public static void populateFlowMaps(@Nonnull MethodNode method,
 	                                    @Nonnull Int2ObjectMap<List<Integer>> successorMap,
 	                                    @Nonnull Int2ObjectMap<List<Integer>> predecessorMap) {
-		populateFlowMaps(method, successorMap, predecessorMap, true);
+		populateFlowMaps(method, successorMap, predecessorMap, ExceptionFlow.THROWING);
 	}
 
 	/**
@@ -779,33 +1033,67 @@ public class AsmInsnUtil implements Opcodes {
 	 * 		Output successor map.
 	 * @param predecessorMap
 	 * 		Output predecessor map.
-	 * @param followExceptionFlow
-	 * 		Flag to indicate whether to include exception flow in the maps.
-	 * 		When {@code true}, instructions that can throw exceptions will have their respective catch block handlers included as successors.
-	 * 		When {@code false}, exception flow is ignored and only explicit control flow instructions are considered.
+	 * @param exceptionFlow
+	 * 		How exception handlers take part in control flow.
 	 */
-	@SuppressWarnings("StatementWithEmptyBody")
 	public static void populateFlowMaps(@Nonnull MethodNode method,
 	                                    @Nonnull Int2ObjectMap<List<Integer>> successorMap,
 	                                    @Nonnull Int2ObjectMap<List<Integer>> predecessorMap,
-	                                    boolean followExceptionFlow) {
+	                                    @Nonnull ExceptionFlow exceptionFlow) {
+		populateSuccessors(method, successorMap, exceptionFlow);
+
+		// Populate predecessor map from successor map.
+		int size = method.instructions.size();
+		for (int i = 0; i < size; i++)
+			for (int s : successorMap.getOrDefault(i, emptyList()))
+				predecessorMap.computeIfAbsent(s, _ -> new ArrayList<>()).add(i);
+	}
+
+	/**
+	 * Populate control flow successors for a method.
+	 *
+	 * @param method
+	 * 		Method to analyze.
+	 * @param successorMap
+	 * 		Output successor map.
+	 * @param exceptionFlow
+	 * 		How exception handlers take part in control flow.
+	 */
+	public static void populateSuccessors(@Nonnull MethodNode method,
+	                                      @Nonnull Int2ObjectMap<List<Integer>> successorMap,
+	                                      @Nonnull ExceptionFlow exceptionFlow) {
 		InsnList instructions = method.instructions;
 		int size = instructions.size();
+		int[] handlerStarts = new int[0];
+		int[] handlerEnds = new int[0];
+		int[] handlerTargets = new int[0];
+		if (exceptionFlow != ExceptionFlow.NONE) {
+			List<TryCatchBlockNode> tryCatchBlocks = method.tryCatchBlocks;
+			int handlerCount = tryCatchBlocks.size();
+			handlerStarts = new int[handlerCount];
+			handlerEnds = new int[handlerCount];
+			handlerTargets = new int[handlerCount];
+			for (int i = 0; i < handlerCount; i++) {
+				TryCatchBlockNode block = tryCatchBlocks.get(i);
+				handlerStarts[i] = instructions.indexOf(block.start);
+				handlerEnds[i] = instructions.indexOf(block.end);
+				handlerTargets[i] = instructions.indexOf(block.handler);
+			}
+		}
+
 		for (int i = 0; i < size; i++) {
 			AbstractInsnNode insn = instructions.get(i);
 			if (insn == null) // Sanity check, can happen if you don't use ASM the way it wants you to.
 				throw new IllegalStateException("You broke the method instruction list");
 			List<Integer> ss = new ArrayList<>();
 			int op = insn.getOpcode();
-			if (op >= IRETURN && op <= RETURN || op == ATHROW) {
+			if (op >= IRETURN && op <= RETURN || op == ATHROW || op == RET) {
 				// Terminal instructions, no successors.
 			} else if (insn instanceof JumpInsnNode jin) {
-				// Jump instructions have their target and fall-through (excluding goto/jsr) as successors.
-				int target = instructions.indexOf(jin.label);
-				ss.add(target);
-				if (op != GOTO && op != JSR)
-					if (i + 1 < size)
-						ss.add(i + 1);
+				// Jump instructions have their target and fall-through (excluding goto) as successors.
+				ss.add(instructions.indexOf(jin.label));
+				if (op != GOTO && i + 1 < size)
+					ss.add(i + 1);
 			} else if (insn instanceof TableSwitchInsnNode tswitch) {
 				// Switch instructions have all their targets as successors.
 				ss.add(instructions.indexOf(tswitch.dflt));
@@ -816,59 +1104,73 @@ public class AsmInsnUtil implements Opcodes {
 				ss.add(instructions.indexOf(lswitch.dflt));
 				for (LabelNode label : lswitch.labels)
 					ss.add(instructions.indexOf(label));
-			} else {
+			} else if (i + 1 < size) {
 				// All other instructions just flow to the next instruction.
-				if (i + 1 < size)
-					ss.add(i + 1);
+				ss.add(i + 1);
 			}
 
 			// Add exception successors.
-			if (followExceptionFlow && canThrow(insn)) {
+			if (exceptionFlow == ExceptionFlow.COVERED ||
+					exceptionFlow == ExceptionFlow.THROWING && canThrow(insn)) {
 				// TODO: Used to filter if the contained instructions could actually throw the handled type.
 				//  IE, a block of 'nop' instructions wouldn't actually throw anything.
-				for (TryCatchBlockNode block : method.tryCatchBlocks) {
-					int start = instructions.indexOf(block.start);
-					int end = instructions.indexOf(block.end);
-					if (start <= i && i < end)
-						ss.add(instructions.indexOf(block.handler));
-				}
+				for (int block = 0; block < handlerStarts.length; block++)
+					if (handlerStarts[block] <= i && i < handlerEnds[block])
+						ss.add(handlerTargets[block]);
 			}
 			successorMap.put(i, ss);
 		}
-
-		// Populate predecessor map from successor map.
-		for (int i = 0; i < size; i++)
-			for (int s : successorMap.getOrDefault(i, emptyList()))
-				predecessorMap.computeIfAbsent(s, _ -> new ArrayList<>()).add(i);
 	}
 
 	/**
-	 * Compute reachable instructions in a method.
+	 * Compute reachable instructions from the method entry.
 	 *
 	 * @param size
 	 * 		Size of {@link InsnList} for a method's instructions.
 	 * @param successors
-	 * 		Control flow successor map for the method. See {@link #populateFlowMaps(MethodNode, Int2ObjectMap, Int2ObjectMap)}
+	 * 		Control flow successor map for the method.
+	 * 		See {@link #populateSuccessors(MethodNode, Int2ObjectMap, ExceptionFlow)}.
 	 *
-	 * @return BitSet of reachable instructions in the method.
+	 * @return BitSet of instructions reachable from index {@code 0}. An empty method has no reachable instructions.
 	 */
 	@Nonnull
 	public static BitSet computeReachable(int size, @Nonnull Int2ObjectMap<List<Integer>> successors) {
+		return computeReachable(size, successors, 0);
+	}
+
+	/**
+	 * Compute reachable instructions from one or more entry points.
+	 *
+	 * @param size
+	 * 		Size of {@link InsnList} for a method's instructions.
+	 * @param successors
+	 * 		Control flow successor map for the method. See {@link #populateSuccessors(MethodNode, Int2ObjectMap, ExceptionFlow)}.
+	 * @param entries
+	 * 		Indices from which to begin traversal. Entries outside {@code [0, size)} are ignored.
+	 *
+	 * @return BitSet of reachable instructions. An empty method has no reachable instructions.
+	 */
+	@Nonnull
+	public static BitSet computeReachable(int size, @Nonnull Int2ObjectMap<List<Integer>> successors, int... entries) {
 		BitSet reachable = new BitSet(size);
 		if (size == 0)
 			return reachable;
 
 		// Compute reachable instructions. Start at the beginning.
 		Deque<Integer> unprocessed = new ArrayDeque<>();
-		reachable.set(0);
-		unprocessed.add(0);
+		for (int entry : entries) {
+			if (entry >= 0 && entry < size && !reachable.get(entry)) {
+				reachable.set(entry);
+				unprocessed.add(entry);
+			}
+		}
 		while (!unprocessed.isEmpty()) {
 			// Follow successors.
 			int current = unprocessed.poll();
-			for (int s : successors.getOrDefault(current, List.of())) {
-				if (!reachable.get(s)) {
-					reachable.set(s);
-					unprocessed.add(s);
+			for (int successor : successors.getOrDefault(current, List.of())) {
+				if (successor >= 0 && successor < size && !reachable.get(successor)) {
+					reachable.set(successor);
+					unprocessed.add(successor);
 				}
 			}
 		}
@@ -1367,5 +1669,19 @@ public class AsmInsnUtil implements Opcodes {
 			default:
 				throw new IllegalArgumentException("Unhandled instruction: " + op);
 		}
+	}
+
+	/**
+	 * How exception handlers take part in a method's control flow.
+	 *
+	 * @see #populateFlowMaps(MethodNode, Int2ObjectMap, Int2ObjectMap, ExceptionFlow)
+	 */
+	public enum ExceptionFlow {
+		/** Handlers are not linked to the code they cover. Only explicit control flow reaches them. */
+		NONE,
+		/** Instructions that can throw ({@link AsmInsnUtil#canThrow(AbstractInsnNode)}) flow to the handlers covering them. */
+		THROWING,
+		/** Every instruction flows to the handlers covering it, whether or not it can throw. */
+		COVERED
 	}
 }

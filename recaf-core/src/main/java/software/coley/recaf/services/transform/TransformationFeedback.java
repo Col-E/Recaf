@@ -25,6 +25,31 @@ public interface TransformationFeedback {
 	};
 
 	/**
+	 * Called immediately before a phase begins execution.
+	 *
+	 * @param phase
+	 * 		Phase about to execute.
+	 * @param phaseIndex
+	 * 		One-based index of the phase in execution order.
+	 * @param phaseCount
+	 * 		Total number of phases in the plan.
+	 */
+	default void onPhaseStart(@Nonnull TransformationPhase phase, int phaseIndex, int phaseCount) {
+		// no-op
+	}
+
+	/**
+	 * Called after a phase finishes or is skipped.
+	 *
+	 * @param result
+	 * 		Phase execution result.
+	 */
+	default void onPhaseComplete(@Nonnull TransformationPhaseResult result) {
+		// no-op
+	}
+
+
+	/**
 	 * @return {@code true} to request {@link TransformationApplier} stops handling input to end the transformation early.
 	 * {@code false} to continue the transformation.
 	 */

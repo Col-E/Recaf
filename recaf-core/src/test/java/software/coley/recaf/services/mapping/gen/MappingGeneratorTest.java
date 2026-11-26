@@ -328,8 +328,10 @@ public class MappingGeneratorTest extends TestBase {
 			assertEquals(1, consumerUserMethodMappings.size());
 			assertEquals("main", consumerUserMethodMappings.getFirst().getOldName());
 
-			// Nothing
-			assertEquals(0, intermediate.getVariables().size());
+			// Two mapped variables should exist, one for each of the mapped methods.
+			// - StringConsumer.accept : s
+			// - StringConsumerUser.main : arg
+			assertEquals(2, intermediate.getVariables().size());
 		}
 
 		@Test

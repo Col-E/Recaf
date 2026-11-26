@@ -119,6 +119,28 @@ public class ConfigPane extends BorderPane implements ManagedConfigListener {
 		SceneUtils.whenAddedToSceneConsume(this, pane -> installWindowHooks(pane.getScene()));
 	}
 
+	/**
+	 * Selects the page for the given config container.
+	 *
+	 * @param container
+	 * 		Config container whose page should be selected.
+	 *
+	 * @return {@code true} when the container has a visible page and it was selected.
+	 */
+	public boolean selectPage(@Nonnull ConfigContainer container) {
+		ConfigTreeItem pageItem = idToTree.get(container.getGroupAndId());
+		if (pageItem == null)
+			return false;
+
+		// Clear any search filter so the requested page can be selected.
+		searchField.clear();
+		for (TreeItem<String> item = pageItem; item != null; item = item.getParent())
+			item.setExpanded(true);
+		tree.getSelectionModel().select(pageItem);
+		tree.scrollTo(tree.getRow(pageItem));
+		return true;
+	}
+
 	private void initialize() {
 		content.setFitToWidth(true);
 		root.setExpanded(true);

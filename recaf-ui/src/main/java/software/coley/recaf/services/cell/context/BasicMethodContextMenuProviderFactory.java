@@ -4,6 +4,7 @@ import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import javafx.scene.control.ContextMenu;
+import org.objectweb.asm.Type;
 import org.slf4j.Logger;
 import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.Logging;
@@ -21,6 +22,8 @@ import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.inheritance.InheritanceGraphService;
 import software.coley.recaf.services.navigation.Actions;
 import software.coley.recaf.services.search.match.StringPredicateProvider;
+import software.coley.recaf.services.stub.StubStrategy;
+import software.coley.recaf.services.stub.StubbingService;
 import software.coley.recaf.ui.contextmenu.ContextMenuBuilder;
 import software.coley.recaf.ui.pane.search.MemberReferenceSearchPane;
 import software.coley.recaf.ui.pane.search.SearchContextSource;
@@ -44,14 +47,17 @@ public class BasicMethodContextMenuProviderFactory extends AbstractContextMenuPr
 	private static final Logger logger = Logging.get(BasicMethodContextMenuProviderFactory.class);
 
 	private final InheritanceGraphService graphService;
+	private final StubbingService stubbingService;
 
 	@Inject
 	public BasicMethodContextMenuProviderFactory(@Nonnull InheritanceGraphService graphService,
-			@Nonnull TextProviderService textService,
+	                                             @Nonnull StubbingService stubbingService,
+	                                             @Nonnull TextProviderService textService,
 	                                             @Nonnull IconProviderService iconService,
 	                                             @Nonnull Actions actions) {
 		super(textService, iconService, actions);
 		this.graphService = graphService;
+		this.stubbingService = stubbingService;
 	}
 
 	@Nonnull
@@ -97,8 +103,14 @@ public class BasicMethodContextMenuProviderFactory extends AbstractContextMenuPr
 
 					edit.item("menu.edit.copy", COPY_FILE, () -> actions.copyMember(workspace, resource, jvmBundle, declaringJvmClass, method));
 					edit.item("menu.edit.removevars", CIRCLE_DASH, () -> actions.removeMethodVariables(workspace, resource, jvmBundle, declaringJvmClass, List.of(method)));
-					if (!method.getName().equals("<init>")) // The conditions for optimally no-op'ing a constructor are a bit tricky, we'll just skip those for now.
-						edit.item("menu.edit.noop", CIRCLE_DASH, () -> actions.makeMethodsNoop(workspace, resource, jvmBundle, declaringJvmClass, List.of(method)));
+					if (!method.getName().equals("<init>")) { // The conditions for optimally stubbing a constructor are a bit tricky, we'll just skip those for now.
+						Type returnType = Type.getMethodType(method.getDescriptor()).getReturnType();
+						var stubs = edit.submenu("menu.edit.stub", CIRCLE_DASH);
+						for (StubStrategy strategy : stubbingService.getStubbings(returnType.getDescriptor())) {
+							stubs.item(strategy.name().getTranslationKey(), CIRCLE_DASH,
+									() -> stubbingService.stubMethods(workspace, resource, jvmBundle, declaringJvmClass, List.of(method), strategy));
+						}
+					}
 					edit.item("menu.edit.delete", TRASH_CAN, () -> actions.deleteClassMethods(workspace, resource, jvmBundle, declaringJvmClass, List.of(method)));
 					edit.item("menu.edit.remove.annotation", CLOSE, () -> actions.deleteMemberAnnotations(workspace, resource, jvmBundle, declaringJvmClass, method))
 							.disableWhen(method.getAnnotations().isEmpty());

@@ -2,18 +2,21 @@ package software.coley.recaf.services.deobfuscation.transform.generic;
 
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
-import me.darknet.assembler.printer.JvmPrinterUtil;
+import me.darknet.assembler.backend.jvm.printer.JvmPrinterUtil;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.JumpInsnNode;
 import org.objectweb.asm.tree.LabelNode;
+import org.objectweb.asm.tree.LookupSwitchInsnNode;
 import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.TableSwitchInsnNode;
 import org.objectweb.asm.tree.TryCatchBlockNode;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.transform.JvmClassTransformer;
 import software.coley.recaf.services.transform.JvmTransformerContext;
 import software.coley.recaf.services.transform.TransformationException;
+import software.coley.recaf.services.transform.TransformationParameter;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -35,6 +38,13 @@ import static software.coley.recaf.util.AsmInsnUtil.*;
  */
 @Dependent
 public class DuplicateCatchMergingTransformer implements JvmClassTransformer {
+	public static final String IDENTIFIER = "peephole.flow.duplicatecatch";
+	public static final String KEY_MIN_BLOCK_THRESHOLD = IDENTIFIER + ".min-block-threshold";
+
+	private static final int DEFAULT_MIN_BLOCK_THRESHOLD = 4;
+	private static final TransformationParameter<Integer> MIN_BLOCK_THRESHOLD_PARAMETER =
+			new TransformationParameter<>(KEY_MIN_BLOCK_THRESHOLD, int.class, 4);
+
 	/**
 	 * Allows us to skip blocks that are too simple to bother merging.
 	 * For instance:
@@ -44,7 +54,12 @@ public class DuplicateCatchMergingTransformer implements JvmClassTransformer {
 	 *     <li>{@code { no-op }}</li>
 	 * </ul>
 	 */
-	private static final int MIN_BLOCK_THRESHOLD = 4;
+	private int minBlockThreshold;
+
+	@Override
+	public void setup(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace) {
+		minBlockThreshold = context.getParameters().getInt(KEY_MIN_BLOCK_THRESHOLD, DEFAULT_MIN_BLOCK_THRESHOLD);
+	}
 
 	@Override
 	public void transform(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace,
@@ -82,7 +97,7 @@ public class DuplicateCatchMergingTransformer implements JvmClassTransformer {
 				}
 
 				// Skip if the block is too small.
-				if (catchBlockInsns.size() < MIN_BLOCK_THRESHOLD)
+				if (catchBlockInsns.size() < minBlockThreshold)
 					continue;
 
 				// Skip if there is control flow pointing to a contained label.
@@ -133,8 +148,43 @@ public class DuplicateCatchMergingTransformer implements JvmClassTransformer {
 
 	@Nonnull
 	@Override
-	public String name() {
-		return "Duplicate catch merging";
+	public String identifier() {
+		return IDENTIFIER;
+	}
+
+	@Nonnull
+	@Override
+	public String beforeExample() {
+		return """
+				try { ... }
+				catch (Exception t) {
+				    // This block is the same as the more generic 'Throwable' block below
+				    t.printStackTrace();
+				    throw t;
+				}
+				catch (Throwable t) {
+				    t.printStackTrace();
+				    throw t;
+				}
+				""";
+	}
+
+	@Nonnull
+	@Override
+	public String afterExample() {
+		return """
+				try { ... }
+				catch (Throwable t) {
+				    t.printStackTrace();
+				    throw t;
+				}
+				""";
+	}
+
+	@Nonnull
+	@Override
+	public List<TransformationParameter<?>> getParameterDefinitions() {
+		return List.of(MIN_BLOCK_THRESHOLD_PARAMETER);
 	}
 
 	/**
@@ -148,11 +198,59 @@ public class DuplicateCatchMergingTransformer implements JvmClassTransformer {
 
 		private CodeBlock(@Nonnull List<AbstractInsnNode> instructions) {
 			this.instructions = instructions;
+
+			// Number the labels within the block.
+			// The upstream 'JvmPrinterUtil.toString(insn)' otherwise prints them all as 'A' which isn't correct.
+			Map<LabelNode, Integer> blockLabels = new IdentityHashMap<>();
+			for (AbstractInsnNode insn : instructions)
+				if (insn instanceof LabelNode label)
+					blockLabels.put(label, blockLabels.size());
+
 			this.disassembled = instructions.stream()
 					.skip(1) // Skip first label, which will always be unique
-					.map(JvmPrinterUtil::toString)
+					.map(insn -> describe(insn, blockLabels))
 					.collect(Collectors.joining("\n"));
 			this.index = indexOf(instructions.getFirst());
+		}
+
+		/**
+		 * @param insn
+		 * 		Instruction to describe.
+		 * @param blockLabels
+		 * 		Labels within the block, mapped to their order in the block.
+		 *
+		 * @return Text that is the same for instructions that have the same effect in an equivalent block.
+		 */
+		@Nonnull
+		private static String describe(@Nonnull AbstractInsnNode insn, @Nonnull Map<LabelNode, Integer> blockLabels) {
+			return switch (insn) {
+				case LabelNode label -> "label " + describe(label, blockLabels);
+				case JumpInsnNode jump -> jump.getOpcode() + " " + describe(jump.label, blockLabels);
+				case TableSwitchInsnNode tableSwitch -> "tableswitch " + tableSwitch.min + " " + tableSwitch.max
+						+ " default " + describe(tableSwitch.dflt, blockLabels)
+						+ tableSwitch.labels.stream().map(label -> " " + describe(label, blockLabels)).collect(Collectors.joining());
+				case LookupSwitchInsnNode lookupSwitch -> {
+					StringBuilder sb = new StringBuilder("lookupswitch default " + describe(lookupSwitch.dflt, blockLabels));
+					for (int i = 0; i < lookupSwitch.keys.size(); i++)
+						sb.append(' ').append(lookupSwitch.keys.get(i)).append(' ').append(describe(lookupSwitch.labels.get(i), blockLabels));
+					yield sb.toString();
+				}
+				default -> JvmPrinterUtil.toString(insn);
+			};
+		}
+
+		/**
+		 * @param label
+		 * 		Label to describe.
+		 * @param blockLabels
+		 * 		Labels within the block, mapped to their order in the block.
+		 *
+		 * @return Text that is the same for labels that have the same effect in an equivalent block.
+		 */
+		@Nonnull
+		private static String describe(@Nonnull LabelNode label, @Nonnull Map<LabelNode, Integer> blockLabels) {
+			Integer blockIndex = blockLabels.get(label);
+			return blockIndex != null ? "inner-" + blockIndex : "outer-" + indexOf(label);
 		}
 
 		/**

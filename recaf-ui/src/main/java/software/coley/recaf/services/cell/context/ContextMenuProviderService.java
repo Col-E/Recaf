@@ -15,6 +15,7 @@ import software.coley.recaf.info.annotation.Annotated;
 import software.coley.recaf.info.annotation.AnnotationInfo;
 import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.info.member.FieldMember;
+import software.coley.recaf.info.member.LocalVariable;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.path.AssemblerPathData;
 import software.coley.recaf.services.Service;
@@ -44,12 +45,14 @@ import java.util.function.BiConsumer;
  *     <li>{@link #addInnerClassContextMenuAdapter(InnerClassContextMenuAdapter)}</li>
  *     <li>{@link #addFieldContextMenuAdapter(FieldContextMenuAdapter)}</li>
  *     <li>{@link #addMethodContextMenuAdapter(MethodContextMenuAdapter)}</li>
+ *     <li>{@link #addLocalVariableContextMenuAdapter(LocalVariableContextMenuAdapter)}</li>
  *     <li>{@link #addAnnotationContextMenuAdapter(AnnotationContextMenuAdapter)}</li>
  *     <li>{@link #addPackageContextMenuAdapter(PackageContextMenuAdapter)}</li>
  *     <li>{@link #addDirectoryContextMenuAdapter(DirectoryContextMenuAdapter)}</li>
  *     <li>{@link #addBundleContextMenuAdapter(BundleContextMenuAdapter)}</li>
  *     <li>{@link #addResourceContextMenuAdapter(ResourceContextMenuAdapter)}</li>
  *     <li>{@link #addAssemblerContextMenuAdapter(AssemblerContextMenuAdapter)}</li>
+ *     <li>{@link #addConstantContextMenuAdapter(ConstantContextMenuAdapter)}</li>
  * </ul>
  *
  * @author Matt Coley
@@ -64,24 +67,28 @@ public class ContextMenuProviderService implements Service {
 	private final List<InnerClassContextMenuAdapter> innerClassContextMenuAdapters = new ArrayList<>();
 	private final List<FieldContextMenuAdapter> fieldContextMenuAdapters = new ArrayList<>();
 	private final List<MethodContextMenuAdapter> methodContextMenuAdapters = new ArrayList<>();
+	private final List<LocalVariableContextMenuAdapter> localVariableContextMenuAdapters = new ArrayList<>();
 	private final List<AnnotationContextMenuAdapter> annotationContextMenuAdapters = new ArrayList<>();
 	private final List<PackageContextMenuAdapter> packageContextMenuAdapters = new ArrayList<>();
 	private final List<DirectoryContextMenuAdapter> directoryContextMenuAdapters = new ArrayList<>();
 	private final List<BundleContextMenuAdapter> bundleContextMenuAdapters = new ArrayList<>();
 	private final List<ResourceContextMenuAdapter> resourceContextMenuAdapters = new ArrayList<>();
 	private final List<AssemblerContextMenuAdapter> assemblerContextMenuAdapters = new ArrayList<>();
+	private final List<ConstantContextMenuAdapter> constantContextMenuAdapters = new ArrayList<>();
 	// Defaults
 	private final ClassContextMenuProviderFactory classContextMenuDefault;
 	private final FileContextMenuProviderFactory fileContextMenuDefault;
 	private final InnerClassContextMenuProviderFactory innerClassContextMenuDefault;
 	private final FieldContextMenuProviderFactory fieldContextMenuDefault;
 	private final MethodContextMenuProviderFactory methodContextMenuDefault;
+	private final LocalVariableContextMenuProviderFactory localVariableContextMenuDefault;
 	private final AnnotationContextMenuProviderFactory annotationContextMenuDefault;
 	private final PackageContextMenuProviderFactory packageContextMenuDefault;
 	private final DirectoryContextMenuProviderFactory directoryContextMenuDefault;
 	private final BundleContextMenuProviderFactory bundleContextMenuDefault;
 	private final ResourceContextMenuProviderFactory resourceContextMenuDefault;
 	private final AssemblerContextMenuProviderFactory assemblerContextMenuDefault;
+	private final ConstantContextMenuProviderFactory constantContextMenuDefault;
 
 	@Inject
 	public ContextMenuProviderService(@Nonnull ContextMenuProviderServiceConfig config,
@@ -90,12 +97,14 @@ public class ContextMenuProviderService implements Service {
 	                                  @Nonnull InnerClassContextMenuProviderFactory innerClassContextMenuDefault,
 	                                  @Nonnull FieldContextMenuProviderFactory fieldContextMenuDefault,
 	                                  @Nonnull MethodContextMenuProviderFactory methodContextMenuDefault,
+	                                  @Nonnull LocalVariableContextMenuProviderFactory localVariableContextMenuDefault,
 	                                  @Nonnull AnnotationContextMenuProviderFactory annotationContextMenuDefault,
 	                                  @Nonnull PackageContextMenuProviderFactory packageContextMenuDefault,
 	                                  @Nonnull DirectoryContextMenuProviderFactory directoryContextMenuDefault,
 	                                  @Nonnull BundleContextMenuProviderFactory bundleContextMenuDefault,
 	                                  @Nonnull ResourceContextMenuProviderFactory resourceContextMenuDefault,
-	                                  @Nonnull AssemblerContextMenuProviderFactory assemblerContextMenuDefault) {
+	                                  @Nonnull AssemblerContextMenuProviderFactory assemblerContextMenuDefault,
+	                                  @Nonnull ConstantContextMenuProviderFactory constantContextMenuDefault) {
 		this.config = config;
 
 		// Default factories
@@ -104,12 +113,14 @@ public class ContextMenuProviderService implements Service {
 		this.innerClassContextMenuDefault = innerClassContextMenuDefault;
 		this.fieldContextMenuDefault = fieldContextMenuDefault;
 		this.methodContextMenuDefault = methodContextMenuDefault;
+		this.localVariableContextMenuDefault = localVariableContextMenuDefault;
 		this.annotationContextMenuDefault = annotationContextMenuDefault;
 		this.packageContextMenuDefault = packageContextMenuDefault;
 		this.directoryContextMenuDefault = directoryContextMenuDefault;
 		this.bundleContextMenuDefault = bundleContextMenuDefault;
 		this.resourceContextMenuDefault = resourceContextMenuDefault;
 		this.assemblerContextMenuDefault = assemblerContextMenuDefault;
+		this.constantContextMenuDefault = constantContextMenuDefault;
 	}
 
 	/**
@@ -230,6 +241,41 @@ public class ContextMenuProviderService implements Service {
 		} else {
 			throw new IllegalStateException("Unsupported member: " + member.getClass().getName());
 		}
+	}
+
+	/**
+	 * Delegates to {@link LocalVariableContextMenuProviderFactory}.
+	 *
+	 * @param source
+	 * 		Context request origin.
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param declaringClass
+	 * 		Containing class.
+	 * @param declaringMethod
+	 * 		Containing method.
+	 * @param variable
+	 * 		The variable to create a menu for.
+	 *
+	 * @return Menu provider for the variable.
+	 */
+	@Nonnull
+	public ContextMenuProvider getLocalVariableContextMenuProvider(@Nonnull ContextSource source,
+	                                                               @Nonnull Workspace workspace,
+	                                                               @Nonnull WorkspaceResource resource,
+	                                                               @Nonnull ClassBundle<? extends ClassInfo> bundle,
+	                                                               @Nonnull ClassInfo declaringClass,
+	                                                               @Nonnull MethodMember declaringMethod,
+	                                                               @Nonnull LocalVariable variable) {
+		ContextMenuProvider provider = localVariableContextMenuDefault.getLocalVariableContextMenuProvider(source, workspace, resource, bundle,
+				declaringClass, declaringMethod, variable);
+		provider = adapt(provider, localVariableContextMenuAdapters, (adapter, menu) ->
+				adapter.adaptLocalVariableContextMenu(menu, source, workspace, resource, bundle, declaringClass, declaringMethod, variable));
+		return provider;
 	}
 
 	/**
@@ -417,6 +463,18 @@ public class ContextMenuProviderService implements Service {
 	}
 
 	/**
+	 * @param value
+	 * 		Constant value to create a menu for.
+	 *
+	 * @return Menu provider for the constant value.
+	 */
+	@Nonnull
+	public ContextMenuProvider getConstantContextMenuProvider(@Nonnull Object value) {
+		ContextMenuProvider provider = constantContextMenuDefault.getConstantContextMenuProvider(value);
+		return adapt(provider, constantContextMenuAdapters, (adapter, menu) -> adapter.adaptConstantContextMenu(menu, value));
+	}
+
+	/**
 	 * @param adapter
 	 * 		Adapter to register for modifying class context menus.
 	 *
@@ -514,6 +572,26 @@ public class ContextMenuProviderService implements Service {
 	 */
 	public boolean removeMethodContextMenuAdapter(@Nonnull MethodContextMenuAdapter adapter) {
 		return methodContextMenuAdapters.remove(adapter);
+	}
+
+	/**
+	 * @param adapter
+	 * 		Adapter to register for modifying local-variable context menus.
+	 *
+	 * @return {@code true} when the adapter was added. {@link false} when the adapter has already been added.
+	 */
+	public boolean addLocalVariableContextMenuAdapter(@Nonnull LocalVariableContextMenuAdapter adapter) {
+		return PrioritySortable.add(localVariableContextMenuAdapters, adapter);
+	}
+
+	/**
+	 * @param adapter
+	 * 		Adapter to remove.
+	 *
+	 * @return {@code true} when the adapter was removed. {@link false} when the adapter was not previously registered.
+	 */
+	public boolean removeLocalVariableContextMenuAdapter(@Nonnull LocalVariableContextMenuAdapter adapter) {
+		return localVariableContextMenuAdapters.remove(adapter);
 	}
 
 	/**
@@ -637,6 +715,26 @@ public class ContextMenuProviderService implements Service {
 	}
 
 	/**
+	 * @param adapter
+	 * 		Adapter to register for modifying constant context menus.
+	 *
+	 * @return {@code true} when the adapter was added. {@link false} when the adapter has already been added.
+	 */
+	public boolean addConstantContextMenuAdapter(@Nonnull ConstantContextMenuAdapter adapter) {
+		return PrioritySortable.add(constantContextMenuAdapters, adapter);
+	}
+
+	/**
+	 * @param adapter
+	 * 		Adapter to remove.
+	 *
+	 * @return {@code true} when the adapter was removed. {@link false} when the adapter was not previously registered.
+	 */
+	public boolean removeConstantContextMenuAdapter(@Nonnull ConstantContextMenuAdapter adapter) {
+		return constantContextMenuAdapters.remove(adapter);
+	}
+
+	/**
 	 * @return Default menu provider for classes.
 	 */
 	@Nonnull
@@ -709,6 +807,14 @@ public class ContextMenuProviderService implements Service {
 	}
 
 	/**
+	 * @return Default menu provider for local variables.
+	 */
+	@Nonnull
+	public LocalVariableContextMenuProviderFactory getLocalVariableContextMenuDefault() {
+		return localVariableContextMenuDefault;
+	}
+
+	/**
 	 * @return Default menu provider for annotations.
 	 */
 	@Nonnull
@@ -722,6 +828,14 @@ public class ContextMenuProviderService implements Service {
 	@Nonnull
 	public AssemblerContextMenuProviderFactory getAssemblerContextMenuDefault() {
 		return assemblerContextMenuDefault;
+	}
+
+	/**
+	 * @return Default menu provider for constant values.
+	 */
+	@Nonnull
+	public ConstantContextMenuProviderFactory getConstantContextMenuDefault() {
+		return constantContextMenuDefault;
 	}
 
 	@Nonnull

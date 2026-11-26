@@ -26,7 +26,7 @@ public non-sealed interface ObjectValue extends ReValue {
 	ObjectValue VAL_OBJECT_MAYBE_NULL = new ObjectValueImpl(Types.OBJECT_TYPE, Nullness.UNKNOWN);
 	ObjectValue VAL_CLASS = new ObjectValueImpl(Types.CLASS_TYPE, Nullness.NOT_NULL);
 	ObjectValue VAL_CLASS_NULL = new ObjectValueImpl(Types.CLASS_TYPE, Nullness.NULL);
-	ObjectValue VAL_CLASS_MAYBE_NULL = new ObjectValueImpl(Types.CLASS_TYPE, Nullness.NULL);
+	ObjectValue VAL_CLASS_MAYBE_NULL = new ObjectValueImpl(Types.CLASS_TYPE, Nullness.UNKNOWN);
 	ObjectValue VAL_METHOD_TYPE = new ObjectValueImpl(Type.getObjectType("java/lang/invoke/MethodType"), Nullness.NOT_NULL);
 	ObjectValue VAL_METHOD_HANDLE = new ObjectValueImpl(Type.getObjectType("java/lang/invoke/MethodType"), Nullness.NOT_NULL);
 	ObjectValue VAL_JSR = new ObjectValueImpl(Type.VOID_TYPE, Nullness.NOT_NULL);
@@ -90,6 +90,14 @@ public non-sealed interface ObjectValue extends ReValue {
 		};
 	}
 
+	/**
+	 * @param type
+	 * 		Value type.
+	 * @param nullness
+	 * 		Null state of the value.
+	 *
+	 * @return Object value of the given nullness with a type of {@code type}.
+	 */
 	@Nonnull
 	static ObjectValue object(@Nonnull Type type, @Nonnull Nullness nullness) {
 		if (Types.OBJECT_TYPE.equals(type))

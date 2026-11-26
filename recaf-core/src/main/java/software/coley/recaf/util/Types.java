@@ -23,6 +23,7 @@ public class Types {
 	public static final Type OBJECT_TYPE = Type.getObjectType("java/lang/Object");
 	public static final Type CLASS_TYPE = Type.getObjectType("java/lang/Class");
 	public static final Type STRING_TYPE = Type.getObjectType("java/lang/String");
+	public static final Type CHARSET_TYPE = Type.getObjectType("java/nio/charset/Charset");
 	public static final Type BOX_VOID = Type.getObjectType("java/lang/Void");
 	public static final Type BOX_BOOLEAN = Type.getObjectType("java/lang/Boolean");
 	public static final Type BOX_CHAR = Type.getObjectType("java/lang/Character");
@@ -64,6 +65,22 @@ public class Types {
 			"Ljava/lang/Double;",
 			"Ljava/lang/Long;"
 	);
+	/** @see #isValidSignature(String, SignatureContext) */
+	public static final int MAX_SIGNATURE_NESTING = 128;
+	/** @see #isValidSignature(String, SignatureContext) */
+	public static final int MAX_SIGNATURE_TYPE_PARAMETERS = 256;
+
+	/**
+	 * @param desc
+	 * 		Some internal type descriptor.
+	 *
+	 * @return {@code true} if it matches an array type.
+	 */
+	public static boolean isArray(@Nullable String desc) {
+		if (desc == null || desc.isEmpty())
+			return false;
+		return desc.charAt(0) == '[';
+	}
 
 	/**
 	 * @param type
@@ -85,9 +102,76 @@ public class Types {
 		if (desc == null || desc.length() != 1)
 			return false;
 		char c = desc.charAt(0);
+		return isPrimitive(c);
+	}
+
+	/**
+	 * @param c
+	 * 		Some single-char descriptor to check.
+	 *
+	 * @return {@code true} if it matches one of the primitive type chars.
+	 */
+	public static boolean isPrimitive(char c) {
 		return switch (c) {
 			case 'V', 'Z', 'C', 'B', 'S', 'I', 'F', 'J', 'D' -> true;
 			default -> false;
+		};
+	}
+
+	/**
+	 * @param desc
+	 * 		Some internal type descriptor.
+	 *
+	 * @return Source name of the primitive, or {@code null} if it is not a primitive.
+	 */
+	@Nullable
+	public static String primitiveToSource(@Nonnull String desc) {
+		if (desc.length() != 1)
+			return null;
+		return primitiveToSource(desc.charAt(0));
+	}
+
+	/**
+	 * @param desc
+	 * 		Some single-char descriptor.
+	 *
+	 * @return Source name of the primitive, or {@code null} if it is not a primitive.
+	 */
+	@Nullable
+	public static String primitiveToSource(char desc) {
+		return switch (desc) {
+			case 'V' -> "void";
+			case 'Z' -> "boolean";
+			case 'B' -> "byte";
+			case 'C' -> "char";
+			case 'S' -> "short";
+			case 'I' -> "int";
+			case 'J' -> "long";
+			case 'F' -> "float";
+			case 'D' -> "double";
+			default -> null;
+		};
+	}
+
+	/**
+	 * @param type
+	 * 		Source name of a primitive.
+	 *
+	 * @return Internal descriptor of the primitive, or {@code null} if it is not a primitive.
+	 */
+	@Nullable
+	public static String sourceToPrimitive(@Nonnull String type) {
+		return switch (type) {
+			case "void" -> "V";
+			case "boolean" -> "Z";
+			case "byte" -> "B";
+			case "char" -> "C";
+			case "short" -> "S";
+			case "int" -> "I";
+			case "long" -> "J";
+			case "float" -> "F";
+			case "double" -> "D";
+			default -> null;
 		};
 	}
 
@@ -190,11 +274,57 @@ public class Types {
 	 * @return Number of variable slots occupied by the parameters.
 	 */
 	public static int countParameterSlots(@Nonnull Type methodType) {
-		int size = 0;
 		Type[] methodArgs = methodType.getArgumentTypes();
-		for (Type arg : methodArgs)
+		return countParameterSlots(methodArgs);
+	}
+
+	/**
+	 * @param argumentTypes
+	 * 		Parsed method argument types.
+	 *
+	 * @return Number of variable slots occupied by the parameters.
+	 */
+	public static int countParameterSlots(@Nonnull Type[] argumentTypes) {
+		int size = 0;
+		for (Type arg : argumentTypes)
 			size += arg.getSize();
 		return size;
+	}
+
+	/**
+	 * @param isStatic
+	 * 		Whether the method is static.
+	 * @param desc
+	 * 		Method descriptor.
+	 *
+	 * @return Number of variable slots occupied by the parameters, including {@code this} if non-static.
+	 */
+	public static int parameterEndSlot(boolean isStatic, @Nonnull String desc) {
+		return parameterEndSlot(isStatic, Type.getType(desc));
+	}
+
+	/**
+	 * @param isStatic
+	 * 		Whether the method is static.
+	 * @param methodType
+	 * 		Parsed method descriptor type.
+	 *
+	 * @return Number of variable slots occupied by the parameters, including {@code this} if non-static.
+	 */
+	public static int parameterEndSlot(boolean isStatic, @Nonnull Type methodType) {
+		return parameterEndSlot(isStatic, methodType.getArgumentTypes());
+	}
+
+	/**
+	 * @param isStatic
+	 * 		Whether the method is static.
+	 * @param argumentTypes
+	 * 		Parsed method argument types.
+	 *
+	 * @return Number of variable slots occupied by the parameters, including {@code this} if non-static.
+	 */
+	public static int parameterEndSlot(boolean isStatic, @Nonnull Type[] argumentTypes) {
+		return countParameterSlots(argumentTypes) + (isStatic ? 0 : 1);
 	}
 
 	/**
@@ -238,6 +368,42 @@ public class Types {
 	}
 
 	/**
+	 * Unlike {@link #isValidDesc(String)}, this accepts primitive descriptors, and rejects method descriptors.
+	 *
+	 * @param desc
+	 * 		Field descriptor to check.
+	 *
+	 * @return {@code true} when the descriptor is a primitive or reference type that ASM can parse.
+	 */
+	public static boolean isValidFieldDesc(@Nullable String desc) {
+		if (desc == null || desc.isEmpty())
+			return false;
+		if (desc.length() == 1)
+			return "ZCBSIFJD".indexOf(desc.charAt(0)) >= 0;
+		return desc.charAt(0) != '(' && isValidDesc(desc);
+	}
+
+	/**
+	 * @param desc
+	 * 		Method descriptor to check.
+	 *
+	 * @return {@code true} when the descriptor is a method type that ASM can parse.
+	 */
+	public static boolean isValidMethodDesc(@Nullable String desc) {
+		return desc != null && desc.startsWith("(") && isValidDesc(desc);
+	}
+
+	/**
+	 * @param type
+	 * 		Type to check.
+	 *
+	 * @return {@code true} for {@link Type#OBJECT} or {@link Type#ARRAY} types.
+	 */
+	public static boolean isReference(@Nonnull Type type) {
+		return type.getSort() == Type.OBJECT || type.getSort() == Type.ARRAY;
+	}
+
+	/**
 	 * @param type
 	 * 		Type to check.
 	 *
@@ -246,6 +412,17 @@ public class Types {
 	public static boolean isWide(@Nullable Type type) {
 		if (type == null) return false;
 		return Type.DOUBLE_TYPE.equals(type) || Type.LONG_TYPE.equals(type);
+	}
+
+	/**
+	 * @param desc
+	 * 		Descriptor to check.
+	 *
+	 * @return {@code true} if it is a wide type.
+	 */
+	public static boolean isWide(@Nullable String desc) {
+		if (desc == null) return false;
+		return "D".equals(desc) || "J".equals(desc);
 	}
 
 	/**
@@ -340,7 +517,7 @@ public class Types {
 	public static int getNormalizedSort(int sort) {
 		if (sort == Type.ARRAY)
 			sort = Type.OBJECT;
-		else if (sort > 0 && sort < Type.INT)
+		else if (sort > Type.VOID && sort < Type.INT)
 			sort = Type.INT;
 		return sort;
 	}
@@ -513,6 +690,10 @@ public class Types {
 			return true;
 		if (signature.isEmpty())
 			return false;
+
+		if (exceedsSignatureLimits(signature))
+			return false;
+
 		try {
 			switch (context) {
 				case CLASS -> CheckClassAdapter.checkClassSignature(signature);
@@ -523,6 +704,108 @@ public class Types {
 		} catch (Throwable t) {
 			return false;
 		}
+	}
+
+	/**
+	 * @param signature Signature to check.
+	 * @return {@code true} if the signature exceeds the limits defined by {@link #MAX_SIGNATURE_NESTING} and {@link #MAX_SIGNATURE_TYPE_PARAMETERS}.
+	 */
+	private static boolean exceedsSignatureLimits(@Nonnull String signature) {
+		int nesting = 0;
+		int dimensions = 0;
+		int bounds = 0;
+		for (int i = 0, length = signature.length(); i < length; i++) {
+			char c = signature.charAt(i);
+
+			// Each array dimension wraps the type that follows it, so a long run of them recurses like type arguments do.
+			if (c == '[') {
+				if (nesting + ++dimensions > MAX_SIGNATURE_NESTING)
+					return true;
+				continue;
+			}
+
+			dimensions = 0;
+			if (c == '<') {
+				if (++nesting > MAX_SIGNATURE_NESTING)
+					return true;
+			} else if (c == '>') {
+				if (nesting > 0)
+					nesting--;
+			} else if (c == ':') {
+				if (++bounds > MAX_SIGNATURE_TYPE_PARAMETERS)
+					return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * @param arrayType
+	 * 		The array type to check.
+	 * @param valueType
+	 * 		The value type to check for storing into the array.
+	 * @param recursive
+	 * 		Whether to check for nested arrays if the array type is multi-dimensional.
+	 *
+	 * @return {@code true} if the value type can be stored in the array type, {@code false} otherwise.
+	 */
+	public static boolean isArrayStorable(@Nonnull Type arrayType, @Nonnull Type valueType, boolean recursive) {
+		if (arrayType.getSort() != Type.ARRAY)
+			return false;
+
+		Type componentType = Type.getType(arrayType.getDescriptor().substring(1));
+		if (isArrayStoreCompatible(componentType, valueType))
+			return true;
+
+		if (recursive && componentType.getSort() == Type.ARRAY)
+			return isArrayStorable(componentType, valueType, true);
+
+		return false;
+	}
+
+	/**
+	 * @param arrayComponent
+	 * 		The component type of the array.
+	 * @param value
+	 * 		The value type to check for storing into the array.
+	 *
+	 * @return {@code true} if the value type can be stored in the array component type, {@code false} otherwise.
+	 */
+	public static boolean isArrayStoreCompatible(@Nonnull Type arrayComponent, @Nonnull Type value) {
+		if (arrayComponent.equals(value))
+			return true;
+
+		// Primitive widening rules allow narrower types to be stored in wider types.
+		int aSort = arrayComponent.getSort();
+		int vSort = value.getSort();
+		if (aSort >= Type.BOOLEAN && aSort <= Type.DOUBLE && vSort >= Type.BOOLEAN && vSort <= Type.DOUBLE) {
+			if (aSort == Type.BOOLEAN || vSort == Type.BOOLEAN)
+				return false;
+			return switch (aSort) {
+				case Type.DOUBLE -> true;
+				case Type.FLOAT -> vSort != Type.DOUBLE;
+				case Type.LONG -> vSort <= Type.LONG && vSort != Type.FLOAT;
+				case Type.INT -> vSort == Type.BYTE || vSort == Type.SHORT || vSort == Type.CHAR || vSort == Type.INT;
+				case Type.SHORT -> vSort == Type.BYTE || vSort == Type.SHORT;
+				case Type.CHAR, Type.BYTE -> false;
+				default -> false;
+			};
+		}
+
+		// Object/array types can be stored in each other if they are compatible.
+		// We don't do any sort of special 'isAssignableFrom' checks here, just a simple check for object/array types.
+		if (aSort == Type.OBJECT || aSort == Type.ARRAY) {
+			if (aSort == Type.OBJECT && "java/lang/Object".equals(arrayComponent.getInternalName()))
+				return vSort == Type.OBJECT || vSort == Type.ARRAY;
+
+			if (aSort == Type.ARRAY && vSort == Type.ARRAY) {
+				Type tComp = Type.getType(arrayComponent.getDescriptor().substring(1));
+				Type sComp = Type.getType(value.getDescriptor().substring(1));
+				return isArrayStoreCompatible(tComp, sComp);
+			}
+		}
+
+		return false;
 	}
 
 	/**

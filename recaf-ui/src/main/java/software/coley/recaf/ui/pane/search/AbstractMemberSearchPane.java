@@ -100,7 +100,7 @@ abstract class AbstractMemberSearchPane extends AbstractSearchPane {
 				.or(EventStreams.changesOf(descValue))
 				.or(EventStreams.changesOf(descPredicateId))
 				.reduceSuccessions(Collections::singletonList, Lists::add, Duration.ofMillis(Editor.SHORT_DELAY_MS))
-				.addObserver(unused -> search());
+				.addObserver(unused -> searchLive());
 
 		setInputs(input);
 	}

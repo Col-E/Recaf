@@ -1,7 +1,7 @@
 package software.coley.recaf.ui.pane.editing.assembler;
 
 import jakarta.annotation.Nonnull;
-import me.darknet.assembler.compile.JavaCompileResult;
+import me.darknet.assembler.backend.jvm.compile.JavaCompileResult;
 import me.darknet.assembler.compiler.ClassResult;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
@@ -14,7 +14,7 @@ import software.coley.recaf.services.assembler.AssemblerPipeline;
  */
 public interface JvmAssemblerBuildConsumer extends AssemblerBuildConsumer {
 	@Override
-	default void consumeClass(@Nonnull ClassResult result, @Nonnull ClassInfo classInfo) {
+	default void consumeClass(@Nonnull ClassResult<?> result, @Nonnull ClassInfo classInfo) {
 		if (result instanceof JavaCompileResult jcr && classInfo.isJvmClass())
 			onClassAssembled(jcr, classInfo.asJvmClass());
 	}

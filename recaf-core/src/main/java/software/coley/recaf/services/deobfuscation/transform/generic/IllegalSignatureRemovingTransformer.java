@@ -20,6 +20,8 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
  */
 @Dependent
 public class IllegalSignatureRemovingTransformer implements JvmClassTransformer {
+	public static final String IDENTIFIER = "cleanup.illegalsignature";
+
 	@Override
 	public void transform(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace,
 	                      @Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle,
@@ -38,8 +40,8 @@ public class IllegalSignatureRemovingTransformer implements JvmClassTransformer 
 
 	@Nonnull
 	@Override
-	public String name() {
-		return "Illegal signature removal";
+	public String identifier() {
+		return IDENTIFIER;
 	}
 
 	@Override

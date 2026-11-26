@@ -91,15 +91,19 @@ public class InstructionSearchPane extends AbstractSearchPane {
 							ToStringConverter.from(s -> Lang.get(StringPredicate.TRANSLATION_PREFIX + s)));
 					modeCombo.setId("id-" + line.uuid());
 					modeCombo.getSelectionModel().select(StringPredicateProvider.KEY_CONTAINS);
-					EventStreams.changesOf(stringValue)
-							.or(EventStreams.changesOf(stringPredicateId))
-							.reduceSuccessions(Collections::singletonList, Lists::add, Duration.ofMillis(Editor.MEDIUM_DELAY_MS))
-							.addObserver(unused -> search());
+						EventStreams.changesOf(stringValue)
+								.or(EventStreams.changesOf(stringPredicateId))
+								.reduceSuccessions(Collections::singletonList, Lists::add, Duration.ofMillis(Editor.MEDIUM_DELAY_MS))
+								.addObserver(unused -> searchLive());
 					GridPane.setHgrow(textField, Priority.ALWAYS);
 					if (line.uuid() == TOP_UID) {
 						input.addRow(input.getRowCount(), textField, modeCombo);
 					} else {
+						// Add a delete button for all lines except the first one, which is always present.
+						// These aren't focus traversable since clicking will request focus, then upon removal
+						// the focus jumps to the next input field which may be in an unrelated docking tab.
 						ActionButton delete = new ActionButton(CarbonIcons.TRASH_CAN, () -> lines.remove(line));
+						delete.setFocusTraversable(false);
 						delete.setId("delete-" + line.uuid());
 						input.addRow(input.getRowCount(), textField, modeCombo, delete);
 					}
@@ -150,6 +154,8 @@ public class InstructionSearchPane extends AbstractSearchPane {
 			// May be null if no such id exists as a predicate, but we filter out nulls anyways.
 			return stringPredicateProvider.newBiStringPredicate(id, search);
 		}).filter(Objects::nonNull).toList();
+		if (predicates.isEmpty())
+			return null;
 		return new InstructionQuery(predicates);
 	}
 

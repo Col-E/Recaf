@@ -36,7 +36,7 @@ public class SnippetManagerConfig extends BasicConfigContainer implements Servic
 				getstatic java/lang/System.out Ljava/io/PrintStream;
 				ldc "Hello"
 				invokevirtual java/io/PrintStream.println (Ljava/lang/String;)V
-				"""));
+				""", SnippetTarget.JVM));
 		snippets.put("println-fmt", new Snippet("println formatted", "A formatted string println() call", """
 				// String name = "bob";
 				// System.out.printf("hello %s\\n", name);
@@ -55,7 +55,7 @@ public class SnippetManagerConfig extends BasicConfigContainer implements Servic
 				    invokevirtual java/io/PrintStream.printf (Ljava/lang/String;[Ljava/lang/Object;)Ljava/io/PrintStream;
 				    pop
 				end:
-				"""));
+				""", SnippetTarget.JVM));
 		snippets.put("fori", new Snippet("for-i", "for-loop between [0, 9]", """
 				// for (int i = 0; i < 10; i++) someMethod();
 				init:
@@ -76,7 +76,7 @@ public class SnippetManagerConfig extends BasicConfigContainer implements Servic
 				    goto check
 				exit:
 				// End of for-loop
-				"""));
+				""", SnippetTarget.JVM));
 		snippets.put("while", new Snippet("while", "A simple while loop", """
 				// int i = 100;
 				// while (i >= 0) {
@@ -98,7 +98,7 @@ public class SnippetManagerConfig extends BasicConfigContainer implements Servic
 				    goto check
 				exit:
 				// End of while-loop
-				"""));
+				""", SnippetTarget.JVM));
 		snippets.put("if-else", new Snippet("if ... else ...", "A simple if else statement", """
 				// if (b)
 				//   whenTrue();
@@ -110,9 +110,16 @@ public class SnippetManagerConfig extends BasicConfigContainer implements Servic
 				    invokestatic com/example/MyClass.whenTrue ()V
 				    goto end
 				isFalse:
-				    invokestatic com/example/MyClass.whenFalse ()V
+				invokestatic com/example/MyClass.whenFalse ()V
 				end:
-				"""));
+				""", SnippetTarget.JVM));
+
+		// TODO: Additional default dalvik snippets.
+		snippets.put("dalvik-logger", new Snippet("log.wtf", "A error debug log", """
+				    move-exception error // Some Throwable
+				    const-string message "An error occurred"
+				    invoke-static { message, error } android/util/Log.wtf (Ljava/lang/String;Ljava/lang/Throwable;)I
+				""", SnippetTarget.DALVIK));
 	}
 
 	/**

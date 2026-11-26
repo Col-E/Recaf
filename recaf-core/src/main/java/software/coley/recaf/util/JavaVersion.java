@@ -37,4 +37,17 @@ public class JavaVersion {
 	public static int adaptFromClassFileVersion(int version) {
 		return version - VERSION_OFFSET;
 	}
+
+	/**
+	 * Adapts the Java language version to the class file spec version.
+	 * For example, Java 8 becomes 52.
+	 *
+	 * @param version
+	 * 		Java language version, such as from {@link Runtime.Version#feature()}.
+	 *
+	 * @return Class file version, such as from {@link JvmClassInfo#getVersion()}.
+	 */
+	public static int adaptFromLanguageVersion(int version) {
+		return version + VERSION_OFFSET;
+	}
 }

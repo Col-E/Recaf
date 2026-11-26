@@ -13,8 +13,8 @@ import software.coley.recaf.ui.control.richtext.suggest.java.JavaCompletionFacto
 import software.coley.recaf.ui.control.richtext.suggest.java.JavaCompletionSession;
 import software.coley.recaf.ui.control.richtext.suggest.java.JavaKeywordCompletionRules;
 import software.coley.recaf.ui.control.richtext.suggest.java.JavaLexicalContext;
-import software.coley.recaf.ui.control.richtext.suggest.java.TypeCandidate;
-import software.coley.recaf.ui.control.richtext.suggest.java.lookups.VisibleTypeLookup;
+import software.coley.recaf.ui.control.richtext.suggest.lookups.CompletionMatching;
+import software.coley.recaf.ui.control.richtext.suggest.typeindex.TypeCandidate;
 import software.coley.sourcesolver.model.CompilationUnitModel;
 import software.coley.sourcesolver.model.MethodModel;
 import software.coley.sourcesolver.model.ScopeLookup;
@@ -32,8 +32,6 @@ import java.util.Objects;
  * @author Matt Coley
  */
 public final class IdentifierCompletionProvider implements JavaCompletionProvider {
-	private final VisibleTypeLookup visibleTypeLookup = new VisibleTypeLookup();
-
 	@Nonnull
 	@Override
 	public List<JavaCompletion> complete(@Nonnull JavaCompletionSession session, @Nonnull JavaLexicalContext context) {
@@ -49,7 +47,7 @@ public final class IdentifierCompletionProvider implements JavaCompletionProvide
 			for (VariableModel variable : ScopeLookup.collectVisibleVariables(unit, astPos)) {
 				String variableName = variable.getName();
 				boolean parameter = variable.getParent() instanceof MethodModel;
-				if (!JavaCompletionFactory.matchesPrefix(variableName, partial))
+				if (!CompletionMatching.matchesPrefix(variableName, partial))
 					continue;
 				JavaCompletion.addOrReplace(completions, new JavaCompletion(
 						CompletionKind.LOCAL,
@@ -69,13 +67,13 @@ public final class IdentifierCompletionProvider implements JavaCompletionProvide
 		if (currentPath != null) {
 			ClassInfo currentClass = currentPath.getValue();
 			for (FieldMember field : currentClass.getFields()) {
-				if (!JavaCompletionFactory.matchesPrefix(field.getName(), partial))
+				if (!CompletionMatching.matchesPrefix(field.getName(), partial))
 					continue;
 				JavaCompletion.addOrReplace(completions, new JavaCompletion(
 						CompletionKind.FIELD,
 						JavaCompletionFactory.displayField(field.getName(), field.getDescriptor()),
 						field.getName(),
-						10 + JavaCompletionFactory.prefixPenalty(field.getName(), partial),
+						10 + CompletionMatching.prefixPenalty(field.getName(), partial),
 						currentPath.child(field),
 						field.getName(),
 						0,
@@ -85,12 +83,12 @@ public final class IdentifierCompletionProvider implements JavaCompletionProvide
 			for (MethodMember method : currentClass.getMethods()) {
 				if (method.getName().startsWith("<"))
 					continue;
-				if (!JavaCompletionFactory.matchesPrefix(method.getName(), partial))
+				if (!CompletionMatching.matchesPrefix(method.getName(), partial))
 					continue;
 				JavaCompletion.addOrReplace(completions, JavaCompletionFactory.methodCompletion(
 						method.getName(),
 						method.getDescriptor(),
-						11 + JavaCompletionFactory.prefixPenalty(method.getName(), partial),
+						11 + CompletionMatching.prefixPenalty(method.getName(), partial),
 						currentPath.child(method),
 						true
 				));
@@ -101,23 +99,23 @@ public final class IdentifierCompletionProvider implements JavaCompletionProvide
 					continue;
 				if (!Objects.equals(innerClass.getOuterClassName(), currentClass.getName()))
 					continue;
-				if (!JavaCompletionFactory.matchesPrefix(innerName, partial))
+				if (!CompletionMatching.matchesPrefix(innerName, partial))
 					continue;
 				ClassPathNode innerPath = session.workspace().findClass(innerClass.getInnerClassName());
-				JavaCompletion.addOrReplace(completions,
-						JavaCompletionFactory.typeCompletion(innerPath, innerName, 20 + JavaCompletionFactory.prefixPenalty(innerName, partial)));
+				JavaCompletion.addOrReplace(completions, JavaCompletionFactory.typeCompletion(innerPath, innerName,
+						20 + CompletionMatching.prefixPenalty(innerName, partial)));
 			}
 		} else {
 			JavaCompletionContext.DeclaredClassInfo declaredClassInfo = session.declaredClassInfo();
 			if (declaredClassInfo != null) {
 				for (FieldMember field : declaredClassInfo.fields()) {
-					if (!JavaCompletionFactory.matchesPrefix(field.getName(), partial))
+					if (!CompletionMatching.matchesPrefix(field.getName(), partial))
 						continue;
 					JavaCompletion.addOrReplace(completions, new JavaCompletion(
 							CompletionKind.FIELD,
 							JavaCompletionFactory.displayField(field.getName(), field.getDescriptor()),
 							field.getName(),
-							10 + JavaCompletionFactory.prefixPenalty(field.getName(), partial),
+							10 + CompletionMatching.prefixPenalty(field.getName(), partial),
 							null,
 							field.getName(),
 							0,
@@ -127,39 +125,44 @@ public final class IdentifierCompletionProvider implements JavaCompletionProvide
 				for (MethodMember method : declaredClassInfo.methods()) {
 					if (method.getName().startsWith("<"))
 						continue;
-					if (!JavaCompletionFactory.matchesPrefix(method.getName(), partial))
+					if (!CompletionMatching.matchesPrefix(method.getName(), partial))
 						continue;
 					JavaCompletion.addOrReplace(completions, JavaCompletionFactory.methodCompletion(
 							method.getName(),
 							method.getDescriptor(),
-							11 + JavaCompletionFactory.prefixPenalty(method.getName(), partial),
+							11 + CompletionMatching.prefixPenalty(method.getName(), partial),
 							null,
 							true
 					));
 				}
 				for (TypeCandidate innerType : declaredClassInfo.innerTypes()) {
-					if (!JavaCompletionFactory.matchesPrefix(innerType.simpleName(), partial))
+					if (!CompletionMatching.matchesPrefix(innerType.simpleName(), partial))
 						continue;
 					JavaCompletion.addOrReplace(completions,
-							JavaCompletionFactory.typeCompletion(innerType, 20 + JavaCompletionFactory.prefixPenalty(innerType.simpleName(), partial)));
+							JavaCompletionFactory.typeCompletion(innerType, 20 + CompletionMatching.prefixPenalty(innerType.simpleName(), partial)));
 				}
 			}
 		}
 
 		// Add visible types from the current context.
 		// This includes types from the current package, imported types, and types from java.lang.
-		visibleTypeLookup.addVisibleTypeCompletions(session, completions, partial, false, 30);
+		for (TypeCandidate candidate : session.visibleTypes().values()) {
+			if (!CompletionMatching.matchesPrefix(candidate.simpleName(), partial))
+				continue;
+			JavaCompletion.addOrReplace(completions, JavaCompletionFactory.typeCompletion(candidate,
+					30 + CompletionMatching.prefixPenalty(candidate.simpleName(), partial)));
+		}
 
 		// Add keywords that match the current prefix.
 		// This is a bit of a catch-all to ensure we have some suggestions even if we can't resolve any types or members.
 		for (String keyword : JavaKeywordCompletionRules.getIdentifierKeywords(session, context)) {
-			if (!JavaCompletionFactory.matchesPrefix(keyword, partial))
+			if (!CompletionMatching.matchesPrefix(keyword, partial))
 				continue;
 			JavaCompletion.addOrReplace(completions, new JavaCompletion(
 					CompletionKind.KEYWORD,
 					keyword,
 					keyword,
-					20 + JavaCompletionFactory.prefixPenalty(keyword, partial),
+					20 + CompletionMatching.prefixPenalty(keyword, partial),
 					null,
 					keyword,
 					0,

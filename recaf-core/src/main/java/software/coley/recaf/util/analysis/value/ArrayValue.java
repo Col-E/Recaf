@@ -6,6 +6,7 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import software.coley.recaf.util.Types;
 import software.coley.recaf.util.analysis.Nullness;
+import software.coley.recaf.util.analysis.ReFrame;
 import software.coley.recaf.util.analysis.value.impl.ArrayValueImpl;
 
 import java.util.Arrays;
@@ -17,26 +18,36 @@ import java.util.OptionalInt;
  * @author Matt Coley
  */
 public interface ArrayValue extends ObjectValue {
-	ArrayValue VAL_BOOLEANS = new ArrayValueImpl(Type.getType("[Z"), Nullness.NOT_NULL);
-	ArrayValue VAL_BOOLEANS_NULL = new ArrayValueImpl(Type.getType("[Z"), Nullness.NULL);
-	ArrayValue VAL_CHARS = new ArrayValueImpl(Type.getType("[C"), Nullness.NOT_NULL);
-	ArrayValue VAL_CHARS_NULL = new ArrayValueImpl(Type.getType("[C"), Nullness.NULL);
-	ArrayValue VAL_BYTES = new ArrayValueImpl(Type.getType("[B"), Nullness.NOT_NULL);
-	ArrayValue VAL_BYTES_NULL = new ArrayValueImpl(Type.getType("[B"), Nullness.NULL);
-	ArrayValue VAL_SHORTS = new ArrayValueImpl(Type.getType("[S"), Nullness.NOT_NULL);
-	ArrayValue VAL_SHORTS_NULL = new ArrayValueImpl(Type.getType("[S"), Nullness.NULL);
-	ArrayValue VAL_INTS = new ArrayValueImpl(Type.getType("[I"), Nullness.NOT_NULL);
-	ArrayValue VAL_INTS_NULL = new ArrayValueImpl(Type.getType("[I"), Nullness.NULL);
-	ArrayValue VAL_FLOATS = new ArrayValueImpl(Type.getType("[F"), Nullness.NOT_NULL);
-	ArrayValue VAL_FLOATS_NULL = new ArrayValueImpl(Type.getType("[F"), Nullness.NULL);
-	ArrayValue VAL_DOUBLES = new ArrayValueImpl(Type.getType("[D"), Nullness.NOT_NULL);
-	ArrayValue VAL_DOUBLES_NULL = new ArrayValueImpl(Type.getType("[D"), Nullness.NULL);
-	ArrayValue VAL_LONGS = new ArrayValueImpl(Type.getType("[J"), Nullness.NOT_NULL);
-	ArrayValue VAL_LONGS_NULL = new ArrayValueImpl(Type.getType("[J"), Nullness.NULL);
-	ArrayValue VAL_OBJECTS = new ArrayValueImpl(Type.getType("[Ljava/lang/Object;"), Nullness.NOT_NULL);
-	ArrayValue VAL_OBJECTS_NULL = new ArrayValueImpl(Type.getType("[Ljava/lang/Object;"), Nullness.NULL);
-	ArrayValue VAL_STRINGS = new ArrayValueImpl(Type.getType("[Ljava/lang/String;"), Nullness.NOT_NULL);
-	ArrayValue VAL_STRINGS_NULL = new ArrayValueImpl(Type.getType("[Ljava/lang/String;"), Nullness.NULL);
+	ArrayValue VAL_BOOLEANS = new ArrayValueImpl(Types.ARRAY_1D_BOOLEAN, Nullness.NOT_NULL);
+	ArrayValue VAL_BOOLEANS_NULL = new ArrayValueImpl(Types.ARRAY_1D_BOOLEAN, Nullness.NULL);
+	ArrayValue VAL_BOOLEANS_MAYBE_NULL = new ArrayValueImpl(Types.ARRAY_1D_BOOLEAN, Nullness.UNKNOWN);
+	ArrayValue VAL_CHARS = new ArrayValueImpl(Types.ARRAY_1D_CHAR, Nullness.NOT_NULL);
+	ArrayValue VAL_CHARS_NULL = new ArrayValueImpl(Types.ARRAY_1D_CHAR, Nullness.NULL);
+	ArrayValue VAL_CHARS_MAYBE_NULL = new ArrayValueImpl(Types.ARRAY_1D_CHAR, Nullness.UNKNOWN);
+	ArrayValue VAL_BYTES = new ArrayValueImpl(Types.ARRAY_1D_BYTE, Nullness.NOT_NULL);
+	ArrayValue VAL_BYTES_NULL = new ArrayValueImpl(Types.ARRAY_1D_BYTE, Nullness.NULL);
+	ArrayValue VAL_BYTES_MAYBE_NULL = new ArrayValueImpl(Types.ARRAY_1D_BYTE, Nullness.UNKNOWN);
+	ArrayValue VAL_SHORTS = new ArrayValueImpl(Types.ARRAY_1D_SHORT, Nullness.NOT_NULL);
+	ArrayValue VAL_SHORTS_NULL = new ArrayValueImpl(Types.ARRAY_1D_SHORT, Nullness.NULL);
+	ArrayValue VAL_SHORTS_MAYBE_NULL = new ArrayValueImpl(Types.ARRAY_1D_SHORT, Nullness.UNKNOWN);
+	ArrayValue VAL_INTS = new ArrayValueImpl(Types.ARRAY_1D_INT, Nullness.NOT_NULL);
+	ArrayValue VAL_INTS_NULL = new ArrayValueImpl(Types.ARRAY_1D_INT, Nullness.NULL);
+	ArrayValue VAL_INTS_MAYBE_NULL = new ArrayValueImpl(Types.ARRAY_1D_INT, Nullness.UNKNOWN);
+	ArrayValue VAL_FLOATS = new ArrayValueImpl(Types.ARRAY_1D_FLOAT, Nullness.NOT_NULL);
+	ArrayValue VAL_FLOATS_NULL = new ArrayValueImpl(Types.ARRAY_1D_FLOAT, Nullness.NULL);
+	ArrayValue VAL_FLOATS_MAYBE_NULL = new ArrayValueImpl(Types.ARRAY_1D_FLOAT, Nullness.UNKNOWN);
+	ArrayValue VAL_DOUBLES = new ArrayValueImpl(Types.ARRAY_1D_DOUBLE, Nullness.NOT_NULL);
+	ArrayValue VAL_DOUBLES_NULL = new ArrayValueImpl(Types.ARRAY_1D_DOUBLE, Nullness.NULL);
+	ArrayValue VAL_DOUBLES_MAYBE_NULL = new ArrayValueImpl(Types.ARRAY_1D_DOUBLE, Nullness.UNKNOWN);
+	ArrayValue VAL_LONGS = new ArrayValueImpl(Types.ARRAY_1D_LONG, Nullness.NOT_NULL);
+	ArrayValue VAL_LONGS_NULL = new ArrayValueImpl(Types.ARRAY_1D_LONG, Nullness.NULL);
+	ArrayValue VAL_LONGS_MAYBE_NULL = new ArrayValueImpl(Types.ARRAY_1D_LONG, Nullness.UNKNOWN);
+	ArrayValue VAL_OBJECTS = new ArrayValueImpl(Types.ARRAY_1D_OBJECT, Nullness.NOT_NULL);
+	ArrayValue VAL_OBJECTS_NULL = new ArrayValueImpl(Types.ARRAY_1D_OBJECT, Nullness.NULL);
+	ArrayValue VAL_OBJECTS_MAYBE_NULL = new ArrayValueImpl(Types.ARRAY_1D_OBJECT, Nullness.UNKNOWN);
+	ArrayValue VAL_STRINGS = new ArrayValueImpl(Types.ARRAY_1D_STRING, Nullness.NOT_NULL);
+	ArrayValue VAL_STRINGS_NULL = new ArrayValueImpl(Types.ARRAY_1D_STRING, Nullness.NULL);
+	ArrayValue VAL_STRINGS_MAYBE_NULL = new ArrayValueImpl(Types.ARRAY_1D_STRING, Nullness.UNKNOWN);
 
 	/**
 	 * @param type
@@ -50,16 +61,16 @@ public interface ArrayValue extends ObjectValue {
 	static ArrayValue of(@Nonnull Type type, @Nonnull Nullness nullness) {
 		String descriptor = type.getDescriptor();
 		return switch (descriptor) {
-			case "[Z" -> nullness == Nullness.NULL ? VAL_BOOLEANS_NULL : VAL_BOOLEANS;
-			case "[C" -> nullness == Nullness.NULL ? VAL_CHARS_NULL : VAL_CHARS;
-			case "[B" -> nullness == Nullness.NULL ? VAL_BYTES_NULL : VAL_BYTES;
-			case "[S" -> nullness == Nullness.NULL ? VAL_SHORTS_NULL : VAL_SHORTS;
-			case "[I" -> nullness == Nullness.NULL ? VAL_INTS_NULL : VAL_INTS;
-			case "[F" -> nullness == Nullness.NULL ? VAL_FLOATS_NULL : VAL_FLOATS;
-			case "[D" -> nullness == Nullness.NULL ? VAL_DOUBLES_NULL : VAL_DOUBLES;
-			case "[J" -> nullness == Nullness.NULL ? VAL_LONGS_NULL : VAL_LONGS;
-			case "[Ljava/lang/String;" -> nullness == Nullness.NULL ? VAL_STRINGS_NULL : VAL_STRINGS;
-			case "[Ljava/lang/Object;" -> nullness == Nullness.NULL ? VAL_OBJECTS_NULL : VAL_OBJECTS;
+			case "[Z" -> nullness == Nullness.NULL ? VAL_BOOLEANS_NULL : nullness == Nullness.UNKNOWN ? VAL_BOOLEANS_MAYBE_NULL : VAL_BOOLEANS;
+			case "[C" -> nullness == Nullness.NULL ? VAL_CHARS_NULL : nullness == Nullness.UNKNOWN ? VAL_CHARS_MAYBE_NULL : VAL_CHARS;
+			case "[B" -> nullness == Nullness.NULL ? VAL_BYTES_NULL : nullness == Nullness.UNKNOWN ? VAL_BYTES_MAYBE_NULL : VAL_BYTES;
+			case "[S" -> nullness == Nullness.NULL ? VAL_SHORTS_NULL : nullness == Nullness.UNKNOWN ? VAL_SHORTS_MAYBE_NULL : VAL_SHORTS;
+			case "[I" -> nullness == Nullness.NULL ? VAL_INTS_NULL : nullness == Nullness.UNKNOWN ? VAL_INTS_MAYBE_NULL : VAL_INTS;
+			case "[F" -> nullness == Nullness.NULL ? VAL_FLOATS_NULL : nullness == Nullness.UNKNOWN ? VAL_FLOATS_MAYBE_NULL : VAL_FLOATS;
+			case "[D" -> nullness == Nullness.NULL ? VAL_DOUBLES_NULL : nullness == Nullness.UNKNOWN ? VAL_DOUBLES_MAYBE_NULL : VAL_DOUBLES;
+			case "[J" -> nullness == Nullness.NULL ? VAL_LONGS_NULL : nullness == Nullness.UNKNOWN ? VAL_LONGS_MAYBE_NULL : VAL_LONGS;
+			case "[Ljava/lang/String;" -> nullness == Nullness.NULL ? VAL_STRINGS_NULL : nullness == Nullness.UNKNOWN ? VAL_STRINGS_MAYBE_NULL : VAL_STRINGS;
+			case "[Ljava/lang/Object;" -> nullness == Nullness.NULL ? VAL_OBJECTS_NULL : nullness == Nullness.UNKNOWN ? VAL_OBJECTS_MAYBE_NULL : VAL_OBJECTS;
 			default -> new ArrayValueImpl(type, nullness);
 		};
 	}
@@ -96,6 +107,30 @@ public interface ArrayValue extends ObjectValue {
 				i -> multiANewArray(Types.undimension(type), Arrays.copyOfRange(dimensions, 1, dimensions.length))
 		);
 	}
+
+	/**
+	 * @param value
+	 * 		Value to check.
+	 * @param recursive
+	 *        {@code true} to check for any nested arrays, {@code false} to only check the top-level array.
+	 *
+	 * @return {@code true} if the given value can be stored in this array, {@code false} otherwise.
+	 */
+	default boolean canStore(@Nonnull ReValue value, boolean recursive) {
+		Type valueType = value.type();
+		if (valueType == null)
+			return false;
+		return Types.isArrayStorable(type(), valueType, recursive);
+	}
+
+	/**
+	 * This exists strictly for performance reasons. In {@link ReFrame#replaceValue(ReValue, ReValue)} frames with many
+	 * arrays + nested arrays can be very slow to update. If we know that an array does not contain any nested arrays,
+	 * we can skip the recursive search for the value to replace.
+	 *
+	 * @return {@code true} when this array contains another sub-array, {@code false} otherwise.
+	 */
+	boolean containsTrackedSubArray();
 
 	/**
 	 * @param index
@@ -177,7 +212,7 @@ public interface ArrayValue extends ObjectValue {
 	 * @param index
 	 * 		Index within {@link #getFirstDimensionLength()}.
 	 *
-	 * @return Value, if known, at the given index. Otherwise, a {@link ReValue} of the array's element type..
+	 * @return Value, if known, at the given index. Otherwise, a {@link ReValue} of the array's element type.
 	 */
 	@Nullable
 	ReValue getValue(int index);

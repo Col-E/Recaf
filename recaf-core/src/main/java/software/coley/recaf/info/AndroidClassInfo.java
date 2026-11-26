@@ -22,7 +22,7 @@ public interface AndroidClassInfo extends ClassInfo {
 	}
 
 	/**
-	 * @return Backing dex class definition.
+	 * @return Backing DEX class definition.
 	 */
 	@Nonnull
 	ClassDefinition getBackingDefinition();

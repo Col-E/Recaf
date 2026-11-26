@@ -4,20 +4,24 @@ import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import software.coley.recaf.services.navigation.Actions;
+import software.coley.recaf.services.transform.TransformationPreset;
+import software.coley.recaf.services.transform.TransformationPresetManager;
 import software.coley.recaf.services.window.WindowManager;
 import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.ui.control.ActionMenuItem;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.docking.DockingManager;
 import software.coley.recaf.ui.window.DeobfuscationWindow;
-
-import java.util.UUID;
+import software.coley.recaf.util.FxThreadUtil;
 
 import static software.coley.recaf.util.Lang.getBinding;
-import static software.coley.recaf.util.Menus.action;
+import static software.coley.recaf.util.Menus.*;
 
 /**
  * Analysis menu component for {@link MainMenu}.
@@ -28,17 +32,21 @@ import static software.coley.recaf.util.Menus.action;
 public class AnalysisMenu extends WorkspaceAwareMenu {
 	private final WindowManager windowManager;
 	private final Instance<DeobfuscationWindow> deobfuscationWindowProvider;
+	private final TransformationPresetManager presetManager;
+	private final BooleanProperty hasPresets = new SimpleBooleanProperty();
 
 	@Inject
 	public AnalysisMenu(@Nonnull WorkspaceManager workspaceManager,
 	                    @Nonnull DockingManager dockingManager,
 	                    @Nonnull WindowManager windowManager,
 	                    @Nonnull Instance<DeobfuscationWindow> deobfuscationWindowProvider,
+	                    @Nonnull TransformationPresetManager presetManager,
 	                    @Nonnull Actions actions) {
 		super(workspaceManager);
 
 		this.windowManager = windowManager;
 		this.deobfuscationWindowProvider = deobfuscationWindowProvider;
+		this.presetManager = presetManager;
 
 		disableProperty().bind(hasWorkspace.not());
 		textProperty().bind(getBinding("menu.analysis"));
@@ -56,9 +64,29 @@ public class AnalysisMenu extends WorkspaceAwareMenu {
 		itemDeobfuscation.disableProperty().bind(hasWorkspace.or(hasAgentWorkspace).not());
 		getItems().add(itemDeobfuscation);
 
+		Menu presetMenu = menu("menu.analysis.deobfuscation-presets", new FontIconView(CarbonIcons.SAVE));
+		presetMenu.disableProperty().bind(hasWorkspace.or(hasAgentWorkspace).not().or(hasPresets.not()));
+		getItems().add(presetMenu);
+		rebuildPresetMenu(presetMenu);
+		presetManager.getPresets().addChangeListener((ob, old, cur) -> FxThreadUtil.run(() -> rebuildPresetMenu(presetMenu)));
+
 		ActionMenuItem itemListComments = action("menu.analysis.list-comments", CarbonIcons.CHAT, actions::openCommentList);
 		itemListComments.disableProperty().bind(hasWorkspace.or(hasAgentWorkspace).not());
 		getItems().add(itemListComments);
+	}
+
+	/**
+	 * Rebuild the preset submenu to reflect the currently saved presets.
+	 */
+	private void rebuildPresetMenu(@Nonnull Menu presetMenu) {
+		presetMenu.getItems().clear();
+
+		for (String name : presetManager.getPresetNames()) {
+			ActionMenuItem item = actionLiteral(name, CarbonIcons.SAVE, () -> applyPreset(name));
+			presetMenu.getItems().add(item);
+		}
+
+		hasPresets.set(!presetMenu.getItems().isEmpty());
 	}
 
 	/**
@@ -70,5 +98,23 @@ public class AnalysisMenu extends WorkspaceAwareMenu {
 		deobfuscationWindow.requestFocus();
 		deobfuscationWindow.setOnCloseRequest(e -> deobfuscationWindowProvider.destroy(deobfuscationWindow));
 		windowManager.registerAnonymous(deobfuscationWindow);
+	}
+
+	/**
+	 * Resolve and apply a saved preset directly to the current workspace.
+	 */
+	private void applyPreset(@Nonnull String name) {
+		TransformationPreset preset = presetManager.getPreset(name);
+		if (preset == null)
+			return;
+
+		DeobfuscationWindow deobfuscationWindow = deobfuscationWindowProvider.get();
+		deobfuscationWindow.setOnCloseRequest(e -> deobfuscationWindowProvider.destroy(deobfuscationWindow));
+		windowManager.registerAnonymous(deobfuscationWindow);
+
+		// Apply before showing so the stage-1 tree initializes with the preset selection.
+		deobfuscationWindow.applyPreset(preset);
+		deobfuscationWindow.show();
+		deobfuscationWindow.requestFocus();
 	}
 }

@@ -52,7 +52,22 @@ public class ThreadUtil {
 	 */
 	@Nonnull
 	public static <T> CompletableFuture<T> supply(@Nonnull Supplier<T> action, @Nullable T fallback) {
-		return CompletableFuture.supplyAsync(wrap(action, fallback), scheduledService);
+		return supply(action, fallback, null);
+	}
+
+	/**
+	 * @param action
+	 * 		Supplier to start in new thread.
+	 * @param fallback
+	 * 		Fallback value if the supplier encounters a failure.
+	 * @param executor
+	 * 		Executor to run the supplier on. If {@code null}, will use the default misc executor.
+	 *
+	 * @return Thread future.
+	 */
+	@Nonnull
+	public static <T> CompletableFuture<T> supply(@Nonnull Supplier<T> action, @Nullable T fallback, @Nullable Executor executor) {
+		return CompletableFuture.supplyAsync(wrap(action, fallback), executor != null ? executor : scheduledService);
 	}
 
 	/**
@@ -120,7 +135,6 @@ public class ThreadUtil {
 			return true;
 		}
 	}
-
 
 	/**
 	 * Give a thread pool a time limit to finish all of its threads.

@@ -2,7 +2,10 @@ package software.coley.recaf.services.phantom.model;
 
 import jakarta.annotation.Nonnull;
 
+import java.util.Collections;
 import java.util.Objects;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * Required method shape for a generated phantom class.
@@ -13,6 +16,7 @@ public class PhantomMethodRequirement {
 	private final String name;
 	private final String descriptor;
 	private boolean isStatic;
+	private final Set<String> exceptions = new TreeSet<>();
 
 	/**
 	 * @param name
@@ -42,6 +46,22 @@ public class PhantomMethodRequirement {
 	@Nonnull
 	public String getDescriptor() {
 		return descriptor;
+	}
+
+	/**
+	 * @param exception
+	 * 		Internal name of a checked or unchecked exception the method declares.
+	 */
+	public void addException(@Nonnull String exception) {
+		exceptions.add(exception);
+	}
+
+	/**
+	 * @return Internal names of the exceptions the method declares, sorted.
+	 */
+	@Nonnull
+	public Set<String> getExceptions() {
+		return Collections.unmodifiableSet(exceptions);
 	}
 
 	/**

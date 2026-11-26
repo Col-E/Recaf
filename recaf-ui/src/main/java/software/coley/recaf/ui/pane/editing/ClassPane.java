@@ -6,6 +6,7 @@ import software.coley.recaf.analytics.logging.DebuggingLogger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.ClassInfo;
+import software.coley.recaf.info.InnerClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.path.ClassPathNode;
@@ -15,6 +16,8 @@ import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
 import software.coley.recaf.ui.pane.editing.android.AndroidClassPane;
 import software.coley.recaf.ui.pane.editing.jvm.JvmClassPane;
+
+import java.util.function.Consumer;
 
 /**
  * Common outline for displaying {@link ClassInfo} content.
@@ -28,17 +31,12 @@ public abstract class ClassPane extends AbstractContentPane<ClassPathNode> imple
 
 	@Override
 	public void requestFocus(@Nonnull ClassMember member) {
-		// Delegate to child components
-		for (Navigable navigableChild : getNavigableChildren())
-			if (navigableChild instanceof ClassNavigable navigableClass)
-				navigableClass.requestFocus(member);
-			else {
-				// The side-tabs are not class-navigable, but some the side-tab's contents are.
-				// We will thus check the children of non class-navigable components to address this.
-				for (Navigable childOfChild : navigableChild.getNavigableChildren())
-					if (childOfChild instanceof ClassNavigable upnavigableClassatable)
-						upnavigableClassatable.requestFocus(member);
-			}
+		delegateFocus(navigable -> navigable.requestFocus(member));
+	}
+
+	@Override
+	public void requestFocus(@Nonnull InnerClassInfo innerClass) {
+		delegateFocus(navigable -> navigable.requestFocus(innerClass));
 	}
 
 	@Override
@@ -71,5 +69,19 @@ public abstract class ClassPane extends AbstractContentPane<ClassPathNode> imple
 	@Override
 	public ClassPathNode getClassPath() {
 		return path;
+	}
+
+	private void delegateFocus(@Nonnull Consumer<ClassNavigable> request) {
+		// Delegate to direct class-aware children first.
+		for (Navigable navigableChild : getNavigableChildren())
+			if (navigableChild instanceof ClassNavigable navigableClass)
+				request.accept(navigableClass);
+			else {
+				// The side-tabs are not class-navigable, but some the side-tab's contents are.
+				// We will thus check the children of non class-navigable components to address this.
+				for (Navigable childOfChild : navigableChild.getNavigableChildren())
+					if (childOfChild instanceof ClassNavigable navigableClass)
+						request.accept(navigableClass);
+			}
 	}
 }

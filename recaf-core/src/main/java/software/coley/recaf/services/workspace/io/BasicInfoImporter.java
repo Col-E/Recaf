@@ -4,7 +4,6 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import me.darknet.dex.tree.codec.definition.CodeCodec;
 import org.objectweb.asm.ClassReader;
 import org.slf4j.Logger;
 import software.coley.cafedude.classfile.VersionConstants;
@@ -24,12 +23,13 @@ import software.coley.recaf.info.builder.NativeLibraryFileInfoBuilder;
 import software.coley.recaf.info.builder.VideoFileInfoBuilder;
 import software.coley.recaf.info.builder.ZipFileInfoBuilder;
 import software.coley.recaf.info.properties.builtin.IllegalClassSuspectProperty;
+import software.coley.recaf.info.properties.builtin.PatchedClassProperty;
 import software.coley.recaf.info.properties.builtin.ZipMarkerProperty;
 import software.coley.recaf.services.text.TextFormatConfig;
-import software.coley.recaf.util.ByteHeaderUtil;
-import software.coley.recaf.util.IOUtil;
 import software.coley.recaf.util.android.AndroidXmlUtil;
+import software.coley.recaf.util.io.ByteHeaderUtil;
 import software.coley.recaf.util.io.ByteSource;
+import software.coley.recaf.util.io.IOUtil;
 
 import java.io.IOException;
 
@@ -126,7 +126,6 @@ public class BasicInfoImporter implements InfoImporter {
 	@Nullable
 	private static FileInfo readAsSpecializedFile(@Nonnull String name, byte[] data) {
 		if (ByteHeaderUtil.match(data, ByteHeaderUtil.DEX)) {
-			CodeCodec.readDebug = false; // TODO: Remove this flag when debug parsing is fixed upstream.
 			return new DexFileInfoBuilder()
 					.withRawContent(data)
 					.withName(name)
@@ -193,14 +192,24 @@ public class BasicInfoImporter implements InfoImporter {
 					.build();
 		}
 
+		// ASM recursively expands CONSTANT_Dynamic bootstrap arguments when it copies a class into a ClassWriter.
+		// Filter hostile bootstrap graphs before any validation step can trigger that expansion.
+		byte[] prefiltered = classPatcher.prefilter(name, data);
+		boolean rewritten = prefiltered != null;
+		if (prefiltered != null)
+			data = prefiltered;
+
 		// We're doing a check-then-filter. If ASM reads the class as-is without issue, keep the result.
 		// Otherwise, patch when we encounter parse problems and try again.
-		int readerFlags = patchingMode == InfoImporterConfig.ClassPatchMode.CHECK_ADVANCED_THEN_FILTER ? ClassReader.SKIP_CODE : 0;
+		int readerFlags = patchingMode == InfoImporterConfig.ClassPatchMode.CHECK_BASIC_THEN_FILTER ? ClassReader.SKIP_CODE : 0;
 		try {
-			return new JvmClassInfoBuilder()
+			JvmClassInfo classInfo = new JvmClassInfoBuilder()
 					.skipValidationChecks(false)
 					.adaptFrom(data, readerFlags)
 					.build();
+			if (rewritten)
+				PatchedClassProperty.set(classInfo);
+			return classInfo;
 		} catch (Throwable t) {
 			// Patch if not compatible with ASM
 			byte[] patched = classPatcher.patch(name, data);
@@ -208,6 +217,8 @@ public class BasicInfoImporter implements InfoImporter {
 				JvmClassInfo patchedClassInfo = new JvmClassInfoBuilder(patched, readerFlags)
 						.skipValidationChecks(false)
 						.build();
+				if (rewritten)
+					PatchedClassProperty.set(patchedClassInfo);
 				logger.debug("CafeDude patched class: {}", name);
 				return patchedClassInfo;
 			} catch (Throwable t1) {
@@ -216,7 +227,6 @@ public class BasicInfoImporter implements InfoImporter {
 			}
 		}
 	}
-
 
 	/**
 	 * Check if the byte array is prefixed by the class file magic header.

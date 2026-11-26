@@ -83,7 +83,7 @@ public class PackagePurpose {
 		addBucket(packageBucketTree, "com/sun/javafx", BUCKET_UI);
 		addBucket(packageBucketTree, "com/sun/jna", BUCKET_NATIVE);
 		addBucket(packageBucketTree, "com/sun/security", BUCKET_SECURITY);
-		addBucket(packageBucketTree, "dalvik/system", BUCKET_REFLECTION); // Had a bunch of classloaders for dex files.
+		addBucket(packageBucketTree, "dalvik/system", BUCKET_REFLECTION); // Had a bunch of classloaders for DEX files.
 		addBucket(packageBucketTree, "io/netty", BUCKET_NETWORKING);
 		addBucket(packageBucketTree, "it/unimi", BUCKET_UTIL); // Primitive collections.
 		addBucket(packageBucketTree, "jakarta", BUCKET_ENTERPRISE);

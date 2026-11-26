@@ -41,6 +41,7 @@ import software.coley.recaf.info.annotation.AnnotationInfo;
 import software.coley.recaf.info.builder.JvmClassInfoBuilder;
 import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.info.member.FieldMember;
+import software.coley.recaf.info.member.LocalVariable;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.path.ClassMemberPathNode;
 import software.coley.recaf.path.ClassPathNode;
@@ -48,14 +49,15 @@ import software.coley.recaf.path.DirectoryPathNode;
 import software.coley.recaf.path.FilePathNode;
 import software.coley.recaf.path.IncompletePathException;
 import software.coley.recaf.path.LineNumberPathNode;
+import software.coley.recaf.path.LocalVariablePathNode;
 import software.coley.recaf.path.PathNode;
 import software.coley.recaf.path.PathNodes;
 import software.coley.recaf.services.Service;
+import software.coley.recaf.services.analysis.structure.AreaAnalysisResult;
 import software.coley.recaf.services.cell.CellConfigurationService;
 import software.coley.recaf.services.cell.icon.IconProvider;
 import software.coley.recaf.services.cell.icon.IconProviderService;
 import software.coley.recaf.services.cell.text.TextProviderService;
-import software.coley.recaf.services.analysis.structure.AreaAnalysisResult;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.inheritance.InheritanceGraphService;
 import software.coley.recaf.services.mapping.IntermediateMappings;
@@ -67,17 +69,18 @@ import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.ui.config.KeybindingConfig;
 import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.control.graph.MethodCallGraphTreesPane;
-import software.coley.recaf.ui.pane.analysis.AreaAnalysisPane;
 import software.coley.recaf.ui.control.popup.AddMemberPopup;
 import software.coley.recaf.ui.control.popup.ItemListSelectionPopup;
 import software.coley.recaf.ui.control.popup.ItemTreeSelectionPopup;
 import software.coley.recaf.ui.control.popup.NamePopup;
 import software.coley.recaf.ui.control.popup.OverrideMethodPopup;
 import software.coley.recaf.ui.docking.DockingManager;
+import software.coley.recaf.ui.pane.WorkspaceExplorerPane;
+import software.coley.recaf.ui.pane.WorkspaceInformationPane;
+import software.coley.recaf.ui.pane.analysis.AreaAnalysisPane;
 import software.coley.recaf.ui.pane.analysis.CommentEditPane;
 import software.coley.recaf.ui.pane.analysis.CommentListPane;
 import software.coley.recaf.ui.pane.analysis.DocumentationPane;
-import software.coley.recaf.ui.pane.WorkspaceInformationPane;
 import software.coley.recaf.ui.pane.editing.AbstractContentPane;
 import software.coley.recaf.ui.pane.editing.FileDisplayMode;
 import software.coley.recaf.ui.pane.editing.FilePane;
@@ -92,10 +95,11 @@ import software.coley.recaf.ui.pane.search.InstructionSearchPane;
 import software.coley.recaf.ui.pane.search.MemberDeclarationSearchPane;
 import software.coley.recaf.ui.pane.search.MemberReferenceSearchPane;
 import software.coley.recaf.ui.pane.search.NumberSearchPane;
-import software.coley.recaf.ui.pane.search.StringSearchPane;
-import software.coley.recaf.ui.pane.search.StringTablePane;
+import software.coley.recaf.ui.pane.search.SearchResultsPane;
 import software.coley.recaf.ui.pane.search.SimilarClassTablePane;
 import software.coley.recaf.ui.pane.search.SimilarMethodTablePane;
+import software.coley.recaf.ui.pane.search.StringSearchPane;
+import software.coley.recaf.ui.pane.search.StringTablePane;
 import software.coley.recaf.util.Animations;
 import software.coley.recaf.util.ClipboardUtil;
 import software.coley.recaf.util.EscapeUtil;
@@ -110,7 +114,6 @@ import software.coley.recaf.util.visitors.MemberCopyingVisitor;
 import software.coley.recaf.util.visitors.MemberRemovingVisitor;
 import software.coley.recaf.util.visitors.MemberStubAddingVisitor;
 import software.coley.recaf.util.visitors.MethodAnnotationRemovingVisitor;
-import software.coley.recaf.util.visitors.MethodNoopingVisitor;
 import software.coley.recaf.util.visitors.MethodPredicate;
 import software.coley.recaf.util.visitors.MethodVariableRemovingVisitor;
 import software.coley.recaf.workspace.PathExportingManager;
@@ -263,22 +266,40 @@ public class Actions implements Service {
 	 */
 	@Nonnull
 	public Navigable gotoDeclaration(@Nonnull PathNode<?> path) throws IncompletePathException {
-		if (path instanceof ClassPathNode classPath) return gotoDeclaration(classPath);
-		else if (path instanceof FilePathNode filePath) return gotoDeclaration(filePath);
-		else if (path instanceof ClassMemberPathNode classMemberPath) {
-			ClassPathNode parent = classMemberPath.getParent();
-			if (parent == null)
-				throw new IncompletePathException(ClassInfo.class);
-			ClassNavigable navigable = gotoDeclaration(parent);
-			navigable.requestFocus(classMemberPath.getValue());
-			return navigable;
-		} else if (path instanceof LineNumberPathNode lineNumberPath) {
-			FilePathNode parent = lineNumberPath.getParent();
-			if (parent == null)
-				throw new IncompletePathException(FileInfo.class);
-			return gotoDeclaration(parent);
+		switch (path) {
+			case ClassPathNode classPath -> {
+				return gotoDeclaration(classPath);
+			}
+			case FilePathNode filePath -> {
+				return gotoDeclaration(filePath);
+			}
+			case ClassMemberPathNode classMemberPath -> {
+				ClassPathNode parent = classMemberPath.getParent();
+				if (parent == null)
+					throw new IncompletePathException(ClassInfo.class);
+				ClassNavigable navigable = gotoDeclaration(parent);
+				navigable.requestFocus(classMemberPath.getValue());
+				return navigable;
+			}
+			case LocalVariablePathNode variablePath -> {
+				ClassMemberPathNode parent = variablePath.getParent();
+				if (parent == null)
+					throw new IncompletePathException(ClassMember.class);
+				ClassPathNode classPath = parent.getParent();
+				if (classPath == null)
+					throw new IncompletePathException(ClassInfo.class);
+				ClassNavigable navigable = gotoDeclaration(classPath);
+				navigable.requestFocus(parent.getValue());
+				return navigable;
+			}
+			case LineNumberPathNode lineNumberPath -> {
+				FilePathNode parent = lineNumberPath.getParent();
+				if (parent == null)
+					throw new IncompletePathException(FileInfo.class);
+				return gotoDeclaration(parent);
+			}
+			default -> throw new IncompletePathException(path.getValueType());
 		}
-		throw new IncompletePathException(path.getValueType());
 	}
 
 	/**
@@ -500,6 +521,34 @@ public class Actions implements Service {
 			setupInfoContextMenu(info, content, dockable, menu -> addFilePaneOptions(menu, content));
 			return dockable;
 		});
+	}
+
+
+	/**
+	 * Prompts the user to document the class or member contained in the given path.
+	 *
+	 * @param path
+	 * 		Path to a class or member to document.
+	 */
+	public void openCommentEditing(@Nonnull PathNode<?> path) {
+		Workspace workspace = path.getValueOfType(Workspace.class);
+		WorkspaceResource resource = path.getValueOfType(WorkspaceResource.class);
+		ClassBundle<?> bundle = path.getValueOfType(ClassBundle.class);
+		if (workspace == null || resource == null || bundle == null) {
+			logger.error("Cannot open comment editor for path '{}', missing workspace, resource, or class bundle", path);
+			return;
+		}
+
+		if (path instanceof ClassPathNode classPath) {
+			openCommentEditing(workspace, resource, bundle, classPath.getValue());
+		} else if (path instanceof ClassMemberPathNode memberPath) {
+			ClassInfo declaringClass = memberPath.getValueOfType(ClassInfo.class);
+			if (declaringClass == null) {
+				logger.error("Cannot open comment editor for member path '{}', missing declaring class", path);
+				return;
+			}
+			openCommentEditing(workspace, resource, bundle, declaringClass, memberPath.getValue());
+		}
 	}
 
 	/**
@@ -945,6 +994,8 @@ public class Actions implements Service {
 				Unchecked.run(() -> renameField(memberPathNode));
 			else
 				Unchecked.run(() -> renameMethod(memberPathNode));
+		else if (path instanceof LocalVariablePathNode variablePath)
+			Unchecked.run(() -> renameVariable(variablePath));
 		else if (path instanceof FilePathNode filePath)
 			Unchecked.run(() -> renameFile(filePath));
 		else if (path instanceof DirectoryPathNode directoryPath)
@@ -1153,6 +1204,89 @@ public class Actions implements Service {
 		new NamePopup(renameTask)
 				.withInitialName(originalName)
 				.forMethodRename(declaringClass, method)
+				.show();
+	}
+
+	/**
+	 * Prompts the user to rename the given local variable.
+	 *
+	 * @param path
+	 * 		Path to variable.
+	 *
+	 * @throws IncompletePathException
+	 * 		When the path is missing parent elements.
+	 */
+	public void renameVariable(@Nonnull LocalVariablePathNode path) throws IncompletePathException {
+		Workspace workspace = path.getValueOfType(Workspace.class);
+		WorkspaceResource resource = path.getValueOfType(WorkspaceResource.class);
+		ClassBundle<?> bundle = path.getValueOfType(ClassBundle.class);
+		ClassInfo declaringClass = path.getValueOfType(ClassInfo.class);
+		MethodMember declaringMethod = path.getValueOfType(MethodMember.class);
+		LocalVariable variable = path.getValue();
+		if (workspace == null) {
+			logger.error("Cannot resolve required path nodes for variable '{}', missing workspace in path", variable.getName());
+			throw new IncompletePathException(Workspace.class);
+		}
+		if (resource == null) {
+			logger.error("Cannot resolve required path nodes for variable '{}', missing resource in path", variable.getName());
+			throw new IncompletePathException(WorkspaceResource.class);
+		}
+		if (bundle == null) {
+			logger.error("Cannot resolve required path nodes for variable '{}', missing bundle in path", variable.getName());
+			throw new IncompletePathException(ClassBundle.class);
+		}
+		if (declaringClass == null) {
+			logger.error("Cannot resolve required path nodes for variable '{}', missing class in path", variable.getName());
+			throw new IncompletePathException(ClassInfo.class);
+		}
+		if (declaringMethod == null) {
+			logger.error("Cannot resolve required path nodes for variable '{}', missing method in path", variable.getName());
+			throw new IncompletePathException(MethodMember.class);
+		}
+		renameVariable(workspace, resource, bundle, declaringClass, declaringMethod, variable);
+	}
+
+	/**
+	 * Prompts the user to rename the given local variable.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Containing bundle.
+	 * @param declaringClass
+	 * 		Class containing the method.
+	 * @param declaringMethod
+	 * 		Method containing the variable.
+	 * @param variable
+	 * 		Variable to rename.
+	 */
+	public void renameVariable(@Nonnull Workspace workspace,
+	                           @Nonnull WorkspaceResource resource,
+	                           @Nonnull ClassBundle<? extends ClassInfo> bundle,
+	                           @Nonnull ClassInfo declaringClass,
+	                           @Nonnull MethodMember declaringMethod,
+	                           @Nonnull LocalVariable variable) {
+		if (variable.getIndex() < 0) {
+			logger.warn("Cannot rename variable '{}' because its local variable table index is unknown", variable.getName());
+			return;
+		}
+
+		String originalName = variable.getName();
+		Consumer<String> renameTask = newName -> {
+			IntermediateMappings mappings = new IntermediateMappings();
+			mappings.addVariable(declaringClass.getName(), declaringMethod.getName(), declaringMethod.getDescriptor(),
+					variable.getDescriptor(), originalName, variable.getIndex(), newName);
+
+			// Apply the mappings.
+			MappingApplier applier = mappingApplierService.inWorkspace(workspace);
+			MappingResults results = applier.applyToPrimaryResource(mappings);
+			results.apply();
+		};
+		new NamePopup(renameTask)
+				.withInitialName(originalName)
+				.forVariableRename(declaringMethod, variable)
 				.show();
 	}
 
@@ -1735,10 +1869,12 @@ public class Actions implements Service {
 	                          @Nullable String packageName) {
 		JvmClassBundle bundleCopy = new BasicJvmClassBundle();
 		bundle.valuesAsCopy().forEach(cls -> {
-			if (packageName == null && cls.getPackageName() == null)
+			if (packageName == null || packageName.isEmpty()) {
+				if (cls.getPackageName() == null)
+					bundleCopy.put(cls);
+			} else if (cls.getName().startsWith(packageName + "/")) {
 				bundleCopy.put(cls);
-			else if (cls.getName().startsWith(packageName + "/"))
-				bundleCopy.put(cls);
+			}
 		});
 		WorkspaceResource resourceCopy = new WorkspaceResourceBuilder().withJvmClassBundle(bundleCopy).build();
 		Workspace workspaceCopy = new BasicWorkspace(resourceCopy);
@@ -1757,12 +1893,65 @@ public class Actions implements Service {
 	 */
 	public void exportClasses(@Nonnull Workspace workspace,
 	                          @Nonnull WorkspaceResource resource,
-	                          @Nonnull JvmClassBundle bundle) {
+	                          @Nonnull ClassBundle<?> bundle) {
+		if (bundle instanceof JvmClassBundle jvmClassBundle)
+			exportJvmClasses(workspace, resource, jvmClassBundle);
+		else if (bundle instanceof AndroidClassBundle androidClassBundle)
+			exportAndroidClasses(workspace, resource, androidClassBundle);
+		else
+			logger.warn("Cannot export classes from bundle of type {}", bundle.getClass().getName());
+	}
+
+	/**
+	 * Exports all JVM classes in a bundle, prompting the user to select a location to save the file to.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		JVM bundle with contents to export.
+	 */
+	public void exportJvmClasses(@Nonnull Workspace workspace,
+	                             @Nonnull WorkspaceResource resource,
+	                             @Nonnull JvmClassBundle bundle) {
 		BasicJvmClassBundle bundleCopy = new BasicJvmClassBundle();
 		bundle.valuesAsCopy().forEach(bundleCopy::initialPut);
 		WorkspaceResource resourceCopy = new WorkspaceResourceBuilder().withJvmClassBundle(bundleCopy).build();
 		Workspace workspaceCopy = new BasicWorkspace(resourceCopy);
 		pathExportingManager.export(workspaceCopy, "bundle", false);
+	}
+
+	/**
+	 * Exports all Android classes in a bundle, prompting the user to select a location to save the file to.
+	 *
+	 * @param workspace
+	 * 		Containing workspace.
+	 * @param resource
+	 * 		Containing resource.
+	 * @param bundle
+	 * 		Android bundle with contents to export.
+	 */
+
+	public void exportAndroidClasses(@Nonnull Workspace workspace,
+	                                 @Nonnull WorkspaceResource resource,
+	                                 @Nonnull AndroidClassBundle bundle) {
+		// Map all Android classes to JVM classes, and export the resulting bundle.
+		BasicJvmClassBundle bundleCopy = new BasicJvmClassBundle();
+		for (AndroidClassInfo classInfo : bundle.valuesAsCopy()) {
+			try {
+				bundleCopy.initialPut(classInfo.asJvmClass());
+			} catch (Throwable t) {
+				logger.warn("Failed to convert Android class '{}' to JVM bytecode for export", classInfo.getName(), t);
+			}
+		}
+
+		if (bundleCopy.isEmpty()) {
+			logger.warn("No Android classes could be converted to JVM bytecode for export");
+			return;
+		}
+
+		exportClasses(workspace, resource, bundleCopy);
 	}
 
 	/**
@@ -1782,11 +1971,13 @@ public class Actions implements Service {
 	                            @Nonnull FileBundle bundle,
 	                            @Nullable String directoryName) {
 		FileBundle bundleCopy = new BasicFileBundle();
-		bundle.valuesAsCopy().forEach(cls -> {
-			if (directoryName == null && cls.getDirectoryName() == null)
-				bundleCopy.put(cls);
-			else if (cls.getName().startsWith(directoryName + "/"))
-				bundleCopy.put(cls);
+		bundle.valuesAsCopy().forEach(file -> {
+			if (directoryName == null || directoryName.isEmpty()) {
+				if (file.getDirectoryName() == null)
+					bundleCopy.put(file);
+			} else if (file.getName().startsWith(directoryName + "/")) {
+				bundleCopy.put(file);
+			}
 		});
 		WorkspaceResource resourceCopy = new WorkspaceResourceBuilder().withFileBundle(bundleCopy).build();
 		Workspace workspaceCopy = new BasicWorkspace(resourceCopy);
@@ -2198,34 +2389,6 @@ public class Actions implements Service {
 	}
 
 	/**
-	 * Makes the given methods no-op.
-	 *
-	 * @param workspace
-	 * 		Containing workspace.
-	 * @param resource
-	 * 		Containing resource.
-	 * @param bundle
-	 * 		Containing bundle.
-	 * @param declaringClass
-	 * 		Class declaring the methods.
-	 * @param methods
-	 * 		Methods to noop.
-	 */
-	public void makeMethodsNoop(@Nonnull Workspace workspace,
-	                            @Nonnull WorkspaceResource resource,
-	                            @Nonnull JvmClassBundle bundle,
-	                            @Nonnull JvmClassInfo declaringClass,
-	                            @Nonnull Collection<MethodMember> methods) {
-		ClassReader reader = declaringClass.getClassReader();
-		ClassWriter writer = new ClassWriter(reader, 0);
-		MethodNoopingVisitor visitor = new MethodNoopingVisitor(writer, MethodPredicate.of(methods));
-		reader.accept(visitor, declaringClass.getClassReaderFlags());
-		bundle.put(declaringClass.toJvmClassBuilder()
-				.adaptFrom(writer.toByteArray())
-				.build());
-	}
-
-	/**
 	 * Removes variable debug info in the given methods.
 	 *
 	 * @param workspace
@@ -2433,6 +2596,68 @@ public class Actions implements Service {
 		return openPaneAdjacent(SEARCH_PANE_TYPES, "menu.search.class.instruction", CarbonIcons.CODE, instructionSearchPaneProvider);
 	}
 
+	/**
+	 * Opens a search result view beside its owning search pane.
+	 *
+	 * @param source
+	 * 		Search pane that produced the results.
+	 * @param content
+	 * 		Result view to display.
+	 * @param onClose
+	 * 		Callback invoked when the result view is closed.
+	 *
+	 * @return Dockable containing the result view.
+	 */
+	@Nonnull
+	public Dockable openSearchResults(@Nonnull AbstractSearchPane source,
+	                                  @Nonnull SearchResultsPane content,
+	                                  @Nonnull Consumer<Dockable> onClose) {
+		return openSearchResults(source, content, getBinding("search.results"), onClose);
+	}
+
+	/**
+	 * Opens a search result view beside its owning search pane.
+	 *
+	 * @param source
+	 * 		Search pane that produced the results.
+	 * @param content
+	 * 		Result view to display.
+	 * @param title
+	 * 		Dockable title binding.
+	 * @param onClose
+	 * 		Callback invoked with the dockable when the result view is closed.
+	 *
+	 * @return Dockable containing the result view.
+	 */
+	@Nonnull
+	public Dockable openSearchResults(@Nonnull AbstractSearchPane source,
+	                                  @Nonnull SearchResultsPane content,
+	                                  @Nonnull ObservableValue<String> title,
+	                                  @Nonnull Consumer<Dockable> onClose) {
+		DockablePath sourcePath = dockingManager.getBento().search().dockable(d -> d.getNode() == source);
+		DockContainerLeaf container = sourcePath == null ? null : sourcePath.leafContainer();
+		Dockable dockable;
+		if (container != null) {
+			dockable = createDockable(container, title,
+					d -> new FontIconView(CarbonIcons.LIST), content, false);
+		} else {
+			dockable = createDockable(null, title,
+					d -> new FontIconView(CarbonIcons.LIST), content);
+			Scene originScene = dockingManager.getPrimaryDockingContainer().asRegion().getScene();
+			Stage stage = dockingManager.getBento().stageBuilding().newStageForDockable(originScene, dockable, 800, 400);
+			stage.show();
+			stage.requestFocus();
+		}
+		dockable.setDragGroupMask(DockingManager.GROUP_ANYWHERE);
+		dockable.addCloseListener((_, _) -> onClose.accept(dockable));
+		dockable.setContextMenuFactory(d -> {
+			ContextMenu menu = new ContextMenu();
+			addCloseActions(menu, d);
+			return menu;
+		});
+		return dockable;
+	}
+
 	@Nonnull
 	private <T extends Parent> T openPaneAdjacent(@Nonnull List<Class<?>> adjacentTypes, @Nonnull String titleId,
 	                                              @Nonnull Ikon icon, @Nonnull Instance<T> paneProvider) {
@@ -2535,11 +2760,35 @@ public class Actions implements Service {
 				items.add(mode);
 			}
 
+			addShowInTreeAction(menu, contentPane);
 			addCopyPathAction(menu, info);
 			addCloseActions(menu, d);
 
 			return menu;
 		});
+	}
+
+	/**
+	 * Adds an action to reveal the pane's current content in the workspace tree.
+	 *
+	 * @param menu
+	 * 		Menu to add the action to.
+	 * @param contentPane
+	 * 		Pane whose path should be selected in the tree.
+	 */
+	private void addShowInTreeAction(@Nonnull ContextMenu menu, @Nonnull AbstractContentPane<?> contentPane) {
+		menu.getItems().add(action("menu.tab.showintree", CarbonIcons.TREE_VIEW, () -> {
+			PathNode<?> path = contentPane.getPath();
+			if (path == null)
+				return;
+			for (DockablePath dockPath : dockingManager.getBento().search().allDockables()) {
+				Node node = dockPath.dockable().nodeProperty().get();
+				if (node instanceof WorkspaceExplorerPane explorer) {
+					explorer.getWorkspaceTree().selectPath(path);
+					break;
+				}
+			}
+		}));
 	}
 
 	/**
@@ -2607,6 +2856,31 @@ public class Actions implements Service {
 	                                @Nonnull ObservableValue<String> title,
 	                                @Nonnull DockableIconFactory graphicFactory,
 	                                @Nonnull Node node) {
+		return createDockable(container, title, graphicFactory, node, true);
+	}
+
+	/**
+	 * Shorthand for dockable creation with optional selection of the new dockable.
+	 *
+	 * @param container
+	 * 		Parent container to spawn in.
+	 * @param title
+	 * 		Dockable title binding.
+	 * @param graphicFactory
+	 * 		Dockable graphic factory.
+	 * @param node
+	 * 		Dockable content.
+	 * @param select
+	 * 		Whether to select and focus the new dockable when it is added.
+	 *
+	 * @return Created dockable.
+	 */
+	@Nonnull
+	private Dockable createDockable(@Nullable DockContainerLeaf container,
+	                                @Nonnull ObservableValue<String> title,
+	                                @Nonnull DockableIconFactory graphicFactory,
+	                                @Nonnull Node node,
+	                                boolean select) {
 		Dockable dockable = dockingManager.newTranslatableDockable(title, graphicFactory, node);
 		node.addEventFilter(KeyEvent.KEY_PRESSED, e -> {
 			if (keybindingConfig.getCloseTab().match(e))
@@ -2614,8 +2888,10 @@ public class Actions implements Service {
 		});
 		if (container != null) {
 			container.addDockable(dockable);
-			container.selectDockable(dockable);
-			focusSelectedDockableContent(container);
+			if (select) {
+				container.selectDockable(dockable);
+				focusSelectedDockableContent(container);
+			}
 		}
 		return dockable;
 	}

@@ -2,13 +2,21 @@ package software.coley.recaf.util.visitors;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
-import org.objectweb.asm.*;
+import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.Handle;
+import org.objectweb.asm.Label;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.TypePath;
 import software.coley.recaf.RecafConstants;
 import software.coley.recaf.util.AccessFlag;
 import software.coley.recaf.util.StringUtil;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /**
@@ -18,6 +26,7 @@ import java.util.function.Consumer;
  */
 public class MethodNoopingVisitor extends ClassVisitor {
 	private final MemberPredicate predicate;
+	private final BiConsumer<MethodVisitor, Type> stubber;
 
 	/**
 	 * @param cv
@@ -26,9 +35,25 @@ public class MethodNoopingVisitor extends ClassVisitor {
 	 * 		Predicate to match which methods will be noop'd, or {@code null} to noop all methods.
 	 */
 	public MethodNoopingVisitor(@Nullable ClassVisitor cv, @Nullable MemberPredicate predicate) {
+		this(cv, predicate, NoopingMethodVisitor::writeDefault);
+	}
+
+	/**
+	 * @param cv
+	 * 		Parent visitor.
+	 * @param predicate
+	 * 		Predicate to match which methods will be stubbed, or {@code null} to stub all methods.
+	 * @param stubber
+	 * 		Callback which writes the replacement return instructions. The callback must write a complete
+	 * 		return sequence for the given return type.
+	 */
+	public MethodNoopingVisitor(@Nullable ClassVisitor cv,
+	                            @Nullable MemberPredicate predicate,
+	                            @Nonnull BiConsumer<MethodVisitor, Type> stubber) {
 		super(RecafConstants.getAsmVersion(), cv);
 
 		this.predicate = predicate;
+		this.stubber = stubber;
 	}
 
 	@Override
@@ -41,7 +66,7 @@ public class MethodNoopingVisitor extends ClassVisitor {
 
 		// Only noop matched methods.
 		if (predicate == null || predicate.matchMethod(access, name, descriptor, signature, exceptions))
-			return new MethodNoopingVisitor.NoopingMethodVisitor(mv, descriptor);
+			return new MethodNoopingVisitor.NoopingMethodVisitor(mv, descriptor, stubber);
 
 		return mv;
 	}
@@ -53,10 +78,18 @@ public class MethodNoopingVisitor extends ClassVisitor {
 		private static final int MAX_STACK = 2;
 		private static final Map<String, Consumer<MethodVisitor>> OBJECT_DEFAULTS = new HashMap<>();
 		private final Type type;
+		private final BiConsumer<MethodVisitor, Type> stubber;
 
 		public NoopingMethodVisitor(@Nullable MethodVisitor mv, @Nonnull String desc) {
+			this(mv, desc, NoopingMethodVisitor::writeDefault);
+		}
+
+		public NoopingMethodVisitor(@Nullable MethodVisitor mv,
+		                            @Nonnull String desc,
+		                            @Nonnull BiConsumer<MethodVisitor, Type> stubber) {
 			super(RecafConstants.getAsmVersion(), mv);
 			type = Type.getMethodType(desc);
+			this.stubber = stubber;
 		}
 
 		@Override
@@ -64,7 +97,10 @@ public class MethodNoopingVisitor extends ClassVisitor {
 			// Directly pass to the delegate so these do not get no-op'd
 			MethodVisitor mv = getDelegate();
 			if (mv == null) return;
-			Type returnType = type.getReturnType();
+			stubber.accept(mv, type.getReturnType());
+		}
+
+		private static void writeDefault(@Nonnull MethodVisitor mv, @Nonnull Type returnType) {
 			int sort = returnType.getSort();
 			switch (sort) {
 				case Type.VOID -> {

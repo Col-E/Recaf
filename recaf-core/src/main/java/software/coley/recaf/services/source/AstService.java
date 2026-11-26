@@ -17,8 +17,12 @@ import software.coley.recaf.info.InnerClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
+import software.coley.recaf.path.BundlePathNode;
 import software.coley.recaf.path.ClassPathNode;
+import software.coley.recaf.path.DirectoryPathNode;
 import software.coley.recaf.path.PathNode;
+import software.coley.recaf.path.PathNodes;
+import software.coley.recaf.path.ResourcePathNode;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.services.mapping.Mappings;
 import software.coley.recaf.services.workspace.WorkspaceCloseListener;
@@ -28,6 +32,7 @@ import software.coley.recaf.util.ClasspathUtil;
 import software.coley.recaf.util.ReflectUtil;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
+import software.coley.recaf.workspace.model.bundle.ClassBundle;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.ResourceAndroidClassListener;
 import software.coley.recaf.workspace.model.resource.ResourceJvmClassListener;
@@ -165,6 +170,33 @@ public class AstService implements Service {
 	/**
 	 * @param workspace
 	 * 		Workspace with classes to link resolved references to.
+	 * @param classContextPath
+	 * 		Path to the class that represents the code outlined by the compilation unit.
+	 * @param unit
+	 * 		Unit to resolve references within.
+	 *
+	 * @return Resolver to link results to {@link PathNode paths in the provided workspace}.
+	 */
+	@Nonnull
+	public ResolverAdapter newJavaResolver(@Nonnull Workspace workspace,
+	                                       @Nonnull ClassPathNode classContextPath,
+	                                       @Nonnull CompilationUnitModel unit) {
+		EntryPool pool = poolFromWorkspace(workspace);
+		prefillReferencedClasses(workspace, pool, unit);
+
+		// Wrap the entry pool in a type that resolves against content in the given context path first
+		// before using the default workspace lookup order.
+		if (!isPrimary(classContextPath) && pool instanceof WorkspaceBackedEntryPool workspacePool)
+			pool = new ContextOverlayEntryPool(workspacePool, classContextPath);
+
+		ResolverAdapter resolver = new ResolverAdapter(workspace, unit, pool);
+		resolver.setClassContext(classContextPath);
+		return resolver;
+	}
+
+	/**
+	 * @param workspace
+	 * 		Workspace with classes to link resolved references to.
 	 * @param pool
 	 * 		Pool containing class models used by the resolver.
 	 * @param unit
@@ -250,6 +282,26 @@ public class AstService implements Service {
 	}
 
 	/**
+	 * In some cases we want context-sensitive resolution which may not be the default workspace resolution order.
+	 * This only occurs when the path does not belong to the primary resource in the workspace.
+	 *
+	 * @param classPath
+	 * 		Path to check.
+	 *
+	 * @return {@code true} if the given class path is from a primary resource, {@code false} otherwise.
+	 */
+	private static boolean isPrimary(@Nonnull ClassPathNode classPath) {
+		DirectoryPathNode directory = classPath.getParent();
+		if (directory == null)
+			return false;
+		BundlePathNode bundle = directory.getParent();
+		if (bundle == null)
+			return false;
+		ResourcePathNode resource = bundle.getParent();
+		return resource != null && resource.isPrimary();
+	}
+
+	/**
 	 * Stub class for cases where we cannot find information about a type in the workspace.
 	 */
 	private static class StubClassEntry extends BasicClassEntry {
@@ -286,12 +338,16 @@ public class AstService implements Service {
 	 * Pool that pulls classes from a {@link Workspace}.
 	 */
 	private static class WorkspaceBackedEntryPool implements EntryPool, ResourceJvmClassListener, ResourceAndroidClassListener {
-		private final Map<String, ClassEntry> cache = new ConcurrentHashMap<>();
-		private final ClassEntry OBJECT_ENTRY;
-		private final Set<String> hydratedRuntimePackages = ConcurrentHashMap.newKeySet();
-		private final Workspace workspace;
+		protected final Map<String, ClassEntry> cache = new ConcurrentHashMap<>();
+		protected final ClassEntry OBJECT_ENTRY;
+		protected final Set<String> hydratedRuntimePackages = ConcurrentHashMap.newKeySet();
+		protected final Workspace workspace;
 
 		private WorkspaceBackedEntryPool(@Nonnull Workspace workspace) {
+			this(workspace, true);
+		}
+
+		private WorkspaceBackedEntryPool(@Nonnull Workspace workspace, boolean attachListeners) {
 			this.workspace = workspace;
 
 			// Special case, we want to have 'Object' built using the default reflective logic.
@@ -299,7 +355,8 @@ public class AstService implements Service {
 
 			// TODO: When we have classes update, we will want to invalidate their child classes
 			//  in the cache as well.
-			workspace.getPrimaryResource().addListener(this);
+			if (attachListeners)
+				workspace.getPrimaryResource().addListener(this);
 		}
 
 		@Override
@@ -383,7 +440,7 @@ public class AstService implements Service {
 		private void hydrateRuntimeClass(@Nonnull String className) {
 			// Workspace will always allow us to pull classes from the runtime classpath,
 			// so we can just ask it for the class and if it's there we'll add it to the pool.
-			ClassPathNode path = workspace.findClass(className);
+			ClassPathNode path = findClass(className);
 			if (path != null)
 				computeEntry(path.getValue(), DEFAULT_TTL);
 		}
@@ -399,19 +456,36 @@ public class AstService implements Service {
 		 * @return Class entry by the given name, if cached or discoverable in the workspace.
 		 */
 		@Nullable
-		private ClassEntry getClass(@Nonnull String name, int ttl) {
+		protected ClassEntry getClass(@Nonnull String name, int ttl) {
+			// Check for prior resolution.
 			ClassEntry entry = cache.get(name);
 			if (entry != null)
 				return entry;
+
+			// Abort if we've reached the end of our TTL.
 			if (ttl <= 1)
 				return null;
 
-			ClassPathNode path = workspace.findClass(name);
+			// Attempt to find the class in the workspace and compute an entry for it.
+			ClassPathNode path = findClass(name);
 			if (path == null)
 				return null;
-
 			ClassInfo info = path.getValue();
 			return computeEntry(info, ttl);
+		}
+
+		/**
+		 * Find a class in the workspace by name.
+		 * Can be overridden to change lookup order / context.
+		 *
+		 * @param name
+		 * 		Name of class to find.
+		 *
+		 * @return Path to class in the workspace, or {@code null} if not found.
+		 */
+		@Nullable
+		protected ClassPathNode findClass(@Nonnull String name) {
+			return workspace.findClass(name);
 		}
 
 		/**
@@ -423,7 +497,7 @@ public class AstService implements Service {
 		 * @return Newly created entry modeling the given class.
 		 */
 		@Nullable
-		private ClassEntry computeEntry(@Nonnull ClassInfo info, int ttl) {
+		protected ClassEntry computeEntry(@Nonnull ClassInfo info, int ttl) {
 			String className = info.getName();
 			ClassEntry entry = cache.get(className);
 			if (entry != null)
@@ -505,7 +579,7 @@ public class AstService implements Service {
 		}
 
 		@Nonnull
-		private ClassEntry lookupClassEntry(@Nonnull String name, int ttl) {
+		protected ClassEntry lookupClassEntry(@Nonnull String name, int ttl) {
 			ClassEntry entry = getClass(name, ttl);
 			if (entry != null)
 				return entry;
@@ -513,7 +587,7 @@ public class AstService implements Service {
 		}
 
 		@Nonnull
-		private ClassEntry fallbackClassEntry(@Nonnull String name) {
+		protected ClassEntry fallbackClassEntry(@Nonnull String name) {
 			ClassEntry entry = cache.get(name);
 			if (entry != null)
 				return entry;
@@ -556,6 +630,101 @@ public class AstService implements Service {
 		public void onRemoveClass(@Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle,
 		                          @Nonnull JvmClassInfo cls) {
 			cache.remove(cls.getName());
+		}
+	}
+
+	/**
+	 * Per-resolver overlay that changes class resolution order to favor a given path's associated bundle/resource.
+	 */
+	private static class ContextOverlayEntryPool extends WorkspaceBackedEntryPool {
+		private final WorkspaceBackedEntryPool delegate;
+		private final ClassPathNode classContextPath;
+		private final BundlePathNode bundleContextPath;
+		private final WorkspaceResource resourceContext;
+		private final String classContextName;
+
+		private ContextOverlayEntryPool(@Nonnull WorkspaceBackedEntryPool delegate, @Nonnull ClassPathNode classContextPath) {
+			super(delegate.workspace, false); // As a wrapper, don't attach listeners to the workspace. The delegate will handle that.
+
+			this.delegate = delegate;
+			this.classContextPath = classContextPath;
+
+			// Extract context from path
+			bundleContextPath = classContextPath.getParent().getParent();
+			resourceContext = classContextPath.getValueOfType(WorkspaceResource.class);
+			classContextName = classContextPath.getValue().getName();
+		}
+
+		@Nullable
+		@Override
+		protected ClassEntry getClass(@Nonnull String name, int ttl) {
+			ClassEntry entry = cache.get(name);
+			if (entry != null)
+				return entry;
+
+			// Use our contextual lookup first, then fall back to the delegate pool.
+			ClassPathNode contextualPath = findContextualClass(name);
+			if (contextualPath != null)
+				return computeEntry(contextualPath.getValue(), ttl);
+			return delegate.getClass(name, ttl);
+		}
+
+		@Nonnull
+		@Override
+		public List<ClassEntry> getClassesInPackage(@Nullable String packageName) {
+			// Fill in the package with classes from the delegate pool first.
+			Map<String, ClassEntry> entries = new LinkedHashMap<>();
+			for (ClassEntry entry : delegate.getClassesInPackage(packageName))
+				entries.put(entry.getName(), entry);
+
+			// Then override with classes from the contextual resource.
+			if (resourceContext != null) {
+				for (ClassBundle<? extends ClassInfo> bundle : resourceContext.classBundleStream().toList()) {
+					for (ClassInfo info : bundle.values()) {
+						if (Objects.equals(packageName, info.getPackageName())) {
+							ClassEntry entry = getClass(info.getName());
+							if (entry != null)
+								entries.put(entry.getName(), entry);
+						}
+					}
+				}
+			}
+
+			return List.copyOf(entries.values());
+		}
+
+		@Nullable
+		@Override
+		protected ClassPathNode findClass(@Nonnull String name) {
+			// Use our contextual lookup first, then fall back to the delegate pool.
+			ClassPathNode contextualPath = findContextualClass(name);
+			if (contextualPath != null)
+				return contextualPath;
+			return delegate.findClass(name);
+		}
+
+		@Nullable
+		private ClassPathNode findContextualClass(@Nonnull String name) {
+			// First check if the class context is the class we're looking for.
+			if (classContextName.equals(name))
+				return classContextPath;
+
+			// Next check the same bundle as the context.
+			ClassInfo classInfo = (ClassInfo) bundleContextPath.getValue().get(name);
+			if (classInfo != null)
+				return bundleContextPath.child(classInfo);
+
+			// Then check the same resource as the context, across its other class bundles.
+			if (resourceContext != null) {
+				for (ClassBundle<? extends ClassInfo> bundle : resourceContext.classBundleStream().toList()) {
+					if (bundle == bundleContextPath.getValue()) // We already checked this bundle, so skip it.
+						continue;
+					classInfo = bundle.get(name);
+					if (classInfo != null)
+						return PathNodes.classPath(workspace, resourceContext, bundle, classInfo);
+				}
+			}
+			return null;
 		}
 	}
 

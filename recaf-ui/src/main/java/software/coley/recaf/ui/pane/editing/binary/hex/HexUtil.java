@@ -104,4 +104,20 @@ public class HexUtil {
 			return INV_DISPLAY;
 		return c;
 	}
+
+	/**
+	 * @param value
+	 * 		Hexadecimal character.
+	 *
+	 * @return Numeric value of the character, or {@code -1} if not a valid hex digit.
+	 */
+	public static int hexDigit(char value) {
+		if (value >= '0' && value <= '9')
+			return value - '0';
+		if (value >= 'a' && value <= 'f')
+			return value - 'a' + 10;
+		if (value >= 'A' && value <= 'F')
+			return value - 'A' + 10;
+		return -1;
+	}
 }

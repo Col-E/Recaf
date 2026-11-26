@@ -7,6 +7,7 @@ package software.coley.recaf.services.phantom.analysis;
  */
 public enum PhantomTypeKind {
 	CLASS,
+	ENUM,
 	INTERFACE,
 	ANNOTATION,
 	UNKNOWN

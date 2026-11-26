@@ -267,6 +267,29 @@ public class JavacScriptEngineTest extends TestBase {
 			assertEquals("three", System.getProperty(propertyName),
 					"Javac script engine failed to set property correctly after script modifications: " + propertyName);
 		}
+
+		@Test
+		void innerClassUsage() {
+			String propertyName = "test-inner-class";
+			String script = """
+					public class Test implements Runnable {
+						private interface Result {}
+					
+						private record PatchResult(String value) implements Result {}
+					
+						@Override
+						public void run() {
+							Result result = null;
+							result = result == null ? new PatchResult("inner") : result;
+							System.setProperty("test-inner-class", ((PatchResult) result).value());
+						}
+					}
+					""";
+
+			// Script compilation, loading, then execution shouldn't break with usage of inner classes.
+			assertSuccess(script);
+			assertEquals("inner", System.getProperty(propertyName));
+		}
 	}
 
 	static void assertSuccess(String code) {

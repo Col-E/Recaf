@@ -2,8 +2,10 @@ package software.coley.recaf.ui.pane.editing.assembler;
 
 import jakarta.annotation.Nonnull;
 import me.darknet.assembler.ast.ASTElement;
-import me.darknet.assembler.compile.JavaCompileResult;
-import me.darknet.assembler.compile.analysis.MethodAnalysisLookup;
+import me.darknet.assembler.backend.dalvik.compile.DalvikCompileResult;
+import me.darknet.assembler.backend.dalvik.compile.analysis.DalvikMethodAnalysisLookup;
+import me.darknet.assembler.backend.jvm.compile.JavaCompileResult;
+import me.darknet.assembler.backend.jvm.compile.analysis.JvmMethodAnalysisLookup;
 import me.darknet.assembler.compiler.ClassResult;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.FieldMember;
@@ -19,7 +21,8 @@ import java.util.List;
  */
 public abstract class AstBuildConsumerComponent extends ContextualAssemblerComponent implements AssemblerAstConsumer, AssemblerBuildConsumer {
 	protected List<ASTElement> astElements = Collections.emptyList();
-	protected MethodAnalysisLookup analysisLookup;
+	protected volatile JvmMethodAnalysisLookup analysisLookupJvm;
+	protected volatile DalvikMethodAnalysisLookup analysisLookupDalvik;
 	protected ClassInfo currentClass;
 	protected MethodMember currentMethod;
 	protected FieldMember currentField;
@@ -55,9 +58,12 @@ public abstract class AstBuildConsumerComponent extends ContextualAssemblerCompo
 	}
 
 	@Override
-	public void consumeClass(@Nonnull ClassResult result, @Nonnull ClassInfo classInfo) {
+	public void consumeClass(@Nonnull ClassResult<?> result, @Nonnull ClassInfo classInfo) {
 		if (result instanceof JavaCompileResult javaCompileResult) {
-			analysisLookup = javaCompileResult.analysisLookup();
+			analysisLookupJvm = javaCompileResult.analysisLookup();
+			onPipelineOutputUpdate();
+		} else if (result instanceof DalvikCompileResult dalvikCompileResult) {
+			analysisLookupDalvik = dalvikCompileResult.analysisLookup();
 			onPipelineOutputUpdate();
 		}
 	}
@@ -78,7 +84,7 @@ public abstract class AstBuildConsumerComponent extends ContextualAssemblerCompo
 	protected void onFieldSelected() {}
 
 	/**
-	 * Called when {@link #astElements} or {@link #analysisLookup} updates.
+	 * Called when {@link #astElements}, {@link #analysisLookupJvm}, or {@link #analysisLookupDalvik} updates.
 	 */
 	protected void onPipelineOutputUpdate() {}
 }

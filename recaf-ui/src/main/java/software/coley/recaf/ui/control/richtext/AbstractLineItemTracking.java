@@ -77,8 +77,11 @@ public abstract class AbstractLineItemTracking<T extends Comparable<T>, L extend
 	 */
 	public boolean addItem(@Nonnull T item) {
 		List<T> list;
-		synchronized (items) {list = items.computeIfAbsent(getLine(item), k -> new ArrayList<>());}
-		boolean insert = Lists.sortedInsert(list, item);
+		boolean insert;
+		synchronized (items) {
+			list = items.computeIfAbsent(getLine(item), k -> new ArrayList<>());
+			insert = Lists.sortedInsert(list, item);
+		}
 		if (insert)
 			notifyListeners("Exception thrown when adding item to tracking");
 		return insert;

@@ -509,20 +509,28 @@ public class AndroidRes implements AndroidResourceProvider {
 	                          @Nonnull Map<String, String> attrToFormat,
 	                          @Nonnull Map<String, Object2LongMap<String>> attrToEnum,
 	                          @Nonnull Map<String, Object2LongMap<String>> attrToFlags,
-	                          @Nonnull JsonObject node) {
-		JsonElement nameNode = node.get("name");
-		if (nameNode != null && node instanceof JsonObject childObject) {
+	                          @Nonnull JsonElement node) {
+		if (node instanceof JsonArray array) {
+			for (JsonElement child : array)
+				visit(formatToAttrs, attrToFormat, attrToEnum, attrToFlags, child);
+			return;
+		}
+		if (!(node instanceof JsonObject object))
+			return;
+
+		JsonElement nameNode = object.get("name");
+		if (nameNode != null) {
 			String name = nameNode.getAsString();
 
 			// Handle different kinds of entries
-			JsonElement formatNode = childObject.get("format");
+			JsonElement formatNode = object.get("format");
 			if (formatNode != null) {
 				String format = formatNode.getAsString();
 				attrToFormat.put(name, format);
 				formatToAttrs.computeIfAbsent(format, f -> new TreeSet<>()).add(name);
 				return;
 			} else {
-				JsonElement flagNode = childObject.get("flag");
+				JsonElement flagNode = object.get("flag");
 				if (flagNode instanceof JsonArray flagArray) {
 					Object2LongMap<String> nameToValue = new Object2LongMap<>();
 					for (JsonElement flagEntry : flagArray) {
@@ -537,7 +545,7 @@ public class AndroidRes implements AndroidResourceProvider {
 					attrToFlags.put(name, nameToValue);
 					return;
 				} else {
-					JsonElement enumNode = node.get("enum");
+					JsonElement enumNode = object.get("enum");
 					if (enumNode instanceof JsonArray enumArray) {
 						Object2LongMap<String> nameToValue = new Object2LongMap<>();
 						for (JsonElement flagEntry : enumArray) {
@@ -557,9 +565,8 @@ public class AndroidRes implements AndroidResourceProvider {
 		}
 
 		// Visit the children if this node is not a child and isn't one of the types we expect.
-		for (JsonElement child : node.asMap().values())
-			if (child instanceof JsonObject childObject)
-				visit(formatToAttrs, attrToFormat, attrToEnum, attrToFlags, childObject);
+		for (JsonElement child : object.asMap().values())
+			visit(formatToAttrs, attrToFormat, attrToEnum, attrToFlags, child);
 	}
 
 	/**

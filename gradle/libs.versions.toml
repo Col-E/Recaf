@@ -1,33 +1,35 @@
 [versions]
 acc-agent = "1.0.4"
-assertj = "3.27.3"
-asm = "9.10.1"
+apkzlib = "8.13.0"
+apksig = "8.13.0"
+assertj = "3.27.7"
+asm = "9.11.1"
 atlantafx = "2.1.0"
 binary-resources = "31.3.0-alpha01.8"
-cafedude = "2.6.5"
+cafedude = "2.6.7"
 cdi-api = "4.1.0"
 cdi-impl = "6.0.4.Final"
 cfr = "0.152"
-dex = "7825de96c3"
-diffutils = "4.16"
-docking = "0.15.1"
+dex = "9820dea8be"
+diffutils = "4.17"
+docking = "0.16.0"
 downgrader = "1.3.6"
-extra-collections = "1.8.0"
+extra-collections = "1.8.1"
 extra-observables = "1.3.0"
 gson = "2.14.0"
 ikonli = "12.4.0"
 image-io-ext = { strictly = "3.0.2" } # newer release breaks ico plugin
 image-io-ext-ico = "3.0.2"
-instrument-server = "1.5.0"
-jackson = "2.18.2"
+instrument-server = "1.6.0"
+jackson = "2.22.0"
 jakarta-annotation = "3.0.0"
-jasm = "77c67f6ceb"
+jasm = "3.2.0"
 jelf = "0.11.0"
 jlinker = "3.0.1"
 junit = "5.13.4"
 junit-launch = "1.13.4"
-jsvg = "2.0.0"
-lljzip = "2.9.1"
+jsvg = "2.1.0"
+lljzip = "2.9.2"
 rainbowgum = "0.8.2"
 mapping-io = "0.8.0"
 mockito = "5.23.0"
@@ -37,11 +39,10 @@ pe = "2.2.3"
 procyon = "0.6.0"
 reactfx = { strictly = "2.0-M5" } # won't get updates, dead
 regex = "0.1.19"
-# richtextfx = "0.11.3"
-richtextfx = "cbdcbd1440"
+richtextfx = "bb63ddb997" # fork based on 0.11.7 with folding performance improvements
 treemapfx = "1.1.0"
 vineflower = "1.12.0"
-sourcesolver = "1.3.1"
+sourcesolver = "1.5.3"
 spatialcanvas = "1.0.0"
 # Plugins
 benmanes-versions = "0.52.0"
@@ -53,6 +54,9 @@ peterabeles-gversion = "1.10.3"
 
 [libraries]
 acc-agent = { module = "software.coley:javafx-access-agent", version.ref = "acc-agent" }
+
+apkzlib = { module = "com.android.tools.build:apkzlib", version.ref = "apkzlib" }
+apksig = { module = "com.android.tools.build:apksig", version.ref = "apksig" }
 
 assertj = { module = "org.assertj:assertj-core", version.ref = "assertj" }
 
@@ -79,7 +83,7 @@ dex-convert = { module = "com.github.jumanji144.dex:dex-convert", version.ref = 
 
 diffutils = { module = "io.github.java-diff-utils:java-diff-utils", version.ref = "diffutils" }
 
-docking = { module = "software.coley:bento-fx", version.ref = "docking" }
+docking = { module = "software.coley.bento-fx:core", version.ref = "docking" }
 
 downgrader-core = { module = "xyz.wagyourtail.jvmdowngrader:jvmdowngrader", version.ref = "downgrader" }
 downgrader-impls = { module = "xyz.wagyourtail.jvmdowngrader:jvmdowngrader-java-api", version.ref = "downgrader" }

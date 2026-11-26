@@ -3,7 +3,6 @@ package software.coley.recaf.services.assembler;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import me.darknet.assembler.compiler.ClassRepresentation;
 import me.darknet.assembler.compiler.ClassResult;
 import software.coley.recaf.cdi.EagerInitialization;
 import software.coley.recaf.info.ClassInfo;
@@ -62,7 +61,7 @@ public class AssemblerPipelineManager implements Service {
 	 * @return Either a {@link JvmAssemblerPipeline} or {@link AndroidAssemblerPipeline} based on the path contents.
 	 */
 	@Nonnull
-	public AssemblerPipeline<? extends ClassInfo, ? extends ClassResult, ? extends ClassRepresentation> getPipeline(@Nonnull PathNode<?> path) {
+	public AssemblerPipeline<? extends ClassInfo, ? extends ClassResult<?>, ?> getPipeline(@Nonnull PathNode<?> path) {
 		ClassInfo info = path.getValueOfType(ClassInfo.class);
 		if (info == null)
 			throw new IllegalStateException("Failed to find class info for node: " + path);
@@ -104,7 +103,7 @@ public class AssemblerPipelineManager implements Service {
 			return currentAndroidPipeline;
 
 		InheritanceGraph graph = graphService.getOrCreateInheritanceGraph(workspace);
-		return new AndroidAssemblerPipeline(workspace, Objects.requireNonNull(graph), config, androidConfig);
+		return new AndroidAssemblerPipeline(Objects.requireNonNull(graph), config, androidConfig);
 	}
 
 	@Nonnull

@@ -28,6 +28,8 @@ import java.util.Set;
  */
 @Dependent
 public class KotlinNameRestorationTransformer implements JvmClassTransformer {
+	public static final String IDENTIFIER = "restoration.kotlinname";
+
 	@Override
 	public void transform(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace,
 	                      @Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle,
@@ -82,8 +84,32 @@ public class KotlinNameRestorationTransformer implements JvmClassTransformer {
 
 	@Nonnull
 	@Override
-	public String name() {
-		return "Kotlin name restoration";
+	public String identifier() {
+		return IDENTIFIER;
+	}
+
+	@Nonnull
+	@Override
+	public String beforeExample() {
+		return """
+				// Kotlin metadata is generally larger than this, but the key part is
+				// the d1 field which contains encoded data about the class.
+				@Metadata(mv = {1, 8, 0}, d1 = {"..."})
+				class AA {
+					int aaa;
+				}
+				""";
+	}
+
+	@Nonnull
+	@Override
+	public String afterExample() {
+		return """
+				// Depending on the contents, original names can be restored for the class, fields, and methods.
+				class BoxedInt {
+					int value;
+				}
+				""";
 	}
 
 	@Nonnull

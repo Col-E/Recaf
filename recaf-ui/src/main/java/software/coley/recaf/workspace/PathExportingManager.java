@@ -1,6 +1,7 @@
 package software.coley.recaf.workspace;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import javafx.scene.control.Alert;
@@ -11,24 +12,32 @@ import javafx.stage.Stage;
 import org.slf4j.Logger;
 import software.coley.observables.ObservableString;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.info.ApkFileInfo;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.Info;
 import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.info.properties.builtin.InputFilePathProperty;
 import software.coley.recaf.services.workspace.WorkspaceManager;
+import software.coley.recaf.services.workspace.io.ApkSigningOptions;
 import software.coley.recaf.services.workspace.io.PathWorkspaceExportConsumer;
 import software.coley.recaf.services.workspace.io.WorkspaceCompressType;
 import software.coley.recaf.services.workspace.io.WorkspaceExportOptions;
 import software.coley.recaf.services.workspace.io.WorkspaceExporter;
 import software.coley.recaf.services.workspace.io.WorkspaceOutputType;
+import software.coley.recaf.services.workspace.io.ApkSigningConfig;
 import software.coley.recaf.ui.config.ExportConfig;
 import software.coley.recaf.ui.config.RecentFilesConfig;
+import software.coley.recaf.ui.control.popup.ApkSigningCredentialsPopup;
+import software.coley.recaf.util.CancelSignal;
 import software.coley.recaf.util.DirectoryChooserBuilder;
 import software.coley.recaf.util.ErrorDialogs;
 import software.coley.recaf.util.FileChooserBuilder;
-import software.coley.recaf.util.IOUtil;
+import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.Icons;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.util.StringUtil;
+import software.coley.recaf.util.android.ApkSigningCredentialCodec;
+import software.coley.recaf.util.io.IOUtil;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceDirectoryResource;
 import software.coley.recaf.workspace.model.resource.WorkspaceFileResource;
@@ -37,7 +46,13 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.IdentityHashMap;
+import java.util.Map;
+import java.util.concurrent.CompletionException;
 
 /**
  * Manager module handle exporting {@link Info} and {@link Workspace} instances to {@link Path}s.
@@ -47,17 +62,24 @@ import java.nio.file.Path;
 @ApplicationScoped
 public class PathExportingManager {
 	private static final Logger logger = Logging.get(PathExportingManager.class);
+	private final Map<Workspace, Path> sessionExportPaths = Collections.synchronizedMap(new IdentityHashMap<>());
 	private final WorkspaceManager workspaceManager;
 	private final ExportConfig exportConfig;
+	private final ApkSigningConfig apkSigningConfig;
 	private final RecentFilesConfig recentFilesConfig;
 
 	@Inject
 	public PathExportingManager(WorkspaceManager workspaceManager,
 	                            ExportConfig exportConfig,
+	                            ApkSigningConfig apkSigningConfig,
 	                            RecentFilesConfig recentFilesConfig) {
 		this.workspaceManager = workspaceManager;
 		this.exportConfig = exportConfig;
+		this.apkSigningConfig = apkSigningConfig;
 		this.recentFilesConfig = recentFilesConfig;
+
+		// We don't want to keep workspaces in-memory, for obvious reasons...
+		workspaceManager.addWorkspaceCloseListener(sessionExportPaths::remove);
 	}
 
 	/**
@@ -111,7 +133,244 @@ public class PathExportingManager {
 			}
 		}
 
-		// Prompt a path for the user to write to.
+		// Prompt for a path to export to. If the user cancels, then we don't export.
+		Path exportPath = chooseWorkspacePath(workspace);
+		if (exportPath == null)
+			return;
+
+		try {
+			exportToPath(workspace, exportPath, false);
+			logger.info("Exported {} to path '{}'", contentDescription, exportPath);
+		} catch (CancelSignal ignored) {
+			// Cancellation is a normal user choice; leave the existing output and sidecar untouched.
+		} catch (IOException ex) {
+			logger.error("Failed to export {} to path '{}'", contentDescription, exportPath, ex);
+			showWorkspaceExportError(ex);
+		}
+	}
+
+	/**
+	 * Export a workspace to a complete destination path.
+	 *
+	 * @param workspace
+	 * 		Workspace to export.
+	 * @param path
+	 * 		Complete destination path.
+	 * @param automatic
+	 *        {@code true} to stage and safely install the output.
+	 *
+	 * @throws IOException
+	 * 		When export generation or installation fails.
+	 */
+	public void exportToPath(@Nonnull Workspace workspace, @Nonnull Path path, boolean automatic) throws IOException {
+		WorkspaceResource primaryResource = workspace.getPrimaryResource();
+
+		// Determine the export mode. Automatic exports should be staged to avoid overwriting the destination if the export fails.
+		// But for manual exports, we can write directly to the destination since the user is (hopefully) aware of the risk.
+		PathWorkspaceExportConsumer.Mode mode = PathWorkspaceExportConsumer.Mode.DIRECT;
+		if (automatic) {
+			mode = primaryResource instanceof WorkspaceDirectoryResource
+					? PathWorkspaceExportConsumer.Mode.MIRROR_DIRECTORY
+					: PathWorkspaceExportConsumer.Mode.ATOMIC_FILE;
+		}
+
+		// Export the workspace to the given path.
+		try (PathWorkspaceExportConsumer consumer = new PathWorkspaceExportConsumer(path, mode)) {
+			ApkSigningOptions signingOptions = createApkSigningOptions(primaryResource);
+			createResourceExporter(primaryResource, consumer, signingOptions).export(workspace);
+		}
+
+		// An edited APK cannot keep the v4 sidecar for the previous archive contents.
+		if (primaryResource instanceof WorkspaceFileResource fileResource &&
+				fileResource.getFileInfo() instanceof ApkFileInfo) {
+			Path sidecarPath = path.resolveSibling(path.getFileName() + ".idsig");
+			try {
+				Files.deleteIfExists(sidecarPath);
+			} catch (IOException ex) {
+				throw new IOException("Failed to remove stale APK v4 signature sidecar: " + sidecarPath, ex);
+			}
+		}
+
+		// Exports of temporary workspace copies must not change the active workspace's destination.
+		if (workspaceManager.hasCurrentWorkspace() && workspace == workspaceManager.getCurrent()) {
+			if (RecentFilesConfig.ResourceModel.isSupported(primaryResource))
+				recentFilesConfig.recordWorkspaceExportPath(workspace, path);
+			else
+				sessionExportPaths.put(workspace, path.toAbsolutePath().normalize());
+		}
+	}
+
+	/**
+	 * Export a workspace to its latest successful destination, source path, or a user-selected fallback.
+	 * Intended to be used for {@link ExportConfig#getAutoExportAfterSave() automatic exports} after a
+	 * workspace save operation.
+	 *
+	 * @param workspace
+	 * 		Workspace to export.
+	 *
+	 * @return {@code true} when an export completed, or {@code false} when the fallback chooser was canceled.
+	 *
+	 * @throws IOException
+	 * 		When export generation or installation fails.
+	 * @see WorkspaceSaveService
+	 */
+	public boolean exportAutomatically(@Nonnull Workspace workspace) throws IOException {
+		Path destination = resolveAutomaticDestination(workspace);
+		if (destination == null) {
+			destination = FxThreadUtil.supply(() -> chooseWorkspacePath(workspace), null).join();
+			if (destination == null)
+				return false;
+		}
+
+		try {
+			exportToPath(workspace, destination, true);
+			return true;
+		} catch (CancelSignal ignored) {
+			return false;
+		}
+	}
+
+	@Nullable
+	private ApkSigningOptions createApkSigningOptions(@Nonnull WorkspaceResource resource) throws IOException {
+		// If signing is not enabled, or the resource is not an APK, then we don't need to sign.
+		if (!apkSigningConfig.getSigningEnabled().getValue()
+				|| !(resource instanceof WorkspaceFileResource fileResource)
+				|| !(fileResource.getFileInfo() instanceof ApkFileInfo))
+			return null;
+
+		// Validate the configuration before prompting for the master password.
+		// No need to ask for a password to a keystore that doesn't exist.
+		Path keyStorePath = apkSigningConfig.requireKeystoreSettings();
+		String envelope = apkSigningConfig.requireCredentialEnvelope();
+
+		// Prompt for the master password to decrypt the stored credentials.
+		char[] masterPassword;
+		try {
+			masterPassword = ApkSigningCredentialsPopup.promptMasterPassword().join();
+		} catch (CompletionException ex) {
+			throw new IOException("Unable to request APK signing master password", ex);
+		}
+		if (masterPassword == null)
+			throw CancelSignal.get();
+
+		// Decrypt the stored credentials and create the signing options.
+		try {
+			ApkSigningCredentialCodec.Credentials credentials;
+			try {
+				credentials = ApkSigningCredentialCodec.decrypt(masterPassword, envelope);
+			} catch (IOException ex) {
+				throw new IOException("Incorrect master password or invalid stored APK signing credentials", ex);
+			}
+			try (credentials) {
+				try {
+					return new ApkSigningOptions(keyStorePath,
+							apkSigningConfig.getKeystoreType().getValue(),
+							apkSigningConfig.getKeyAlias().getValue(),
+							credentials.storePassword(), credentials.keyPassword());
+				} catch (RuntimeException ex) {
+					throw new IOException("Invalid APK signing configuration", ex);
+				}
+			}
+		} finally {
+			Arrays.fill(masterPassword, '\0');
+		}
+	}
+
+	/**
+	 * Error reporting after a failure in {@link #exportAutomatically(Workspace)}.
+	 *
+	 * @param path
+	 * 		Failed destination.
+	 * @param failure
+	 * 		Export failure.
+	 *
+	 * @see WorkspaceSaveService
+	 */
+	public void reportWorkspaceExportFailure(@Nullable Path path, @Nonnull IOException failure) {
+		if (path == null)
+			logger.error("Failed to automatically export workspace", failure);
+		else
+			logger.error("Failed to export workspace to path '{}'", path, failure);
+		showWorkspaceExportError(failure);
+	}
+
+	/**
+	 * Resolve the destination path for an automatic export.
+	 *
+	 * @param workspace
+	 * 		Workspace to export.
+	 *
+	 * @return Destination path, or {@code null} if no usable path was found.
+	 */
+	private @Nullable Path resolveAutomaticDestination(@Nonnull Workspace workspace) {
+		// Check if the user has a preferred path for this workspace.
+		Path remembered = recentFilesConfig.getWorkspaceExportPath(workspace);
+		if (remembered == null) {
+			synchronized (sessionExportPaths) {
+				remembered = sessionExportPaths.get(workspace);
+			}
+		}
+
+		// That preferred path may not be usable, so check if it is still valid.
+		if (isUsableAutomaticTarget(workspace, remembered))
+			return remembered.toAbsolutePath().normalize();
+
+		// It wasn't valid... so next check if the workspace has a source path that is usable.
+		WorkspaceResource primary = workspace.getPrimaryResource();
+		Path original = null;
+		if (primary instanceof WorkspaceDirectoryResource directoryResource) {
+			original = directoryResource.getDirectoryPath();
+		} else if (primary instanceof WorkspaceFileResource fileResource) {
+			original = InputFilePathProperty.get(fileResource.getFileInfo());
+		}
+		if (isUsableAutomaticTarget(workspace, original))
+			return original.toAbsolutePath().normalize();
+
+		// No usable path was found, so the user will need to select one.
+		return null;
+	}
+
+	/**
+	 * Check if the given path is usable for an automatic export.
+	 *
+	 * @param workspace
+	 * 		Workspace to export.
+	 * @param candidate
+	 * 		Candidate path to check.
+	 *
+	 * @return {@code true} when the path is usable, otherwise {@code false}.
+	 */
+	private static boolean isUsableAutomaticTarget(@Nonnull Workspace workspace, @Nullable Path candidate) {
+		if (candidate == null)
+			return false;
+
+		// The containing directory should exist and be writable.
+		Path target = candidate.toAbsolutePath().normalize();
+		Path parent = target.getParent();
+		if (parent == null || !Files.isDirectory(parent) || !Files.isWritable(parent))
+			return false;
+
+		// If the target path doesn't exist then we can write to it.
+		if (!Files.exists(target, LinkOption.NOFOLLOW_LINKS))
+			return true;
+
+		// If the target path does exist, then it must be the same type of resource as the workspace's primary resource.
+		if (workspace.getPrimaryResource() instanceof WorkspaceDirectoryResource)
+			return Files.isDirectory(target);
+		return Files.isRegularFile(target);
+	}
+
+	/**
+	 * Prompt the user for a path to export the workspace to.
+	 *
+	 * @param workspace
+	 * 		Workspace to export.
+	 *
+	 * @return Selected path, or {@code null} if the user canceled the prompt.
+	 */
+	@Nullable
+	private Path chooseWorkspacePath(@Nonnull Workspace workspace) {
+		WorkspaceResource primaryResource = workspace.getPrimaryResource();
 		ObservableString lastWorkspaceExportDir = recentFilesConfig.getLastWorkspaceExportDirectory();
 		File lastExportDir = lastWorkspaceExportDir.unboxingMap(File::new);
 		File selectedPath;
@@ -140,37 +399,29 @@ public class PathExportingManager {
 				if (extension != null)
 					builder.setFileExtensionFilter(extension.toUpperCase(), "*." + extension.toLowerCase());
 			}
-
-			FileChooser chooser = builder.build();
-			selectedPath = chooser.showSaveDialog(null);
+			selectedPath = builder.build().showSaveDialog(null);
 		}
+		if (selectedPath == null)
+			return null;
+		String parent = selectedPath.getParent();
+		if (parent != null)
+			lastWorkspaceExportDir.setValue(parent);
+		return selectedPath.toPath().toAbsolutePath().normalize();
+	}
 
-		// Convert selected file to nio path, update last export directory.
-		Path exportPath;
-		if (selectedPath != null) {
-			String parent = selectedPath.getParent();
-			if (parent != null) lastWorkspaceExportDir.setValue(parent);
-			exportPath = selectedPath.toPath();
-		} else {
-			// Selected path is null, meaning user closed out of file chooser.
-			// Cancel export.
-			return;
-		}
-
-		// Create export options from the resource type and export the workspace to the selected path.
-		WorkspaceExporter exporter = createResourceExporter(primaryResource, exportPath);
-		try {
-			exporter.export(workspace);
-			logger.info("Exported " + contentDescription + " to path '{}'", exportPath);
-		} catch (IOException ex) {
-			logger.error("Failed to export " + contentDescription + " to path '{}'", exportPath, ex);
-			ErrorDialogs.show(
-					Lang.getBinding("dialog.error.exportworkspace.title"),
-					Lang.getBinding("dialog.error.exportworkspace.header"),
-					Lang.getBinding("dialog.error.exportworkspace.content"),
-					ex
-			);
-		}
+	/**
+	 * Show an error dialog for a failed workspace export.
+	 *
+	 * @param failure
+	 * 		Failure that occurred during export.
+	 */
+	private void showWorkspaceExportError(@Nonnull IOException failure) {
+		FxThreadUtil.run(() -> ErrorDialogs.show(
+				Lang.getBinding("dialog.error.exportworkspace.title"),
+				Lang.getBinding("dialog.error.exportworkspace.header"),
+				Lang.getBinding("dialog.error.exportworkspace.content"),
+				failure
+		));
 	}
 
 	/**
@@ -252,10 +503,11 @@ public class PathExportingManager {
 	}
 
 	@Nonnull
-	private WorkspaceExporter createResourceExporter(@Nonnull WorkspaceResource resource, @Nonnull Path path) {
+	private WorkspaceExporter createResourceExporter(@Nonnull WorkspaceResource resource,
+	                                                 @Nonnull PathWorkspaceExportConsumer exportConsumer,
+	                                                 @Nullable ApkSigningOptions signingOptions) {
 		WorkspaceCompressType compression = exportConfig.getCompression().getValue();
 		WorkspaceExportOptions options;
-		PathWorkspaceExportConsumer exportConsumer = new PathWorkspaceExportConsumer(path);
 		if (resource instanceof WorkspaceDirectoryResource) {
 			options = new WorkspaceExportOptions(WorkspaceOutputType.DIRECTORY, exportConsumer);
 		} else if (resource instanceof WorkspaceFileResource) {
@@ -265,6 +517,7 @@ public class PathExportingManager {
 		}
 		options.setBundleSupporting(exportConfig.getBundleSupportingResources().getValue());
 		options.setCreateZipDirEntries(exportConfig.getCreateZipDirEntries().getValue());
+		options.setApkSigningOptions(signingOptions);
 		return options.create();
 	}
 }

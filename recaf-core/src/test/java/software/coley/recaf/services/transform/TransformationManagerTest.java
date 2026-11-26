@@ -41,7 +41,7 @@ class TransformationManagerTest {
 
 		@Nonnull
 		@Override
-		public String name() {
+		public String identifier() {
 			return "jvm-a";
 		}
 	}

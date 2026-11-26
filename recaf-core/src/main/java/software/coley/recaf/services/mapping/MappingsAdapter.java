@@ -16,11 +16,13 @@ import software.coley.recaf.services.mapping.data.MethodMapping;
 import software.coley.recaf.services.mapping.data.MethodMappingKey;
 import software.coley.recaf.services.mapping.data.VariableMapping;
 import software.coley.recaf.services.mapping.data.VariableMappingKey;
+import software.coley.recaf.util.NameTypePair;
 import software.coley.recaf.workspace.model.Workspace;
 
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -28,6 +30,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 /**
@@ -44,7 +48,12 @@ import java.util.function.Function;
  * @author Matt Coley
  */
 public class MappingsAdapter implements Mappings {
+	private static final int MAX_HIERARCHY_LOOKUP_CACHE_ENTRIES = 70_000; // Enough to fit a decent sized sample like a vanilla MC client jar.
+	private static final Object NO_HIERARCHY_MAPPING = new Object();
+
 	private final Map<MappingKey, String> mappings = new HashMap<>();
+	private volatile HierarchyLookupCache inheritedFieldLookupCache;
+	private volatile HierarchyLookupCache inheritedMethodLookupCache;
 	private final boolean supportFieldTypeDifferentiation;
 	private final boolean supportVariableTypeDifferentiation;
 	private InheritanceGraph inheritanceGraph;
@@ -94,11 +103,13 @@ public class MappingsAdapter implements Mappings {
 				String newMethodName = methodMapping.getNewName();
 				if (!oldMethodName.equals(newMethodName))
 					addMethod(methodMapping.getOwnerName(), oldMethodName, oldMethodDesc, newMethodName);
-				for (VariableMapping variableMapping : mappings.getMethodVariableMappings(className, oldMethodName, oldMethodDesc)) {
-					addVariable(className, oldMethodName, oldMethodDesc,
-							variableMapping.getOldName(), variableMapping.getDesc(), variableMapping.getIndex(),
-							variableMapping.getNewName());
-				}
+			}
+		}
+		for (List<VariableMapping> variablesPerMethod : mappings.getVariables().values()) {
+			for (VariableMapping variableMapping : variablesPerMethod) {
+				addVariable(variableMapping.getOwnerName(), variableMapping.getMethodName(), variableMapping.getMethodDesc(),
+						variableMapping.getOldName(), variableMapping.getDesc(), variableMapping.getIndex(),
+						variableMapping.getNewName());
 			}
 		}
 	}
@@ -112,9 +123,22 @@ public class MappingsAdapter implements Mappings {
 	 * 		Inheritance graph to use for looking up method families.
 	 */
 	public void infillMethodFamilies(@Nonnull IntermediateMappings inputMappings, @Nonnull InheritanceGraph inheritanceGraph) {
-		// Collect all method mappings in the input.
-		List<MethodMapping> explicitMappings = inputMappings.getMethods().values().stream()
-				.flatMap(Collection::stream)
+		// Keep only one entry per method key while detecting conflicting explicit mappings.
+		//
+		// Mapping formats may preserve duplicate records, and some duplicates may even have conflicting output names.
+		// We want to dedupe and abort on any conflicts first.
+		Map<MethodMappingKey, MethodMapping> origins = new HashMap<>();
+		for (List<MethodMapping> ownerMappings : inputMappings.getMethods().values()) {
+			for (MethodMapping explicitMapping : ownerMappings) {
+				MethodMappingKey key = new MethodMappingKey(explicitMapping.getOwnerName(), explicitMapping.getOldName(), explicitMapping.getDesc());
+				MethodMapping previous = origins.putIfAbsent(key, explicitMapping);
+				if (previous != null && !previous.getNewName().equals(explicitMapping.getNewName()))
+					throw newMethodConflict(key, key.getOwner(), previous, explicitMapping);
+			}
+		}
+
+		// Now gather all mappings and sort for deterministic processing order.
+		List<MethodMapping> explicitMappings = origins.values().stream()
 				.sorted(Comparator
 						.comparing(MethodMapping::getOwnerName)
 						.thenComparing(MethodMapping::getOldName)
@@ -122,19 +146,18 @@ public class MappingsAdapter implements Mappings {
 						.thenComparing(MethodMapping::getNewName))
 				.toList();
 
-		// Compute which methods are mapped to what, and detect any conflicts in the provided mappings.
-		Map<MethodMappingKey, MethodMapping> origins = new HashMap<>();
-		for (MethodMapping explicitMapping : explicitMappings) {
-			MethodMappingKey key = new MethodMappingKey(explicitMapping.getOwnerName(), explicitMapping.getOldName(), explicitMapping.getDesc());
-			MethodMapping previous = origins.putIfAbsent(key, explicitMapping);
-			if (previous != null && !previous.getNewName().equals(explicitMapping.getNewName()))
-				throw newMethodConflict(key, key.getOwner(), previous, explicitMapping);
-		}
+		// Build a map of method names to descriptors that are explicitly mapped.
+		Map<String, Set<String>> mappedDescriptorsByName = new HashMap<>();
+		for (MethodMapping explicitMapping : explicitMappings)
+			mappedDescriptorsByName.computeIfAbsent(explicitMapping.getOldName(), _ -> new HashSet<>()).add(explicitMapping.getDesc());
 
 		// Iterate over the method mappings, and for each mapping,
 		// check if there are any methods in the same override family that would be affected by the same mapping.
 		// If so, add the same mapping for those methods as well.
-		Map<String, Set<InheritanceVertex>> familyCache = new IdentityHashMap<>(); // Thankfully we can get away with identity here.
+		Map<InheritanceVertex, Set<InheritanceVertex>> familyCache = new IdentityHashMap<>(); // Thankfully we can get away with identity here.
+		Map<InheritanceVertex, Map<NameTypePair, List<MethodFamilyEntry>>> familyMethodIndexCache = new IdentityHashMap<>();
+		Map<MethodMappingKey, String> infilledMethodNames = new HashMap<>();
+		MethodFamilyRelationCache methodFamilyRelations = null;
 		for (MethodMapping explicitMapping : explicitMappings) {
 			// Skip constructors and static initializers.
 			String methodName = explicitMapping.getOldName();
@@ -153,39 +176,91 @@ public class MappingsAdapter implements Mappings {
 			if (ownerMethod == null || ownerMethod.hasPrivateModifier() || ownerMethod.hasStaticModifier())
 				continue;
 
-			// Iterate over classes in the inheritance family and apply the same mapping to any method with the same signature that is inherited by the owner method.
-			Set<InheritanceVertex> sortedFamily = familyCache.computeIfAbsent(ownerName, o -> inheritanceGraph.getVertexFamily(o, false));
-			for (InheritanceVertex familyVertex : sortedFamily) {
-				// Again, skipping library classes.
-				if (familyVertex.isLibraryVertex())
-					continue;
+			// Check if this method family has already been infilled by a previous explicit mapping.
+			MethodMappingKey explicitKey = new MethodMappingKey(ownerName, methodName, explicitMapping.getDesc());
+			String infilledName = infilledMethodNames.get(explicitKey);
+			if (infilledName != null) {
+				if (!infilledName.equals(explicitMapping.getNewName())) {
+					MethodMapping previous = origins.get(explicitKey);
+					if (previous == null || !previous.getNewName().equals(infilledName))
+						previous = new MethodMapping(ownerName, methodName, explicitMapping.getDesc(), infilledName);
+					throw newMethodConflict(explicitKey, ownerName, previous, explicitMapping);
+				}
 
-				// Check if the method is inherited by this family member.
-				// If it isn't, then we don't want to apply the mapping to it.
-				ClassInfo familyInfo = familyVertex.getValue();
-				MethodMember familyMethod = familyInfo.getDeclaredMethod(methodName, explicitMapping.getDesc());
-				if (familyMethod == null || !MappingsAdapter.isSameMethodFamily(ownerVertex, ownerInfo, ownerMethod, familyVertex, familyInfo, familyMethod))
-					continue;
+				// This same method family was already fully infilled by another explicit member.
+				// We don't need to do anything else, as the family has already been enriched with the same mapping.
+				continue;
+			}
 
-				// The method is inherited by this family member. Enrich the adapter.
-				String familyOwnerName = familyInfo.getName();
+			// This method family has not been infilled yet, so we need to gather all family members and apply the same mapping to them.
+			// Start by gathering the whole family and caching it for later use.
+			Set<InheritanceVertex> family = familyCache.get(ownerVertex);
+			if (family == null) {
+				// Gather all vertices in the same family as the explicit mapping owner.
+				family = inheritanceGraph.getVertexFamily(ownerName, false);
+				familyCache.put(ownerVertex, family);
+				for (InheritanceVertex familyVertex : family)
+					familyCache.put(familyVertex, family);
+			}
+
+			// Build a map of method signatures to family members for the given method family.
+			Map<NameTypePair, List<MethodFamilyEntry>> familyMethodIndex = familyMethodIndexCache.get(ownerVertex);
+			if (familyMethodIndex == null) {
+				familyMethodIndex = new HashMap<>();
+				for (InheritanceVertex familyVertex : family) {
+					if (familyVertex.isLibraryVertex())
+						continue;
+
+					ClassInfo familyInfo = familyVertex.getValue();
+					for (MethodMember familyMethod : familyInfo.getMethods()) {
+						Set<String> mappedDescriptors = mappedDescriptorsByName.get(familyMethod.getName());
+						if (mappedDescriptors == null || !mappedDescriptors.contains(familyMethod.getDescriptor()))
+							continue;
+
+						NameTypePair signature = new NameTypePair(familyMethod.getName(), familyMethod.getDescriptor());
+						familyMethodIndex.computeIfAbsent(signature, ignored -> new ArrayList<>())
+								.add(new MethodFamilyEntry(familyVertex, familyInfo, familyMethod));
+					}
+				}
+
+				// Update cache for all family members.
+				for (InheritanceVertex familyVertex : family)
+					familyMethodIndexCache.put(familyVertex, familyMethodIndex);
+			}
+
+			// Gather all family members that match the explicit mapping's name/desc.
+			List<MethodFamilyEntry> candidates = familyMethodIndex.getOrDefault(new NameTypePair(methodName, explicitMapping.getDesc()), List.of());
+			List<MethodFamilyEntry> methodFamily = new ArrayList<>();
+			if (methodFamilyRelations == null)
+				methodFamilyRelations = new MethodFamilyRelationCache();
+			for (MethodFamilyEntry candidate : candidates) {
+				if (MappingsAdapter.isSameMethodFamily(ownerVertex, ownerInfo, ownerMethod, candidate.vertex(), candidate.ownerInfo(), candidate.method(), methodFamilyRelations))
+					methodFamily.add(candidate);
+			}
+			methodFamily.sort(Comparator.comparing(entry -> entry.vertex().getName()));
+
+			// Apply the mapping once to the whole method family.
+			for (MethodFamilyEntry familyEntry : methodFamily) {
+				String familyOwnerName = familyEntry.ownerInfo().getName();
 				MethodMappingKey familyKey = new MethodMappingKey(familyOwnerName, methodName, explicitMapping.getDesc());
 				String existing = getMappedMethodName(familyOwnerName, methodName, explicitMapping.getDesc());
 				if (existing == null) {
-					// Add the method mapping to this family member, and mark the original mapping as the origin for this mapping.
+					// Add a new mapping for this method family member.
 					addMethod(familyOwnerName, methodName, explicitMapping.getDesc(), explicitMapping.getNewName());
 					origins.put(familyKey, explicitMapping);
 				} else if (!existing.equals(explicitMapping.getNewName())) {
-					// Shouldn't happen due to earlier check, but just in case... check for conflicting mappings.
+					// If the names don't match, then we have a conflict between the existing mapping and the explicit mapping.
+					// Shouldn't happen due to our earlier deduplication, but just in case...
 					MethodMapping previous = origins.get(familyKey);
 					if (previous == null)
 						previous = new MethodMapping(familyOwnerName, methodName, explicitMapping.getDesc(), existing);
 					throw newMethodConflict(familyKey, familyOwnerName, previous, explicitMapping);
 				} else {
-					// This family member already has the same mapping, so we can just mark the
-					// original mapping as the origin for this family member's mapping.
 					origins.putIfAbsent(familyKey, explicitMapping);
 				}
+
+				// Record that this method family has been infilled with the explicit mapping's new name.
+				infilledMethodNames.put(familyKey, explicitMapping.getNewName());
 			}
 		}
 	}
@@ -227,8 +302,16 @@ public class MappingsAdapter implements Mappings {
 	public String getMappedFieldName(@Nonnull String ownerName, @Nonnull String fieldName, @Nonnull String fieldDesc) {
 		MappingKey key = getFieldKey(ownerName, fieldName, fieldDesc);
 		String mapped = mappings.get(key);
-		if (mapped == null && inheritanceGraph != null)
-			mapped = findInParent(ownerName, parent -> getFieldKey(parent, fieldName, fieldDesc));
+		if (mapped == null && inheritanceGraph != null) {
+			HierarchyLookupCache cache = fieldLookupCache();
+			Object cached = cache.get(key);
+			if (cached == null) {
+				mapped = findInParent(ownerName, parent -> getFieldKey(parent, fieldName, fieldDesc));
+				Object result = mapped == null ? NO_HIERARCHY_MAPPING : mapped;
+				cached = cache.putIfSpace(key, result);
+			}
+			mapped = cached == NO_HIERARCHY_MAPPING ? null : (String) cached;
+		}
 		return mapped;
 	}
 
@@ -237,8 +320,16 @@ public class MappingsAdapter implements Mappings {
 	public String getMappedMethodName(@Nonnull String ownerName, @Nonnull String methodName, @Nonnull String methodDesc) {
 		MappingKey key = getMethodKey(ownerName, methodName, methodDesc);
 		String mapped = mappings.get(key);
-		if (mapped == null && inheritanceGraph != null)
-			mapped = findMethodInParent(ownerName, methodName, methodDesc);
+		if (mapped == null && inheritanceGraph != null) {
+			HierarchyLookupCache cache = methodLookupCache();
+			Object cached = cache.get(key);
+			if (cached == null) {
+				mapped = findMethodInParent(ownerName, methodName, methodDesc);
+				Object result = mapped == null ? NO_HIERARCHY_MAPPING : mapped;
+				cached = cache.putIfSpace(key, result);
+			}
+			mapped = cached == NO_HIERARCHY_MAPPING ? null : (String) cached;
+		}
 		return mapped;
 	}
 
@@ -266,6 +357,9 @@ public class MappingsAdapter implements Mappings {
 				String oldName = fk.getName();
 				String oldDesc = fk.getDesc();
 				intermediate.addField(oldOwner, oldDesc, oldName, newName);
+			} else if (key instanceof VariableMappingKey vk) {
+				intermediate.addVariable(vk.getOwner(), vk.getMethodName(), vk.getMethodDesc(),
+						vk.getVariableDesc(), vk.getVariableName(), vk.getVariableIndex(), newName);
 			}
 		}
 		return intermediate;
@@ -279,6 +373,38 @@ public class MappingsAdapter implements Mappings {
 	@Override
 	public boolean doesSupportVariableTypeDifferentiation() {
 		return supportVariableTypeDifferentiation;
+	}
+
+	/**
+	 * @return Lookup cache for field mappings that are inherited from parent classes.
+	 */
+	@Nonnull
+	private HierarchyLookupCache fieldLookupCache() {
+		HierarchyLookupCache cache = inheritedFieldLookupCache;
+		if (cache == null) {
+			synchronized (this) {
+				cache = inheritedFieldLookupCache;
+				if (cache == null)
+					inheritedFieldLookupCache = cache = new HierarchyLookupCache();
+			}
+		}
+		return cache;
+	}
+
+	/**
+	 * @return Lookup cache for method mappings that are inherited from parent classes.
+	 */
+	@Nonnull
+	private HierarchyLookupCache methodLookupCache() {
+		HierarchyLookupCache cache = inheritedMethodLookupCache;
+		if (cache == null) {
+			synchronized (this) {
+				cache = inheritedMethodLookupCache;
+				if (cache == null)
+					inheritedMethodLookupCache = cache = new HierarchyLookupCache();
+			}
+		}
+		return cache;
 	}
 
 	/**
@@ -404,21 +530,50 @@ public class MappingsAdapter implements Mappings {
 	                                            @Nonnull InheritanceVertex familyVertex,
 	                                            @Nonnull ClassInfo familyInfo,
 	                                            @Nonnull MethodMember familyMethod) {
+		return isSameMethodFamily(ownerVertex, ownerInfo, ownerMethod, familyVertex, familyInfo, familyMethod, new MethodFamilyRelationCache());
+	}
+
+	/**
+	 * @param ownerVertex
+	 * 		Vertex defining the explicit mapping.
+	 * @param ownerInfo
+	 * 		Class defining the explicit mapping method.
+	 * @param ownerMethod
+	 * 		Explicitly mapped method.
+	 * @param familyVertex
+	 * 		Candidate family vertex to apply the same mapping to.
+	 * @param familyInfo
+	 * 		Class defining the candidate family method.
+	 * @param familyMethod
+	 * 		Candidate family method.
+	 * @param relations Cache of ancestry/descendant relations to avoid repeated graph traversals.
+	 *
+	 * @return {@code true} when both methods belong to the same override/implementation family.
+	 */
+	private static boolean isSameMethodFamily(@Nonnull InheritanceVertex ownerVertex,
+	                                         @Nonnull ClassInfo ownerInfo,
+	                                         @Nonnull MethodMember ownerMethod,
+	                                         @Nonnull InheritanceVertex familyVertex,
+	                                         @Nonnull ClassInfo familyInfo,
+	                                         @Nonnull MethodMember familyMethod,
+	                                         @Nonnull MethodFamilyRelationCache relations) {
 		if (ownerVertex == familyVertex)
 			return true;
 
-		// Direct ancestry: one method is declared on a parent/interface path of the other.
-		if (familyVertex.isParentOf(ownerVertex))
+		// Cache the owner's ancestry and descendant graphs to avoid repeated graph traversals for every family member.
+		Set<InheritanceVertex> ownerParents = relations.parents(ownerVertex);
+		if (ownerParents.contains(familyVertex))
 			return isInheritedMethod(ownerInfo, ownerMethod, familyInfo, familyMethod);
-		if (familyVertex.isChildOf(ownerVertex))
+		Set<InheritanceVertex> ownerChildren = relations.children(ownerVertex);
+		if (ownerChildren.contains(familyVertex))
 			return isInheritedMethod(familyInfo, familyMethod, ownerInfo, ownerMethod);
 
 		// Indirect family members only share a mapping if they both implement/override
 		// a method declared by some common ancestor or interface.
-		Set<InheritanceVertex> ownerParents = ownerVertex.getAllParents();
-		Set<InheritanceVertex> familyParents = familyVertex.getAllParents();
-		for (InheritanceVertex commonParent : ownerParents) {
-			if (!familyParents.contains(commonParent))
+		Iterator<InheritanceVertex> parentIterator = familyVertex.allParents().iterator();
+		while (parentIterator.hasNext()) {
+			InheritanceVertex commonParent = parentIterator.next();
+			if (!ownerParents.contains(commonParent))
 				continue;
 
 			ClassInfo commonInfo = commonParent.getValue();
@@ -432,10 +587,10 @@ public class MappingsAdapter implements Mappings {
 			return true;
 		}
 
-		Set<InheritanceVertex> ownerChildren = ownerVertex.getAllChildren();
-		Set<InheritanceVertex> familyChildren = familyVertex.getAllChildren();
-		for (InheritanceVertex commonChild : ownerChildren) {
-			if (!familyChildren.contains(commonChild))
+		Iterator<InheritanceVertex> childIterator = familyVertex.allChildren().iterator();
+		while (childIterator.hasNext()) {
+			InheritanceVertex commonChild = childIterator.next();
+			if (!ownerChildren.contains(commonChild))
 				continue;
 
 			ClassInfo childInfo = commonChild.getValue();
@@ -474,6 +629,8 @@ public class MappingsAdapter implements Mappings {
 	 */
 	public void enableHierarchyLookup(@Nonnull InheritanceGraph inheritanceGraph) {
 		this.inheritanceGraph = inheritanceGraph;
+		inheritedFieldLookupCache = null;
+		inheritedMethodLookupCache = null;
 	}
 
 	/**
@@ -515,6 +672,7 @@ public class MappingsAdapter implements Mappings {
 	public void addField(@Nonnull String owner, @Nonnull String originalName, @Nonnull String desc, @Nonnull String renamedName) {
 		if (doesSupportFieldTypeDifferentiation()) {
 			mappings.put(getFieldKey(owner, originalName, desc), renamedName);
+			inheritedFieldLookupCache = null;
 		} else {
 			throw new IllegalStateException("The current mapping implementation does not support " +
 					"field type differentiation");
@@ -538,6 +696,7 @@ public class MappingsAdapter implements Mappings {
 					"specifying field descriptors");
 		} else {
 			mappings.put(getFieldKey(owner, originalName, null), renamedName);
+			inheritedFieldLookupCache = null;
 		}
 	}
 
@@ -555,6 +714,7 @@ public class MappingsAdapter implements Mappings {
 	 */
 	public void addMethod(@Nonnull String owner, @Nonnull String originalName, @Nonnull String desc, @Nonnull String renamedName) {
 		mappings.put(getMethodKey(owner, originalName, desc), renamedName);
+		inheritedMethodLookupCache = null;
 	}
 
 	/**
@@ -641,7 +801,7 @@ public class MappingsAdapter implements Mappings {
 	@Nonnull
 	protected MappingKey getVariableKey(@Nonnull String className, @Nonnull String methodName, @Nonnull String methodDesc,
 	                                    @Nullable String name, @Nullable String desc, int index) {
-		return new VariableMappingKey(className, methodName, methodDesc, name, desc);
+		return new VariableMappingKey(className, methodName, methodDesc, name, desc, index);
 	}
 
 	/**
@@ -671,5 +831,75 @@ public class MappingsAdapter implements Mappings {
 				key.getName() + key.getDesc() + "' affecting '" + affectedOwner + "': '" +
 				previous.getOwnerName() + "' -> '" + previous.getNewName() + "' conflicts with '" +
 				current.getOwnerName() + "' -> '" + current.getNewName() + "'");
+	}
+
+	/**
+	 * Method family entry.
+	 *
+	 * @param vertex
+	 * 		Inheritance vertex of the method.
+	 * @param ownerInfo
+	 * 		Class info of the method owner.
+	 * @param method
+	 * 		Method member.
+	 */
+	private record MethodFamilyEntry(@Nonnull InheritanceVertex vertex, @Nonnull ClassInfo ownerInfo, @Nonnull MethodMember method) {}
+
+	/**
+	 * Lazily caches ancestry and descendant graphs for method family lookups to avoid repeated graph traversals.
+	 */
+	private static final class MethodFamilyRelationCache {
+		private final Map<InheritanceVertex, Set<InheritanceVertex>> parents = new IdentityHashMap<>();
+		private final Map<InheritanceVertex, Set<InheritanceVertex>> children = new IdentityHashMap<>();
+
+		@Nonnull
+		private Set<InheritanceVertex> parents(@Nonnull InheritanceVertex vertex) {
+			Set<InheritanceVertex> result = parents.get(vertex);
+			if (result == null) {
+				result = vertex.getAllParents();
+				parents.put(vertex, result);
+			}
+			return result;
+		}
+
+		@Nonnull
+		private Set<InheritanceVertex> children(@Nonnull InheritanceVertex vertex) {
+			Set<InheritanceVertex> result = children.get(vertex);
+			if (result == null) {
+				result = vertex.getAllChildren();
+				children.put(vertex, result);
+			}
+			return result;
+		}
+	}
+
+	/**
+	 * Caches results of looking up a field/method in parent classes to avoid repeated lookups.
+	 */
+	private static final class HierarchyLookupCache {
+		private final Map<MappingKey, Object> results = new ConcurrentHashMap<>();
+		private final AtomicInteger entryCount = new AtomicInteger();
+
+		@Nullable
+		private Object get(@Nonnull MappingKey key) {
+			return results.get(key);
+		}
+
+		@Nonnull
+		private Object putIfSpace(@Nonnull MappingKey key, @Nonnull Object value) {
+			// Reserve a slot before insertion so concurrent misses cannot exceed the cache limit.
+			int count = entryCount.get();
+			while (count < MAX_HIERARCHY_LOOKUP_CACHE_ENTRIES) {
+				if (entryCount.compareAndSet(count, count + 1)) {
+					Object previous = results.putIfAbsent(key, value);
+					if (previous == null)
+						return value;
+					entryCount.decrementAndGet();
+					return previous;
+				}
+				count = entryCount.get();
+			}
+			return value;
+		}
 	}
 }

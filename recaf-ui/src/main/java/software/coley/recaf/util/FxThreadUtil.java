@@ -8,13 +8,14 @@ import javafx.beans.value.ObservableValue;
 import javafx.beans.value.WritableValue;
 import software.coley.recaf.RecafApplication;
 import software.coley.recaf.util.threading.Batch;
-import software.coley.recaf.util.threading.DirectBatch;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
 import software.coley.recaf.util.threading.ThreadUtil;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.function.Supplier;
 
 /**
  * Utility for working with JavaFX threading.
@@ -26,8 +27,9 @@ import java.util.concurrent.Executor;
  */
 public class FxThreadUtil {
 	private static final Executor jfxExecutor = FxThreadUtil::run;
-	private static final List<Runnable> preInitQueue = new ArrayList<>();
-	private static boolean initialized;
+	private static final Object initLock = new Object();
+	private static List<Runnable> preInitQueue = new ArrayList<>();
+	private static volatile boolean initialized;
 
 	/**
 	 * Run action in JavaFX thread.
@@ -41,8 +43,12 @@ public class FxThreadUtil {
 
 		// Hold for later if FX has not been initialized.
 		if (!initialized) {
-			preInitQueue.add(action);
-			return;
+			synchronized (initLock) {
+				if (!initialized) {
+					preInitQueue.add(action);
+					return;
+				}
+			}
 		}
 
 		// Wrap action so that if it fails we don't explode and kill the FX thread.
@@ -63,6 +69,21 @@ public class FxThreadUtil {
 	 */
 	public static void delayedRun(long delayMs, @Nonnull Runnable action) {
 		ThreadUtil.runDelayed(delayMs, () -> run(action));
+	}
+
+	/**
+	 * @param action
+	 * 		Supplier to start in new thread.
+	 * @param fallback
+	 * 		Fallback value if the supplier encounters a failure.
+	 *
+	 * @return Thread future.
+	 */
+	@Nonnull
+	public static <T> CompletableFuture<T> supply(@Nonnull Supplier<T> action, @Nullable T fallback) {
+		if (Platform.isFxApplicationThread())
+			return CompletableFuture.completedFuture(ThreadUtil.wrap(action, fallback).get());
+		return ThreadUtil.supply(action, fallback, jfxExecutor);
 	}
 
 	/**
@@ -107,10 +128,18 @@ public class FxThreadUtil {
 	 * Called by {@link RecafApplication} when it is first initialized.
 	 */
 	public static void onInitialize() {
-		initialized = true;
-		for (Runnable runnable : preInitQueue)
+		List<Runnable> queuedActions;
+		synchronized (initLock) {
+			if (initialized)
+				return;
+
+			queuedActions = preInitQueue;
+			preInitQueue = List.of();
+			initialized = true;
+		}
+
+		for (Runnable runnable : queuedActions)
 			run(runnable);
-		preInitQueue.clear();
 	}
 
 	/**

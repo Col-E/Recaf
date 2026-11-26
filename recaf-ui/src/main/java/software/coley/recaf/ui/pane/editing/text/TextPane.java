@@ -16,15 +16,19 @@ import software.coley.recaf.ui.config.KeybindingConfig;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.bracket.BracketMatchGraphicFactory;
 import software.coley.recaf.ui.control.richtext.bracket.SelectedBracketTracking;
+import software.coley.recaf.ui.control.richtext.highlight.SelectedWordHighlighting;
 import software.coley.recaf.ui.control.richtext.search.SearchBar;
 import software.coley.recaf.util.Animations;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.threading.ThreadUtil;
+import software.coley.recaf.workspace.WorkspaceSaveService;
+import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.Bundle;
 import software.coley.recaf.workspace.model.bundle.FileBundle;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -36,18 +40,23 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class TextPane extends BorderPane implements FileNavigable, UpdatableNavigable {
 	protected final AtomicBoolean updateLock = new AtomicBoolean();
 	private final FileTypeSyntaxAssociationService languageAssociation;
+	private final WorkspaceSaveService saveService;
 	protected final Editor editor;
 	protected FilePathNode path;
 
 	@Inject
 	public TextPane(@Nonnull FileTypeSyntaxAssociationService languageAssociation,
+	                @Nonnull WorkspaceSaveService saveService,
 	                @Nonnull KeybindingConfig keys,
-	                @Nonnull SearchBar searchBar) {
+	                @Nonnull SearchBar searchBar,
+	                @Nonnull TextConfig textConfig) {
 		this.languageAssociation = languageAssociation;
+		this.saveService = saveService;
 
 		// Configure the editor
 		editor = new Editor();
-		editor.setSelectedBracketTracking(new SelectedBracketTracking());
+		if (textConfig.doHighlightWord()) editor.setSelectedWordHighlighting(new SelectedWordHighlighting());
+		if (textConfig.doTrackBrackets()) editor.setSelectedBracketTracking(new SelectedBracketTracking());
 		editor.getRootLineGraphicFactory().addLineGraphicFactory(new BracketMatchGraphicFactory());
 		searchBar.install(editor);
 
@@ -74,6 +83,9 @@ public class TextPane extends BorderPane implements FileNavigable, UpdatableNavi
 	private void save() {
 		// Pull data from path.
 		TextFileInfo info = path.getValue().asTextFile();
+		Workspace workspace = path.getValueOfType(Workspace.class);
+		if (workspace == null)
+			throw new IllegalStateException("Workspace missing from file path node");
 		FileBundle bundle = path.getValueOfType(FileBundle.class);
 		if (bundle == null)
 			throw new IllegalStateException("Bundle missing from file path node");
@@ -85,8 +97,11 @@ public class TextPane extends BorderPane implements FileNavigable, UpdatableNavi
 
 		// Update the file in the bundle.
 		updateLock.set(true);
-		bundle.put(newInfo);
-		updateLock.set(false);
+		try {
+			saveService.commit(workspace, bundle, newInfo);
+		} finally {
+			updateLock.set(false);
+		}
 		FxThreadUtil.run(() -> Animations.animateSuccess(this, 1000));
 	}
 

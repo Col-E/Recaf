@@ -3,7 +3,7 @@ package software.coley.recaf.services.assembler;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import me.darknet.assembler.compile.JvmVariableMode;
+import me.darknet.assembler.backend.jvm.compile.JvmVariableMode;
 import software.coley.observables.ObservableBoolean;
 import software.coley.observables.ObservableObject;
 import software.coley.recaf.config.BasicConfigContainer;

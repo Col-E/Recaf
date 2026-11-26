@@ -9,8 +9,13 @@ import software.coley.recaf.services.transform.JvmTransformResult;
 import software.coley.recaf.services.transform.TransformationApplier;
 import software.coley.recaf.services.transform.TransformationApplierService;
 import software.coley.recaf.test.CompilerTestBase;
+import software.coley.recaf.util.ClassDefiner;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -128,6 +133,34 @@ public abstract class TransformerTestBase extends CompilerTestBase {
 		String transformedDisassembly = disassembleTransformed(result, isFullBody);
 		if (PRINT_BEFORE_AFTER) System.out.println("========= AFTER ========\n" + transformedDisassembly);
 		assertionChecker.accept(transformedDisassembly);
+	}
+
+	protected void transformAndApply(@Nonnull List<Class<? extends JvmClassTransformer>> transformers) {
+		JvmTransformResult result = assertDoesNotThrow(() -> newApplier().transformJvm(transformers));
+		assertTrue(result.getTransformerFailures().isEmpty(), "There were transformation failures");
+		result.apply();
+	}
+
+	@Nullable
+	protected Object invokeStatic(@Nonnull String owner, @Nonnull String method, @Nonnull String... classNames) {
+		Map<String, byte[]> classes = new HashMap<>();
+		for (String className : classNames)
+			classes.put(className.replace('/', '.'), get(className).getBytecode());
+		try {
+			Class<?> type = Class.forName(owner.replace('/', '.'), true, new ClassDefiner(classes));
+			Method target = type.getDeclaredMethod(method);
+			target.setAccessible(true);
+			return target.invoke(null);
+		} catch (InvocationTargetException ex) {
+			Throwable cause = ex.getCause();
+			if (cause instanceof Error error)
+				throw error;
+			if (cause instanceof RuntimeException runtime)
+				throw runtime;
+			throw new AssertionError("Method threw checked exception: " + cause, cause);
+		} catch (ReflectiveOperationException ex) {
+			throw new AssertionError("Failed to invoke " + owner + "." + method, ex);
+		}
 	}
 
 	@Nonnull

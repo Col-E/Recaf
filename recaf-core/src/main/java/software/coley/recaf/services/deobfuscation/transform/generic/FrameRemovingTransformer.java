@@ -24,6 +24,8 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
  */
 @Dependent
 public class FrameRemovingTransformer implements JvmClassTransformer {
+	public static final String IDENTIFIER = "cleanup.frames";
+
 	@Override
 	public void transform(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace,
 	                      @Nonnull WorkspaceResource resource, @Nonnull JvmClassBundle bundle,
@@ -33,13 +35,14 @@ public class FrameRemovingTransformer implements JvmClassTransformer {
 			for (MethodNode method : node.methods) {
 				InsnList instructions = method.instructions;
 				if (instructions != null) {
-					for (int i = instructions.size() - 1; i > 0; i--) {
+					for (int i = instructions.size() - 1; i >= 0; i--) {
 						AbstractInsnNode insn = instructions.get(i);
 						if (insn instanceof FrameNode)
 							instructions.remove(insn);
 					}
 				}
 			}
+			context.setNode(bundle, initialClassState, node);
 		} else {
 			ClassReader reader = new ClassReader(context.getBytecode(bundle, initialClassState));
 			ClassWriter writer = new ClassWriter(reader, 0);
@@ -51,7 +54,7 @@ public class FrameRemovingTransformer implements JvmClassTransformer {
 
 	@Nonnull
 	@Override
-	public String name() {
-		return "Stack frame removal";
+	public String identifier() {
+		return IDENTIFIER;
 	}
 }

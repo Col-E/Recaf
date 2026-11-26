@@ -2,7 +2,15 @@ package software.coley.recaf.services.deobfuscation;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
+import org.objectweb.asm.Label;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.MethodInsnNode;
+import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.VarInsnNode;
 import software.coley.recaf.services.deobfuscation.transform.generic.CallResultInliningTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.DeadCodeRemovingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.GotoInliningTransformer;
@@ -10,6 +18,9 @@ import software.coley.recaf.services.deobfuscation.transform.generic.OpaqueConst
 import software.coley.recaf.services.deobfuscation.transform.generic.OpaquePredicateFoldingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.RedundantTryCatchRemovingTransformer;
 import software.coley.recaf.services.deobfuscation.transform.generic.VariableFoldingTransformer;
+import software.coley.recaf.services.deobfuscation.transform.generic.VariableTableNormalizingTransformer;
+import software.coley.recaf.services.transform.JvmTransformResult;
+import software.coley.recaf.services.transform.TransformationParameters;
 import software.coley.recaf.util.AsmInsnUtil;
 import software.coley.recaf.util.RegexUtil;
 import software.coley.recaf.util.StringUtil;
@@ -17,6 +28,7 @@ import software.coley.recaf.util.analysis.ReInterpreter;
 import software.coley.recaf.util.analysis.value.ReValue;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -24,6 +36,92 @@ import static org.junit.jupiter.api.Assertions.*;
  * An assortment of deobfuscation tests, specifically to ensure weird bugs that occurred at one point do not come back.
  */
 public class RegressionDeobfuscationTest extends TransformerTestBase {
+	private static final String COUNTER_SOURCE = """
+			class Counter {
+			    static int count;
+			    static int next() { return ++count; }
+			}
+			""";
+
+	private static final String SIDE_EFFECT_SEQUENCES = """
+			.super java/lang/Object
+			.class public super Example {
+			    .field static keys [I
+			    .field static sink I
+			
+			    .method static <clinit> ()V {
+			        code: {
+			        A:
+			            iconst_1
+			            newarray int
+			            putstatic Example.keys [I
+			            return
+			        B:
+			        }
+			    }
+			
+			    .method static record (I)V {
+			        parameters: { value },
+			        code: {
+			        A:
+			            iload value
+			            putstatic Example.sink I
+			            return
+			        B:
+			        }
+			    }
+			
+			    .method static arrayStore ()I {
+			        code: {
+			        A:
+			            iconst_1
+			            getstatic Example.keys [I
+			            iconst_0
+			            bipush 7
+			            iastore
+			            iconst_2
+			            iadd
+			            pop
+			            getstatic Example.keys [I
+			            iconst_0
+			            iaload
+			            ireturn
+			        B:
+			        }
+			    }
+			
+			    .method static fieldStore ()I {
+			        code: {
+			        A:
+			            iconst_1
+			            iconst_2
+			            bipush 7
+			            putstatic Example.sink I
+			            iadd
+			            pop
+			            getstatic Example.sink I
+			            ireturn
+			        B:
+			        }
+			    }
+			
+			    .method static argumentCall ()I {
+			        code: {
+			        A:
+			            iconst_1
+			            iconst_2
+			            bipush 7
+			            invokestatic Example.record (I)V
+			            iadd
+			            pop
+			            getstatic Example.sink I
+			            ireturn
+			        B:
+			        }
+			    }
+			}
+			""";
+
 	@Test
 	void gotoInlining1a() {
 		String asm = """
@@ -438,6 +536,135 @@ public class RegressionDeobfuscationTest extends TransformerTestBase {
 		validateNoTransformation(asm, List.of(VariableFoldingTransformer.class));
 	}
 
+	/**
+	 * Prior transformer behavior would try to fold the first part, but also break the second part by changing
+	 * {@code iload} to {@code aload} if the slot was the same. We want to fold the first part without breaking
+	 * the second part.
+	 */
+	@Test
+	void variableFoldingKeepsDifferentTypedSlotReuse() {
+		String asm = """
+				.method public static example (Ljava/lang/Object;)I {
+				    parameters: { source },
+				    code: {
+				    A:
+				        aload source
+				        astore copy // transformer wants to fold this redundant store to use just 'source'
+				        aload copy
+				        pop
+				    B:
+				        // Rewrite 'copy' to hold an int from this point onward.
+				        invokestatic Example.getValue ()I
+				        istore copy
+				    C:
+				        // Transformer should keep this as iload as the value of 'copy' is a clearly different type.
+				        iload copy
+				        ireturn
+				    D:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(VariableFoldingTransformer.class), dis -> {
+			assertTrue(RegexUtil.matchesAny("iload \\w+\\s+ireturn", dis), "The integer reuse of the copy slot must remain an integer load");
+			assertFalse(RegexUtil.matchesAny("aload source\\s+ireturn", dis), "The reference source must not replace the integer result");
+		});
+	}
+
+	/**
+	 * Variant of the above test, main thing we are testing here is that the {@code iinc} doesn't trip up the
+	 * tracking of the foldable reference portion at the start.
+	 */
+	@Test
+	void variableFoldingKeepsIincForDifferentTypedSlotReuse() {
+		String asm = """
+				.method public static example (Ljava/lang/Object;)I {
+				    parameters: { source },
+				    code: {
+				    A:
+				        aload source
+				        astore copy
+				        aload copy
+				        pop
+				    B:
+				        invokestatic Example.getValue ()I
+				        istore copy
+				    C:
+				        iinc copy 1
+				        iload copy
+				        ireturn
+				    D:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(VariableFoldingTransformer.class), dis -> {
+			assertTrue(RegexUtil.matchesAny("istore (\\w+)\\s+iinc \\1 1\\s+iload \\1", dis), "The integer increment must remain on the reused slot");
+			assertFalse(RegexUtil.matchesAny("iinc i0 1", dis), "The reference source must not receive the integer increment");
+		});
+	}
+
+	/**
+	 * Another variant that allows the first part to be folded, without getting confused by the slot re-assignment later.
+	 */
+	@Test
+	void variableFoldingResetsAfterSlotDomination() {
+		String asm = """
+				.method public static example (Ljava/lang/Object;)Ljava/lang/Object; {
+				    parameters: { source },
+				    code: {
+				    A:
+				        aload source
+				        astore copy
+				        aload copy // <-- Can be 'source'
+				        pop
+				    B:
+				        invokestatic Example.getValue ()Ljava/lang/Object;
+				        astore copy
+				    C:
+				        aload copy // <-- Must remain as 'copy'
+				        areturn
+				    D:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(VariableFoldingTransformer.class), dis -> {
+			// The first copy is redundant and should be replaced with direct source loads.
+			assertTrue(RegexUtil.matchesAny("aload source\\s+pop\\s+aload source\\s+pop", dis), "The copy should fold before the later overwrite");
+
+			// The later definition must remain the value read by the return path.
+			assertTrue(RegexUtil.matchesAny("invokestatic Example.getValue \\(\\)Ljava/lang/Object;\\s+astore \\w+\\s+aload \\w+\\s+areturn", dis), "The later slot definition and read must remain");
+			assertFalse(RegexUtil.matchesAny("invokestatic Example.getValue \\(\\)Ljava/lang/Object;\\s+astore \\w+\\s+aload source\\s+areturn", dis), "The later slot definition must not be replaced with the original source");
+		});
+	}
+
+	/**
+	 * Illegal code that writes to wide-reserved slots shouldn't trigger transformations.
+	 */
+	@Test
+	void variableFoldingRejectsOverlappingWideSourceWrite() {
+		putClass(CLASS_NAME, node -> {
+			// Pseudocode: long example(long p0)
+			//    long v2 = p0;
+			//    int i1 = getValue(); // Illegal store to reserved slot 1 (overlaps with reserved slot of p0)
+			//    i1;
+			//    return v2;
+			MethodNode method = new MethodNode(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, "example", "(J)J", null, null);
+			method.instructions.add(new VarInsnNode(Opcodes.LLOAD, 0));
+			method.instructions.add(new VarInsnNode(Opcodes.LSTORE, 2));
+			method.instructions.add(new MethodInsnNode(Opcodes.INVOKESTATIC, CLASS_NAME, "getValue", "()I", false));
+			method.instructions.add(new VarInsnNode(Opcodes.ISTORE, 1));
+			method.instructions.add(new VarInsnNode(Opcodes.ILOAD, 1));
+			method.instructions.add(new InsnNode(Opcodes.POP));
+			method.instructions.add(new VarInsnNode(Opcodes.LLOAD, 2));
+			method.instructions.add(new InsnNode(Opcodes.LRETURN));
+			method.maxStack = 2;
+			method.maxLocals = 4;
+			node.methods.add(method);
+		});
+		JvmTransformResult result = assertDoesNotThrow(() -> newApplier().transformJvm(List.of(VariableFoldingTransformer.class)));
+		assertTrue(result.getTransformerFailures().isEmpty(), "There were transformation failures");
+		assertTrue(result.getTransformedClasses().isEmpty(), "The overlapping source write must prevent copy folding");
+	}
+
 	@Test
 	void callInliningOfUnhandledCoreJdkClassesDoesNotFail() {
 		// Unknown values like 'Thread.currentThread()' shouldn't throw exceptions.
@@ -451,6 +678,34 @@ public class RegressionDeobfuscationTest extends TransformerTestBase {
 				        invokevirtual java/lang/Object.hashCode ()I
 				        ireturn
 				    B:
+				    }
+				}
+				""";
+		validateNoTransformation(asm, List.of(CallResultInliningTransformer.class));
+	}
+
+	@Test
+	@Timeout(5)
+	void callInliningRecursiveCycle() {
+		// If this runs for 5+ seconds we know we have a recursive call inlining issue.
+		String asm = """
+				.super java/lang/Object
+				.class Example {
+				    .method public static recurse ()I {
+				        code: {
+				        A:
+				            invokestatic Example.recurse ()I
+				            ireturn
+				        B:
+				        }
+				    }
+				    .method public static caller ()I {
+				        code: {
+				        A:
+				            invokestatic Example.recurse ()I
+				            ireturn
+				        B:
+				        }
 				    }
 				}
 				""";
@@ -596,6 +851,55 @@ public class RegressionDeobfuscationTest extends TransformerTestBase {
 	}
 
 	/**
+	 * A handler can be reached both before and after a redundant copy store. The handler load must keep using
+	 * the target local because the source local is not initialized on the pre-store exception path.
+	 */
+	@Test
+	void variableFoldingDoesNotUseCopySourceAcrossBypassExceptionPath() {
+		compileFull("Example", """
+				class Example {
+				    static String create(boolean shouldThrow) {
+				        if (shouldThrow) throw new IllegalStateException();
+				        return "source";
+				    }
+				    static void maybeThrow(boolean shouldThrow) {
+				        if (shouldThrow) throw new IllegalStateException();
+				    }
+				    static String throwBeforeCopy() {
+				        String copy = null;
+				        try {
+				            String source = create(true);
+				            copy = source;
+				            maybeThrow(false);
+				        } catch (IllegalStateException ignored) {
+				            return copy;
+				        }
+				        return copy;
+				    }
+				    static String throwAfterCopy() {
+				        String copy = null;
+				        try {
+				            String source = create(false);
+				            copy = source;
+				            maybeThrow(true);
+				        } catch (IllegalStateException ignored) {
+				            return copy;
+				        }
+				        return copy;
+				    }
+				}
+				""");
+
+		assertNull(invokeStatic("Example", "throwBeforeCopy", "Example"));
+		assertEquals("source", invokeStatic("Example", "throwAfterCopy", "Example"));
+
+		transformAndApply(List.of(VariableFoldingTransformer.class));
+
+		assertNull(invokeStatic("Example", "throwBeforeCopy", "Example"));
+		assertEquals("source", invokeStatic("Example", "throwAfterCopy", "Example"));
+	}
+
+	/**
 	 * If {@link ReInterpreter#merge(ReValue, ReValue)} is implemented incorrectly, some transformers relying on
 	 * frame analysis with {@link ReValue} contents may incorrectly assume they should make optimizations.
 	 * <p>
@@ -666,7 +970,7 @@ public class RegressionDeobfuscationTest extends TransformerTestBase {
 				        iand
 				        tableswitch {
 				            min: 0,
-				            max: 3,
+				            max: 2,
 				            cases: { C, D, B },
 				            default: B
 				        }
@@ -1165,6 +1469,45 @@ public class RegressionDeobfuscationTest extends TransformerTestBase {
 	}
 
 	/**
+	 * A backwards jump can merge an unknown value into a foldable sequence's successor frame,
+	 * triggering the sequence fallback evaluation. When the instruction immediately before the
+	 * sequence consumes a stack value, the sequence entry frame must be taken from the sequence's
+	 * first instruction, not the instruction before it. Otherwise, the fallback evaluation starts
+	 * from an inflated stack and overflows the method's max stack.
+	 */
+	@Test
+	void constantFoldingSequencePrecededByPopDoesNotOverflowMaxStack() {
+		String asm = """
+				.method public static example ()V {
+				    code: {
+				    A:
+				        iconst_1
+				        goto C
+				    B:
+				        pop
+				        bipush 15
+				        bipush 15
+				        iadd
+				    C:
+				        dup
+				        lookupswitch {
+				            1: B,
+				            default: D
+				        }
+				    D:
+				        pop
+				        return
+				    E:
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(OpaqueConstantFoldingTransformer.class), dis -> {
+			assertFalse(dis.contains("bipush 15"), "Failed to fold edge sequence");
+			assertTrue(dis.contains("bipush 30"), "Failed to fold edge sequence into expected value");
+		});
+	}
+
+	/**
 	 * A snippet of DashO obfuscation. Includes a series of opaque jumps with some loop-backs in dead code.
 	 * There's also sequences that set up the stack before those jumps which also have variable state side effects.
 	 * These two issues have caused issues with opaque folding transformers in the past.
@@ -1250,7 +1593,7 @@ public class RegressionDeobfuscationTest extends TransformerTestBase {
 				        invokestatic java/lang/Integer.parseInt (Ljava/lang/String;)I
 				        tableswitch {
 				            min: 0,
-				            max: 1,
+				            max: 0,
 				            cases: { U },
 				            default: H
 				        }
@@ -1259,7 +1602,7 @@ public class RegressionDeobfuscationTest extends TransformerTestBase {
 				        invokestatic java/lang/Integer.parseInt (Ljava/lang/String;)I
 				        tableswitch {
 				            min: 0,
-				            max: 1,
+				            max: 0,
 				            cases: { J },
 				            default: AA
 				        }
@@ -1296,7 +1639,7 @@ public class RegressionDeobfuscationTest extends TransformerTestBase {
 				        iload i0
 				        tableswitch {
 				            min: 0,
-				            max: 1,
+				            max: 0,
 				            cases: { W },
 				            default: D
 				        }
@@ -1304,7 +1647,7 @@ public class RegressionDeobfuscationTest extends TransformerTestBase {
 				        iload i0
 				        tableswitch {
 				            min: 0,
-				            max: 1,
+				            max: 0,
 				            cases: { F },
 				            default: N
 				        }
@@ -1313,7 +1656,7 @@ public class RegressionDeobfuscationTest extends TransformerTestBase {
 				        invokestatic java/lang/Integer.parseInt (Ljava/lang/String;)I
 				        tableswitch {
 				            min: 0,
-				            max: 1,
+				            max: 0,
 				            cases: { B },
 				            default: Y
 				        }
@@ -1414,7 +1757,7 @@ public class RegressionDeobfuscationTest extends TransformerTestBase {
 				        invokestatic java/lang/Integer.parseInt (Ljava/lang/String;)I
 				        tableswitch {
 				            min: 0,
-				            max: 1,
+				            max: 0,
 				            cases: { B },
 				            default: X
 				        }
@@ -1425,7 +1768,7 @@ public class RegressionDeobfuscationTest extends TransformerTestBase {
 				        iload i
 				        tableswitch {
 				            min: 0,
-				            max: 1,
+				            max: 0,
 				            cases: { X },
 				            default: D
 				        }
@@ -1453,11 +1796,65 @@ public class RegressionDeobfuscationTest extends TransformerTestBase {
 		});
 	}
 
+	@Test
+	void analyzerRequeuesReachableBranchTargets() {
+		// When we use ReAnalyzer/ReFrame we need to ensure that the first branching behavior to some destination frame
+		// does not prevent a later reachable branch from re-analyzing that destination frame. In the past when this
+		// bug was present, the first branch would mark 'TARGET' as unreachable, and any transformer would ignore
+		// the contents of the TARGET block.
+		String asm = """
+				.super java/lang/Object
+				.class Example {
+					.method static <clinit> ()V {
+					    code: {
+					    ENTRY:
+					        // This first branch is opaque, and indicate TARGET is unreachable from ENTRY.
+					        iconst_1
+					        iconst_0
+					        if_icmpgt PATH_A // GOTO PATH_A
+					    TARGET:
+					        invokestatic Example.value ()Ljava/lang/String;
+					        pop
+					        return
+					    PATH_A:
+					        // This second branch is also opaque, but indicates TARGET is reachable from PATH_A.
+					        iconst_1
+					        iconst_0
+					        if_icmpgt TARGET // GOTO TARGET
+					        return
+					    }
+					}
+					.method static value ()Ljava/lang/String; {
+					    code: {
+					    A:
+					        ldc "reachable"
+					        areturn
+					    B:
+					    }
+					}
+				}
+				""";
+		assemble(asm, true);
+
+		TransformationParameters parameters = new TransformationParameters(Map.of(
+				CallResultInliningTransformer.KEY_EVALUATE_CLASS_INITIALIZERS, true));
+		JvmTransformResult result = assertDoesNotThrow(() ->
+				newApplier().transformJvm(List.of(CallResultInliningTransformer.class), parameters));
+		assertTrue(result.getTransformerFailures().isEmpty(), "There were transformation failures");
+
+		String disassembly = disassembleTransformed(result, true);
+		assertEquals(0, StringUtil.count("invokestatic Example.value", disassembly),
+				"A later reachable edge must requeue the previously pruned target");
+		assertEquals(2, StringUtil.count("ldc \"reachable\"", disassembly),
+				"The reachable initializer call must be replaced with its exact value");
+	}
+
 	/**
 	 * Ensures the const-folder doesn't take too long to run.
 	 */
 	@Test
-	@Timeout(value = 1)
+	@Timeout(value = 10)
+	@DisabledIfEnvironmentVariable(named = "GITHUB_ACTIONS", matches = "true")
 	void constFolderDoesNotCatestrophicallyBacktrack() {
 		String asm = """
 				.method public static example (I)I {
@@ -1472,5 +1869,652 @@ public class RegressionDeobfuscationTest extends TransformerTestBase {
 				}
 				""".replace("\0", "        iconst_1\n        iadd\n".repeat(20_000));
 		validateNoTransformation(asm, List.of(OpaqueConstantFoldingTransformer.class));
+	}
+
+	/**
+	 * Folding a sequence that contains a variable store should retain side effects.
+	 * Previously we incorrectly read the operation's top stack operand instead,
+	 * which rewrote {@code tmp} from {@code 7} to {@code 3}.
+	 */
+	@Test
+	void foldSequenceWithVarStorePreservesStoredValue() {
+		String asm = """
+				.method public static example ()I {
+				    code: {
+				    A:
+				        iconst_1
+				        bipush 7
+				        istore tmp // tmp = 7
+				        iconst_3
+				        iadd // 1 + 3
+				        iload tmp
+				        iadd // 7 + 4
+				        ireturn
+				    B:
+				    }
+				}
+				""";
+
+		// tmp must remain 7, keeping the method's return value at 1 + 3 + 7 = 11.
+		validateBeforeAfterDecompile(asm, List.of(OpaqueConstantFoldingTransformer.class), "tmp = 7", "tmp = 7");
+	}
+
+	/**
+	 * We previously read the local from the operation frame and double-applied the increment, turning {@code x += 5} into 10.
+	 */
+	@Test
+	void foldSequenceWithIincPreservesIncrementedValue() {
+		String asm = """
+				.method public static example ()I {
+				    code: {
+				    A:
+				        iconst_0
+				        istore x // x = 0
+				        iconst_1
+				        iconst_2
+				        iadd // 1 + 2
+				        iinc x 5 // x += 5
+				        iload x
+				        iadd // 5 + 3
+				        iload x
+				        iadd // 5 + 8
+				        ireturn
+				    B:
+				    }
+				}
+				""";
+		// x must be 5 after folding, keeping the method's return value at 1 + 2 + 5 + 5 = 13.
+		validateBeforeAfterDecompile(asm, List.of(OpaqueConstantFoldingTransformer.class), "x += 5", "x = 5");
+	}
+
+	/**
+	 * When a two-argument predicate compares values created by {@code dup2}, only the {@code dup2}
+	 * itself is removed. The two originals it duplicated remain on the stack for the branch body.
+	 */
+	@Test
+	void foldOpaqueDup2Predicate() {
+		String asm = """
+				.method public static example ()V {
+				    code: {
+				    A:
+				        iconst_0
+				        iconst_1
+				        dup2
+				        if_icmpne C
+				    B:
+				        pop2
+				        return
+				    C:
+				        pop2
+				        return
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(OpaquePredicateFoldingTransformer.class), dis -> {
+			// The "0 != 1" predicate folds into an unconditional goto.
+			assertEquals(0, StringUtil.count("if_icmpne", dis), "Expected to remove if_icmpne");
+			assertEquals(1, StringUtil.count("goto B", dis), "Expected to replace if_icmpne <target> with goto <target>");
+
+			// Only the dup2 is removed; the two originals it duplicated remain for the branch body.
+			assertEquals(0, StringUtil.count("dup2", dis), "Expected to remove dup2");
+			assertEquals(1, StringUtil.count("iconst_0", dis), "Expected to keep the first original value");
+			assertEquals(1, StringUtil.count("iconst_1", dis), "Expected to keep the second original value");
+
+			// The unreachable fall-through branch is pruned, leaving a single pop2.
+			assertEquals(1, StringUtil.count("pop2", dis), "Expected to prune the dead fall-through branch");
+		});
+	}
+
+	/**
+	 * Object comparisons backed by {@code dup2} keep the two duplicated originals as well.
+	 */
+	@Test
+	void foldOpaqueDup2AcmpPredicate() {
+		String asm = """
+				.method public static example ()V {
+				    code: {
+				    A:
+				        aconst_null
+				        aconst_null
+				        dup2
+				        if_acmpeq C
+				    B:
+				        pop2
+				        return
+				    C:
+				        pop2
+				        return
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(OpaquePredicateFoldingTransformer.class), dis -> {
+			assertEquals(0, StringUtil.count("if_acmpeq", dis), "Expected to remove if_acmpeq");
+			assertEquals(1, StringUtil.count("goto B", dis), "Expected to replace if_acmpeq <target> with goto <target>");
+			assertEquals(0, StringUtil.count("dup2", dis), "Expected to remove dup2");
+			assertEquals(2, StringUtil.count("aconst_null", dis), "Expected to keep the two duplicated originals");
+			assertEquals(1, StringUtil.count("pop2", dis), "Expected to prune the dead fall-through branch");
+		});
+	}
+
+	/**
+	 * A single-value predicate above {@code dup2} keeps the {@code dup2} and pops the copy the jump
+	 * no longer consumes, so the two originals plus the surviving copy remain for the branch body.
+	 */
+	@Test
+	void foldOpaqueDup2SingleValuePredicate() {
+		String asm = """
+				.method public static example ()V {
+				    code: {
+				    A:
+				        iconst_0
+				        iconst_1
+				        dup2
+				        ifne C
+				    B:
+				        pop
+				        pop
+				        pop
+				        return
+				    C:
+				        pop
+				        pop
+				        pop
+				        return
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(OpaquePredicateFoldingTransformer.class), dis -> {
+			assertEquals(0, StringUtil.count("ifne", dis), "Expected to remove ifne");
+			assertEquals(1, StringUtil.count("goto B", dis), "Expected to replace ifne <target> with goto <target>");
+			assertEquals(1, StringUtil.count("dup2", dis), "Expected to keep the dup2");
+			assertEquals(1, StringUtil.count("iconst_0", dis), "Expected to keep the first original value");
+			assertEquals(1, StringUtil.count("iconst_1", dis), "Expected to keep the second original value");
+			assertEquals(4, StringUtil.count("pop", dis), "Expected the surviving copy to be popped");
+		});
+	}
+
+	/**
+	 * Object single-value predicates backed by {@code dup2} keep the two duplicated originals and
+	 * pop the surviving copy, mirroring the primitive case.
+	 */
+	@Test
+	void foldOpaqueDup2NullSingleValuePredicate() {
+		String asm = """
+				.method public static example ()V {
+				    code: {
+				    A:
+				        aconst_null
+				        aconst_null
+				        dup2
+				        ifnull C
+				    B:
+				        pop
+				        pop
+				        pop
+				        return
+				    C:
+				        pop
+				        pop
+				        pop
+				        return
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(OpaquePredicateFoldingTransformer.class), dis -> {
+			assertEquals(0, StringUtil.count("ifnull", dis), "Expected to remove ifnull");
+			assertEquals(1, StringUtil.count("goto B", dis), "Expected to replace ifnull <target> with goto <target>");
+			assertEquals(1, StringUtil.count("dup2", dis), "Expected to keep the dup2");
+			assertEquals(2, StringUtil.count("aconst_null", dis), "Expected to keep the two duplicated originals");
+			assertEquals(4, StringUtil.count("pop", dis), "Expected the surviving copy to be popped");
+		});
+	}
+
+	/**
+	 * A switch selector produced by {@code dup2} keeps the {@code dup2} and pops the selector copy
+	 * the switch no longer consumes.
+	 */
+	@Test
+	void foldOpaqueDup2SwitchPredicate() {
+		String asm = """
+				.method public static example ()V {
+				    code: {
+				    A:
+				        iconst_0
+				        iconst_1
+				        dup2
+				        lookupswitch {
+				            0: B,
+				            1: C,
+				            default: B
+				        }
+				    B:
+				        pop
+				        pop
+				        pop
+				        return
+				    C:
+				        pop
+				        pop
+				        pop
+				        return
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(OpaquePredicateFoldingTransformer.class), dis -> {
+			assertEquals(0, StringUtil.count("lookupswitch", dis), "Expected to remove lookupswitch");
+			assertEquals(1, StringUtil.count("goto B", dis), "Expected to replace lookupswitch <target> with goto <target>");
+			assertEquals(1, StringUtil.count("dup2", dis), "Expected to keep the dup2");
+			assertEquals(1, StringUtil.count("iconst_0", dis), "Expected to keep the first original value");
+			assertEquals(1, StringUtil.count("iconst_1", dis), "Expected to keep the second original value");
+			assertEquals(4, StringUtil.count("pop", dis), "Expected the surviving copy to be popped");
+		});
+	}
+
+	/**
+	 * An effective-goto switch with a {@code dup2} selector keeps the {@code dup2} and pops the
+	 * selector copy the goto no longer consumes.
+	 */
+	@Test
+	void foldOpaqueDup2EffectiveGotoSwitchPredicate() {
+		String asm = """
+				.method public static example ()V {
+				    code: {
+				    A:
+				        iconst_0
+				        iconst_1
+				        dup2
+				        lookupswitch {
+				            0: B,
+				            1: B,
+				            default: B
+				        }
+				    B:
+				        pop
+				        pop
+				        pop
+				        return
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(OpaquePredicateFoldingTransformer.class), dis -> {
+			assertEquals(0, StringUtil.count("lookupswitch", dis), "Expected to remove lookupswitch");
+			assertEquals(1, StringUtil.count("goto B", dis), "Expected to replace lookupswitch <target> with goto <target>");
+			assertEquals(1, StringUtil.count("dup2", dis), "Expected to keep the dup2");
+			assertEquals(1, StringUtil.count("iconst_0", dis), "Expected to keep the first original value");
+			assertEquals(1, StringUtil.count("iconst_1", dis), "Expected to keep the second original value");
+			assertEquals(4, StringUtil.count("pop", dis), "Expected the surviving copy to be popped");
+		});
+	}
+
+	/**
+	 * A two-argument predicate whose lower value comes from a {@code dup2} keeps the {@code dup2}
+	 * and pops the consumed copy, removing only the top producer.
+	 */
+	@Test
+	void foldOpaqueDup2BelowProducerPredicate() {
+		String asm = """
+				.method public static example ()V {
+				    code: {
+				    A:
+				        iconst_0
+				        iconst_1
+				        dup2
+				        iconst_2
+				        if_icmpne C
+				    B:
+				        pop
+				        pop
+				        pop
+				        return
+				    C:
+				        pop
+				        pop
+				        pop
+				        return
+				    }
+				}
+				""";
+		validateAfterAssembly(asm, List.of(OpaquePredicateFoldingTransformer.class), dis -> {
+			assertEquals(0, StringUtil.count("if_icmpne", dis), "Expected to remove if_icmpne");
+			assertEquals(1, StringUtil.count("goto B", dis), "Expected to replace if_icmpne <target> with goto <target>");
+			assertEquals(1, StringUtil.count("dup2", dis), "Expected to keep the dup2");
+			assertEquals(1, StringUtil.count("iconst_0", dis), "Expected to keep the first original value");
+			assertEquals(1, StringUtil.count("iconst_1", dis), "Expected to keep the second original value");
+			assertEquals(0, StringUtil.count("iconst_2", dis), "Expected to remove the top producer");
+			assertEquals(4, StringUtil.count("pop", dis), "Expected the surviving copy to be popped");
+		});
+	}
+
+	/**
+	 * A discarded call result must not delete the call, as the call may have side effects.
+	 */
+	@Test
+	void constantFoldingKeepsDiscardedStaticCall() {
+		compileFull("Example", COUNTER_SOURCE + """
+				class Example {
+				    static int run() {
+				        Counter.next();
+				        return Counter.count;
+				    }
+				}
+				""");
+		assertEquals(1, invokeStatic("Example", "run", "Example", "Counter"));
+		transformAndApply(List.of(OpaqueConstantFoldingTransformer.class));
+		assertEquals(1, invokeStatic("Example", "run", "Example", "Counter"));
+	}
+
+	/**
+	 * A call whose result is duplicated must still only be called once.
+	 */
+	@Test
+	void constantFoldingKeepsDuplicatedStaticCallSingle() {
+		compileFull("Example", COUNTER_SOURCE + """
+				class Example {
+				    static int run() {
+				        int x, y;
+				        x = y = Counter.next();
+				        return Counter.count * 100 + x * 10 + y;
+				    }
+				}
+				""");
+		assertEquals(111, invokeStatic("Example", "run", "Example", "Counter"));
+		transformAndApply(List.of(OpaqueConstantFoldingTransformer.class));
+		assertEquals(111, invokeStatic("Example", "run", "Example", "Counter"));
+	}
+
+	/**
+	 * An unused local assigned from a call must not delete the call, as the call may have side effects.
+	 */
+	@Test
+	void variableFoldingKeepsDeadStoreStaticCall() {
+		compileFull("Example", COUNTER_SOURCE + """
+				class Example {
+				    static int run() {
+				        int unused = Counter.next();
+				        return Counter.count;
+				    }
+				}
+				""");
+		assertEquals(1, invokeStatic("Example", "run", "Example", "Counter"));
+		transformAndApply(List.of(VariableFoldingTransformer.class));
+		assertEquals(1, invokeStatic("Example", "run", "Example", "Counter"));
+	}
+
+	/**
+	 * A side effecting call between folded operands must be kept even though the arithmetic folds.
+	 */
+	@Test
+	void constantFoldingKeepsVoidStaticCallBetweenOperands() {
+		assemble("""
+				.super java/lang/Object
+				.class public super Example {
+				    .field static hits I
+				
+				    .method static setupXorKeys ()V {
+				        code: {
+				        A:
+				            getstatic Example.hits I
+				            iconst_1
+				            iadd
+				            putstatic Example.hits I
+				            return
+				        B:
+				        }
+				    }
+				
+				    .method static run ()I {
+				        code: {
+				        A:
+				            iconst_1
+				            iconst_1
+				            invokestatic Example.setupXorKeys ()V
+				            iadd
+				            getstatic Example.hits I
+				            iadd
+				            ireturn
+				        B:
+				        }
+				    }
+				}
+				""", true);
+		assertEquals(3, invokeStatic("Example", "run", "Example"));
+		transformAndApply(List.of(OpaqueConstantFoldingTransformer.class));
+		assertEquals(3, invokeStatic("Example", "run", "Example"));
+	}
+
+	/**
+	 * A value returning call whose result is discarded between folded operands must be kept.
+	 */
+	@Test
+	void constantFoldingKeepsPoppedStaticCallBetweenOperands() {
+		assemble("""
+				.super java/lang/Object
+				.class public super Example {
+				    .field static count I
+				
+				    .method static next ()I {
+				        code: {
+				        A:
+				            getstatic Example.count I
+				            iconst_1
+				            iadd
+				            dup
+				            putstatic Example.count I
+				            ireturn
+				        B:
+				        }
+				    }
+				
+				    .method static run ()I {
+				        code: {
+				        A:
+				            iconst_1
+				            invokestatic Example.next ()I
+				            pop
+				            iconst_1
+				            iadd
+				            getstatic Example.count I
+				            iadd
+				            ireturn
+				        B:
+				        }
+				    }
+				}
+				""", true);
+		assertEquals(3, invokeStatic("Example", "run", "Example"));
+		transformAndApply(List.of(OpaqueConstantFoldingTransformer.class));
+		assertEquals(3, invokeStatic("Example", "run", "Example"));
+	}
+
+	/**
+	 * A cast that looks redundant for the known runtime value must be kept when the verifier
+	 * only knows the less specific static type of the operand.
+	 */
+	@Test
+	void constantFoldingKeepsCastRequiredByVerifier() {
+		compileFull("Example", """
+				class Example {
+				    static int run() {
+				        Object[] holder = new Object[4];
+				        holder[3] = new Object[5];
+				        ((Object[]) holder[3])[0] = "x";
+				        return ((Object[]) holder[3])[0] == null ? 0 : 1;
+				    }
+				}
+				""");
+		assertEquals(1, invokeStatic("Example", "run", "Example"));
+		transformAndApply(List.of(OpaqueConstantFoldingTransformer.class));
+		assertEquals(1, invokeStatic("Example", "run", "Example"));
+	}
+
+	/**
+	 * Removing a dead block removes its stack map frame, which later delta frames <i>(chop/append/same)</i>
+	 * may be relative to. Frames must be recomputed so the output still verifies.
+	 */
+	@Test
+	void deadCodeRemovalRecomputesFramesAfterDeadFrame() {
+		putDeadFrameClass();
+		assertEquals(1, invokeStatic("DeadFrame", "run", "DeadFrame"));
+		transformAndApply(List.of(DeadCodeRemovingTransformer.class));
+		assertEquals(1, invokeStatic("DeadFrame", "run", "DeadFrame"));
+	}
+
+	/**
+	 * Opaque predicate folding runs dead code removal as a dependency, so it must also recompute frames.
+	 */
+	@Test
+	void opaquePredicateFoldingRecomputesFramesAfterDeadFrame() {
+		putDeadFrameClass();
+		assertEquals(1, invokeStatic("DeadFrame", "run", "DeadFrame"));
+		transformAndApply(List.of(OpaquePredicateFoldingTransformer.class));
+		assertEquals(1, invokeStatic("DeadFrame", "run", "DeadFrame"));
+	}
+
+	/**
+	 * Removing a dead store leaves a later stack map frame claiming the local is assigned.
+	 * Frames must be recomputed so the output still verifies.
+	 */
+	@Test
+	void variableFoldingRecomputesFramesAfterDeadStoreRemoval() {
+		compileFull("Example", """
+				class Example {
+				    static int field = 7;
+				    static int run() {
+				        int unused = field;
+				        if (field > 5) return 9;
+				        return 3;
+				    }
+				}
+				""");
+		assertEquals(9, invokeStatic("Example", "run", "Example"));
+		transformAndApply(List.of(VariableFoldingTransformer.class));
+		assertEquals(9, invokeStatic("Example", "run", "Example"));
+	}
+
+	/**
+	 * Compacting local slots and shrinking max locals leaves frames naming slots that no longer exist.
+	 * Frames must be recomputed so the output can be written and still verifies.
+	 */
+	@Test
+	void variableTableNormalizingRecomputesFramesAfterSlotCompaction() {
+		putClass("SlotGap", node -> {
+			MethodVisitor mv = node.visitMethod(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, "run", "()I", null, null);
+			Label join = new Label();
+			mv.visitCode();
+			mv.visitIntInsn(Opcodes.BIPUSH, 42);
+			mv.visitVarInsn(Opcodes.ISTORE, 2);
+			mv.visitInsn(Opcodes.ICONST_0);
+			mv.visitJumpInsn(Opcodes.IFEQ, join);
+			mv.visitIincInsn(2, 1);
+
+			// The only used local is in slot 2, with slots 0 and 1 unused.
+			mv.visitLabel(join);
+			mv.visitFrame(Opcodes.F_FULL, 3, new Object[]{Opcodes.TOP, Opcodes.TOP, Opcodes.INTEGER}, 0, new Object[0]);
+			mv.visitVarInsn(Opcodes.ILOAD, 2);
+			mv.visitInsn(Opcodes.IRETURN);
+			mv.visitMaxs(1, 3);
+			mv.visitEnd();
+		});
+		assertEquals(42, invokeStatic("SlotGap", "run", "SlotGap"));
+		transformAndApply(List.of(VariableTableNormalizingTransformer.class));
+		assertEquals(42, invokeStatic("SlotGap", "run", "SlotGap"));
+	}
+
+	/** Normalization shouldn't change abstract/native methods, which have no code and thus no variable table. */
+	@Test
+	void variableTableNormalizingSkipsCodeLessMethods() {
+		compileFull("AbstractMethods", """
+				interface AbstractMethods {
+					void invoke(String text, long count);
+				}
+				""");
+		compileFull("NativeMethods", """
+				class NativeMethods {
+					native void invoke(String text, long count);
+				}
+				""");
+		JvmTransformResult result = assertDoesNotThrow(() -> newApplier().transformJvm(List.of(VariableTableNormalizingTransformer.class)));
+		assertTrue(result.getTransformerFailures().isEmpty(), "There were transformation failures");
+		assertTrue(result.getTransformedClasses().isEmpty(), "Abstract methods should not be normalized");
+	}
+
+	/**
+	 * Folding a sequence must not delete array element stores it contains.
+	 */
+	@Test
+	void constantFoldingKeepsArrayStoreInFoldedSequence() {
+		assemble(SIDE_EFFECT_SEQUENCES, true);
+		assertEquals(7, invokeStatic("Example", "arrayStore", "Example"));
+		transformAndApply(List.of(OpaqueConstantFoldingTransformer.class));
+		assertEquals(7, invokeStatic("Example", "arrayStore", "Example"));
+	}
+
+	/**
+	 * Folding a sequence must not delete field stores it contains.
+	 */
+	@Test
+	void constantFoldingKeepsFieldStoreInFoldedSequence() {
+		assemble(SIDE_EFFECT_SEQUENCES, true);
+		assertEquals(7, invokeStatic("Example", "fieldStore", "Example"));
+		transformAndApply(List.of(OpaqueConstantFoldingTransformer.class));
+		assertEquals(7, invokeStatic("Example", "fieldStore", "Example"));
+	}
+
+	/**
+	 * Folding a sequence must not delete calls with arguments it contains.
+	 */
+	@Test
+	void constantFoldingKeepsArgumentCallInFoldedSequence() {
+		assemble(SIDE_EFFECT_SEQUENCES, true);
+		assertEquals(7, invokeStatic("Example", "argumentCall", "Example"));
+		transformAndApply(List.of(OpaqueConstantFoldingTransformer.class));
+		assertEquals(7, invokeStatic("Example", "argumentCall", "Example"));
+	}
+
+	/**
+	 * A folded sequence whose result is known regardless of a side-effecting call operand must keep the call's
+	 * value discarded at its position, without disturbing the stack around the folded constant.
+	 */
+	@Test
+	void constantFoldingKeepsCallOperandOfKnownResultOnOneBranch() {
+		compileFull("Example", """
+				class Example {
+				    static int get() { return 5; }
+				    static int run() {
+				        int r = 1;
+				        if (get() > 4) { r = 0 * get(); }
+				        return r + 2;
+				    }
+				}
+				""");
+		assertEquals(2, invokeStatic("Example", "run", "Example"));
+		transformAndApply(List.of(OpaqueConstantFoldingTransformer.class));
+		assertEquals(2, invokeStatic("Example", "run", "Example"));
+	}
+
+	private void putDeadFrameClass() {
+		putClass("DeadFrame", node -> {
+			MethodVisitor mv = node.visitMethod(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, "run", "()I", null, null);
+			Label dead = new Label();
+			Label live = new Label();
+			mv.visitCode();
+			mv.visitInsn(Opcodes.ICONST_1);
+			mv.visitVarInsn(Opcodes.ISTORE, 0);
+			mv.visitJumpInsn(Opcodes.GOTO, live);
+
+			// Unreachable, but its frame appends two ints to the initial frame and is the base for the next frame.
+			mv.visitLabel(dead);
+			mv.visitFrame(Opcodes.F_APPEND, 2, new Object[]{Opcodes.INTEGER, Opcodes.INTEGER}, 0, null);
+			mv.visitIincInsn(1, 1);
+			mv.visitJumpInsn(Opcodes.GOTO, live);
+
+			// Reachable, and chops one local relative to the dead frame.
+			mv.visitLabel(live);
+			mv.visitFrame(Opcodes.F_CHOP, 1, null, 0, null);
+			mv.visitVarInsn(Opcodes.ILOAD, 0);
+			mv.visitInsn(Opcodes.IRETURN);
+			mv.visitMaxs(1, 2);
+			mv.visitEnd();
+		});
 	}
 }

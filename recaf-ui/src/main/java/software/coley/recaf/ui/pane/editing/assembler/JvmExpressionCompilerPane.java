@@ -1,12 +1,22 @@
 package software.coley.recaf.ui.pane.editing.assembler;
 
+import atlantafx.base.controls.Popover;
+import atlantafx.base.theme.Styles;
 import jakarta.annotation.Nonnull;
 import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.event.ActionEvent;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.SplitPane;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.StackPane;
+import org.kordamp.ikonli.carbonicons.CarbonIcons;
 import org.objectweb.asm.Type;
 import software.coley.collections.Lists;
 import software.coley.recaf.info.member.FieldMember;
@@ -16,6 +26,7 @@ import software.coley.recaf.services.assembler.ExpressionResult;
 import software.coley.recaf.services.compile.CompilerDiagnostic;
 import software.coley.recaf.services.info.association.FileTypeSyntaxAssociationService;
 import software.coley.recaf.ui.LanguageStylesheets;
+import software.coley.recaf.ui.control.FontIconView;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.bracket.BracketMatchGraphicFactory;
 import software.coley.recaf.ui.control.richtext.bracket.SelectedBracketTracking;
@@ -52,6 +63,10 @@ public class JvmExpressionCompilerPane extends AstBuildConsumerComponent {
 	private final ExpressionCompiler expressionCompiler;
 	private final Editor javaEditor = new Editor();
 	private final Editor jasmEditor = new Editor();
+	private final Button settingsButton = new Button();
+	private final CheckBox classContextCheckBox = new CheckBox();
+	private final CheckBox methodContextCheckBox = new CheckBox();
+	private Popover popover;
 	private boolean isDirty;
 
 	@Inject
@@ -73,7 +88,25 @@ public class JvmExpressionCompilerPane extends AstBuildConsumerComponent {
 		searchBarProvider.get().install(javaEditor);
 		searchBarProvider.get().install(jasmEditor);
 
-		SplitPane split = new SplitPane(javaEditor, jasmEditor);
+		// Configure the available expression context options.
+		classContextCheckBox.textProperty().bind(Lang.getBinding("assembler.playground.class-context"));
+		methodContextCheckBox.textProperty().bind(Lang.getBinding("assembler.playground.method-context"));
+		classContextCheckBox.setSelected(true);
+		methodContextCheckBox.setSelected(true);
+		methodContextCheckBox.disableProperty().bind(classContextCheckBox.selectedProperty().not());
+		classContextCheckBox.selectedProperty().addListener((ob, old, cur) -> onContextOptionChanged());
+		methodContextCheckBox.selectedProperty().addListener((ob, old, cur) -> onContextOptionChanged());
+
+		// Layout:
+		//  - Left:  Java editor + settings/problems overlay
+		//  - Right: Bytecode output
+		settingsButton.setGraphic(new FontIconView(CarbonIcons.SETTINGS));
+		settingsButton.getStyleClass().addAll(Styles.BUTTON_ICON, Styles.ACCENT, Styles.FLAT);
+		settingsButton.setOnAction(this::showConfiguratorPopover);
+		StackPane stack = new StackPane(javaEditor, settingsButton);
+		SplitPane split = new SplitPane(stack, jasmEditor);
+		StackPane.setAlignment(settingsButton, Pos.BOTTOM_RIGHT);
+		StackPane.setMargin(settingsButton, new Insets(7));
 		setCenter(split);
 
 		javaEditor.getTextChangeEventStream()
@@ -83,31 +116,21 @@ public class JvmExpressionCompilerPane extends AstBuildConsumerComponent {
 
 	@Override
 	protected void onClassSelected() {
-		expressionCompiler.clearContext();
-		if (canAssignClassContext())
-			expressionCompiler.setClassContext(currentClass.asJvmClass());
+		updateCompilerContext();
 		init(ContextType.CLASS);
 		scheduleCompile();
 	}
 
 	@Override
 	protected void onMethodSelected() {
-		expressionCompiler.clearContext();
-		if (canAssignClassContext()) {
-			expressionCompiler.setClassContext(currentClass.asJvmClass());
-			if (canAssignMethodContext()) {
-				expressionCompiler.setMethodContext(currentMethod);
-			}
-		}
+		updateCompilerContext();
 		init(ContextType.METHOD);
 		scheduleCompile();
 	}
 
 	@Override
 	protected void onFieldSelected() {
-		expressionCompiler.clearContext();
-		if (canAssignClassContext())
-			expressionCompiler.setClassContext(currentClass.asJvmClass());
+		updateCompilerContext();
 		init(ContextType.FIELD);
 		scheduleCompile();
 	}
@@ -185,6 +208,54 @@ public class JvmExpressionCompilerPane extends AstBuildConsumerComponent {
 				javaEditor.textProperty().removeListener(this);
 			}
 		});
+	}
+
+	/**
+	 * Applies each selected context independently after resetting stale compiler state.
+	 */
+	private void updateCompilerContext() {
+		expressionCompiler.clearContext();
+		if (classContextCheckBox.isSelected() && currentClass != null && canAssignClassContext())
+			expressionCompiler.setClassContext(currentClass.asJvmClass());
+		if (methodContextCheckBox.isSelected() && currentMethod != null && canAssignMethodContext())
+			expressionCompiler.setMethodContext(currentMethod);
+	}
+
+	/**
+	 * Called when a context option is changed, which will update the compiler context and schedule a recompile.
+	 */
+	private void onContextOptionChanged() {
+		updateCompilerContext();
+		scheduleCompile();
+	}
+
+	/**
+	 * Shows the context settings popover, creating its controls on first use.
+	 *
+	 * @param e
+	 * 		Button action event.
+	 */
+	private void showConfiguratorPopover(@Nonnull ActionEvent e) {
+		if (popover == null) {
+			GridPane content = createGrid();
+
+			// Wrap in popover
+			popover = new Popover(content);
+			popover.setArrowLocation(Popover.ArrowLocation.BOTTOM_RIGHT);
+		}
+		popover.show(settingsButton);
+	}
+
+	/**
+	 * @return Grid containing the context options.
+	 */
+	@Nonnull
+	private GridPane createGrid() {
+		GridPane grid = new GridPane(8, 8);
+		grid.setPadding(new Insets(8));
+		grid.add(classContextCheckBox, 0, 0);
+		grid.add(methodContextCheckBox, 0, 1);
+		return grid;
 	}
 
 	/**

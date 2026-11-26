@@ -1,7 +1,7 @@
 package software.coley.recaf.services.workspace.patch;
 
 import jakarta.annotation.Nonnull;
-import me.darknet.assembler.error.Error;
+import me.darknet.assembler.error.Diagnostic;
 import org.junit.jupiter.api.Test;
 import org.objectweb.asm.ClassWriter;
 import software.coley.recaf.info.JvmClassInfo;
@@ -176,8 +176,8 @@ class PatchingTest extends TestBase {
 	private PatchFeedback failOnErrors() {
 		return new PatchFeedback() {
 			@Override
-			public void onAssemblerErrorsObserved(@Nonnull List<Error> errors) {
-				fail("Errors encountered applying patch: " + errors.stream().map(Error::getMessage).collect(Collectors.joining(", ")));
+			public void onAssemblerErrorsObserved(@Nonnull List<Diagnostic> errors) {
+				fail("Errors encountered applying patch: " + errors.stream().map(Diagnostic::message).collect(Collectors.joining(", ")));
 			}
 
 			@Override

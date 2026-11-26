@@ -19,6 +19,7 @@ import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.ui.config.WindowScaleConfig;
 import software.coley.recaf.ui.pane.ScalePane;
+import software.coley.recaf.ui.window.ConfigWindow;
 import software.coley.recaf.ui.window.IdentifiableStage;
 import software.coley.recaf.util.NodeEvents;
 
@@ -231,8 +232,8 @@ public class WindowManager implements Service {
 	 * @return Window for the config display.
 	 */
 	@Nonnull
-	public Stage getConfigWindow() {
-		return Objects.requireNonNull(getWindow(WIN_CONFIG));
+	public ConfigWindow getConfigWindow() {
+		return (ConfigWindow) Objects.requireNonNull(getWindow(WIN_CONFIG));
 	}
 
 	/**

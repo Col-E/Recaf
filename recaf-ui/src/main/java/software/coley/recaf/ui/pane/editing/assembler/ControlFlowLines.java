@@ -22,15 +22,18 @@ import me.darknet.assembler.ast.primitive.ASTInstruction;
 import me.darknet.assembler.ast.primitive.ASTLabel;
 import me.darknet.assembler.ast.specific.ASTClass;
 import me.darknet.assembler.ast.specific.ASTMethod;
-import me.darknet.assembler.parser.BytecodeFormat;
+import me.darknet.assembler.backend.dalvik.DalvikTargetContext;
+import me.darknet.assembler.backend.jvm.JvmTargetContext;
 import me.darknet.assembler.query.AssemblyQueries;
 import me.darknet.assembler.query.AssemblyUtils;
 import me.darknet.assembler.query.LabelInfo;
 import me.darknet.assembler.query.LabelQueryResult;
 import me.darknet.assembler.query.LabelUsage;
+import me.darknet.assembler.target.TargetContext;
 import me.darknet.assembler.util.Location;
 import me.darknet.assembler.util.Range;
 import org.reactfx.Change;
+import org.reactfx.EventStream;
 import org.slf4j.Logger;
 import software.coley.bentofx.control.canvas.PixelCanvas;
 import software.coley.bentofx.control.canvas.PixelPainter;
@@ -71,12 +74,14 @@ import java.util.stream.Stream;
 @Dependent
 public class ControlFlowLines extends AstBuildConsumerComponent {
 	private static final Logger logger = Logging.get(ControlFlowLines.class);
+	private static final TargetContext[] CONTEXTS = {JvmTargetContext.INSTANCE, DalvikTargetContext.INSTANCE};
 	private final Consumer<Change<Integer>> onCaretMove = this::onCaretMove;
 	private final ObservableObject<ASTInstruction> currentInstructionSelection = new ObservableObject<>(null);
 	private final ObservableBoolean drawLines = new ObservableBoolean(false);
 	private final ControlFlowLineFactory arrowFactory = new ControlFlowLineFactory();
 	private final ControlFlowLinesConfig config;
 	private final ListenerHost redrawListener = new ListenerHost();
+	private EventStream<Change<Integer>> lastCaretStream;
 	private List<LabelData> model = Collections.emptyList();
 
 	@Inject
@@ -90,7 +95,9 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 		super.install(editor);
 
 		editor.getRootLineGraphicFactory().addLineGraphicFactory(arrowFactory);
-		editor.getCaretPosEventStream().addObserver(onCaretMove);
+
+		lastCaretStream = editor.getCaretPosEventStream().successionEnds(java.time.Duration.ofMillis(Editor.SHORT_DELAY_MS));
+		lastCaretStream.addObserver(onCaretMove);
 
 		drawLines.addChangeListener(redrawListener);
 		currentInstructionSelection.addChangeListener(redrawListener);
@@ -105,7 +112,9 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 
 		arrowFactory.cleanup();
 		editor.getRootLineGraphicFactory().removeLineGraphicFactory(arrowFactory);
-		editor.getCaretPosEventStream().removeObserver(onCaretMove);
+
+		if (lastCaretStream != null)
+			lastCaretStream.removeObserver(onCaretMove);
 
 		drawLines.removeChangeListener(redrawListener);
 		currentInstructionSelection.removeChangeListener(redrawListener);
@@ -161,6 +170,13 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 	 * 		Caret pos change.
 	 */
 	private void onCaretMove(@Nonnull Change<Integer> caretChange) {
+		// Skip if the user is selecting text.
+		if (editor.getCodeArea().getSelection().getLength() > 0) {
+			currentInstructionSelection.setValue(null);
+			drawLines.setValue(false);
+			return;
+		}
+
 		// Find the selected element off of the FX thread, then update our selection and line draw states on the FX thread.
 		CompletableFuture.supplyAsync(this::findSelected, ThreadUtil.executor()).thenAcceptAsync(selected -> {
 			try {
@@ -172,8 +188,7 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 				} else if (current != null) {
 					String insnName = current.identifier().content();
 					List<ASTElement> arguments = current.arguments();
-					if ((!arguments.isEmpty() && AssemblyUtils.isFlowControlInstruction(BytecodeFormat.JVM, insnName))
-							|| AssemblyUtils.isSwitchInstruction(BytecodeFormat.JVM, insnName)) {
+					if ((!arguments.isEmpty() && AssemblyUtils.isFlowControlInstruction(insnName, CONTEXTS))) {
 						hasSelection = true;
 					}
 				}
@@ -191,7 +206,7 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 		try {
 			int pos = editor.getCodeArea().getCaretPosition();
 			int line = editor.getCodeArea().getCurrentParagraph() + 1;
-			selected.set(AssemblyUtils.findInstruction(astElements, pos, line));
+			selected.set(AssemblyUtils.findInstruction(astElements, pos, line, CONTEXTS));
 		} catch (Throwable t) {
 			logger.warn("Error finding selected AST element", t);
 		}
@@ -207,7 +222,7 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 		}
 
 		// Collect all label usage information from the AST.
-		LabelQueryResult labelQuery = AssemblyQueries.labels(astMethod, BytecodeFormat.JVM);
+		LabelQueryResult labelQuery = AssemblyQueries.labels(astMethod, CONTEXTS);
 		Map<String, LabelData> labels = new LinkedHashMap<>();
 		for (LabelInfo declaration : labelQuery.declarations()) {
 			labels.putIfAbsent(declaration.name(), new LabelData(
@@ -331,7 +346,7 @@ public class ControlFlowLines extends AstBuildConsumerComponent {
 					if (value == null) {
 						// No current selection?  We can skip everything. Just return.
 						return;
-					} else if (AssemblyUtils.isSwitchInstruction(BytecodeFormat.JVM, value.identifier().literal())) {
+					} else if (AssemblyUtils.isSwitchInstruction(value.identifier().literal(), CONTEXTS)) {
 						// If the selected item is a switch we want to draw all the lines to all destinations.
 						//
 						// The label data writers will be targeting the label identifier children in the AST

@@ -1,7 +1,6 @@
 package software.coley.recaf.ui.control.richtext.suggest;
 
 import jakarta.annotation.Nonnull;
-import jakarta.annotation.Nullable;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import org.fxmisc.richtext.model.PlainTextChange;
@@ -40,6 +39,9 @@ public interface TabCompleter<T> extends EditorComponent {
 	 * This is called for <i>ANY</i> and <i>ALL</i> changes.
 	 * <p>
 	 * Implementations should update any state that is cheap to maintain in here.
+	 *
+	 * @param changes
+	 * 		Observed changes to the text.
 	 */
 	void onFineTextUpdate(@Nonnull PlainTextChange changes);
 
@@ -47,20 +49,21 @@ public interface TabCompleter<T> extends EditorComponent {
 	 * Called when the linked {@link Editor} has updated its text, with reduced successions.
 	 * <p>
 	 * Implementations should update any state that is expensive to maintain in here.
+	 *
+	 * @param changes
+	 * 		Observed changes to the text, with reduced successions.
 	 */
 	void onRoughTextUpdate(@Nonnull List<PlainTextChange> changes);
 
 	/**
-	 * Called when the {@link CompletionPopupUpdater} observes a typed non-letter/non-digit {@link KeyCode}.
-	 * <p>
-	 * Implementations can check for key-codes not covered by {@link KeyCode#isLetterKey()} and {@link KeyCode#isDigitKey()}
-	 * to support completion of additional characters. For example the {@code []} characters are not covered by default
-	 * and an implementation would need to explicitly support them via this method.
+	 * Called when the {@link CompletionPopupUpdater} observes a typed character that is not a letter, digit, or period.
 	 *
-	 * @param code Key-code to check for tab-completion support.
-	 * @return {@code true} when this completer supports the tab-completion of the given key-code.
+	 * @param character
+	 * 		Typed character to check for tab-completion support.
+	 *
+	 * @return {@code true} when this completer supports the tab-completion of the given character.
 	 */
-	default boolean isSpecialCompletableKeyCode(@Nullable KeyCode code) {
+	default boolean isSpecialCompletableCharacter(char character) {
 		return false;
 	}
 

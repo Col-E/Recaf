@@ -1,5 +1,8 @@
 package software.coley.recaf.ui.pane.editing.binary.hex.ops;
 
+import jakarta.annotation.Nonnull;
+import software.coley.recaf.ui.pane.editing.binary.hex.HexSelection;
+
 /**
  * Outlines UI navigation for the hex editor.
  *
@@ -7,9 +10,10 @@ package software.coley.recaf.ui.pane.editing.binary.hex.ops;
  */
 public interface HexNavigation {
 	/**
-	 * @return Current offset in the data that is selected.
+	 * @return Current directed selection. Its anchor and caret are byte boundaries, including the end of the data.
 	 */
-	int selectionOffset();
+	@Nonnull
+	HexSelection selection();
 
 	/**
 	 * The hex editor has two main columns for editing data. The same offset is used for both, but determining
@@ -28,54 +32,30 @@ public interface HexNavigation {
 	void switchColumns();
 
 	/**
-	 * Selects the given offset in the data. The value is clamped to fit if it is out of bounds.
+	 * Select a single byte at the given offset. Clamped to {@code [0, data length]}.
 	 *
 	 * @param offset
-	 * 		Offset in the data to select.
+	 * 		Byte offset to select.
 	 */
 	void select(int offset);
 
 	/**
-	 * Move selection by {@code +1}.
+	 * Select a range of bytes. Both boundaries are clamped to {@code [0, data length]}.
+	 *
+	 * @param anchor
+	 * 		Fixed boundary.
+	 * @param caret
+	 * 		Moving boundary.
 	 */
-	void selectNext();
+	void selectRange(int anchor, int caret);
 
 	/**
-	 * Move selection by {@code -1}.
+	 * Move the caret to a byte boundary, optionally extending from the current anchor.
+	 *
+	 * @param offset
+	 * 		Target boundary.
+	 * @param extend
+	 *        {@code true} to preserve the current anchor.
 	 */
-	void selectPrevious();
-
-	/**
-	 * Move selection by {@code +R} where:
-	 * <ul>
-	 *     <li>{@code R} is the number of values shown per row.</li>
-	 * </ul>
-	 */
-	void selectDown();
-
-	/**
-	 * Move selection by {@code -R} where:
-	 * <ul>
-	 *     <li>{@code R} is the number of values shown per row.</li>
-	 * </ul>
-	 */
-	void selectUp();
-
-	/**
-	 * Move selection by {@code +N*R} where {@code R} is the number of values shown per row.
-	 * <ul>
-	 *     <li>{@code R} is the number of values shown per row.</li>
-	 *     <li>{@code N} is the number of rows</li>
-	 * </ul>
-	 */
-	void selectDown(int rows);
-
-	/**
-	 * Move selection by {@code -N*R} where:
-	 * <ul>
-	 *     <li>{@code R} is the number of values shown per row.</li>
-	 *     <li>{@code N} is the number of rows</li>
-	 * </ul>
-	 */
-	void selectUp(int rows);
+	void moveTo(int offset, boolean extend);
 }

@@ -8,6 +8,7 @@ import org.objectweb.asm.ClassWriter;
 import org.slf4j.Logger;
 import software.coley.cafedude.InvalidClassException;
 import software.coley.cafedude.classfile.ClassFile;
+import software.coley.cafedude.classfile.ConstantPoolConstants;
 import software.coley.cafedude.classfile.attribute.BootstrapMethodsAttribute;
 import software.coley.cafedude.classfile.behavior.AttributeHolder;
 import software.coley.cafedude.classfile.constant.ConstDynamic;
@@ -28,6 +29,7 @@ import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Basic patcher implementation with CafeDude.
@@ -38,15 +40,34 @@ import java.util.Map;
 public class BasicClassPatcher implements ClassPatcher {
 	private static final Logger logger = Logging.get(BasicClassPatcher.class);
 
+	@Nullable
+	@Override
+	public byte[] prefilter(@Nullable String name, @Nonnull byte[] code) throws IOException {
+		if (!hasDynamicConstants(code))
+			return null;
+		return patch(name, code, true);
+	}
+
 	@Nonnull
 	@Override
 	public byte[] patch(@Nullable String name, @Nonnull byte[] code) throws IOException {
+		byte[] patched = patch(name, code, false);
+		if (patched == null)
+			throw new IllegalStateException("Unconditional patching produced no output");
+		return patched;
+	}
+
+	@Nullable
+	private static byte[] patch(@Nullable String name, @Nonnull byte[] code, boolean onlyIfNecessary) throws IOException {
 		try {
 			// Patch via CafeDude
 			ClassFileReader reader = new ClassFileReaderExt();
 			ClassFile classFile = reader.read(code);
 			if (name == null) name = classFile.getName();
-			new BootstrapSpamTransformer(classFile).transform();
+			BootstrapSpamTransformer bootstrapTransformer = new BootstrapSpamTransformer(classFile);
+			bootstrapTransformer.transform();
+			if (onlyIfNecessary && !bootstrapTransformer.wasTransformed())
+				return null;
 			new IllegalStrippingTransformerExt(classFile).transform();
 			return new ClassFileWriter().write(classFile);
 		} catch (InvalidClassException ex) {
@@ -58,6 +79,27 @@ public class BasicClassPatcher implements ClassPatcher {
 			logger.error("CafeDude failed to patch '{}'", name, t);
 			throw new IOException(t);
 		}
+	}
+
+	/**
+	 * @param code
+	 * 		Input bytecode.
+	 *
+	 * @return {@code true} if the bytecode contains dynamic constants,
+	 * which can exploit ASM's constant pool copying to exhaust memory and CPU.
+	 */
+	private static boolean hasDynamicConstants(@Nonnull byte[] code) {
+		try {
+			ClassReader reader = new ClassReader(code);
+			for (int i = 1; i < reader.getItemCount(); i++) {
+				int offset = reader.getItem(i);
+				if (offset > 0 && reader.readByte(offset - 1) == ConstantPoolConstants.DYNAMIC)
+					return true;
+			}
+		} catch (Throwable ignored) {
+			// Let the normal ASM validation and CafeDude fallback handle malformed constant pools.
+		}
+		return false;
 	}
 
 	/**
@@ -92,6 +134,9 @@ public class BasicClassPatcher implements ClassPatcher {
 	private static class BootstrapSpamTransformer extends Transformer {
 		private static final int ARG_THRESHOLD = 100;
 		private final Map<BootstrapMethodsAttribute.BootstrapMethod, Integer> argCount = new IdentityHashMap<>();
+		private final Set<BootstrapMethodsAttribute.BootstrapMethod> visiting =
+				Collections.newSetFromMap(new IdentityHashMap<>());
+		private boolean transformed;
 
 		public BootstrapSpamTransformer(@Nonnull ClassFile clazz) {
 			super(clazz);
@@ -103,10 +148,16 @@ public class BasicClassPatcher implements ClassPatcher {
 			if (attribute == null)
 				return;
 			for (BootstrapMethodsAttribute.BootstrapMethod bootstrapMethod : attribute.getBootstrapMethods()) {
-				if (computeTotalArgs(attribute, bootstrapMethod) >= ARG_THRESHOLD) {
+				if (computeTotalArgs(attribute, bootstrapMethod) >= ARG_THRESHOLD &&
+						!bootstrapMethod.getArgs().isEmpty()) {
 					bootstrapMethod.setArgs(Collections.emptyList());
+					transformed = true;
 				}
 			}
+		}
+
+		public boolean wasTransformed() {
+			return transformed;
 		}
 
 		private int computeTotalArgs(@Nonnull BootstrapMethodsAttribute bsmAttribute,
@@ -116,13 +167,14 @@ public class BasicClassPatcher implements ClassPatcher {
 			if (cachedValue != null)
 				return cachedValue;
 
+			// A bootstrap graph is allowed to be cyclic. ASM recursively materializes dynamic constants without a
+			// cycle guard, so a cycle must be treated as exceeding the limit.
+			if (!visiting.add(bsm))
+				return ARG_THRESHOLD;
+
 			// Get direct arg count.
 			List<CpEntry> args = bsm.getArgs();
 			int total = args.size();
-
-			// Put the arg count in the map for now, we will update it later.
-			// We just need it here already to handle short-circuiting with the indirect-argument counting.
-			argCount.put(bsm, total);
 
 			// Only sum indirect-arguments if we're under the threshold.
 			if (total < ARG_THRESHOLD) {
@@ -133,6 +185,7 @@ public class BasicClassPatcher implements ClassPatcher {
 				}
 			}
 
+			visiting.remove(bsm);
 			argCount.put(bsm, total);
 			return total;
 		}

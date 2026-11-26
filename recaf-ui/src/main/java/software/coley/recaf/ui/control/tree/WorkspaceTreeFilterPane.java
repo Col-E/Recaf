@@ -16,16 +16,22 @@ import software.coley.recaf.path.FilePathNode;
 import software.coley.recaf.path.PathNode;
 import software.coley.recaf.ui.control.BoundToggleIcon;
 import software.coley.recaf.ui.control.FontIconView;
+import software.coley.recaf.ui.control.PathNodeTree;
 import software.coley.recaf.util.Lang;
 
 import java.util.function.Predicate;
 
 /**
- * Pane component to filter what is visible in a given {@link WorkspaceTree}.
+ * Pane component to filter what is visible in a workspace-backed {@link PathNodeTree}.
  *
  * @author Matt Coley
  */
 public class WorkspaceTreeFilterPane extends BorderPane {
+	/** Style class name for the filter pane. */
+	public static final String PANE_STYLE_CLASS = "workspace-filter-pane";
+	/** Style class name for the filter text field. */
+	public static final String TEXT_STYLE_CLASS = "workspace-filter-text";
+
 	private final ObjectProperty<Predicate<TreeItem<PathNode<?>>>> currentPredicate = new SimpleObjectProperty<>();
 	private final SimpleBooleanProperty caseSensitivity = new SimpleBooleanProperty(false);
 	private final CustomTextField textField = new CustomTextField();
@@ -34,15 +40,15 @@ public class WorkspaceTreeFilterPane extends BorderPane {
 	 * @param tree
 	 * 		Tree to filter.
 	 */
-	public WorkspaceTreeFilterPane(@Nonnull WorkspaceTree tree) {
+	public WorkspaceTreeFilterPane(@Nonnull PathNodeTree tree) {
 		BoundToggleIcon toggleSensitivity = new BoundToggleIcon(new FontIconView(CarbonIcons.LETTER_CC), caseSensitivity).withTooltip("misc.casesensitive");
 		toggleSensitivity.getStyleClass().addAll(Styles.BUTTON_ICON, Styles.ACCENT, Styles.FLAT, Styles.SMALL);
 		textField.rightProperty().set(toggleSensitivity);
 
 		textField.promptTextProperty().bind(Lang.getBinding("workspace.filter-prompt"));
 		setCenter(textField);
-		getStyleClass().add("workspace-filter-pane");
-		textField.getStyleClass().add("workspace-filter-text");
+		getStyleClass().add(PANE_STYLE_CLASS);
+		textField.getStyleClass().add(TEXT_STYLE_CLASS);
 
 		textField.textProperty().addListener((ob, old, cur) -> update(tree));
 		caseSensitivity.addListener((ob, old, cur) -> update(tree));
@@ -64,9 +70,8 @@ public class WorkspaceTreeFilterPane extends BorderPane {
 		return textField;
 	}
 
-	private void update(@Nonnull WorkspaceTree tree) {
-		WorkspaceTreeNode root = (WorkspaceTreeNode) tree.getRoot();
-		if (root == null) return;
+	private void update(@Nonnull PathNodeTree tree) {
+		if (!(tree.getRoot() instanceof WorkspaceTreeNode root)) return;
 
 		ObjectProperty<Predicate<TreeItem<PathNode<?>>>> rootPredicate = root.predicateProperty();
 		if (textField.getText().isEmpty()) {

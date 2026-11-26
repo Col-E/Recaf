@@ -36,7 +36,7 @@ public interface WorkspaceResource extends PropertyContainer, Closing {
 	 * via {@link #getVersionedJvmClassBundles()}.
 	 * <br>
 	 * For Android files (APK) this will always be empty.
-	 * Android APK's classes reside in embedded dex files, which are accessible via {@link #getAndroidClassBundles()}.
+	 * Android APK's classes reside in embedded DEX files, which are accessible via {@link #getAndroidClassBundles()}.
 	 *
 	 * @return Immediate classes within the resource.
 	 */

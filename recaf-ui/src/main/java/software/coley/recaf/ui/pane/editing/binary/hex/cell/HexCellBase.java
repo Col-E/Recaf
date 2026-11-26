@@ -28,6 +28,17 @@ public abstract class HexCellBase extends BorderPane implements HexCell {
 	protected static final PseudoClass PSEUDO_ZERO = PseudoClass.getPseudoClass("zero");
 	protected static final PseudoClass PSEUDO_SELECTED = PseudoClass.getPseudoClass("selected");
 	protected static final PseudoClass PSEUDO_EDITED = PseudoClass.getPseudoClass("edited");
+	protected static final PseudoClass PSEUDO_MATCH = PseudoClass.getPseudoClass("match");
+	protected static final PseudoClass PSEUDO_MATCH_RANGE = PseudoClass.getPseudoClass("match-range");
+	protected static final PseudoClass PSEUDO_MATCH_RANGE_TOP = PseudoClass.getPseudoClass("match-range-top");
+	protected static final PseudoClass PSEUDO_MATCH_RANGE_BOTTOM = PseudoClass.getPseudoClass("match-range-bottom");
+	protected static final PseudoClass PSEUDO_MATCH_RANGE_LEFT = PseudoClass.getPseudoClass("match-range-left");
+	protected static final PseudoClass PSEUDO_MATCH_RANGE_RIGHT = PseudoClass.getPseudoClass("match-range-right");
+	protected static final PseudoClass PSEUDO_RANGE = PseudoClass.getPseudoClass("range");
+	protected static final PseudoClass PSEUDO_RANGE_TOP = PseudoClass.getPseudoClass("range-top");
+	protected static final PseudoClass PSEUDO_RANGE_BOTTOM = PseudoClass.getPseudoClass("range-bottom");
+	protected static final PseudoClass PSEUDO_RANGE_LEFT = PseudoClass.getPseudoClass("range-left");
+	protected static final PseudoClass PSEUDO_RANGE_RIGHT = PseudoClass.getPseudoClass("range-right");
 	protected final StringProperty textProperty = new SimpleStringProperty();
 	protected final StringProperty cachedTextProperty = new SimpleStringProperty();
 	protected final IntegerProperty offsetProperty = new SimpleIntegerProperty();
@@ -52,9 +63,9 @@ public abstract class HexCellBase extends BorderPane implements HexCell {
 			if (newText.length() > maxLength) {
 				endEdit(true);
 
-				// Move to the next editor, and if that succeeds pass the attempted typed character to the next editor.
-				ops.navigation().selectNext();
-				if (ops.navigation().selectionOffset() != offset) {
+				// Move to the next byte's editor when one exists, then pass the attempted typed character to its editor.
+				if (offset + 1 < ops.currentAccess().length()) {
+					ops.navigation().select(offset + 1);
 					ops.engageCurrent();
 
 					// Pass the key to the next editor.
@@ -100,8 +111,9 @@ public abstract class HexCellBase extends BorderPane implements HexCell {
 		textProperty.setValue(mapper().map(b));
 		cachedTextProperty.set(textProperty.get());
 
-		// Initialize edited pseudo-state.
+		// Initialize modified and search-match state.
 		updateEditedPseudoState();
+		updateSearchPseudoState();
 	}
 
 	/**
@@ -161,8 +173,60 @@ public abstract class HexCellBase extends BorderPane implements HexCell {
 	 * the initial construction of the cell.
 	 */
 	protected void updateEditedPseudoState() {
-		// Change the label text color if it differs from the original content
+		// Change the cell text color if it differs from the original content
 		label.pseudoClassStateChanged(PSEUDO_EDITED, isDataStateChanged());
+	}
+
+	/**
+	 * Refresh non-active search-match styling for this byte offset.
+	 */
+	protected void updateSearchPseudoState() {
+		label.pseudoClassStateChanged(PSEUDO_MATCH, ops.isSearchMatch(offsetProperty.get()));
+	}
+
+	/**
+	 * Updates the block boundary states for search matches in this row.
+	 *
+	 * @param rowStart
+	 *		Start offset of the row.
+	 * @param rowLength
+	 *		Number of byte cells in the row.
+	 */
+	protected void updateSearchMatchOutline(int rowStart, int rowLength) {
+		int offset = offsetProperty.get();
+		boolean selected = label.getPseudoClassStates().contains(PSEUDO_SELECTED)
+				|| label.getPseudoClassStates().contains(PSEUDO_RANGE);
+		boolean outlinedMatch = ops.isSearchMatch(offset) && !selected;
+		label.pseudoClassStateChanged(PSEUDO_MATCH_RANGE, outlinedMatch);
+		label.pseudoClassStateChanged(PSEUDO_MATCH_RANGE_TOP, outlinedMatch && ops.isSearchMatchTop(offset, rowStart, rowLength));
+		label.pseudoClassStateChanged(PSEUDO_MATCH_RANGE_BOTTOM, outlinedMatch && ops.isSearchMatchBottom(offset, rowStart, rowLength));
+		label.pseudoClassStateChanged(PSEUDO_MATCH_RANGE_LEFT, outlinedMatch && ops.isSearchMatchStart(offset));
+		label.pseudoClassStateChanged(PSEUDO_MATCH_RANGE_RIGHT, outlinedMatch && ops.isSearchMatchEnd(offset));
+	}
+
+	/**
+	 * Updates the cell to have the {@code :range} pseudo-state if the current value is within the given range.
+	 *
+	 * @param rowStart
+	 * 		Start of the row this cell is in.
+	 * @param rowLength
+	 * 		Length of the row this cell is in.
+	 * @param rangeStart
+	 * 		Start of the range.
+	 * @param rangeEnd
+	 * 		End of the range.
+	 */
+	protected void updateRangeOutline(int rowStart, int rowLength, int rangeStart, int rangeEnd) {
+		int offset = offset();
+		long rowEnd = (long) rowStart + rowLength;
+		int selectedStart = Math.max(rangeStart, rowStart);
+		int selectedEnd = (int) Math.min(rangeEnd, rowEnd);
+		boolean selected = selectedStart < selectedEnd && offset >= selectedStart && offset < selectedEnd;
+		label.pseudoClassStateChanged(PSEUDO_RANGE, selected);
+		label.pseudoClassStateChanged(PSEUDO_RANGE_TOP, selected && rangeStart >= rowStart && rangeStart < rowEnd);
+		label.pseudoClassStateChanged(PSEUDO_RANGE_BOTTOM, selected && rangeEnd > rowStart && rangeEnd <= rowEnd);
+		label.pseudoClassStateChanged(PSEUDO_RANGE_LEFT, selected && offset == selectedStart);
+		label.pseudoClassStateChanged(PSEUDO_RANGE_RIGHT, selected && offset + 1 == selectedEnd);
 	}
 
 	/**
@@ -178,8 +242,9 @@ public abstract class HexCellBase extends BorderPane implements HexCell {
 		else
 			offsetProperty.set(offset);
 
-		// Refresh the edited pseudo-state since the data could have been changed from the original.
+		// Refresh modified and search-match state since data or cell offset may have changed.
 		updateEditedPseudoState();
+		updateSearchPseudoState();
 	}
 
 	/**

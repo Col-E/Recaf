@@ -35,7 +35,7 @@ public class NumberPredicate {
 	}
 
 	/**
-	 * @return Translation key for predicate.
+	 * @return Translation key for the predicate.
 	 */
 	@Nonnull
 	public String getTranslationKey() {

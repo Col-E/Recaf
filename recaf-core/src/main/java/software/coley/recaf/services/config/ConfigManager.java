@@ -9,9 +9,11 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.PreDestroy;
+import jakarta.annotation.Priority;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.enterprise.inject.Instance;
+import jakarta.enterprise.inject.spi.ObserverMethod;
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import software.coley.collections.Unchecked;
@@ -75,7 +77,9 @@ public class ConfigManager implements Service {
 			registerContainer(container);
 	}
 
-	private void init(@Observes InitializationEvent event) {
+	private void init(@Observes @Priority(ObserverMethod.DEFAULT_PRIORITY - 1) InitializationEvent event) {
+		// Load all config values before other services start using them,
+		// or acting on this event, assuming they keep the default priority.
 		load();
 	}
 

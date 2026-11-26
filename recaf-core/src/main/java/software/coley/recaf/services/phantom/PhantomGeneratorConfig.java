@@ -17,13 +17,11 @@ import software.coley.recaf.services.ServiceConfig;
 @ApplicationScoped
 public class PhantomGeneratorConfig extends BasicConfigContainer implements ServiceConfig {
 	private final ObservableBoolean generateWorkspacePhantoms = new ObservableBoolean(false);
-	private final ObservableBoolean lenientConflictingHierarchies = new ObservableBoolean(true);
 
 	@Inject
 	public PhantomGeneratorConfig() {
 		super(ConfigGroups.SERVICE_ANALYSIS, PhantomGenerator.SERVICE_ID + CONFIG_SUFFIX);
 		addValue(new BasicConfigValue<>("generate-workspace-phantoms", boolean.class, generateWorkspacePhantoms));
-		addValue(new BasicConfigValue<>("lenient-conflicting-hierarchies", boolean.class, lenientConflictingHierarchies));
 	}
 
 	/**
@@ -32,13 +30,5 @@ public class PhantomGeneratorConfig extends BasicConfigContainer implements Serv
 	@Nonnull
 	public ObservableBoolean getGenerateWorkspacePhantoms() {
 		return generateWorkspacePhantoms;
-	}
-
-	/**
-	 * @return {@code true} to resolve incompatible phantom superclass constraints in a compile-first lenient mode.
-	 */
-	@Nonnull
-	public ObservableBoolean getLenientConflictingHierarchies() {
-		return lenientConflictingHierarchies;
 	}
 }

@@ -31,7 +31,7 @@ import software.coley.recaf.services.cell.CellConfigurationService;
 import software.coley.recaf.services.navigation.Actions;
 import software.coley.recaf.services.navigation.Navigable;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
-import software.coley.recaf.services.search.CancellableSearchFeedback;
+import software.coley.recaf.services.search.SearchFeedback;
 import software.coley.recaf.services.search.SimilaritySearchService;
 import software.coley.recaf.ui.control.ActionButton;
 import software.coley.recaf.ui.control.BoundIntSpinner;
@@ -66,7 +66,7 @@ public abstract class AbstractSimilarityTablePane<P extends PathNode<?>> extends
 	private final StringProperty referenceText = new SimpleStringProperty("");
 	private Popover advancedOptionsPopover;
 	private ActionButton advancedOptionsButton;
-	private CancellableSearchFeedback lastSearchFeedback;
+	private SearchFeedback lastSearchFeedback;
 	private Control focusTarget;
 	protected int searchGeneration;
 
@@ -144,12 +144,12 @@ public abstract class AbstractSimilarityTablePane<P extends PathNode<?>> extends
 		return new TableSearchFeedback(searchOptions.snapshot());
 	}
 
-	protected final void replaceSearchFeedback(@Nonnull CancellableSearchFeedback feedback) {
+	protected final void replaceSearchFeedback(@Nonnull SearchFeedback feedback) {
 		cancelLastSearch();
 		lastSearchFeedback = feedback;
 	}
 
-	protected final void clearSearchFeedback(@Nonnull CancellableSearchFeedback feedback) {
+	protected final void clearSearchFeedback(@Nonnull SearchFeedback feedback) {
 		if (lastSearchFeedback == feedback)
 			lastSearchFeedback = null;
 	}
@@ -251,7 +251,7 @@ public abstract class AbstractSimilarityTablePane<P extends PathNode<?>> extends
 
 	protected abstract void refresh();
 
-	protected static class TableSearchFeedback extends CancellableSearchFeedback {
+	protected static class TableSearchFeedback extends SearchFeedback {
 		private final SearchOptions.Snapshot optionsSnapshot;
 
 		private TableSearchFeedback(@Nonnull SearchOptions.Snapshot optionsSnapshot) {

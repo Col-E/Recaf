@@ -32,6 +32,19 @@ public class Int2IntMap extends AbstractIntKeyMap {
 	}
 
 	/**
+	 * New map with the same contents as another map.
+	 *
+	 * @param other
+	 * 		Map to copy.
+	 */
+	public Int2IntMap(@Nonnull Int2IntMap other) {
+		super(other.size());
+
+		values = new int[keys.length];
+		other.forEach(this::put);
+	}
+
+	/**
 	 * @param consumer
 	 * 		Consumer to accept all key-value pairs in the map.
 	 */

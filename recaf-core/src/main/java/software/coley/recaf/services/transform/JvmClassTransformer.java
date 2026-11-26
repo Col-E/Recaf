@@ -23,8 +23,12 @@ public interface JvmClassTransformer extends ClassTransformer {
 	 * 		Transformation context for access to other transformers and recording class changes.
 	 * @param workspace
 	 * 		Workspace containing classes to transform.
+	 *
+	 * @throws TransformationException
+	 * 		When the setup fails for any reason.
+	 * 		This will prevent any transformations from occurring.
 	 */
-	default void setup(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace) {}
+	default void setup(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace) throws TransformationException {}
 
 	/**
 	 * Implementations can {@link #dependencies() depend on other transformers} and access them

@@ -8,6 +8,7 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.JumpInsnNode;
+import org.objectweb.asm.tree.LabelNode;
 import org.objectweb.asm.tree.LookupSwitchInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TableSwitchInsnNode;
@@ -20,6 +21,7 @@ import software.coley.recaf.services.transform.JvmClassTransformer;
 import software.coley.recaf.services.transform.JvmTransformerContext;
 import software.coley.recaf.services.transform.TransformationException;
 import software.coley.recaf.util.AsmInsnUtil;
+import software.coley.recaf.util.analysis.ReAnalyzer;
 import software.coley.recaf.util.analysis.value.IntValue;
 import software.coley.recaf.util.analysis.value.ObjectValue;
 import software.coley.recaf.util.analysis.value.ReValue;
@@ -44,6 +46,8 @@ import static software.coley.recaf.util.AsmInsnUtil.isSwitchEffectiveGoto;
  */
 @Dependent
 public class OpaquePredicateFoldingTransformer implements JvmClassTransformer {
+	public static final String IDENTIFIER = "peephole.flow.predicate";
+
 	private final InheritanceGraphService graphService;
 	private InheritanceGraph inheritanceGraph;
 
@@ -78,176 +82,208 @@ public class OpaquePredicateFoldingTransformer implements JvmClassTransformer {
 				AbstractInsnNode instruction = instructions.get(i);
 				if (instruction instanceof TableSwitchInsnNode switchInsn && isSwitchEffectiveGoto(switchInsn)) {
 					AbstractInsnNode previous = switchInsn.getPrevious();
-					if (isValueProducerOrTopDup(previous))
+
+					// A dup2 supplies two copies while the switch consumes one, so it cannot be
+					// removed entirely. Fall back to popping the selector copy instead.
+					if (previous.getOpcode() != DUP2 && isValueProducerOrTopDup(previous))
 						instructions.remove(previous);
 					else
 						instructions.insertBefore(switchInsn, new InsnNode(POP));
+
+					// Replace the switch with a goto to the default label, which is the only label that is reachable.
 					instructions.set(switchInsn, new JumpInsnNode(GOTO, switchInsn.dflt));
 					dirty = true;
 				} else if (instruction instanceof LookupSwitchInsnNode switchInsn && isSwitchEffectiveGoto(switchInsn)) {
 					AbstractInsnNode previous = switchInsn.getPrevious();
-					if (isValueProducerOrTopDup(previous))
+
+					// A dup2 supplies two copies while the switch consumes one, so it cannot be
+					// removed entirely. Fall back to popping the selector copy instead.
+					if (previous.getOpcode() != DUP2 && isValueProducerOrTopDup(previous))
 						instructions.remove(previous);
 					else
 						instructions.insertBefore(switchInsn, new InsnNode(POP));
+
+					// Replace the switch with a goto to the default label, which is the only label that is reachable.
 					instructions.set(switchInsn, new JumpInsnNode(GOTO, switchInsn.dflt));
 					dirty = true;
 				}
 			}
 
 			try {
-				boolean localDirty = false;
-				Frame<ReValue>[] frames = context.analyze(inheritanceGraph, node, method);
-				for (int i = 1; i < instructions.size() - 1; i++) {
-					AbstractInsnNode instruction = instructions.get(i);
+				boolean localDirty;
+				do {
+					localDirty = false;
 
-					// Skip if this isn't a control flow instruction.
-					// We are only flattening control flow here.
-					if (!isFlowControl(instruction))
-						continue;
-
-					// Skip goto, branch is always taken.
-					// Use the goto inliner if you want to clean these up.
-					if (instruction.getOpcode() == GOTO)
-						continue;
-
-					// Skip if there is no frame for this instruction.
-					if (i >= frames.length)
-						continue; // Can happen if there is dead code at the end
-					Frame<ReValue> frame = frames[i];
-					if (frame == null || frame.getStackSize() == 0)
-						continue;
-
-					// Skip if stack top is not known.
-					ReValue stackTop = frame.getStack(frame.getStackSize() - 1);
-					if (!stackTop.hasKnownValue() && !(stackTop instanceof ObjectValue ov && ov.isNull()))
-						continue;
-
-					// Get instruction of the top stack's contributing instruction.
-					// It must also be a value producing instruction.
-					// If this is something that isn't value producing, another transformer needs to simplify it first.
-					AbstractInsnNode prevInstruction = AsmInsnUtil.getPreviousInsn(instruction);
-					if (prevInstruction == null || !isValueProducerOrTopDup(prevInstruction))
-						continue;
-
-					// Handle any control flow instruction and see if we know based on the frame contents if a specific
-					// path is always taken.
-					int insnType = instruction.getType();
-					if (insnType == AbstractInsnNode.JUMP_INSN) {
-						JumpInsnNode jin = (JumpInsnNode) instruction;
-						int opcode = instruction.getOpcode();
-						if ((opcode >= IFEQ && opcode <= IFLE) || opcode == IFNULL || opcode == IFNONNULL) {
-							// Replace single argument binary control flow.
-							localDirty |= switch (opcode) {
-								case IFEQ ->
-										replaceIntValue(instructions, prevInstruction, stackTop, jin, v -> v.isEqualTo(0));
-								case IFNE ->
-										replaceIntValue(instructions, prevInstruction, stackTop, jin, v -> v.isNotEqualTo(0));
-								case IFLT ->
-										replaceIntValue(instructions, prevInstruction, stackTop, jin, v -> v.isLessThan(0));
-								case IFGE ->
-										replaceIntValue(instructions, prevInstruction, stackTop, jin, v -> v.isGreaterThanOrEqual(0));
-								case IFGT ->
-										replaceIntValue(instructions, prevInstruction, stackTop, jin, v -> v.isGreaterThan(0));
-								case IFLE ->
-										replaceIntValue(instructions, prevInstruction, stackTop, jin, v -> v.isLessThanOrEqual(0));
-								case IFNULL ->
-										replaceObjValue(instructions, prevInstruction, stackTop, jin, ObjectValue::isNull);
-								case IFNONNULL ->
-										replaceObjValue(instructions, prevInstruction, stackTop, jin, ObjectValue::isNotNull);
-								default -> localDirty;
-							};
-						} else if (opcode >= IF_ICMPEQ && opcode <= IF_ACMPNE) {
-							// Skip if the other argument to compare with is not available or known.
-							if (frame.getStackSize() < 2)
-								continue;
-							ReValue stack2ndTop = frame.getStack(frame.getStackSize() - 2);
-							if (!stack2ndTop.hasKnownValue() && !(stack2ndTop instanceof ObjectValue ov && ov.isNull()))
-								continue;
-
-							// Skip if the other argument to compare with is not immediately backed by
-							// a value supplying instruction.
-							AbstractInsnNode prevPrevInstruction = prevInstruction.getPrevious();
-							if (prevPrevInstruction == null || !isValueProducerOrTopDup(prevPrevInstruction))
-								continue;
-
-							// Replace double argument binary control flow.
-							localDirty |= switch (opcode) {
-								case IF_ICMPEQ ->
-										replaceIntIntValue(instructions, prevPrevInstruction, prevInstruction, stack2ndTop, stackTop, jin, IntValue::isEqualTo);
-								case IF_ICMPNE ->
-										replaceIntIntValue(instructions, prevPrevInstruction, prevInstruction, stack2ndTop, stackTop, jin, IntValue::isNotEqualTo);
-								case IF_ICMPLT ->
-										replaceIntIntValue(instructions, prevPrevInstruction, prevInstruction, stack2ndTop, stackTop, jin, IntValue::isLessThan);
-								case IF_ICMPGE ->
-										replaceIntIntValue(instructions, prevPrevInstruction, prevInstruction, stack2ndTop, stackTop, jin, IntValue::isGreaterThanOrEqual);
-								case IF_ICMPGT ->
-										replaceIntIntValue(instructions, prevPrevInstruction, prevInstruction, stack2ndTop, stackTop, jin, IntValue::isGreaterThan);
-								case IF_ICMPLE ->
-										replaceIntIntValue(instructions, prevPrevInstruction, prevInstruction, stack2ndTop, stackTop, jin, IntValue::isLessThanOrEqual);
-								case IF_ACMPEQ ->
-										replaceObjObjValue(instructions, prevPrevInstruction, prevInstruction, stack2ndTop, stackTop, jin,
-												(a, b) -> a.isNull() && b.isNull(), // Both null --> both are equal
-												(a, b) -> (a.isNull() && b.isNotNull()) || (a.isNotNull() && b.isNull())); // Nullability conflict, both cannot be equal
-								case IF_ACMPNE ->
-										replaceObjObjValue(instructions, prevPrevInstruction, prevInstruction, stack2ndTop, stackTop, jin,
-												(a, b) -> (a.isNull() && b.isNotNull()) || (a.isNotNull() && b.isNull()), // Nullability conflict, both cannot be equal
-												(a, b) -> a.isNull() && b.isNull()); // Both null --> both are equal
-								default -> localDirty;
-							};
-						}
-					} else if (insnType == AbstractInsnNode.LOOKUPSWITCH_INSN) {
-						LookupSwitchInsnNode lsin = (LookupSwitchInsnNode) instruction;
-
-						// Skip if stack top is not an integer.
-						if (!(stackTop instanceof IntValue intValue))
-							continue;
-
-						// Find matching key in switch.
-						int keyIndex = -1;
-						for (int j = 0; j < lsin.keys.size(); j++) {
-							int key = lsin.keys.get(j);
-							if (intValue.isEqualTo(key)) {
-								keyIndex = j;
-								break;
-							}
-						}
-
-						// Replace switch with goto for the appropriate control flow path.
-						JumpInsnNode replacement = keyIndex == -1 ?
-								new JumpInsnNode(GOTO, lsin.dflt) :
-								new JumpInsnNode(GOTO, lsin.labels.get(keyIndex));
-						instructions.set(lsin, replacement);
-						instructions.set(prevInstruction, new InsnNode(NOP));
-						localDirty = true;
-					} else if (insnType == AbstractInsnNode.TABLESWITCH_INSN) {
-						TableSwitchInsnNode tsin = (TableSwitchInsnNode) instruction;
-
-						// Skip if stack top is not an integer.
-						if (!(stackTop instanceof IntValue intValue))
-							continue;
-
-						// Find matching key in switch.
-						int arg = intValue.value().getAsInt();
-						int keyIndex = (arg > tsin.max || arg < tsin.min) ?
-								-1 : (arg - tsin.min);
-
-						// Replace switch with goto for the appropriate control flow path.
-						JumpInsnNode replacement = keyIndex == -1 ?
-								new JumpInsnNode(GOTO, tsin.dflt) :
-								new JumpInsnNode(GOTO, tsin.labels.get(keyIndex));
-						instructions.set(tsin, replacement);
-						instructions.set(prevInstruction, new InsnNode(NOP));
-						localDirty = true;
+					// Re-analyze the method to get the current state of the stack frames.
+					ReAnalyzer analyzer = context.newAnalyzer(inheritanceGraph, node, method);
+					analyzer.setPruneOutputDeadCodeFrames(false);
+					Frame<ReValue>[] frames;
+					try {
+						frames = analyzer.analyze(node.name, method);
+					} catch (Throwable t) {
+						// Analysis failed, skip this method.
+						break;
 					}
-				}
 
-				// Clear any code that is no longer accessible. If we don't do this step ASM's auto-cleanup
-				// will likely leave some ugly artifacts like "athrow" in dead code regions.
-				if (localDirty) {
-					context.pruneDeadCode(node, method);
-					dirty = true;
-				}
+					for (int i = 1; i < instructions.size() - 1; i++) {
+						AbstractInsnNode instruction = instructions.get(i);
+
+						// Skip if this isn't a control flow instruction.
+						// We are only flattening control flow here.
+						if (!isFlowControl(instruction))
+							continue;
+
+						// Skip goto, branch is always taken.
+						// Use the goto inliner if you want to clean these up.
+						if (instruction.getOpcode() == GOTO)
+							continue;
+
+						// Skip if there is no frame for this instruction.
+						if (i >= frames.length)
+							continue; // Can happen if there is dead code at the end
+						Frame<ReValue> frame = frames[i];
+						if (frame == null || frame.getStackSize() == 0)
+							continue;
+
+						// Skip if stack top is not known.
+						ReValue stackTop = frame.getStack(frame.getStackSize() - 1);
+						if (!stackTop.hasKnownValue() && !(stackTop instanceof ObjectValue ov && ov.isNull()))
+							continue;
+
+						// Get instruction of the top stack's contributing instruction.
+						// It must also be a value producing instruction.
+						// If this is something that isn't value producing, another transformer needs to simplify it first.
+						AbstractInsnNode prevInstruction = AsmInsnUtil.getPreviousInsn(instruction);
+						if (prevInstruction == null
+								|| !isValueProducerOrTopDup(prevInstruction)
+								|| hasControlBoundaryBetween(method, prevInstruction, instruction))
+							continue;
+
+						// Handle any control flow instruction and see if we know based on the frame contents if a specific
+						// path is always taken.
+						int insnType = instruction.getType();
+						if (insnType == AbstractInsnNode.JUMP_INSN) {
+							JumpInsnNode jin = (JumpInsnNode) instruction;
+							int opcode = instruction.getOpcode();
+							if ((opcode >= IFEQ && opcode <= IFLE) || opcode == IFNULL || opcode == IFNONNULL) {
+								// Replace single argument binary control flow.
+								localDirty = switch (opcode) {
+									case IFEQ ->
+											replaceIntValue(instructions, prevInstruction, stackTop, jin, v -> v.isEqualTo(0));
+									case IFNE ->
+											replaceIntValue(instructions, prevInstruction, stackTop, jin, v -> v.isNotEqualTo(0));
+									case IFLT ->
+											replaceIntValue(instructions, prevInstruction, stackTop, jin, v -> v.isLessThan(0));
+									case IFGE ->
+											replaceIntValue(instructions, prevInstruction, stackTop, jin, v -> v.isGreaterThanOrEqual(0));
+									case IFGT ->
+											replaceIntValue(instructions, prevInstruction, stackTop, jin, v -> v.isGreaterThan(0));
+									case IFLE ->
+											replaceIntValue(instructions, prevInstruction, stackTop, jin, v -> v.isLessThanOrEqual(0));
+									case IFNULL ->
+											replaceObjValue(instructions, prevInstruction, stackTop, jin, ObjectValue::isNull);
+									case IFNONNULL ->
+											replaceObjValue(instructions, prevInstruction, stackTop, jin, ObjectValue::isNotNull);
+									default -> localDirty;
+								};
+							} else if (opcode >= IF_ICMPEQ && opcode <= IF_ACMPNE) {
+								// Skip if the other argument to compare with is not available or known.
+								if (frame.getStackSize() < 2)
+									continue;
+								ReValue stack2ndTop = frame.getStack(frame.getStackSize() - 2);
+								if (!stack2ndTop.hasKnownValue() && !(stack2ndTop instanceof ObjectValue ov && ov.isNull()))
+									continue;
+
+								// Skip if the other argument to compare with is not immediately backed by
+								// a value supplying instruction.
+								AbstractInsnNode prevPrevInstruction = prevInstruction.getPrevious();
+								if (prevPrevInstruction == null
+										|| !isValueProducerOrTopDup(prevPrevInstruction)
+										|| hasControlBoundaryBetween(method, prevInstruction, instruction))
+									continue;
+
+								// Replace double argument binary control flow.
+								localDirty = switch (opcode) {
+									case IF_ICMPEQ ->
+											replaceIntIntValue(instructions, prevPrevInstruction, prevInstruction, stack2ndTop, stackTop, jin, IntValue::isEqualTo);
+									case IF_ICMPNE ->
+											replaceIntIntValue(instructions, prevPrevInstruction, prevInstruction, stack2ndTop, stackTop, jin, IntValue::isNotEqualTo);
+									case IF_ICMPLT ->
+											replaceIntIntValue(instructions, prevPrevInstruction, prevInstruction, stack2ndTop, stackTop, jin, IntValue::isLessThan);
+									case IF_ICMPGE ->
+											replaceIntIntValue(instructions, prevPrevInstruction, prevInstruction, stack2ndTop, stackTop, jin, IntValue::isGreaterThanOrEqual);
+									case IF_ICMPGT ->
+											replaceIntIntValue(instructions, prevPrevInstruction, prevInstruction, stack2ndTop, stackTop, jin, IntValue::isGreaterThan);
+									case IF_ICMPLE ->
+											replaceIntIntValue(instructions, prevPrevInstruction, prevInstruction, stack2ndTop, stackTop, jin, IntValue::isLessThanOrEqual);
+									case IF_ACMPEQ ->
+											replaceObjObjValue(instructions, prevPrevInstruction, prevInstruction, stack2ndTop, stackTop, jin,
+													(a, b) -> a.isNull() && b.isNull(), // Both null --> both are equal
+													(a, b) -> (a.isNull() && b.isNotNull()) || (a.isNotNull() && b.isNull())); // Nullability conflict, both cannot be equal
+									case IF_ACMPNE ->
+											replaceObjObjValue(instructions, prevPrevInstruction, prevInstruction, stack2ndTop, stackTop, jin,
+													(a, b) -> (a.isNull() && b.isNotNull()) || (a.isNotNull() && b.isNull()), // Nullability conflict, both cannot be equal
+													(a, b) -> a.isNull() && b.isNull()); // Both null --> both are equal
+									default -> localDirty;
+								};
+							}
+						} else if (insnType == AbstractInsnNode.LOOKUPSWITCH_INSN) {
+							LookupSwitchInsnNode lsin = (LookupSwitchInsnNode) instruction;
+
+							// Skip if stack top is not an integer.
+							if (!(stackTop instanceof IntValue intValue))
+								continue;
+
+							// Find matching key in switch.
+							int keyIndex = -1;
+							for (int j = 0; j < lsin.keys.size(); j++) {
+								int key = lsin.keys.get(j);
+								if (intValue.isEqualTo(key)) {
+									keyIndex = j;
+									break;
+								}
+							}
+
+							// Replace switch with goto for the appropriate control flow path.
+							JumpInsnNode replacement = keyIndex == -1 ?
+									new JumpInsnNode(GOTO, lsin.dflt) :
+									new JumpInsnNode(GOTO, lsin.labels.get(keyIndex));
+							removeSingleValueProducer(instructions, prevInstruction, lsin);
+							instructions.set(lsin, replacement);
+							localDirty = true;
+						} else if (insnType == AbstractInsnNode.TABLESWITCH_INSN) {
+							TableSwitchInsnNode tsin = (TableSwitchInsnNode) instruction;
+
+							// Skip if stack top is not an integer.
+							if (!(stackTop instanceof IntValue intValue))
+								continue;
+
+							// Find matching key in switch.
+							int arg = intValue.value().getAsInt();
+							int keyIndex = (arg > tsin.max || arg < tsin.min) ?
+									-1 : (arg - tsin.min);
+
+							// Replace switch with goto for the appropriate control flow path.
+							JumpInsnNode replacement = keyIndex == -1 ?
+									new JumpInsnNode(GOTO, tsin.dflt) :
+									new JumpInsnNode(GOTO, tsin.labels.get(keyIndex));
+							removeSingleValueProducer(instructions, prevInstruction, tsin);
+							instructions.set(tsin, replacement);
+							localDirty = true;
+						}
+
+						// If we made a change, we need to re-analyze the method since the stack frames have changed.
+						if (localDirty)
+							break;
+					}
+
+					// Clear any code that is no longer accessible. If we don't do this step ASM's auto-cleanup
+					// will likely leave some ugly artifacts like "athrow" in dead code regions.
+					if (localDirty) {
+						context.pruneDeadCode(node, method);
+						dirty = true;
+					}
+				} while (localDirty);
 			} catch (Throwable t) {
 				throw new TransformationException("Error encountered when folding opaque predicates", t);
 			}
@@ -258,17 +294,47 @@ public class OpaquePredicateFoldingTransformer implements JvmClassTransformer {
 		}
 	}
 
+	private static boolean hasControlBoundaryBetween(@Nonnull MethodNode method,
+	                                                 @Nonnull AbstractInsnNode producer,
+	                                                 @Nonnull AbstractInsnNode consumer) {
+		// Iterate through instructions between the producer and consumer to see if any of them are a label that is branched to.
+		for (AbstractInsnNode current = producer.getNext(); current != null
+				&& current != consumer; current = current.getNext()) {
+			// Skip if the instruction is not a label.
+			if (!(current instanceof LabelNode label))
+				continue;
+
+			// Check if any instruction in the method branches to this label.
+			// If so  -> We cannot remove the producer since it is a value that is used in a branch.
+			// If not -> We can remove the producer since it is a value that is not used in any branch.
+			for (AbstractInsnNode instruction : method.instructions) {
+				if (instruction instanceof JumpInsnNode jump && jump.label == label)
+					return true;
+				if (instruction instanceof TableSwitchInsnNode table
+						&& (table.dflt == label || table.labels.contains(label)))
+					return true;
+				if (instruction instanceof LookupSwitchInsnNode lookup
+						&& (lookup.dflt == label || lookup.labels.contains(label)))
+					return true;
+			}
+		}
+		return producer.getNext() == null;
+	}
+
 	private static boolean replaceIntValue(@Nonnull InsnList instructions,
 	                                       @Nonnull AbstractInsnNode stackValueProducerInsn,
 	                                       @Nonnull ReValue stackTopValue,
 	                                       @Nonnull JumpInsnNode jump,
 	                                       @Nonnull Predicate<IntValue> gotoCondition) {
 		if (stackTopValue instanceof IntValue intValue) {
+			// Remove the consumed value first so the jump stays a valid insertion point for the pop.
+			removeSingleValueProducer(instructions, stackValueProducerInsn, jump);
+
+			// Replace the jump with a goto if the condition is met, otherwise replace it with a NOP.
 			AbstractInsnNode replacement = gotoCondition.test(intValue) ?
 					new JumpInsnNode(GOTO, jump.label) :
 					new InsnNode(NOP);
 			instructions.set(jump, replacement);
-			instructions.set(stackValueProducerInsn, new InsnNode(NOP));
 			return true;
 		}
 		return false;
@@ -286,8 +352,21 @@ public class OpaquePredicateFoldingTransformer implements JvmClassTransformer {
 					new JumpInsnNode(GOTO, jump.label) :
 					new InsnNode(NOP);
 			instructions.set(jump, replacement);
-			instructions.set(stackValueProducerInsnA, new InsnNode(NOP));
-			instructions.set(stackValueProducerInsnB, new InsnNode(NOP));
+
+			// Remove the two consumed values from the stack.
+			// A dup2 in the top position supplies both compared values as copies, so only it is removed.
+			// A dup2 in the lower position supplies the lower value plus a surviving copy, so it is kept
+			// and a pop discards the copy the jump no longer consumes.
+			if (stackValueProducerInsnB.getOpcode() == DUP2) {
+				instructions.set(stackValueProducerInsnB, new InsnNode(NOP));
+			} else if (stackValueProducerInsnA.getOpcode() == DUP2) {
+				instructions.insertBefore(stackValueProducerInsnB, new InsnNode(POP));
+				instructions.set(stackValueProducerInsnB, new InsnNode(NOP));
+			} else {
+				instructions.set(stackValueProducerInsnA, new InsnNode(NOP));
+				instructions.set(stackValueProducerInsnB, new InsnNode(NOP));
+			}
+
 			return true;
 		}
 		return false;
@@ -299,11 +378,14 @@ public class OpaquePredicateFoldingTransformer implements JvmClassTransformer {
 	                                       @Nonnull JumpInsnNode jump,
 	                                       @Nonnull Predicate<ObjectValue> gotoCondition) {
 		if (stackTopValue instanceof ObjectValue objectValue) {
+			// Remove the consumed value first so the jump stays a valid insertion point for the pop.
+			removeSingleValueProducer(instructions, stackValueProducerInsn, jump);
+
+			// Replace the jump with a goto if the condition is met, otherwise replace it with a NOP.
 			AbstractInsnNode replacement = gotoCondition.test(objectValue) ?
 					new JumpInsnNode(GOTO, jump.label) :
 					new InsnNode(NOP);
 			instructions.set(jump, replacement);
-			instructions.set(stackValueProducerInsn, new InsnNode(NOP));
 			return true;
 		}
 		return false;
@@ -325,13 +407,56 @@ public class OpaquePredicateFoldingTransformer implements JvmClassTransformer {
 			if (replacement == null) replacement = fallCondition.test(objValueA, objValueB) ? new InsnNode(NOP) : null;
 			if (replacement == null) return false;
 			instructions.set(jump, replacement);
-			instructions.set(stackValueProducerInsnA, new InsnNode(NOP));
-			instructions.set(stackValueProducerInsnB, new InsnNode(NOP));
+
+			// Remove the two consumed values from the stack.
+			// A dup2 in the top position supplies both compared values as copies, so only it is removed.
+			// A dup2 in the lower position supplies the lower value plus a surviving copy, so it is kept
+			// and a pop discards the copy the jump no longer consumes.
+			if (stackValueProducerInsnB.getOpcode() == DUP2) {
+				instructions.set(stackValueProducerInsnB, new InsnNode(NOP));
+			} else if (stackValueProducerInsnA.getOpcode() == DUP2) {
+				instructions.insertBefore(stackValueProducerInsnB, new InsnNode(POP));
+				instructions.set(stackValueProducerInsnB, new InsnNode(NOP));
+			} else {
+				instructions.set(stackValueProducerInsnA, new InsnNode(NOP));
+				instructions.set(stackValueProducerInsnB, new InsnNode(NOP));
+			}
+
 			return true;
 		}
 		return false;
 	}
 
+	/**
+	 * Removes the single stack value that a folded control-flow instruction consumed.
+	 * <p>
+	 * A plain producer or a {@code dup} supplies exactly the one consumed value, so it is removed.
+	 * A {@code dup2} supplies two copies, so it is kept and a {@code pop} discards the copy the
+	 * folded instruction no longer consumes.
+	 *
+	 * @param instructions
+	 * 		Instructions to modify.
+	 * @param producer
+	 * 		Instruction supplying the consumed value.
+	 * @param consumer
+	 * 		Folded control-flow instruction, used as the insertion point for the {@code pop}.
+	 */
+	private static void removeSingleValueProducer(@Nonnull InsnList instructions,
+	                                              @Nonnull AbstractInsnNode producer,
+	                                              @Nonnull AbstractInsnNode consumer) {
+		if (producer.getOpcode() == DUP2)
+			instructions.insertBefore(consumer, new InsnNode(POP));
+		else
+			instructions.set(producer, new InsnNode(NOP));
+	}
+
+	/**
+	 * @param insnNode
+	 * 		Insn to check.
+	 *
+	 * @return {@code true} when the instruction is a value producing instruction
+	 * or a {@code dup} that produces a value on the stack.
+	 */
 	private static boolean isValueProducerOrTopDup(@Nonnull AbstractInsnNode insnNode) {
 		if (isSupportedValueProducer(insnNode))
 			return true;
@@ -361,7 +486,30 @@ public class OpaquePredicateFoldingTransformer implements JvmClassTransformer {
 
 	@Nonnull
 	@Override
-	public String name() {
-		return "Opaque predicate simplification";
+	public String identifier() {
+		return IDENTIFIER;
+	}
+
+	@Nonnull
+	@Override
+	public String beforeExample() {
+		return """
+				if (1 + 1 == 2) {
+					System.out.println("Real code");
+				} else {
+					// This path will never be taken, but the obfuscator made it look like it could be
+					// by making the condition a little more complex than a stupid '1 + 1 == 2' or 'if (true)' check.
+					System.out.println("Dead code");
+				}
+				""";
+	}
+
+	@Nonnull
+	@Override
+	public String afterExample() {
+		return """
+				// The always-taken conditional becomes a 'goto' which decompilers can generally handle and clean up.
+				System.out.println("Real code");
+				""";
 	}
 }

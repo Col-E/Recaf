@@ -14,6 +14,7 @@ import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.info.member.FieldMember;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.services.mapping.aggregate.AggregatedMappings;
+import software.coley.recaf.services.transform.CollectionTransformer;
 import software.coley.recaf.services.transform.JvmClassTransformer;
 import software.coley.recaf.services.transform.JvmTransformerContext;
 import software.coley.recaf.services.transform.TransformationException;
@@ -32,11 +33,9 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.function.Function;
 
 /**
@@ -52,7 +51,9 @@ import java.util.function.Function;
  * @author Matt Coley
  */
 @Dependent
-public class KotlinMetadataCollectionTransformer implements JvmClassTransformer {
+public class KotlinMetadataCollectionTransformer implements JvmClassTransformer, CollectionTransformer {
+	public static final String IDENTIFIER = "restoration.kotlinmetadata";
+
 	private final Map<String, KtClass> kotlinClassModels = new HashMap<>();
 	private AggregatedMappings kotlinClassMappings;
 
@@ -230,8 +231,8 @@ public class KotlinMetadataCollectionTransformer implements JvmClassTransformer 
 
 	@Nonnull
 	@Override
-	public String name() {
-		return "Kotlin metadata collection";
+	public String identifier() {
+		return IDENTIFIER;
 	}
 
 	/**
@@ -299,13 +300,13 @@ public class KotlinMetadataCollectionTransformer implements JvmClassTransformer 
 			case "Lkotlin/Byte;" -> "B";
 			case "Lkotlin/ByteArray;" -> "[B";
 			case "Lkotlin/UByte;",
-					"Lkotlin/Int;",
-					"Lkotlin/UInt;",
-					"Lkotlin/UShort;" -> "I";
+			     "Lkotlin/Int;",
+			     "Lkotlin/UInt;",
+			     "Lkotlin/UShort;" -> "I";
 			case "Lkotlin/UByteArray;",
-					"Lkotlin/IntArray;",
-					"Lkotlin/UIntArray;",
-					"Lkotlin/UShortArray;" -> "[I";
+			     "Lkotlin/IntArray;",
+			     "Lkotlin/UIntArray;",
+			     "Lkotlin/UShortArray;" -> "[I";
 			case "Lkotlin/Char;" -> "C";
 			case "Lkotlin/CharArray;" -> "[C";
 			case "Lkotlin/Double;" -> "D";
@@ -332,7 +333,7 @@ public class KotlinMetadataCollectionTransformer implements JvmClassTransformer 
 			case "Lkotlin/collections/Iterable;" -> "Ljava/util/Iterable;";
 			case "Lkotlin/collections/Iterator;", "Lkotlin/collections/MutableIterator;" -> "Ljava/util/Iterator;";
 			case "Lkotlin/collections/ListIterator;",
-					"Lkotlin/collections/MutableListIterator;" -> "Ljava/util/ListIterator;";
+			     "Lkotlin/collections/MutableListIterator;" -> "Ljava/util/ListIterator;";
 			case "Lkotlin/collections/List;", "Lkotlin/collections/MutableList;" -> "Ljava/util/List;";
 			case "Lkotlin/collections/Set;", "Lkotlin/collections/MutableSet;" -> "Ljava/util/Set;";
 			case "Lkotlin/collections/Map;", "Lkotlin/collections/MutableMap;" -> "Ljava/util/Map;";

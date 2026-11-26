@@ -35,7 +35,7 @@ import software.coley.recaf.ui.dnd.DragAndDrop;
 import software.coley.recaf.util.DirectoryChooserBuilder;
 import software.coley.recaf.util.ErrorDialogs;
 import software.coley.recaf.util.FileChooserBuilder;
-import software.coley.recaf.util.IOUtil;
+import software.coley.recaf.util.io.IOUtil;
 import software.coley.recaf.util.Icons;
 import software.coley.recaf.util.Lang;
 import software.coley.recaf.workspace.PathLoadingManager;
@@ -353,6 +353,8 @@ public class WorkspaceBuilderPane extends BorderPane {
 				// Check if it is a file uri
 				url = string;
 			}
+			if (url == null)
+				return;
 			try {
 				URI u = URI.create(url);
 				if ("file".equals(u.getScheme())) {
@@ -360,9 +362,11 @@ public class WorkspaceBuilderPane extends BorderPane {
 					if (host != null)
 						return;
 					String path = u.getPath();
-					File filePath = new File(path);
-					if (filePath.exists())
-						addPath(filePath.toPath());
+					if (path != null) {
+						File filePath = new File(path);
+						if (filePath.exists())
+							addPath(filePath.toPath());
+					}
 				}
 			} catch (IllegalArgumentException _) {}
 		}

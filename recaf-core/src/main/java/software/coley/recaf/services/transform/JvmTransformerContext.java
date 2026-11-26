@@ -4,7 +4,9 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.analysis.Frame;
 import org.slf4j.Logger;
@@ -17,6 +19,8 @@ import software.coley.recaf.services.deobfuscation.transform.generic.DeadCodeRem
 import software.coley.recaf.services.deobfuscation.transform.generic.FrameRemovingTransformer;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.mapping.aggregate.AggregatedMappings;
+import software.coley.recaf.util.ClassMethodPair;
+import software.coley.recaf.util.Types;
 import software.coley.recaf.util.analysis.ReAnalyzer;
 import software.coley.recaf.util.analysis.ReInterpreter;
 import software.coley.recaf.util.analysis.lookup.BasicGetStaticLookup;
@@ -55,7 +59,8 @@ public class JvmTransformerContext extends AbstractTransformerContext<JvmClassTr
 	private Supplier<GetStaticLookup> getStaticLookupSupplier = BasicGetStaticLookup::new;
 	private Supplier<InvokeVirtualLookup> invokeVirtualLookupSupplier = BasicInvokeVirtualLookup::new;
 	private Supplier<InvokeStaticLookup> invokeStaticLookupSupplier = BasicInvokeStaticLookup::new;
-	private boolean dropFaultyClasses; // For debugging, not exposed publicly.
+	private boolean reuseConstantPool = true;
+	private boolean dropFaultyClasses;
 
 	/**
 	 * Constructs a new context from an array of transformers.
@@ -82,11 +87,66 @@ public class JvmTransformerContext extends AbstractTransformerContext<JvmClassTr
 	 * 		Transformers to associate with this context.
 	 */
 	public JvmTransformerContext(@Nonnull Workspace workspace, @Nonnull WorkspaceResource resource, @Nonnull Collection<? extends JvmClassTransformer> transformers) {
-		super(workspace, resource, transformers);
+		this(workspace, resource, transformers, TransformationParameters.empty());
+	}
+
+	/**
+	 * Constructs a new context from a collection of transformers.
+	 *
+	 * @param workspace
+	 * 		Workspace containing the classes to transform.
+	 * @param resource
+	 * 		Resource in the workspace containing classes to transform. Should always be the {@link Workspace#getPrimaryResource()}.
+	 * @param transformers
+	 * 		Transformers to associate with this context.
+	 * @param parameters
+	 * 		Per-run parameters transformers can pull values from.
+	 */
+	public JvmTransformerContext(@Nonnull Workspace workspace, @Nonnull WorkspaceResource resource,
+	                             @Nonnull Collection<? extends JvmClassTransformer> transformers,
+	                             @Nonnull TransformationParameters parameters) {
+		super(workspace, resource, transformers, parameters);
 
 		// We will use aggregated mappings for the reverse-mapping utility it offers.
 		// Some transformers that aim to provide mappings will find this very handy.
 		mappings = new AggregatedMappings(workspace);
+	}
+
+	/**
+	 * @param dropFaultyClasses
+	 * 		When {@code true}, classes that fail to be written back to bytecode are logged and omitted from the
+	 * 		transformation results instead of aborting the whole run with a {@link TransformationException}.
+	 */
+	public void setDropFaultyClasses(boolean dropFaultyClasses) {
+		this.dropFaultyClasses = dropFaultyClasses;
+	}
+
+	/**
+	 * @return {@code true} when classes that fail to be written back are dropped instead of aborting the run.
+	 */
+	public boolean isDropFaultyClasses() {
+		return dropFaultyClasses;
+	}
+
+	/**
+	 * @return {@code true} when the constant pool of the original class is reused when writing back to bytecode.
+	 * {@code false} to always regenerate the constant pool when writing back to bytecode.
+	 */
+	public boolean isReuseConstantPool() {
+		return reuseConstantPool;
+	}
+
+	/**
+	 * Defaults to {@code true} to reuse, as most transformations should not be affected by the reused pool.
+	 * It's slightly faster to reuse the pool, but there are some side effects like some meta-data being copied
+	 * even if the transformer intentionally removed it.
+	 *
+	 * @param reuseConstantPool
+	 *        {@code true} when the constant pool of the original class is reused when writing back to bytecode.
+	 *        {@code false} to always regenerate the constant pool when writing back to bytecode.
+	 */
+	public void setReuseConstantPool(boolean reuseConstantPool) {
+		this.reuseConstantPool = reuseConstantPool;
 	}
 
 	/**
@@ -111,8 +171,8 @@ public class JvmTransformerContext extends AbstractTransformerContext<JvmClassTr
 				if (data.node != null) {
 					// Emit bytecode from the current node
 					boolean recompute = recomputeFrameClasses.contains(data.node.name);
-					int flags = recompute && !dropFaultyClasses ? ClassWriter.COMPUTE_FRAMES : 0;
-					ClassReader reader = data.initialClass.getClassReader(); // Copy const-pool + bootstrap methods
+					int flags = recompute ? ClassWriter.COMPUTE_FRAMES : 0;
+					ClassReader reader = reuseConstantPool ? data.initialClass.getClassReader() : null;
 					ClassWriter writer = new WorkspaceClassWriter(inheritanceGraph, reader, flags);
 					try {
 						if (recompute)
@@ -152,6 +212,39 @@ public class JvmTransformerContext extends AbstractTransformerContext<JvmClassTr
 			}
 		}
 		return map;
+	}
+
+	/**
+	 * @param inheritanceGraph
+	 * 		Inheritance graph of workspace.
+	 * @param targetType
+	 * 		Target type.
+	 * @param valueType
+	 * 		Value type.
+	 *
+	 * @return {@code true} when the value type is assignable to the target type.
+	 */
+	public boolean isAssignable(@Nonnull InheritanceGraph inheritanceGraph, @Nonnull Type targetType, @Nonnull Type valueType) {
+		// Base case, same type.
+		if (targetType.equals(valueType))
+			return true;
+
+		// Arrays can only be assigned to Object, and Object can be assigned from any array.
+		int targetSort = targetType.getSort();
+		int valueSort = valueType.getSort();
+		if (targetSort == Type.ARRAY || valueSort == Type.ARRAY)
+			return targetSort == Type.OBJECT && Types.OBJECT_TYPE.equals(targetType);
+
+		// For non-object types, these are not assignable between one another.
+		// This method is used strictly for checking casts and object type operations.
+		//
+		// If either type is not an object, then the cast is only valid if both types are the same primitive type,
+		// which is already handled by the equality check above.
+		if (targetSort != Type.OBJECT || valueSort != Type.OBJECT)
+			return false;
+
+		// Check inheritance graph for assignability of reference types.
+		return inheritanceGraph.isAssignableFrom(targetType.getInternalName(), valueType.getInternalName());
 	}
 
 	/**
@@ -324,6 +417,60 @@ public class JvmTransformerContext extends AbstractTransformerContext<JvmClassTr
 	}
 
 	/**
+	 * Resolves a method instruction to the class and method it is calling.
+	 *
+	 * @param min
+	 * 		Method instruction to resolve.
+	 *
+	 * @return The class and method being called, or {@code null} if the method cannot be resolved.
+	 */
+	@Nullable
+	public ClassMethodPair resolveMethod(@Nonnull MethodInsnNode min) {
+		String owner = min.owner;
+		String methodName = min.name;
+		String methodDesc = min.desc;
+
+		return resolveMethod(owner, methodName, methodDesc);
+	}
+
+	/**
+	 * Resolves a method call to the class and method it is calling.
+	 *
+	 * @param owner
+	 * 		Class name declaring the method.
+	 * @param methodName
+	 * 		Name of the method being called.
+	 * @param methodDesc
+	 * 		Descriptor of the method being called.
+	 *
+	 * @return The class and method being called, or {@code null} if the method cannot be resolved.
+	 */
+	@Nullable
+	public ClassMethodPair resolveMethod(@Nonnull String owner,
+	                                     @Nonnull String methodName,
+	                                     @Nonnull String methodDesc) {
+		// Look up class in the workspace.
+		ClassPathNode classPath = workspace.findJvmClass(owner);
+		if (classPath == null)
+			return null;
+
+		// Look up the bundle for the class.
+		JvmClassBundle bundle = classPath.getValueOfType(JvmClassBundle.class);
+		if (bundle == null)
+			return null;
+
+		// We really only looked up the class to get the containing bundle.
+		// Now that we have the bundle, we can look up the class node in its current form in this context
+		// and up-to-date method contents in that class.
+		JvmClassInfo classInfo = classPath.getValue().asJvmClass();
+		ClassNode classNode = getNode(bundle, classInfo);
+		for (MethodNode method : classNode.methods)
+			if (methodName.equals(method.name) && methodDesc.equals(method.desc))
+				return new ClassMethodPair(classNode, method);
+		return null;
+	}
+
+	/**
 	 * Clears any transformations applied to the given class.
 	 *
 	 * @param bundle
@@ -405,6 +552,9 @@ public class JvmTransformerContext extends AbstractTransformerContext<JvmClassTr
 
 	/**
 	 * Container of per-class transformation state.
+	 * <p>
+	 * All operations are synchronized to ensure that the node and bytecode states are
+	 * consistent with each other even when multiple transformers are running in parallel.
 	 */
 	private class JvmClassData {
 		private final JvmClassBundle bundle;
@@ -429,16 +579,12 @@ public class JvmTransformerContext extends AbstractTransformerContext<JvmClassTr
 		 * @return Node representation of the {@link #getBytecode() current bytecode}.
 		 */
 		@Nonnull
-		public ClassNode getOrCreateNode() {
+		public synchronized ClassNode getOrCreateNode() {
 			if (node == null) {
-				synchronized (this) {
-					if (node == null) {
-						node = new ClassNode();
-						int readerFlags = getOptionalTransformer(FrameRemovingTransformer.class) == null ?
-								0 : ClassReader.SKIP_FRAMES; // Can bypass reading frames if this transformer is active.
-						new ClassReader(bytecode).accept(node, readerFlags);
-					}
-				}
+				node = new ClassNode();
+				int readerFlags = getOptionalTransformer(FrameRemovingTransformer.class) == null ?
+						0 : ClassReader.SKIP_FRAMES; // Can bypass reading frames if this transformer is active.
+				new ClassReader(bytecode).accept(node, readerFlags);
 			}
 
 			// We always give back a copy so actions taken on this node are not affecting the cached instance
@@ -452,15 +598,11 @@ public class JvmTransformerContext extends AbstractTransformerContext<JvmClassTr
 		 * @return Current bytecode of the class.
 		 */
 		@Nonnull
-		public byte[] getBytecode() {
+		public synchronized byte[] getBytecode() {
 			if (bytecode == null) {
-				synchronized (this) {
-					if (bytecode == null) {
-						ClassWriter writer = new ClassWriter(0);
-						node.accept(writer);
-						bytecode = writer.toByteArray();
-					}
-				}
+				ClassWriter writer = new ClassWriter(0);
+				node.accept(writer);
+				bytecode = writer.toByteArray();
 			}
 			return bytecode;
 		}
@@ -469,30 +611,26 @@ public class JvmTransformerContext extends AbstractTransformerContext<JvmClassTr
 		 * @param node
 		 * 		Current node representation to set for this class.
 		 */
-		public void setNode(@Nonnull ClassNode node) {
-			synchronized (this) {
-				this.node = node;
-				bytecode = null; // Invalidate bytecode state
-				dirty = true;
-			}
+		public synchronized void setNode(@Nonnull ClassNode node) {
+			this.node = node;
+			bytecode = null; // Invalidate bytecode state
+			dirty = true;
 		}
 
 		/**
 		 * @param bytecode
 		 * 		Current bytecode to set for this class.
 		 */
-		public void setBytecode(@Nonnull byte[] bytecode) {
-			synchronized (this) {
-				this.bytecode = bytecode;
-				node = null; // Invalidate node state
-				dirty = true;
-			}
+		public synchronized void setBytecode(@Nonnull byte[] bytecode) {
+			this.bytecode = bytecode;
+			node = null; // Invalidate node state
+			dirty = true;
 		}
 
 		/**
 		 * @return {@code true} when changes have been applied to this class.
 		 */
-		public boolean isDirty() {
+		public synchronized boolean isDirty() {
 			return dirty;
 		}
 	}

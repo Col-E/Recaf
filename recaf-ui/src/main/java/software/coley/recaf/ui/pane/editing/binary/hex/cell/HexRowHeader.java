@@ -60,7 +60,7 @@ public class HexRowHeader extends HexRow {
 	}
 
 	@Override
-	public void updateSelection(int offset) {
+	public void updateSelection() {
 		// no-op
 	}
 

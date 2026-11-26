@@ -4,16 +4,21 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
-import me.darknet.assembler.printer.JvmPrinterUtil;
+import me.darknet.assembler.backend.jvm.printer.JvmPrinterUtil;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.IincInsnNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.InvokeDynamicInsnNode;
 import org.objectweb.asm.tree.LabelNode;
 import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.TypeInsnNode;
 import org.objectweb.asm.tree.VarInsnNode;
 import org.objectweb.asm.tree.analysis.Frame;
 import software.coley.collections.Lists;
@@ -24,25 +29,40 @@ import software.coley.recaf.services.transform.ClassTransformer;
 import software.coley.recaf.services.transform.JvmClassTransformer;
 import software.coley.recaf.services.transform.JvmTransformerContext;
 import software.coley.recaf.services.transform.TransformationException;
+import software.coley.recaf.services.transform.TransformationParameter;
+import software.coley.recaf.util.AsmInsnUtil;
+import software.coley.recaf.util.Types;
 import software.coley.recaf.util.analysis.ReFrame;
 import software.coley.recaf.util.analysis.eval.EvaluationResult;
 import software.coley.recaf.util.analysis.eval.EvaluationYieldResult;
 import software.coley.recaf.util.analysis.eval.Evaluator;
 import software.coley.recaf.util.analysis.eval.FieldCacheManager;
+import software.coley.recaf.util.analysis.eval.InstancedObjectValue;
+import software.coley.recaf.util.analysis.lookup.BasicGetStaticLookup;
+import software.coley.recaf.util.analysis.lookup.BasicInvokeStaticLookup;
+import software.coley.recaf.util.analysis.lookup.BasicInvokeVirtualLookup;
+import software.coley.recaf.util.analysis.lookup.GetStaticLookup;
+import software.coley.recaf.util.analysis.lookup.InvokeStaticLookup;
+import software.coley.recaf.util.analysis.lookup.InvokeVirtualLookup;
 import software.coley.recaf.util.analysis.value.DoubleValue;
 import software.coley.recaf.util.analysis.value.FloatValue;
 import software.coley.recaf.util.analysis.value.IntValue;
 import software.coley.recaf.util.analysis.value.LongValue;
+import software.coley.recaf.util.analysis.value.ObjectValue;
 import software.coley.recaf.util.analysis.value.ReValue;
 import software.coley.recaf.util.analysis.value.StringValue;
+import software.coley.recaf.util.analysis.value.Values;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
 
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -52,7 +72,6 @@ import java.util.stream.Collectors;
 import static org.objectweb.asm.Opcodes.*;
 import static software.coley.recaf.util.AsmInsnUtil.*;
 
-
 /**
  * A transformer that folds sequences of computed values into constants.
  *
@@ -60,10 +79,22 @@ import static software.coley.recaf.util.AsmInsnUtil.*;
  */
 @Dependent
 public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
+	public static final String IDENTIFIER = "peephole.data.constfold";
+
+	public static final String KEY_INLINE_STRING_CTORS = IDENTIFIER + ".inline-string-ctors";
+	private static final boolean DEFAULT_INLINE_STRING_CTORS = false;
+	private static final TransformationParameter<Boolean> INLINE_STRING_CTORS_PARAMETER =
+			new TransformationParameter<>(KEY_INLINE_STRING_CTORS, boolean.class, DEFAULT_INLINE_STRING_CTORS);
+
 	private static final int[] ARG_1_SIZE = new int[255];
 	private static final int[] ARG_2_SIZE = new int[255];
+	private static final GetStaticLookup STATIC_FIELD_LOOKUP = new BasicGetStaticLookup();
+	private static final InvokeStaticLookup STATIC_METHOD_LOOKUP = new BasicInvokeStaticLookup();
+	private static final InvokeVirtualLookup VIRTUAL_METHOD_LOOKUP = new BasicInvokeVirtualLookup();
 	private final InheritanceGraphService graphService;
 	private InheritanceGraph inheritanceGraph;
+	private JvmTransformerContext context;
+	private boolean inlineStringConstructors;
 
 	@Inject
 	public OpaqueConstantFoldingTransformer(@Nonnull InheritanceGraphService graphService) {
@@ -72,6 +103,9 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 
 	@Override
 	public void setup(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace) {
+		this.context = context;
+
+		inlineStringConstructors = context.getParameters().getBoolean(KEY_INLINE_STRING_CTORS, DEFAULT_INLINE_STRING_CTORS);
 		inheritanceGraph = graphService.getOrCreateInheritanceGraph(workspace);
 	}
 
@@ -112,8 +146,10 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 				throw new TransformationException("Error encountered when folding constants", t);
 			}
 		}
-		if (dirty)
+		if (dirty) {
+			context.setRecomputeFrames(className);
 			context.setNode(bundle, initialClassState, node);
+		}
 	}
 
 	/**
@@ -132,14 +168,18 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 	 *
 	 * @return {@code true} when any stack operation was transformed.
 	 *
-	 * @throws TransformationException
-	 * 		When the method code couldn't be analyzed.
 	 */
 	private boolean pass1StackManipulation(@Nonnull JvmTransformerContext context, @Nonnull ClassNode node,
-	                                       @Nonnull MethodNode method, @Nonnull InsnList instructions) throws TransformationException {
+	                                       @Nonnull MethodNode method, @Nonnull InsnList instructions) {
 		boolean dirty = false;
 		int insertions = 0;
-		Frame<ReValue>[] frames = context.analyze(inheritanceGraph, node, method);
+		Frame<ReValue>[] frames;
+		try {
+			frames = context.analyze(inheritanceGraph, node, method);
+		} catch (Throwable t) {
+			// Can't analyze the method, so we can't do any stack manipulation.
+			return false;
+		}
 		for (int i = 1; i < instructions.size() - 1; i++) {
 			Frame<ReValue> frame = frames[i - insertions];
 			if (frame == null || frame.getStackSize() == 0)
@@ -297,9 +337,15 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 						continue;
 					BinaryOperationArguments arguments = getBinaryOperationArguments(instruction.getPrevious(), POP2);
 					if (arguments != null && arguments.combinedIntermediates().isEmpty()) {
-						instructions.remove(arguments.argument1().insn());
-						instructions.insert(arguments.argument2().insn(), arguments.argument1().insn());
-						instructions.set(instruction, new InsnNode(NOP));
+						if (arguments.argument1().sameAs(arguments.argument2())) {
+							// If the two arguments are the same, then we can just NOP the swap instruction.
+							instructions.set(instruction, new InsnNode(NOP));
+						} else {
+							// Otherwise, rewrite the order of the two arguments to achieve the same effect as a swap.
+							instructions.remove(arguments.argument1().insn());
+							instructions.insert(arguments.argument2().insn(), arguments.argument1().insn());
+							instructions.set(instruction, new InsnNode(NOP));
+						}
 						dirty = true;
 					}
 				}
@@ -324,19 +370,45 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 	 *
 	 * @return {@code true} when any stack operation was transformed.
 	 *
-	 * @throws TransformationException
-	 * 		When the method code couldn't be analyzed.
 	 */
 	private boolean pass2SequenceFolding(@Nonnull JvmTransformerContext context, @Nonnull ClassNode node,
-	                                     @Nonnull MethodNode method, @Nonnull InsnList instructions) throws TransformationException {
+	                                     @Nonnull MethodNode method, @Nonnull InsnList instructions) {
 		boolean dirty = false;
 		List<AbstractInsnNode> sequence = new ArrayList<>();
-		Frame<ReValue>[] frames = context.analyze(inheritanceGraph, node, method);
+		Frame<ReValue>[] frames;
+		try {
+			frames = context.analyze(inheritanceGraph, node, method);
+		} catch (Throwable t) {
+			// Can't analyze the method, so we can't do any stack manipulation.
+			return false;
+		}
 		int endIndex = instructions.size() - 1;
+		if (removeDiscardedSequences(method, instructions, frames, sequence))
+			return true;
+
 		int unknownState = -1;
+		int sequenceScanBoundary = -1;
 		for (int i = 1; i < endIndex; i++) {
 			AbstractInsnNode instruction = instructions.get(i);
 			int opcode = instruction.getOpcode();
+
+			// Casting preserves the stack size, so it is skipped by the sequence walker below.
+			// Handle known-safe casts separately before looking for value-consuming operations.
+			if (opcode == CHECKCAST) {
+				Frame<ReValue> frame = frames[i];
+				if (frame != null && foldRedundantCheckcast(instructions, instruction, frame))
+					dirty = true;
+				continue;
+			}
+
+			// Fold String.toString() independently of the surrounding sequence. The final call in a chain may
+			// otherwise be rejected because an earlier unknown operation made the sequence boundary invalid.
+			Frame<ReValue> frame = frames[i];
+			if (frame != null && isStringToStringCall(instruction)
+					&& foldRedundantStringToString(instructions, instruction, frame)) {
+				dirty = true;
+				continue;
+			}
 
 			// Iterate until we find an instruction that consumes values off the stack as part of an "operation".
 			int sizeConsumed = getSizeConsumed(instruction);
@@ -349,18 +421,46 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 			// Grab the current and next frame for later. We want to pull values from these to determine
 			// if operations on constant inputs can be inlined.
 			// However, a "return" isn't an operation, so we have an edge case handling those.
-			Frame<ReValue> frame = frames[i];
 			if (frame == null)
 				continue;
 			Frame<ReValue> nextFrame = frames[i + 1];
 			if ((nextFrame == null || nextFrame.getStackSize() <= 0) && !isReturn)
 				continue;
 
+			// Repeated unknown operations cannot become known by expanding the same straight-line chain.
+			StringValue foldedStringValue = inlineStringConstructors ? getKnownStringConstructorValue(instruction, frame) : null;
+			ReValue resultValue = foldedStringValue != null ? foldedStringValue : isReturn ?
+					frame.getStack(frame.getStackSize() - 1) :
+					nextFrame.getStack(nextFrame.getStackSize() - 1);
+			boolean resultIsKnownButNonEmittable = resultValue.hasKnownValue()
+					&& !(resultValue instanceof IntValue || resultValue instanceof FloatValue
+					|| resultValue instanceof DoubleValue || resultValue instanceof LongValue
+					|| resultValue instanceof StringValue);
+			AbstractInsnNode nextInstruction = instruction.getNext();
+			boolean repeatedUnknownOperation = !resultValue.hasKnownValue()
+					&& !isReturn
+					&& !isLabel(nextInstruction)
+					&& nextInstruction != null
+					&& nextInstruction.getOpcode() == opcode;
+			if (repeatedUnknownOperation) {
+				// If we have a repeated unknown operation, see if it is a redundant operation.
+				// Aside from that, we cannot do anything with it since we don't know the result of the operation.
+				if (foldRedundantOperations(instructions, instruction, frame))
+					dirty = true;
+				else
+					unknownState = i;
+				continue;
+			}
+
 			// Walk backwards from this point and try and find a sequence of instructions that
 			// will create the expected stack state we see for this operation instruction.
 			boolean validSequence = true;
 			int netStackChange = 0;
 			int j = i;
+			boolean ignoreUnknownArrayState = foldedStringValue != null
+					&& unknownState >= 0
+					&& unknownState < i
+					&& isArrayStore(instructions.get(unknownState).getOpcode());
 			sequence.clear();
 			Map<Integer, ReValue> sequenceVarWrites = new HashMap<>();
 			while (j >= 0) {
@@ -370,10 +470,16 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 					sequence.add(insn);
 
 				// Abort if we've walked backwards into instructions where we observed an unknown stack state.
-				if (j < unknownState) {
-					// Move the unknown state forward since up to this point the stack is unbalanced
-					// and thus this point relies on the prior point.
-					unknownState = i;
+				// Arrays are a special case since they can be used in the computation of final values of some sequence,
+				// but themselves are not completely known values.
+				boolean crossedUnknownState = j < unknownState && !ignoreUnknownArrayState;
+				boolean crossedSequenceScanBoundary = resultIsKnownButNonEmittable && j < sequenceScanBoundary;
+				if (crossedUnknownState || crossedSequenceScanBoundary) {
+					// Move the boundary forward since this point relies on the prior state.
+					if (crossedUnknownState)
+						unknownState = i;
+					if (crossedSequenceScanBoundary)
+						sequenceScanBoundary = i;
 					validSequence = false;
 					break;
 				}
@@ -384,6 +490,13 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 					validSequence = false;
 					break;
 				}
+
+				// Abort if the sequence does something besides computing values. Folding replaces the whole sequence
+				// with a constant, which would delete the effect. Variable writes are handled below.
+				if (hasUnkeepableSideEffect(insn) && !(insn == instruction && foldedStringValue != null)) {
+					validSequence = false;
+					break;
+				}
 				if (insn.getType() == AbstractInsnNode.LABEL && hasInboundFlowReferences(method, Collections.singletonList(insn))) {
 					validSequence = false;
 					break;
@@ -391,17 +504,23 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 
 				// Record variable side effects.
 				// Because j steps backwards the first encountered write will be the only thing we need to ensure
-				// is kept after folding the sequence.
+				// is kept after folding the sequence. The side effects need to be in the context of the frame at
+				// position j, since that is the frame that will be used to evaluate the sequence since the
+				// operation frame reflects the state after the whole sequence.
 				Frame<ReValue> jframe = frames[j];
 				if (isVarStore(insnOp) && insn instanceof VarInsnNode vin) {
 					int index = vin.var;
-					ReValue stack = frame.getStack(frame.getStackSize() - 1);
+					if (jframe == null || jframe.getStackSize() == 0)
+						break;
+					ReValue stack = jframe.getStack(jframe.getStackSize() - 1);
 					if (!stack.hasKnownValue())
 						break;
 					sequenceVarWrites.putIfAbsent(index, stack);
 				} else if (insn instanceof IincInsnNode iinc) {
 					int index = iinc.var;
-					ReValue local = frame.getLocal(index);
+					if (jframe == null)
+						break;
+					ReValue local = jframe.getLocal(index);
 					if (!local.hasKnownValue() || !(local instanceof IntValue intLocal))
 						break;
 					sequenceVarWrites.putIfAbsent(index, intLocal.add(iinc.incr));
@@ -426,7 +545,9 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 			// - Explicitly marked as invalid
 			// - Too small
 			// - The sequence isn't balanced, or requires a larger scope to include all "contributing" instructions
-			if (!validSequence || sequence.size() < 2 || shouldContinueSequence(sequence))
+			if (!validSequence || sequence.size() < 2
+					|| shouldContinueSequence(sequence, foldedStringValue != null)
+					|| !isSelfContainedAroundArrayStores(sequence))
 				continue;
 
 			// Additionally if the sequence does NOT end with 'xreturn' then it should
@@ -445,42 +566,78 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 			}
 
 			// Replace the operation with a constant value, or simplified instruction pattern.
-			ReValue topValue = isReturn ?
+			ReValue topValue = foldedStringValue != null ? foldedStringValue : isReturn ?
 					frame.getStack(frame.getStackSize() - 1) :
 					nextFrame.getStack(nextFrame.getStackSize() - 1);
 
 			// In some cases where the next instruction is a label targeted by backwards jumps from dummy/dead code
 			// the analyzer can get fooled into merging an unknown state into something that should be known.
 			// When this happens we can evaluate our sequence and see what the result should be.
+			// The sequence walk leaves 'j' pointing at the instruction before the sequence's first instruction,
+			// so the entry frame for evaluation is the frame at 'j + 1'.
 			if (!isReturn && !topValue.hasKnownValue() && isLabel(sequence.getLast().getNext()))
-				topValue = evaluateTopFromSequence(context, method, sequence, topValue, frames, j);
+				topValue = evaluateTopFromSequence(context, method, sequence, topValue, frames, j + 1);
 
 			// Handle replacing the sequence.
 			AbstractInsnNode replacement = toInsn(topValue);
 			if (replacement != null) {
 				// If we have a replacement, remove all instructions in the sequence and replace the
 				// operation instruction with one that pushes a constant value of the result in its place.
-				for (AbstractInsnNode item : sequence)
-					instructions.set(item, new InsnNode(NOP));
+				//
+				// The exception is calls and field reads that may have side effects.
+				// Those are kept in place, with their result discarded, as the folded sequence still runs them.
+				// Inserting pops shifts the indices of later instructions, so the operation is replaced by its node.
+				boolean keptSideEffects = false;
+				for (AbstractInsnNode item : sequence) {
+					if (item == instruction)
+						continue;
+
+					// If the instruction is a side-effecting producer (field read, method call, etc.)
+					// then we need to keep it in place and pop its result off the stack.
+					if (isSideEffectingProducer(item)) {
+						Type producedType = getProducedType(item);
+						if (producedType.getSort() != Type.VOID)
+							instructions.insert(item, new InsnNode(producedType.getSize() == 2 ? POP2 : POP));
+						keptSideEffects = true;
+					} else {
+						instructions.set(item, new InsnNode(NOP));
+					}
+				}
 				if (isReturn) {
-					// We know the sequence size must be >= 2, so the instruction before
-					// the return should have been replaced with a nop, and is safe to replace
-					// with our constant.
-					AbstractInsnNode old = instructions.get(i - 1);
-					instructions.set(old, replacement);
+					if (keptSideEffects) {
+						// The instruction before the return may be a kept side effect, so our constant goes after it.
+						instructions.insertBefore(instruction, replacement);
+					} else {
+						// We know the sequence size must be >= 2, so the instruction before
+						// the return should have been replaced with a nop, and is safe to replace
+						// with our constant.
+						AbstractInsnNode old = instructions.get(i - 1);
+						instructions.set(old, replacement);
+					}
 				} else {
-					instructions.set(instructions.get(i), replacement);
+					instructions.set(instruction, replacement);
 
 					// Insert variable writes to ensure their states are not affected by our inlining.
-					sequenceVarWrites.forEach((index, value) -> {
-						AbstractInsnNode varReplacement = toInsn(value);
-						VarInsnNode varStore = createVarStore(index, Objects.requireNonNull(value.type(), "Missing var type"));
-						instructions.insertBefore(replacement, varReplacement);
-						instructions.insertBefore(replacement, varStore);
-					});
-					i += sequenceVarWrites.size() * 2;
+					if (!sequenceVarWrites.isEmpty()) {
+						sequenceVarWrites.forEach((index, value) -> {
+							AbstractInsnNode varReplacement = toInsn(value);
+							VarInsnNode varStore = createVarStore(index, Objects.requireNonNull(value.type(), "Missing var type"));
+							instructions.insertBefore(replacement, varReplacement);
+							instructions.insertBefore(replacement, varStore);
+						});
+
+						// Inserting shifts subsequent instruction indices while 'frames' was computed against the
+						// pre-mutation list. Stop this pass so the next one re-analyzes instead of using stale frames.
+						dirty = true;
+						break;
+					}
 				}
 				dirty = true;
+
+				// Kept side effects had a pop inserted after them, which shifts the indices that 'frames' was computed
+				// against. Stop this pass so the next one re-analyzes the method instead of using stale frames.
+				if (keptSideEffects)
+					break;
 			} else {
 				// If we don't have a replacement (since the end state cannot be resolved) see if we can at least
 				// fold redundant operations like "x = x * 1".
@@ -488,15 +645,103 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 					dirty = true;
 				} else {
 					int stackSize = frame.getStackSize();
+					boolean hasUnknownValue = false;
 					for (int s = 0; s < stackSize; s++) {
 						ReValue stack = frame.getStack(s);
 						if (!stack.hasKnownValue()) {
 							unknownState = i;
+							hasUnknownValue = true;
 							break;
 						}
 					}
+
+					// A known result can still have no emittable replacement (such as an array result).
+					// Keep visiting later instructions, but bound repeated candidates that also produce non-emittable results.
+					if (!hasUnknownValue && topValue.hasKnownValue())
+						sequenceScanBoundary = i;
 				}
 			}
+		}
+		return dirty;
+	}
+
+	/**
+	 * Removes stack-balanced sequences whose values are discarded by {@code POP} or {@code POP2}.
+	 *
+	 * @param method
+	 * 		Method hosting the instructions.
+	 * @param instructions
+	 * 		Method instructions.
+	 * @param frames
+	 * 		Frames computed for the method.
+	 * @param sequence
+	 * 		Reusable sequence buffer.
+	 *
+	 * @return {@code true} when any sequence was removed.
+	 */
+	private boolean removeDiscardedSequences(@Nonnull MethodNode method,
+	                                         @Nonnull InsnList instructions,
+	                                         @Nonnull Frame<ReValue>[] frames,
+	                                         @Nonnull List<AbstractInsnNode> sequence) {
+		boolean dirty = false;
+		for (int i = instructions.size() - 2; i >= 1; i--) {
+			AbstractInsnNode instruction = instructions.get(i);
+			int terminalOpcode = instruction.getOpcode();
+			if ((terminalOpcode != POP && terminalOpcode != POP2) || !hasKnownDiscardedValues(frames[i], terminalOpcode))
+				continue;
+
+			// Instruction is a POP/POP2 that discards known values.
+			// Walk backwards to find the sequence of instructions that produced those values.
+			boolean validSequence = true;
+			int netStackChange = 0;
+			sequence.clear();
+			int j = i;
+			while (j >= 0) {
+				AbstractInsnNode insn = instructions.get(j);
+				int opcode = insn.getOpcode();
+				if (opcode != NOP && opcode != -1)
+					sequence.add(insn);
+
+				// Abort if we see control flow, side effects, or variable writes. Those are not safe to remove.
+				if (isFlowControl(insn)
+						|| hasUnkeepableSideEffect(insn)
+						|| isSideEffectingProducer(insn)
+						|| isVarStore(opcode)
+						|| insn instanceof IincInsnNode
+						|| insn instanceof FieldInsnNode
+						|| insn instanceof MethodInsnNode
+						|| insn instanceof InvokeDynamicInsnNode
+						|| isArrayStore(opcode)
+						|| opcode == CHECKCAST
+						|| insn.getType() == AbstractInsnNode.LABEL
+						&& hasInboundFlowReferences(method, Collections.singletonList(insn))) {
+					validSequence = false;
+					break;
+				}
+
+				// Abort if we see a POP/POP2 that discards unknown values. Those are not safe to remove either.
+				if ((opcode == POP || opcode == POP2) && !hasKnownDiscardedValues(frames[j], opcode)) {
+					validSequence = false;
+					break;
+				}
+
+				netStackChange += computeInstructionStackDifference(frames, j, insn);
+				j--;
+
+				// A discarded sequence is complete when it restores its incoming stack height.
+				if (netStackChange >= 0)
+					break;
+			}
+			Collections.reverse(sequence);
+
+			// Skip if the completed sequence isn't a viable candidate for removal.
+			if (!validSequence || netStackChange != 0 || sequence.size() < 2 || shouldContinueSequence(sequence, false))
+				continue;
+
+			// Done, nop it.
+			for (AbstractInsnNode item : sequence)
+				instructions.set(item, new InsnNode(NOP));
+			dirty = true;
 		}
 		return dirty;
 	}
@@ -537,11 +782,19 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 		// match the sequence length with a little leeway should be alright.
 		final int maxSteps = sequence.size() + 10;
 		ReFrame initialBlockFrame = (ReFrame) frames[Math.max(0, sequenceStartIndex)];
-		Evaluator evaluator = new Evaluator(context.getWorkspace(), context.newInterpreter(inheritanceGraph), new FieldCacheManager(), maxSteps, false);
+		Evaluator evaluator = new Evaluator(context.getWorkspace(), context.newInterpreter(inheritanceGraph), new FieldCacheManager(), maxSteps, false, false);
 
 		// Evaluate the sequence and return the result.
 		// If evaluation fails, return the original unknown top value.
-		EvaluationResult result = evaluator.evaluateBlock(block, initialBlockFrame, method.access);
+		EvaluationResult result;
+		try {
+			result = evaluator.evaluateBlock(block, initialBlockFrame, method.access);
+		} catch (Throwable t) {
+			// Evaluation is best-effort. Some sequences cannot be evaluated, which can surface as an
+			// unchecked exception (for example, the block pushing beyond the origin frame's max stack).
+			// Treat those the same as any other un-evaluatable sequence.
+			return topValue;
+		}
 		if (result instanceof EvaluationYieldResult(ReValue value)) {
 			if (Objects.equals(value.type(), topValue.type())) // Sanity check
 				return value;
@@ -549,6 +802,331 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 
 		// Evaluation failed, this is to be expected as some cases cannot always be evaluated.
 		return topValue;
+	}
+
+	/**
+	 * Removes a checkcast when the analyzed value already has a known assignable runtime type.
+	 *
+	 * @param instructions
+	 * 		Instructions to operate on.
+	 * @param instruction
+	 * 		The checkcast instruction to inspect.
+	 * @param frame
+	 * 		The stack frame before the instruction.
+	 *
+	 * @return {@code true} when the checkcast was redundant and replaced with a nop.
+	 */
+	private boolean foldRedundantCheckcast(@Nonnull InsnList instructions,
+	                                       @Nonnull AbstractInsnNode instruction,
+	                                       @Nonnull Frame<ReValue> frame) {
+		// Skip if this isn't a checkcast instruction or the stack is empty.
+		if (!(instruction instanceof TypeInsnNode cast) || frame.getStackSize() == 0)
+			return false;
+
+		// A known object value has an exact runtime type, so an assignable cast cannot throw or refine the verifier type.
+		ReValue value = frame.getStack(frame.getStackSize() - 1);
+		if (!(value instanceof ObjectValue object) || !object.hasKnownValue())
+			return false;
+
+		// If the value's runtime type is assignable to the cast type, then the checkcast is redundant.
+		Type valueType = object.type();
+		String descriptor = cast.desc;
+		Type targetType = descriptor.startsWith("[") ? Type.getType(descriptor) : Type.getObjectType(descriptor);
+		if (!context.isAssignable(inheritanceGraph, targetType, valueType))
+			return false;
+
+		// The verifier does not know the runtime type of the value.
+		// It only knows the static type of whatever produced it, such as 'Object' for an 'aaload' from 'Object[]'.
+		// If that is not assignable to the cast type then the cast is still needed to pass verification.
+		Type staticType = getStaticOperandType(instruction);
+		if (staticType == null || !context.isAssignable(inheritanceGraph, targetType, staticType))
+			return false;
+
+		instructions.set(instruction, new InsnNode(NOP));
+		return true;
+	}
+
+	/**
+	 * @param frame
+	 * 		The stack frame to inspect.
+	 * @param opcode
+	 * 		The POP/POP2 instruction that discards the top value(s) of the stack.
+	 *
+	 * @return {@code true} when the top value(s) of the stack are known and can be discarded without affecting program semantics.
+	 */
+	private static boolean hasKnownDiscardedValues(@Nullable Frame<ReValue> frame, int opcode) {
+		// Skip if the frame is null (dead code not visited by analyzer) or the stack is empty.
+		if (frame == null || frame.getStackSize() == 0)
+			return false;
+
+		// Check the top value(s) of the stack to see if they are known and can be discarded.
+		int stackSize = frame.getStackSize();
+		ReValue top = frame.getStack(stackSize - 1);
+		if (opcode == POP)
+			return top.getSize() == 1 && isKnownDiscardedValue(top);
+		if (opcode != POP2)
+			return false;
+		if (top.getSize() == 2)
+			return isKnownDiscardedValue(top);
+		if (top.getSize() != 1 || stackSize < 2)
+			return false;
+		ReValue below = frame.getStack(stackSize - 2);
+		return below.getSize() == 1
+				&& isKnownDiscardedValue(top)
+				&& isKnownDiscardedValue(below);
+	}
+
+	/**
+	 * @param value
+	 * 		The value to inspect.
+	 *
+	 * @return {@code true} when the value is known and can be discarded without affecting program semantics.
+	 */
+	private static boolean isKnownDiscardedValue(@Nonnull ReValue value) {
+		return value.hasKnownValue() || value instanceof ObjectValue object && object.isNull();
+	}
+
+	/**
+	 * @param consumer
+	 * 		Instruction consuming an object off the stack.
+	 *
+	 * @return The type the verifier assigns to the consumed value, or {@code null} when that cannot be determined
+	 * from the instruction directly providing the value.
+	 */
+	@Nullable
+	private static Type getStaticOperandType(@Nonnull AbstractInsnNode consumer) {
+		AbstractInsnNode producer = AsmInsnUtil.getPreviousInsn(consumer, true);
+		if (producer == null)
+			return null;
+
+		return switch (producer) {
+			case LdcInsnNode ldc when ldc.cst instanceof String -> Type.getObjectType("java/lang/String");
+			case TypeInsnNode type when type.getOpcode() == CHECKCAST ->
+					type.desc.startsWith("[") ? Type.getType(type.desc) : Type.getObjectType(type.desc);
+			case FieldInsnNode field when field.getOpcode() == GETSTATIC || field.getOpcode() == GETFIELD ->
+					Type.getType(field.desc);
+			case MethodInsnNode method -> Type.getReturnType(method.desc);
+			default -> null;
+		};
+	}
+
+	/**
+	 * Resolves a supported {@code String} constructor when all inputs have known contents.
+	 *
+	 * @param instruction
+	 * 		Potential String constructor call.
+	 * @param frame
+	 * 		Stack frame before the constructor call.
+	 *
+	 * @return Known String value, or {@code null} when the constructor or any input is not supported.
+	 */
+	@Nullable
+	@SuppressWarnings({"deprecation", "OptionalGetWithoutIsPresent"})
+	private static StringValue getKnownStringConstructorValue(@Nonnull AbstractInsnNode instruction,
+	                                                          @Nonnull Frame<ReValue> frame) {
+		// Must be a: new String(...)
+		if (!(instruction instanceof MethodInsnNode constructor)
+				|| instruction.getOpcode() != INVOKESPECIAL
+				|| !constructor.owner.equals("java/lang/String")
+				|| !constructor.name.equals("<init>"))
+			return null;
+
+		// The receiver must be a String and the arguments must be known.
+		int argumentCount = Type.getArgumentCount(constructor.desc);
+		int receiverIndex = frame.getStackSize() - argumentCount - 1;
+		if (receiverIndex < 0
+				|| !(frame.getStack(receiverIndex) instanceof ObjectValue receiver)
+				|| !Types.STRING_TYPE.equals(receiver.type()) || !receiver.isNotNull())
+			return null;
+		int argumentsIndex = receiverIndex + 1;
+
+		// Resolve the constructor arguments to a known String value.
+		String text;
+		try {
+			text = switch (constructor.desc) {
+				case "(Ljava/lang/String;)V" -> Values.asStringOrNull(frame.getStack(argumentsIndex));
+				case "([C)V" -> {
+					char[] chars = Values.getKnownCharArray(frame.getStack(argumentsIndex));
+					yield chars == null ? null : new String(chars);
+				}
+				case "([CII)V" -> {
+					char[] chars = Values.getKnownCharArray(frame.getStack(argumentsIndex));
+					IntValue offset = getKnownIntValue(frame, argumentsIndex + 1);
+					IntValue count = getKnownIntValue(frame, argumentsIndex + 2);
+					yield chars == null || offset == null || count == null ? null :
+							new String(chars, offset.value().getAsInt(), count.value().getAsInt());
+				}
+				case "([III)V" -> {
+					int[] codePoints = Values.getKnownIntArray(frame.getStack(argumentsIndex));
+					IntValue offset = getKnownIntValue(frame, argumentsIndex + 1);
+					IntValue count = getKnownIntValue(frame, argumentsIndex + 2);
+					yield codePoints == null || offset == null || count == null ? null :
+							new String(codePoints, offset.value().getAsInt(), count.value().getAsInt());
+				}
+				case "([BI)V" -> {
+					byte[] bytes = Values.getKnownByteArray(frame.getStack(argumentsIndex));
+					IntValue highByte = getKnownIntValue(frame, argumentsIndex + 1);
+					yield bytes == null || highByte == null ? null :
+							new String(bytes, highByte.value().getAsInt());
+				}
+				case "([BIII)V" -> {
+					byte[] bytes = Values.getKnownByteArray(frame.getStack(argumentsIndex));
+					IntValue highByte = getKnownIntValue(frame, argumentsIndex + 1);
+					IntValue offset = getKnownIntValue(frame, argumentsIndex + 2);
+					IntValue count = getKnownIntValue(frame, argumentsIndex + 3);
+					yield bytes == null || highByte == null || offset == null || count == null ? null :
+							new String(bytes, highByte.value().getAsInt(), offset.value().getAsInt(), count.value().getAsInt());
+				}
+				case "([BIILjava/lang/String;)V" -> {
+					byte[] bytes = Values.getKnownByteArray(frame.getStack(argumentsIndex));
+					IntValue offset = getKnownIntValue(frame, argumentsIndex + 1);
+					IntValue length = getKnownIntValue(frame, argumentsIndex + 2);
+					String charsetName = Values.asStringOrNull(frame.getStack(argumentsIndex + 3));
+					yield bytes == null || offset == null || length == null || charsetName == null ? null :
+							new String(bytes, offset.value().getAsInt(), length.value().getAsInt(), charsetName);
+				}
+				case "([BIILjava/nio/charset/Charset;)V" -> {
+					byte[] bytes = Values.getKnownByteArray(frame.getStack(argumentsIndex));
+					IntValue offset = getKnownIntValue(frame, argumentsIndex + 1);
+					IntValue length = getKnownIntValue(frame, argumentsIndex + 2);
+					Charset charset = getKnownCharset(frame.getStack(argumentsIndex + 3), instruction);
+					yield bytes == null || offset == null || length == null || charset == null ? null :
+							new String(bytes, offset.value().getAsInt(), length.value().getAsInt(), charset);
+				}
+				case "([BLjava/lang/String;)V" -> {
+					byte[] bytes = Values.getKnownByteArray(frame.getStack(argumentsIndex));
+					String charsetName = Values.asStringOrNull(frame.getStack(argumentsIndex + 1));
+					yield bytes == null || charsetName == null ? null : new String(bytes, charsetName);
+				}
+				case "([BLjava/nio/charset/Charset;)V" -> {
+					byte[] bytes = Values.getKnownByteArray(frame.getStack(argumentsIndex));
+					Charset charset = getKnownCharset(frame.getStack(argumentsIndex + 1), instruction);
+					yield bytes == null || charset == null ? null : new String(bytes, charset);
+				}
+				case "([BII)V" -> {
+					byte[] bytes = Values.getKnownByteArray(frame.getStack(argumentsIndex));
+					IntValue offset = getKnownIntValue(frame, argumentsIndex + 1);
+					IntValue length = getKnownIntValue(frame, argumentsIndex + 2);
+					yield bytes == null || offset == null || length == null ? null :
+							new String(bytes, offset.value().getAsInt(), length.value().getAsInt());
+				}
+				case "([B)V" -> {
+					byte[] bytes = Values.getKnownByteArray(frame.getStack(argumentsIndex));
+					yield bytes == null ? null : new String(bytes);
+				}
+				default -> null;
+			};
+		} catch (Exception ex) {
+			// Invalid slices, code points, or charset names keep the original constructor and its exception behavior.
+			return null;
+		}
+
+		return text == null ? null : ObjectValue.string(text);
+	}
+
+	/**
+	 * @param frame
+	 * 		Stack frame to inspect.
+	 * @param index
+	 * 		Index of the stack value to inspect.
+	 *
+	 * @return Known IntValue, or {@code null} when the value is not known.
+	 */
+	@Nullable
+	private static IntValue getKnownIntValue(@Nonnull Frame<ReValue> frame, int index) {
+		if (frame.getStack(index) instanceof IntValue intValue && intValue.hasKnownValue())
+			return intValue;
+		return null;
+	}
+
+	/**
+	 * @param value
+	 * 		Value to convert.
+	 * @param constructor
+	 * 		Method instruction that is constructing the value.
+	 *
+	 * @return Known Charset value, or {@code null} when the constructor or any input is not supported.
+	 */
+	@Nullable
+	private static Charset getKnownCharset(@Nonnull ReValue value, @Nonnull AbstractInsnNode constructor) {
+		if (value instanceof InstancedObjectValue<?> instanced && instanced.getRealInstance() instanceof Charset charset)
+			return charset;
+		if (!(value instanceof ObjectValue object) || !Types.CHARSET_TYPE.equals(object.type()))
+			return null;
+
+		AbstractInsnNode producer = getPreviousInsn(constructor, true);
+		if (producer instanceof FieldInsnNode field
+				&& field.getOpcode() == GETSTATIC
+				&& field.owner.equals("java/nio/charset/StandardCharsets")
+				&& Types.CHARSET_TYPE.equals(Type.getType(field.desc)))
+			return switch (field.name) {
+				case "ISO_8859_1" -> StandardCharsets.ISO_8859_1;
+				case "US_ASCII" -> StandardCharsets.US_ASCII;
+				case "UTF_8" -> StandardCharsets.UTF_8;
+				case "UTF_16" -> StandardCharsets.UTF_16;
+				case "UTF_16BE" -> StandardCharsets.UTF_16BE;
+				case "UTF_16LE" -> StandardCharsets.UTF_16LE;
+				case "UTF_32" -> StandardCharsets.UTF_32;
+				case "UTF_32BE" -> StandardCharsets.UTF_32BE;
+				case "UTF_32LE" -> StandardCharsets.UTF_32LE;
+				default -> null;
+			};
+		return null;
+	}
+
+	/**
+	 * @param instruction
+	 * 		Instruction to inspect.
+	 *
+	 * @return {@code true} when the instruction is a String.toString() invocation.
+	 */
+	private static boolean isStringToStringCall(@Nonnull AbstractInsnNode instruction) {
+		return instruction instanceof MethodInsnNode method
+				&& method.getOpcode() == INVOKEVIRTUAL
+				&& method.owner.equals("java/lang/String")
+				&& method.name.equals("toString")
+				&& method.desc.equals("()Ljava/lang/String;");
+	}
+
+	/**
+	 * Removes {@code String.toString()} calls.
+	 * <ul>
+	 *     <li>{@code "const".toString()} - Any {@code toString()} is redundant.</li>
+	 *     <li>{@code stringBuiler.toString().toString()} - After the first {@code toString()} the rest are redundant.</li>
+	 *     <li>{@code stringVar.toString().toString()} - After the first {@code toString()} the rest are redundant. The first is still needed since it can NPE.</li>
+	 * </ul>
+	 *
+	 * @param instructions
+	 * 		Instructions to operate on.
+	 * @param instruction
+	 * 		Potential {@code String.toString()} invocation.
+	 * @param frame
+	 * 		The stack frame at the instruction position.
+	 *
+	 * @return {@code true} when the redundant invocation was removed.
+	 */
+	private static boolean foldRedundantStringToString(@Nonnull InsnList instructions,
+	                                                   @Nonnull AbstractInsnNode instruction,
+	                                                   @Nonnull Frame<ReValue> frame) {
+		if (!isStringToStringCall(instruction) || frame.getStackSize() == 0)
+			return false;
+
+		ReValue receiver = frame.getStack(frame.getStackSize() - 1);
+		boolean receiverIsNonNull = receiver instanceof ObjectValue object
+				&& Types.STRING_TYPE.equals(object.type())
+				&& object.isNotNull();
+		AbstractInsnNode producer = getPreviousInsn(instruction, true);
+		boolean producerReturnsNonNullString = producer instanceof MethodInsnNode method
+				&& method.getOpcode() == INVOKEVIRTUAL
+				&& method.name.equals("toString")
+				&& method.desc.equals("()Ljava/lang/String;")
+				&& (method.owner.equals("java/lang/String")
+				|| method.owner.equals("java/lang/StringBuilder"));
+		if (!receiverIsNonNull && !producerReturnsNonNullString)
+			return false;
+
+		instructions.set(instruction, new InsnNode(NOP));
+		return true;
 	}
 
 	/**
@@ -562,6 +1140,9 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 	 * @return {@code true} when the instruction was a redundant operation that has been folded. Otherwise {@code false}.
 	 */
 	private static boolean foldRedundantOperations(@Nonnull InsnList instructions, @Nonnull AbstractInsnNode instruction, @Nonnull Frame<ReValue> frame) {
+		if (foldRedundantStringToString(instructions, instruction, frame))
+			return true;
+
 		// Skip if this isn't an operation we can support
 		if (frame.getStackSize() < 2)
 			return false;
@@ -595,6 +1176,13 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 		if (targetValue == 25565)
 			return false;
 
+		// Division and shifts only have an identity on the right operand.
+		boolean rightOperandOnlyIdentity = switch (opcode) {
+			case IDIV, FDIV, DDIV, LDIV,
+			     ISHL, ISHR, IUSHR, LSHL, LSHR, LUSHR -> true;
+			default -> false;
+		};
+
 		if (ReValue.isPrimitiveEqualTo(top, targetValue)) {
 			// Scan for the instructions that provide the argument values for the current instruction/binary operation.
 			// - Start with the instruction before this one as a potential provider for the 2nd argument (right value in an operation)
@@ -608,7 +1196,7 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 			for (AbstractInsnNode intermediate : arguments.argument2().intermediates())
 				instructions.set(intermediate, new InsnNode(NOP));
 			return true;
-		} else if (ReValue.isPrimitiveEqualTo(topM1, targetValue)) {
+		} else if (!rightOperandOnlyIdentity && ReValue.isPrimitiveEqualTo(topM1, targetValue)) {
 			// Scan for the instructions that provide the argument values for the current instruction/binary operation.
 			// - Start with the instruction before this one as a potential provider for the 2nd argument (right value in an operation)
 			BinaryOperationArguments arguments = getBinaryOperationArguments(instruction.getPrevious(), opcode);
@@ -662,10 +1250,12 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 	 *
 	 * @param sequence
 	 * 		Instruction sequence.
+	 * @param stringConstructorResult
+	 *        {@code true} when the sequence ends with a String constructor call that has a known value.
 	 *
 	 * @return {@code true} when the instruction sequence should continue expanding backwards.
 	 */
-	private static boolean shouldContinueSequence(@Nonnull List<AbstractInsnNode> sequence) {
+	private static boolean shouldContinueSequence(@Nonnull List<AbstractInsnNode> sequence, boolean stringConstructorResult) {
 		int stackDiff = 0;
 		int consumed = 0;
 		int produced = 0;
@@ -703,13 +1293,43 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 			stackDiff = produced - consumed;
 			netStackChange += stackDiff;
 		}
+		if (stringConstructorResult)
+			produced = 1;
 		return netStackChange > consumed || netStackChange != produced;
 	}
 
 	@Nonnull
 	@Override
-	public String name() {
-		return "Opaque constant folding";
+	public String identifier() {
+		return IDENTIFIER;
+	}
+
+	@Nonnull
+	@Override
+	public String beforeExample() {
+		return """
+				// Foldable cases:
+				//   value * 1        ---> value
+				//   "##".length()    ---> 2
+				// Then:
+				//   32 / 2 - 16      ---> 0
+				//   value << 0       ---> value
+				return (input * 1) << (32 / "##".length() - 16);
+				""";
+	}
+
+	@Nonnull
+	@Override
+	public String afterExample() {
+		return """
+				return input;
+				""";
+	}
+
+	@Nonnull
+	@Override
+	public List<TransformationParameter<?>> getParameterDefinitions() {
+		return List.of(INLINE_STRING_CTORS_PARAMETER);
 	}
 
 	@Nonnull
@@ -745,11 +1365,107 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 		if (op >= ILOAD && op <= ALOAD)
 			return true;
 		if (op == GETSTATIC)
-			return true;
+			return insn instanceof FieldInsnNode fin && STATIC_FIELD_LOOKUP.hasLookup(fin);
 		return op == INVOKESTATIC
 				&& insn instanceof MethodInsnNode min
 				&& min.desc.startsWith("()")
-				&& !min.desc.endsWith(")V");
+				&& !min.desc.endsWith(")V")
+				&& STATIC_METHOD_LOOKUP.hasLookup(min);
+	}
+
+	/**
+	 * Check if the instruction is a no-arg static call or static field read that is not backed by a static lookup.
+	 * Unlike lookup-backed values, these cannot be proven to be free of side effects since they can potentially
+	 * initialize other classes, or have other side effects, so they must not be removed or duplicated by folding.
+	 *
+	 * @param insn
+	 * 		Instruction to check.
+	 *
+	 * @return {@code true} when the instruction must be kept when its surrounding sequence is folded.
+	 */
+	private static boolean isSideEffectingProducer(@Nonnull AbstractInsnNode insn) {
+		return switch (insn) {
+			case MethodInsnNode min when min.getOpcode() == INVOKESTATIC ->
+					min.desc.startsWith("()") && !STATIC_METHOD_LOOKUP.hasLookup(min);
+			case FieldInsnNode fin when fin.getOpcode() == GETSTATIC -> !STATIC_FIELD_LOOKUP.hasLookup(fin);
+			default -> false;
+		};
+	}
+
+	/**
+	 * Array stores are only safe to fold away when nothing else can observe the array.
+	 * That is the case when every array reachable by the sequence was created by the sequence itself.
+	 *
+	 * @param sequence
+	 * 		Instruction sequence about to be folded.
+	 *
+	 * @return {@code true} when the sequence has no array stores, or all of them write to arrays it created.
+	 */
+	private static boolean isSelfContainedAroundArrayStores(@Nonnull List<AbstractInsnNode> sequence) {
+		if (sequence.stream().noneMatch(insn -> isArrayStore(insn.getOpcode())))
+			return true;
+
+		// References can come from variables, fields, and calls. Any such source that the sequence did
+		// not assign itself may be an array that is still in use after the sequence.
+		Set<Integer> assignedVariables = new HashSet<>();
+		for (AbstractInsnNode insn : sequence) {
+			switch (insn) {
+				case VarInsnNode varInsn when varInsn.getOpcode() == ASTORE -> assignedVariables.add(varInsn.var);
+				case VarInsnNode varInsn when varInsn.getOpcode() == ALOAD -> {
+					if (!assignedVariables.contains(varInsn.var))
+						return false;
+				}
+				case FieldInsnNode fieldInsn when fieldInsn.getOpcode() == GETSTATIC || fieldInsn.getOpcode() == GETFIELD -> {
+					Type fieldType = Type.getType(fieldInsn.desc);
+					if (Types.isReference(fieldType) && !Types.CHARSET_TYPE.equals(fieldType))
+						return false;
+				}
+				case MethodInsnNode methodInsn when isSideEffectingProducer(methodInsn) -> {
+					if (Types.isReference(Type.getReturnType(methodInsn.desc)))
+						return false;
+				}
+				default -> {
+					// Nothing to do.
+				}
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Check if the instruction has an effect outside of the stack and local variables, which folding cannot keep.
+	 * This excludes {@link #isSideEffectingProducer(AbstractInsnNode) producers} which folding keeps in place.
+	 *
+	 * @param insn
+	 * 		Instruction to check.
+	 *
+	 * @return {@code true} when folding a sequence containing the instruction would delete an observable effect.
+	 */
+	private static boolean hasUnkeepableSideEffect(@Nonnull AbstractInsnNode insn) {
+		int op = insn.getOpcode();
+		if (op == PUTSTATIC || op == PUTFIELD || op == MONITORENTER || op == MONITOREXIT)
+			return true;
+		return switch (insn) {
+			case InvokeDynamicInsnNode ignored -> true;
+			case MethodInsnNode min -> !isSideEffectingProducer(min) && !(min.getOpcode() == INVOKESTATIC ?
+					STATIC_METHOD_LOOKUP.hasLookup(min) : VIRTUAL_METHOD_LOOKUP.hasLookup(min));
+			default -> false;
+		};
+	}
+
+	/**
+	 * @param insn
+	 * 		A {@link #isSideEffectingProducer(AbstractInsnNode) side effecting producer}.
+	 *
+	 * @return Type of the value the instruction pushes onto the stack.
+	 */
+	@Nonnull
+	private static Type getProducedType(@Nonnull AbstractInsnNode insn) {
+		if (insn instanceof MethodInsnNode min)
+			return Type.getReturnType(min.desc);
+		if (insn instanceof FieldInsnNode fin)
+			return Type.getType(fin.desc);
+		throw new IllegalArgumentException("Instruction is not a side effecting producer: " + insn.getClass().getSimpleName() + " " + insn.getOpcode());
 	}
 
 	/**
@@ -761,7 +1477,14 @@ public class OpaqueConstantFoldingTransformer implements JvmClassTransformer {
 	 */
 	@Nullable
 	@SuppressWarnings("OptionalGetWithoutIsPresent")
-	public static AbstractInsnNode toInsn(@Nonnull ReValue value) {
+	public static AbstractInsnNode toInsn(@Nullable ReValue value) {
+		if (value == null)
+			return null;
+
+		// Check for null. Not covered by 'known value' so we need to handle it explicitly.
+		if (value == ObjectValue.VAL_OBJECT_NULL || value instanceof ObjectValue objectValue && objectValue.isNull())
+			return new InsnNode(Opcodes.ACONST_NULL);
+
 		// Skip if value is not known.
 		if (!value.hasKnownValue())
 			return null;

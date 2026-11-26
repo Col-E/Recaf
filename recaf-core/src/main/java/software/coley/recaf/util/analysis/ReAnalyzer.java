@@ -26,6 +26,8 @@ public class ReAnalyzer extends Analyzer<ReValue> {
 	private final ReInterpreter interpreter;
 	private MethodNode targetMethod;
 	private AbstractInsnNode currentInsn;
+	private boolean pruneOutputTemplateFrames = true;
+	private boolean pruneOutputDeadCodeFrames = true;
 
 	/**
 	 * @param interpreter
@@ -42,6 +44,22 @@ public class ReAnalyzer extends Analyzer<ReValue> {
 	@Nonnull
 	public ReInterpreter getInterpreter() {
 		return interpreter;
+	}
+
+	/**
+	 * @param pruneOutputTemplateFrames
+	 * 		If {@code true}, output frames that are only used as templates for jump targets will be removed.
+	 */
+	public void setPruneOutputTemplateFrames(boolean pruneOutputTemplateFrames) {
+		this.pruneOutputTemplateFrames = pruneOutputTemplateFrames;
+	}
+
+	/**
+	 * @param pruneOutputDeadCodeFrames
+	 * 		If {@code true}, output frames that are never branched to will be removed.
+	 */
+	public void setPruneOutputDeadCodeFrames(boolean pruneOutputDeadCodeFrames) {
+		this.pruneOutputDeadCodeFrames = pruneOutputDeadCodeFrames;
 	}
 
 	@Override
@@ -65,11 +83,15 @@ public class ReAnalyzer extends Analyzer<ReValue> {
 		// Process the method's frames.
 		Frame<ReValue>[] frames = super.analyze(owner, method);
 
-		// Remove template and frames never branched to.
+		// Remove template and frames never branched to if requested.
 		int frameCount = frames.length;
 		for (int i = 0; i < frameCount; i++) {
 			ReFrame frame = (ReFrame) frames[i];
-			if (frame != null && (frame.isTemplate() || frame.isNeverBranchedTo()))
+			if (frame == null)
+				continue;
+			if (pruneOutputTemplateFrames && frame.isTemplate())
+				frames[i] = null;
+			if (pruneOutputDeadCodeFrames && frame.isNeverBranchedTo())
 				frames[i] = null;
 		}
 
@@ -78,6 +100,7 @@ public class ReAnalyzer extends Analyzer<ReValue> {
 
 	/**
 	 * Fills in all jump/switch targets with template frames.
+	 * <p>
 	 * These templates exist so that {@code Analyzer#merge(int, Frame, Subroutine)}
 	 * will call the template frame's {@link Frame#merge(Frame, Interpreter)}
 	 * instead of creating a new frame.
@@ -149,7 +172,8 @@ public class ReAnalyzer extends Analyzer<ReValue> {
 
 			// Record inverse branching behavior for fall-through target.
 			ReFrame targetFrame = (ReFrame) getFrames()[targetIndex];
-			targetFrame.addBranchingBehavior(branching.invert());
+			if (targetFrame != null)
+				targetFrame.addBranchingBehavior(branching.invert());
 		} else {
 			int targetIndex = targetMethod.instructions.indexOf(target);
 			if (targetIndex < 0)
@@ -157,7 +181,8 @@ public class ReAnalyzer extends Analyzer<ReValue> {
 
 			// Record branching behavior for jump target.
 			ReFrame targetFrame = (ReFrame) getFrames()[targetIndex];
-			targetFrame.addBranchingBehavior(branching);
+			if (targetFrame != null)
+				targetFrame.addBranchingBehavior(branching);
 		}
 	}
 }

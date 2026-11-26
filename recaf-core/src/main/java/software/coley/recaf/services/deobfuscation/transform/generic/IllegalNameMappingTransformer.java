@@ -24,6 +24,8 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
  */
 @Dependent
 public class IllegalNameMappingTransformer implements JvmClassTransformer {
+	public static final String IDENTIFIER = "cleanup.illegalname";
+
 	private static final NameGeneratorFilter ILLEGAL_NAME_FILTER = IllegalNameAntiReversalAnalyzer.getIllegalNameFilter();
 	private static final NameGenerator NAME_GENERATOR = new IncrementingNameGenerator();
 
@@ -53,7 +55,7 @@ public class IllegalNameMappingTransformer implements JvmClassTransformer {
 
 	@Nonnull
 	@Override
-	public String name() {
-		return "Illegal name mapping";
+	public String identifier() {
+		return IDENTIFIER;
 	}
 }

@@ -6,7 +6,7 @@ import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import software.coley.recaf.services.Service;
-import software.coley.recaf.util.ResourceUtil;
+import software.coley.recaf.util.io.ResourceUtil;
 import software.coley.recaf.util.android.AndroidXmlUtil;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;

@@ -7,6 +7,7 @@ import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.cell.CellConfigurationService;
 import software.coley.recaf.ui.control.richtext.suggest.CompletionPopup;
 import software.coley.recaf.ui.control.richtext.suggest.TabCompletionConfig;
+import software.coley.recaf.ui.control.richtext.suggest.ranking.CompletionRanker;
 import software.coley.recaf.util.Icons;
 
 import java.util.function.Supplier;
@@ -19,14 +20,14 @@ import java.util.function.Supplier;
 public final class JavaCompletionPopup extends CompletionPopup<JavaCompletion> {
 	private final JavaLexicalContextParser lexicalContextParser;
 	private final Supplier<JavaLexicalContext> contextSupplier;
-	private final JavaCompletionRanker completionRanker;
+	private final CompletionRanker<JavaCompletion> completionRanker;
 	private CodeArea area;
 
 	public JavaCompletionPopup(@Nonnull TabCompletionConfig config,
 	                           @Nonnull CellConfigurationService configurationService,
 	                           @Nonnull JavaLexicalContextParser lexicalContextParser,
 	                           @Nonnull Supplier<JavaLexicalContext> contextSupplier,
-	                           @Nonnull JavaCompletionRanker completionRanker) {
+	                           @Nonnull CompletionRanker<JavaCompletion> completionRanker) {
 		super(config, STANDARD_CELL_SIZE, JavaCompletion::displayText, completion -> {
 			PathNode<?> path = completion.path();
 			if (path != null)

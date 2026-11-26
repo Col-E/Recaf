@@ -5,7 +5,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import software.coley.observables.ObservableBoolean;
 import software.coley.observables.ObservableCollection;
-import software.coley.recaf.util.IOUtil;
+import software.coley.recaf.util.io.IOUtil;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -16,7 +16,6 @@ import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 

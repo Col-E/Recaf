@@ -302,6 +302,7 @@ dialog.conv.title.expression=Числовое выражение
 
 ## Quick nav
 dialog.quicknav=Быстрая навигация
+dialog.quicknav.tab.all=Все
 dialog.quicknav.tab.classes=Классы
 dialog.quicknav.tab.members=Члены
 dialog.quicknav.tab.files=Файлы

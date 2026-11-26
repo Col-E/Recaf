@@ -7,14 +7,7 @@ import jakarta.annotation.Nonnull;
  *
  * @author Matt Coley
  */
-public interface BiStringMatcher {
-	/**
-	 * @param key
-	 * 		Target value to match against.
-	 * @param target
-	 * 		Value to check.
-	 *
-	 * @return {@code true} when the target value matches the key value.
-	 */
-	boolean test(@Nonnull String key, @Nonnull String target);
+public interface BiStringMatcher extends BiMatcher<String, String> {
+	@Override
+	boolean matches(@Nonnull String key, @Nonnull String target);
 }

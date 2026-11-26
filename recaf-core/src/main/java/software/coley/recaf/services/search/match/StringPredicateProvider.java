@@ -6,7 +6,11 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import software.coley.recaf.util.RegexUtil;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -71,6 +75,9 @@ public class StringPredicateProvider {
 	private final Map<String, BiStringMatcher> biStringMatchers = new ConcurrentHashMap<>();
 	private final Map<String, MultiStringMatcher> multiStringMatchers = new ConcurrentHashMap<>();
 
+	/**
+	 * Registers the built-in string matchers.
+	 */
 	@Inject
 	public StringPredicateProvider() {
 		registerBiMatcher(KEY_ANYTHING, MATHER_ANYTHING);
@@ -274,7 +281,7 @@ public class StringPredicateProvider {
 	public StringPredicate newBiStringPredicate(@Nonnull String id, @Nonnull String key) throws NoSuchElementException {
 		BiStringMatcher matcher = biStringMatchers.get(id);
 		if (matcher != null)
-			return new StringPredicate(id, target -> matcher.test(key, target));
+			return new StringPredicate(id, target -> matcher.matches(key, target));
 		throw new NoSuchElementException("No such single-parameter matcher: " + id);
 	}
 
@@ -293,7 +300,7 @@ public class StringPredicateProvider {
 	public StringPredicate newMultiStringPredicate(@Nonnull String id, @Nonnull Collection<String> keys) throws NoSuchElementException {
 		MultiStringMatcher matcher = multiStringMatchers.get(id);
 		if (matcher != null)
-			return new StringPredicate(id, target -> matcher.test(keys, target));
+			return new StringPredicate(id, target -> matcher.matches(keys, target));
 		throw new NoSuchElementException("No such multi-parameter matcher: " + id);
 	}
 

@@ -22,6 +22,6 @@ public interface JvmClassSearchVisitor extends SearchVisitor {
 	 * 		Class to visit.
 	 */
 	void visit(@Nonnull ResultSink resultSink,
-			   @Nonnull ClassPathNode classPath,
-			   @Nonnull JvmClassInfo classInfo);
+	           @Nonnull ClassPathNode classPath,
+	           @Nonnull JvmClassInfo classInfo);
 }

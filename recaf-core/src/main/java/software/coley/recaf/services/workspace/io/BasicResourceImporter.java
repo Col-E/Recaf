@@ -12,6 +12,7 @@ import software.coley.lljzip.format.model.ZipArchive;
 import software.coley.lljzip.util.ExtraFieldTime;
 import software.coley.lljzip.util.MemorySegmentUtil;
 import software.coley.recaf.analytics.logging.Logging;
+import software.coley.recaf.info.ApkFileInfo;
 import software.coley.recaf.info.DexFileInfo;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.Info;
@@ -19,9 +20,11 @@ import software.coley.recaf.info.JarFileInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.ModulesFileInfo;
 import software.coley.recaf.info.ZipFileInfo;
+import software.coley.recaf.info.builder.ApkFileInfoBuilder;
 import software.coley.recaf.info.builder.FileInfoBuilder;
 import software.coley.recaf.info.builder.ZipFileInfoBuilder;
 import software.coley.recaf.info.properties.builtin.InputFilePathProperty;
+import software.coley.recaf.info.properties.builtin.OriginalFileHashesProperty;
 import software.coley.recaf.info.properties.builtin.PathOriginalNameProperty;
 import software.coley.recaf.info.properties.builtin.PathPrefixProperty;
 import software.coley.recaf.info.properties.builtin.PathSuffixProperty;
@@ -30,22 +33,24 @@ import software.coley.recaf.info.properties.builtin.ZipAccessTimeProperty;
 import software.coley.recaf.info.properties.builtin.ZipCommentProperty;
 import software.coley.recaf.info.properties.builtin.ZipCompressionProperty;
 import software.coley.recaf.info.properties.builtin.ZipCreationTimeProperty;
-import software.coley.recaf.info.properties.builtin.ZipEntryIndexProperty;
 import software.coley.recaf.info.properties.builtin.ZipEntryAuthoritativeOffsetProperty;
+import software.coley.recaf.info.properties.builtin.ZipEntryIndexProperty;
 import software.coley.recaf.info.properties.builtin.ZipMarkerProperty;
 import software.coley.recaf.info.properties.builtin.ZipModificationTimeProperty;
 import software.coley.recaf.info.properties.builtin.ZipPrefixDataProperty;
 import software.coley.recaf.services.Service;
-import software.coley.recaf.util.IOUtil;
-import software.coley.recaf.util.ModulesIOUtil;
-import software.coley.recaf.util.ShortcutUtil;
 import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.util.android.DexIOUtil;
 import software.coley.recaf.util.io.ByteSource;
 import software.coley.recaf.util.io.ByteSources;
+import software.coley.recaf.util.io.IOUtil;
 import software.coley.recaf.util.io.LocalFileHeaderSource;
+import software.coley.recaf.util.io.ModulesIOUtil;
+import software.coley.recaf.util.io.ShortcutUtil;
+import software.coley.recaf.util.io.ZipDecompressionLimiter;
 import software.coley.recaf.util.threading.ThreadPoolFactory;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
+import software.coley.recaf.workspace.model.bundle.AndroidDexMetadata.DexEntryProperties;
 import software.coley.recaf.workspace.model.bundle.BasicFileBundle;
 import software.coley.recaf.workspace.model.bundle.BasicJvmClassBundle;
 import software.coley.recaf.workspace.model.bundle.BasicVersionedJvmClassBundle;
@@ -91,6 +96,7 @@ import java.util.function.Consumer;
 public class BasicResourceImporter implements ResourceImporter, Service {
 	private static final Logger logger = Logging.get(BasicResourceImporter.class);
 	private static final int MAX_WALK_DEPTH = 100;
+	private static final byte[] EMPTY_CONTENT = new byte[0];
 	private final InfoImporter infoImporter;
 	private final ResourceImporterConfig config;
 
@@ -152,13 +158,13 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 		// Check for general ZIP container format (ZIP/JAR/WAR/APK/JMod)
 		if (readInfoAsFile.isZipFile()) {
 			ZipFileInfo readInfoAsZip = readInfoAsFile.asZipFile();
-			return handleZip(builder, readInfoAsZip, source);
+			return handleZip(builder, readInfoAsZip, source, true, 0);
 		} else if (ZipMarkerProperty.get(readInfoAsFile)) {
 			// In some cases the file may have been matched as something else (like an executable)
 			// but also count as a ZIP container. Applications that bundle Java applications into native exe files
 			// tend to do this.
 			try {
-				return handleZip(builder, new ZipFileInfoBuilder(readInfoAsFile.toFileBuilder()).build(), source);
+				return handleZip(builder, new ZipFileInfoBuilder(readInfoAsFile.toFileBuilder()).build(), source, true, 0);
 			} catch (Throwable t) {
 				// Some files will just so happen to have a ZIP marker in their bytes but not represent an actual ZIP.
 				// This is fine because by this point we have an info-type to fall back on.
@@ -170,7 +176,8 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 		if (readInfoAsFile instanceof DexFileInfo) {
 			String dexName = readInfoAsFile.getName();
 			AndroidClassBundle dexBundle = DexIOUtil.read(readInfoAsFile.getRawContent());
-			return builder.withAndroidClassBundles(Map.of(dexName, dexBundle))
+			return builder.withFileInfo(retainHashesDropContent(readInfoAsFile))
+					.withAndroidClassBundles(Map.of(dexName, dexBundle))
 					.build();
 		}
 
@@ -190,7 +197,9 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 	@Nonnull
 	private WorkspaceFileResource handleZip(@Nonnull WorkspaceFileResourceBuilder builder,
 	                                        @Nonnull ZipFileInfo zipInfo,
-	                                        @Nonnull ByteSource source) throws IOException {
+	                                        @Nonnull ByteSource source,
+	                                        boolean rootResource,
+	                                        int zipDepth) throws IOException {
 		logger.info("Reading input from ZIP container '{}'", zipInfo.getName());
 		builder.withFileInfo(zipInfo);
 		BasicJvmClassBundle classes = new BasicJvmClassBundle();
@@ -202,6 +211,10 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 		// Read ZIP
 		boolean isAndroid = zipInfo.getName().toLowerCase().endsWith(".apk");
 		ZipArchive archive = config.mapping().apply(source.readAll());
+		ZipDecompressionLimiter decompressionLimiter = new ZipDecompressionLimiter(
+				config.getMaxZipEntrySize().getValue(),
+				config.getMaxZipTotalSize().getValue(),
+				config.getMaxZipCompressionRatio().getValue());
 
 		// Sanity check, if there's data at the head of the file AND its otherwise empty its probably junk.
 		MemorySegment prefixData = archive.getPrefixData();
@@ -229,7 +242,7 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 						header.getLinkedDirectoryFileHeader().offset();
 				int entryIndex = i;
 				tasks.add(() -> {
-					LocalFileHeaderSource headerSource = new LocalFileHeaderSource(header, isAndroid);
+					LocalFileHeaderSource headerSource = new LocalFileHeaderSource(header, isAndroid, decompressionLimiter);
 					String entryName = header.getFileNameAsString();
 
 					// Skip directories. There is no such thing as a 'directory' entry in ZIP files.
@@ -272,9 +285,7 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 						if (Arrays.equals(zipFile.getRawContent(), zipInfo.getRawContent())) {
 							logger.warn("Skip self-extracting ZIP bomb: {}", entryName);
 							return null;
-						} else if (Arrays.stream(Thread.currentThread().getStackTrace())
-								.filter(trace -> trace.getMethodName().equals("handleZip"))
-								.count() > maxZipDepth) {
+						} else if (zipDepth >= maxZipDepth) {
 							logger.warn("Skip extracting embedded ZIP after {} levels: {}", maxZipDepth, entryName);
 							return null;
 						}
@@ -282,7 +293,7 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 
 					// Add the info to the appropriate bundle
 					addInfo(classes, files, androidClassBundles, versionedJvmClassBundles, embeddedResources,
-							headerSource, entryName, info);
+							headerSource, entryName, info, zipDepth);
 					return null;
 				});
 			}
@@ -292,13 +303,17 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 				throw new IOException("Zip import interrupted", ex);
 			}
 		}
+
+		// Root containers are rebuilt from their bundles on export, so their raw content is not needed.
+		// Embedded containers need to keep their content since exporting reads that content when "smartly" selecting compression.
+		FileInfo rootFileInfo = rootResource ? retainHashesDropContent(zipInfo) : zipInfo;
 		return builder
 				.withJvmClassBundle(classes)
 				.withAndroidClassBundles(androidClassBundles)
 				.withVersionedJvmClassBundles(versionedJvmClassBundles)
 				.withFileBundle(files)
 				.withEmbeddedResources(embeddedResources)
-				.withFileInfo(zipInfo)
+				.withFileInfo(rootFileInfo)
 				.build();
 	}
 
@@ -331,7 +346,7 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 
 						// Add the info to the appropriate bundle
 						addInfo(classes, files, androidClassBundles, versionedJvmClassBundles, embeddedResources,
-								source, fileName, info);
+								source, fileName, info, 0);
 					} catch (IOException ex) {
 						logger.error("IO error walking directory entry '{}' - skipping", path, ex);
 					}
@@ -354,6 +369,17 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 				.build();
 	}
 
+	@Nonnull
+	private FileInfo retainHashesDropContent(@Nonnull FileInfo fileInfo) {
+		OriginalFileHashesProperty.set(fileInfo, fileInfo.getRawContent());
+		FileInfoBuilder<?> fileInfoBuilder;
+		if (fileInfo instanceof ApkFileInfo apkInfo)
+			fileInfoBuilder = new ApkFileInfoBuilder(apkInfo);
+		else
+			fileInfoBuilder = FileInfoBuilder.forFile(fileInfo);
+		return fileInfoBuilder.withRawContent(EMPTY_CONTENT).build();
+	}
+
 	private void addInfo(@Nonnull BasicJvmClassBundle classes,
 	                     @Nonnull BasicFileBundle files,
 	                     @Nonnull Map<String, AndroidClassBundle> androidClassBundles,
@@ -361,11 +387,12 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 	                     @Nonnull Map<String, WorkspaceFileResource> embeddedResources,
 	                     @Nonnull ByteSource infoSource,
 	                     @Nonnull String pathName,
-	                     @Nonnull Info info) {
+	                     @Nonnull Info info,
+	                     int zipDepth) {
 		if (info.isClass()) {
 			addClassInfo(classes, files, versionedJvmClassBundles, pathName, info);
 		} else if (info.isFile()) {
-			addFileInfo(files, androidClassBundles, embeddedResources, infoSource, pathName, info);
+			addFileInfo(files, androidClassBundles, embeddedResources, infoSource, pathName, info, zipDepth);
 		} else {
 			throw new IllegalStateException("Unknown info type: " + info);
 		}
@@ -490,13 +517,20 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 	                         @Nonnull Map<String, WorkspaceFileResource> embeddedResources,
 	                         @Nonnull ByteSource infoSource,
 	                         @Nonnull String pathName,
-	                         @Nonnull Info info) {
+	                         @Nonnull Info info,
+	                         int zipDepth) {
 		FileInfo fileInfo = info.asFile();
 
 		// Check for special file cases (Currently just DEX)
 		if (fileInfo instanceof DexFileInfo) {
 			try {
-				AndroidClassBundle dexBundle = DexIOUtil.read(infoSource);
+				DexEntryProperties entryProperties = new DexEntryProperties(
+						ZipCompressionProperty.get(fileInfo),
+						ZipCommentProperty.get(fileInfo),
+						ZipCreationTimeProperty.get(fileInfo),
+						ZipModificationTimeProperty.get(fileInfo),
+						ZipAccessTimeProperty.get(fileInfo));
+				AndroidClassBundle dexBundle = DexIOUtil.read(infoSource, entryProperties);
 				androidClassBundles.put(pathName, dexBundle);
 			} catch (Throwable t) {
 				logger.error("Failed to read embedded DEX '{}'", pathName, t);
@@ -511,7 +545,7 @@ public class BasicResourceImporter implements ResourceImporter, Service {
 				WorkspaceFileResourceBuilder embeddedResourceBuilder = new WorkspaceFileResourceBuilder()
 						.withFileInfo(fileInfo);
 				WorkspaceFileResource embeddedResource = handleZip(embeddedResourceBuilder,
-						fileInfo.asZipFile(), infoSource);
+						fileInfo.asZipFile(), infoSource, false, zipDepth + 1);
 				embeddedResources.put(pathName, embeddedResource);
 			} catch (Throwable t) {
 				logger.error("Failed to read embedded ZIP '{}'", pathName, t);

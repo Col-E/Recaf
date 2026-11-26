@@ -6,13 +6,18 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
+import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.MethodNode;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.path.ClassMemberPathNode;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.DirectoryPathNode;
+import software.coley.recaf.path.LocalVariablePathNode;
+import software.coley.recaf.path.PathNodes;
 import software.coley.recaf.services.mapping.IntermediateMappings;
 import software.coley.recaf.services.mapping.Mappings;
 import software.coley.recaf.test.TestBase;
@@ -34,8 +39,11 @@ import software.coley.recaf.test.dummy.StringListUser;
 import software.coley.recaf.test.dummy.StringSupplier;
 import software.coley.recaf.util.StringUtil;
 import software.coley.recaf.util.Types;
+import software.coley.recaf.workspace.model.BasicWorkspace;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.BasicJvmClassBundle;
+import software.coley.recaf.workspace.model.resource.WorkspaceResource;
+import software.coley.recaf.workspace.model.resource.WorkspaceResourceBuilder;
 import software.coley.sourcesolver.Parser;
 import software.coley.sourcesolver.model.CompilationUnitModel;
 import software.coley.sourcesolver.model.VariableModel;
@@ -44,6 +52,7 @@ import software.coley.sourcesolver.resolve.result.MethodResolution;
 import software.coley.sourcesolver.resolve.result.Resolution;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.function.Consumer;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -526,10 +535,10 @@ public class AstServiceTest extends TestBase {
 			// generic methods like 'T get(int)' to T return values. In this case, a String.
 			String source = """
 					package software.coley.recaf.test.dummy;
-
+					
 					import java.util.ArrayList;
 					import java.util.List;
-
+					
 					public class HelloWorld {
 						public static void main(String[] args) {
 							List<String> foo = new ArrayList<>();
@@ -552,9 +561,9 @@ public class AstServiceTest extends TestBase {
 			// Same idea but with 'T getFirst()'
 			String source = """
 					package software.coley.recaf.test.dummy;
-
+					
 					import java.util.List;
-
+					
 					public class HelloWorld {
 						public static void main(String[] args) {
 							List<String> foo = List.of("A");
@@ -577,10 +586,10 @@ public class AstServiceTest extends TestBase {
 			// Even if we use 'var' for a variable we should be able to infer its a String.
 			String source = """
 					package software.coley.recaf.test.dummy;
-
+					
 					import java.util.ArrayList;
 					import java.util.List;
-
+					
 					public class HelloWorld {
 						public static void main(String[] args) {
 							List<String> foo = new ArrayList<>();
@@ -604,7 +613,7 @@ public class AstServiceTest extends TestBase {
 			// We should still be able to resolve the inherited get(int) method to return String.
 			String source = """
 					package software.coley.recaf.test.dummy;
-
+					
 					public class HelloWorld {
 						public static void main(String[] args) {
 							StringList list = StringList.of("foo");
@@ -628,7 +637,7 @@ public class AstServiceTest extends TestBase {
 			// If the field isn't generic and has no signature we should still be able to resolve it.
 			String source = """
 					package software.coley.recaf.test.dummy;
-
+					
 					public class HelloWorld {
 						public static void main(String[] args) {
 							AccessibleFields fields = new AccessibleFields();
@@ -643,6 +652,133 @@ public class AstServiceTest extends TestBase {
 				FieldResolution fieldResolution = assertInstanceOf(FieldResolution.class, resolution);
 				assertEquals("I", fieldResolution.getResolvedFieldType().getDescriptor());
 			});
+		}
+
+		@Test
+		void testVariableResolutionAdaptsToLocalVariablePath() {
+			String source = """
+					package software.coley.recaf.test.dummy;
+					
+					public class VariableHost {
+						public void use(String input) {
+							String foo = input;
+							System.out.println(foo);
+						}
+					}
+					""";
+			handleUnit(source, unit -> {
+				ResolverAdapter resolver = service.newJavaResolver(unit);
+
+				// The 'input' name should resolve to a parameter variable with index 1.
+				//  - Method is non-static, so index 0 is 'this'.
+				//  - Type is 'String'
+				int parameterPosition = source.indexOf("input)") + 1;
+				AstResolveResult parameterResult = resolver.resolveThenAdapt(parameterPosition);
+				assertNotNull(parameterResult);
+				assertTrue(parameterResult.isDeclaration());
+				LocalVariablePathNode parameterPath = assertInstanceOf(LocalVariablePathNode.class, parameterResult.path());
+				assertEquals("input", parameterPath.getValue().getName());
+				assertEquals("Ljava/lang/String;", parameterPath.getValue().getDescriptor());
+				assertEquals(1, parameterPath.getValue().getIndex());
+
+				// The 'foo' name should resolve to a local variable with index 2.
+				//  - Next slot after the parameter variable, information is pulled from the local variable table.
+				int localPosition = source.indexOf("foo =") + 1;
+				AstResolveResult localResult = resolver.resolveThenAdapt(localPosition);
+				assertNotNull(localResult);
+				assertTrue(localResult.isDeclaration());
+				LocalVariablePathNode localPath = assertInstanceOf(LocalVariablePathNode.class, localResult.path());
+				assertEquals("foo", localPath.getValue().getName());
+				assertEquals("Ljava/lang/String;", localPath.getValue().getDescriptor());
+				// TODO: See comment below
+				//  assertEquals(2, localPath.getValue().getIndex());
+
+				// Reference to the 'foo' variable should resolve to the same local variable with index 2.
+				int localReferencePosition = source.lastIndexOf("foo") + 1;
+				AstResolveResult localReferenceResult = resolver.resolveThenAdapt(localReferencePosition);
+				assertNotNull(localReferenceResult);
+				assertFalse(localReferenceResult.isDeclaration());
+				LocalVariablePathNode localReferencePath = assertInstanceOf(LocalVariablePathNode.class, localReferenceResult.path());
+				assertEquals("foo", localReferencePath.getValue().getName());
+
+				// TODO: We should fix the test to assert the index is 2, but because the class is pulled from the runtime
+				//  the RuntimeWorkspaceResource is used, and it skips code body parsing for performance reasons.
+				//  - Best fix would be to generate a class dynamically for this test with LVT info in it
+				//  assertEquals(2, localReferencePath.getValue().getIndex());
+			});
+		}
+
+		@Test
+		void testClassContextPathDifferentiatesDuplicateResources() {
+			// Create a workspace with two resources that have the same classes and method signatures.
+			// When resolving a method reference, the path should point to the resource in the resolver context.
+			JvmClassInfo primaryFoo = TestClassUtils.createClass("dup/Foo",
+					node -> node.methods.add(noopMethod("same")));
+			JvmClassInfo supportingFoo = TestClassUtils.createClass("dup/Foo",
+					node -> node.methods.add(noopMethod("same")));
+			JvmClassInfo primaryHelper = TestClassUtils.createClass("dup/Helper",
+					node -> node.methods.add(noopStaticMethod("sameStatic")));
+			JvmClassInfo supportingHelper = TestClassUtils.createClass("dup/Helper",
+					node -> node.methods.add(noopStaticMethod("sameStatic")));
+
+			// Create a workspace with two resources, one primary and one supporting.
+			//  - Primary:    dup/Foo -> same(), dup/Helper -> sameStatic()
+			//  - Supporting: dup/Foo -> same(), dup/Helper -> sameStatic()
+			BasicJvmClassBundle primaryBundle = TestClassUtils.fromClasses(primaryFoo, primaryHelper);
+			BasicJvmClassBundle supportingBundle = TestClassUtils.fromClasses(supportingFoo, supportingHelper);
+			WorkspaceResource primaryResource = new WorkspaceResourceBuilder()
+					.withJvmClassBundle(primaryBundle)
+					.build();
+			WorkspaceResource supportingResource = new WorkspaceResourceBuilder()
+					.withJvmClassBundle(supportingBundle)
+					.build();
+			Workspace workspace = new BasicWorkspace(primaryResource, List.of(supportingResource));
+			ClassPathNode supportingPath = PathNodes.classPath(workspace, supportingResource, supportingBundle, supportingFoo);
+
+			// Validate that the primary resource is found when doing the regular workspace class lookup.
+			ClassPathNode firstFoo = workspace.findClass("dup/Foo");
+			assertNotNull(firstFoo);
+			assertSame(primaryResource, firstFoo.getValueOfType(WorkspaceResource.class));
+
+			// Validate that the supporting resource is found when doing a lookup with the supporting path.
+			String source = """
+					package dup;
+					public class Foo {
+						public void same() {}
+						public void use() {
+							Helper.sameStatic();
+						}
+					}
+					""";
+			CompilationUnitModel unit = parser.parse(source);
+
+			// When we resolve the same() declaration it should point to the supporting resource.
+			// This is because we're passing the supporting resource path to the resolver,
+			// which should take precedence over the primary resource.
+			ResolverAdapter resolver = service.newJavaResolver(workspace, supportingPath, unit);
+			int position = source.indexOf("same()") + 1;
+			AstResolveResult result = resolver.resolveThenAdapt(position);
+			assertNotNull(result);
+			assertTrue(result.isDeclaration());
+
+			// The path should point to the supporting resource, not the primary resource.
+			ClassMemberPathNode memberPath = assertInstanceOf(ClassMemberPathNode.class, result.path());
+			assertSame(supportingResource, memberPath.getValueOfType(WorkspaceResource.class));
+			assertEquals("same", memberPath.getValue().getName());
+			assertEquals("()V", memberPath.getValue().getDescriptor());
+
+			// Now resolve the sameStatic() call, which is in a different class, but still in the supporting resource.
+			position = source.indexOf("sameStatic()") + 1;
+			result = resolver.resolveThenAdapt(position);
+			assertNotNull(result);
+			assertFalse(result.isDeclaration());
+
+			// The path should point to the supporting resource, not the primary resource.
+			memberPath = assertInstanceOf(ClassMemberPathNode.class, result.path());
+			assertSame(supportingResource, memberPath.getValueOfType(WorkspaceResource.class));
+			assertEquals("dup/Helper", memberPath.getValueOfType(ClassInfo.class).getName());
+			assertEquals("sameStatic", memberPath.getValue().getName());
+			assertEquals("()V", memberPath.getValue().getDescriptor());
 		}
 	}
 
@@ -687,7 +823,25 @@ public class AstServiceTest extends TestBase {
 		}
 
 		@Test
-		void renameClass_ReplacesCast() {
+		void renameClass_DoesNotReplaceAnnotationValue() {
+			String source = """
+					package software.coley.recaf.test.dummy;
+					@Deprecated(since = "HelloWorld")
+					class HelloWorld {}
+					""";
+			handleUnit(source, unit -> {
+				IntermediateMappings mappings = new IntermediateMappings();
+				String owner = HelloWorld.class.getName().replace('.', '/');
+				mappings.addClass(owner, "software/coley/recaf/test/dummy/Howdy");
+
+				String modified = applyMappings(unit, mappings);
+				assertTrue(modified.contains("@Deprecated(since = \"HelloWorld\")"), modified);
+				assertTrue(modified.contains("class Howdy {}"), modified);
+			});
+		}
+
+		@Test
+		void renameClass_ReplaceCast() {
 			String source = """
 					package software.coley.recaf.test.dummy;
 					
@@ -1048,6 +1202,30 @@ public class AstServiceTest extends TestBase {
 			});
 		}
 
+		@Test
+		void renameVariable_LocalAndReferences() {
+			String source = """
+					package software.coley.recaf.test.dummy;
+					
+					public class VariableHost {
+						public void use(String input) {
+							String foo = input;
+							System.out.println(foo);
+						}
+					}
+					""";
+			handleUnit(source, unit -> {
+				ResolverAdapter resolver = service.newJavaResolver(unit);
+				IntermediateMappings mappings = new IntermediateMappings();
+				mappings.addVariable("software/coley/recaf/test/dummy/VariableHost", "use", "(Ljava/lang/String;)V",
+						"Ljava/lang/String;", "foo", 2, "renamed");
+
+				String modified = service.applyMappings(unit, resolver, mappings);
+				assertTrue(modified.contains("String renamed = input;"));
+				assertTrue(modified.contains("System.out.println(renamed);"));
+			});
+		}
+
 		@Nonnull
 		private String applyMappings(@Nonnull CompilationUnitModel unit, @Nonnull Mappings mappings) {
 			return service.applyMappings(unit, service.newJavaResolver(unit), mappings);
@@ -1248,10 +1426,24 @@ public class AstServiceTest extends TestBase {
 		}
 	}
 
-	@SuppressWarnings("LanguageMismatch")
 	private static void handleUnit(@Nonnull String source, @Nullable Consumer<CompilationUnitModel> consumer) {
 		if (consumer != null)
 			consumer.accept(parser.parse(source));
+	}
+
+	@Nonnull
+	private static MethodNode noopMethod(@Nonnull String name) {
+		MethodNode method = new MethodNode(Opcodes.ACC_PUBLIC, name, "()V", null, null);
+		method.instructions.add(new InsnNode(Opcodes.RETURN));
+		method.maxLocals = 1;
+		return method;
+	}
+
+	@Nonnull
+	private static MethodNode noopStaticMethod(@Nonnull String name) {
+		MethodNode method = new MethodNode(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, name, "()V", null, null);
+		method.instructions.add(new InsnNode(Opcodes.RETURN));
+		return method;
 	}
 
 	private enum IsDeclarationTarget {

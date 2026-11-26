@@ -17,7 +17,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
-import me.darknet.assembler.util.DescriptorUtil;
+import me.darknet.assembler.descriptor.DescriptorParser;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.member.*;
 import software.coley.recaf.ui.control.ActionButton;
@@ -208,7 +208,7 @@ public class AddMemberPopup extends RecafStage {
 		}));
 
 		isIllegalDescriptor.bind(descInput.textProperty().map(text -> text.isBlank() ||
-				!DescriptorUtil.isValidMethodDescriptor(text)));
+				!DescriptorParser.isValidMethodDescriptor(text)));
 
 		setTitle(Lang.get("dialog.title.add-method"));
 
@@ -239,7 +239,7 @@ public class AddMemberPopup extends RecafStage {
 		}));
 
 		isIllegalDescriptor.bind(descInput.textProperty().map(text -> text.isBlank() ||
-				!DescriptorUtil.isValidFieldDescriptor(text)));
+				!DescriptorParser.isValidFieldDescriptor(text)));
 
 		setTitle(Lang.get("dialog.title.add-field"));
 

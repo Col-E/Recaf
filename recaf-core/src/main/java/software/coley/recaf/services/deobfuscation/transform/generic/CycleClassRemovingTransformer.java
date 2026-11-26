@@ -10,7 +10,6 @@ import software.coley.recaf.services.inheritance.InheritanceVertex;
 import software.coley.recaf.services.transform.JvmClassTransformer;
 import software.coley.recaf.services.transform.JvmTransformerContext;
 import software.coley.recaf.services.transform.TransformationException;
-import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.JvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -22,14 +21,13 @@ import software.coley.recaf.workspace.model.resource.WorkspaceResource;
  */
 @Dependent
 public class CycleClassRemovingTransformer implements JvmClassTransformer {
+	public static final String IDENTIFIER = "cleanup.cycle";
+
 	private final InheritanceGraphService graphService;
-	private final WorkspaceManager workspaceManager;
 	private InheritanceGraph inheritanceGraph;
 
 	@Inject
-	public CycleClassRemovingTransformer(@Nonnull WorkspaceManager workspaceManager,
-	                                     @Nonnull InheritanceGraphService graphService) {
-		this.workspaceManager = workspaceManager;
+	public CycleClassRemovingTransformer(@Nonnull InheritanceGraphService graphService) {
 		this.graphService = graphService;
 	}
 
@@ -37,7 +35,6 @@ public class CycleClassRemovingTransformer implements JvmClassTransformer {
 	public void setup(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace) {
 		inheritanceGraph = graphService.getOrCreateInheritanceGraph(workspace);
 	}
-
 
 	@Override
 	public void transform(@Nonnull JvmTransformerContext context, @Nonnull Workspace workspace,
@@ -50,8 +47,8 @@ public class CycleClassRemovingTransformer implements JvmClassTransformer {
 
 	@Nonnull
 	@Override
-	public String name() {
-		return "Cycle class removal";
+	public String identifier() {
+		return IDENTIFIER;
 	}
 
 	@Override

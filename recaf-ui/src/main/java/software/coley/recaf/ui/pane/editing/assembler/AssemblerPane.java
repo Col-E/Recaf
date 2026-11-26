@@ -1,19 +1,26 @@
 package software.coley.recaf.ui.pane.editing.assembler;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import javafx.geometry.Side;
 import me.darknet.assembler.ast.ASTElement;
 import me.darknet.assembler.ast.specific.ASTClass;
 import me.darknet.assembler.ast.specific.ASTField;
+import me.darknet.assembler.ast.specific.ASTInner;
 import me.darknet.assembler.ast.specific.ASTMethod;
-import me.darknet.assembler.compile.JavaClassRepresentation;
-import me.darknet.assembler.compiler.ClassRepresentation;
+import me.darknet.assembler.backend.dalvik.DalvikClassRepresentation;
+import me.darknet.assembler.backend.dalvik.DalvikTargetContext;
+import me.darknet.assembler.backend.jvm.JvmTargetContext;
+import me.darknet.assembler.backend.jvm.compile.JavaClassRepresentation;
 import me.darknet.assembler.compiler.ClassResult;
-import me.darknet.assembler.error.Error;
-import me.darknet.assembler.error.Result;
+import me.darknet.assembler.error.Diagnostic;
+import me.darknet.assembler.error.Outcome;
 import me.darknet.assembler.parser.Token;
+import me.darknet.assembler.query.AssemblyQueries;
+import me.darknet.assembler.query.resolution.Resolution;
+import me.darknet.assembler.target.TargetContext;
 import me.darknet.assembler.util.Location;
 import org.fxmisc.richtext.CodeArea;
 import org.slf4j.Logger;
@@ -21,38 +28,47 @@ import software.coley.collections.Unchecked;
 import software.coley.collections.box.Box;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.ClassInfo;
+import software.coley.recaf.info.InnerClassInfo;
 import software.coley.recaf.info.member.ClassMember;
+import software.coley.recaf.path.AssemblerPathData;
+import software.coley.recaf.path.AssemblerPathNode;
 import software.coley.recaf.path.ClassMemberPathNode;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.DirectoryPathNode;
 import software.coley.recaf.path.PathNode;
 import software.coley.recaf.services.assembler.AssemblerPipeline;
 import software.coley.recaf.services.assembler.AssemblerPipelineManager;
+import software.coley.recaf.services.assembler.AssemblyStage;
 import software.coley.recaf.services.cell.CellConfigurationService;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.inheritance.InheritanceGraphService;
 import software.coley.recaf.services.navigation.ClassNavigable;
+import software.coley.recaf.services.navigation.NavigationHistoryService;
 import software.coley.recaf.services.navigation.UpdatableNavigable;
 import software.coley.recaf.services.workspace.WorkspaceManager;
 import software.coley.recaf.ui.LanguageStylesheets;
 import software.coley.recaf.ui.config.KeybindingConfig;
 import software.coley.recaf.ui.control.richtext.Editor;
 import software.coley.recaf.ui.control.richtext.bracket.SelectedBracketTracking;
+import software.coley.recaf.ui.control.richtext.highlight.SelectedWordHighlighting;
 import software.coley.recaf.ui.control.richtext.problem.Problem;
 import software.coley.recaf.ui.control.richtext.problem.ProblemLevel;
 import software.coley.recaf.ui.control.richtext.problem.ProblemPhase;
 import software.coley.recaf.ui.control.richtext.problem.ProblemTracking;
 import software.coley.recaf.ui.control.richtext.search.SearchBar;
-import software.coley.recaf.ui.control.richtext.suggest.assembler.AssemblerTabCompleter;
 import software.coley.recaf.ui.control.richtext.suggest.TabCompletionConfig;
+import software.coley.recaf.ui.control.richtext.suggest.assembler.AssemblerTabCompleter;
+import software.coley.recaf.ui.control.richtext.suggest.typeindex.TypeIndexService;
 import software.coley.recaf.ui.control.richtext.syntax.RegexLanguages;
 import software.coley.recaf.ui.control.richtext.syntax.RegexSyntaxHighlighter;
 import software.coley.recaf.ui.pane.editing.AbstractContentPane;
 import software.coley.recaf.ui.pane.editing.SideTabsInjector;
 import software.coley.recaf.ui.pane.editing.tabs.FieldsAndMethodsPane;
+import software.coley.recaf.ui.pane.editing.text.TextConfig;
 import software.coley.recaf.util.Animations;
 import software.coley.recaf.util.FxThreadUtil;
 import software.coley.recaf.util.threading.ThreadUtil;
+import software.coley.recaf.workspace.WorkspaceSaveService;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.Bundle;
 
@@ -75,34 +91,39 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 
 	private final AssemblerPipelineManager pipelineManager;
 	private final AssemblerToolTabs assemblerToolTabs;
+	private final NavigationHistoryService navigationHistoryService;
+	private final WorkspaceSaveService saveService;
 	private final ProblemTracking problemTracking = new ProblemTracking();
 	private final Editor editor = new Editor();
 	private final AtomicBoolean updateLock = new AtomicBoolean();
-	private AssemblerPipeline<? extends ClassInfo, ? extends ClassResult, ? extends ClassRepresentation> pipeline;
+	private AssemblerPipeline<? extends ClassInfo, ? extends ClassResult<?>, ?> pipeline;
 	private AssemblerTabCompleter tabCompleter;
-	private ClassResult lastResult;
-	private ClassRepresentation lastAssembledClassRepresentation;
+	private ClassResult<?> lastResult;
+	private Object lastAssembledClassRepresentation;
 	private ClassInfo lastAssembledClass;
-	private List<Token> lastTokens;
-	private List<ASTElement> lastRoughAst;
-	private List<ASTElement> lastPartialAst;
 	private List<ASTElement> lastConcreteAst;
 
 	@Inject
 	public AssemblerPane(@Nonnull AssemblerPipelineManager pipelineManager,
 	                     @Nonnull AssemblerToolTabs assemblerToolTabs,
 	                     @Nonnull AssemblerContextActionSupport contextActionSupport,
+	                     @Nonnull NavigationHistoryService navigationHistoryService,
 	                     @Nonnull SearchBar searchBar,
 	                     @Nonnull KeybindingConfig keys,
 	                     @Nonnull SideTabsInjector sideTabsInjector,
 	                     @Nonnull WorkspaceManager workspaceManager,
+	                     @Nonnull WorkspaceSaveService saveService,
 	                     @Nonnull InheritanceGraphService graphService,
-						 @Nonnull CellConfigurationService cellConfigurationService,
-	                     @Nonnull TabCompletionConfig tabCompletionConfig) {
+	                     @Nonnull CellConfigurationService cellConfigurationService,
+	                     @Nonnull TypeIndexService typeIndexService,
+	                     @Nonnull TabCompletionConfig tabCompletionConfig,
+	                     @Nonnull TextConfig textConfig) {
 		super(Side.BOTTOM);
 
 		this.pipelineManager = pipelineManager;
 		this.assemblerToolTabs = assemblerToolTabs;
+		this.navigationHistoryService = navigationHistoryService;
+		this.saveService = saveService;
 
 		assemblerToolTabs.setOwner(this);
 
@@ -111,11 +132,12 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 		InheritanceGraph inheritanceGraph = Objects.requireNonNull(graphService.getCurrentWorkspaceInheritanceGraph(), "Graph not created");
 		if (tabCompletionConfig.isEnabledInAssembler()) {
 			Workspace workspace = Objects.requireNonNull(workspaceManager.getCurrent());
-			tabCompleter = new AssemblerTabCompleter(workspace, inheritanceGraph, cellConfigurationService, tabCompletionConfig);
+			tabCompleter = new AssemblerTabCompleter(workspace, inheritanceGraph, typeIndexService, cellConfigurationService, tabCompletionConfig);
 			editor.setTabCompleter(tabCompleter);
 		}
 		editor.getCodeArea().getStylesheets().add(LanguageStylesheets.getJasmStylesheet());
-		editor.setSelectedBracketTracking(new SelectedBracketTracking());
+		if (textConfig.doHighlightWord()) editor.setSelectedWordHighlighting(new SelectedWordHighlighting());
+		if (textConfig.doTrackBrackets()) editor.setSelectedBracketTracking(new SelectedBracketTracking());
 		editor.setSyntaxHighlighter(new RegexSyntaxHighlighter(RegexLanguages.getJasmLanguage()));
 		editor.setProblemTracking(problemTracking);
 		editor.getRootLineGraphicFactory().addDefaultCodeGraphicFactories();
@@ -160,7 +182,8 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 		// update them when a method is selected. We do so by tracking the caret position for being within the
 		// range of one of the methods in the last AST model.
 		Box<PathNode<?>> lastPathBox = new Box<>();
-		Box<ClassResult> lastResultBox = new Box<>();
+		Box<PathNode<?>> lastHistoryPathBox = new Box<>();
+		Box<ClassResult<?>> lastResultBox = new Box<>();
 		editor.getCaretPosEventStream().addObserver(e -> {
 			if (lastConcreteAst == null)
 				return;
@@ -185,23 +208,35 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 						PathNode<?> prior = lastPathBox.get();
 						if (classMember != null) {
 							ClassMemberPathNode memberPath = classPath.child(classMember);
+							if (!Objects.equals(lastHistoryPathBox.get(), memberPath)) {
+								lastHistoryPathBox.set(memberPath);
+								recordAssemblerHistory(classPath, caret);
+							}
 							if (!Objects.equals(prior, memberPath)) {
 								lastPathBox.set(memberPath);
 								eachChild(UpdatableNavigable.class, c -> c.onUpdatePath(memberPath));
 							}
 						} else {
+							if (!Objects.equals(lastHistoryPathBox.get(), classPath)) {
+								lastHistoryPathBox.set(classPath);
+								recordAssemblerHistory(classPath, caret);
+							}
 							if (!Objects.equals(prior, classPath)) {
 								lastPathBox.set(classPath);
 								eachChild(UpdatableNavigable.class, c -> c.onUpdatePath(classPath));
 							}
 						}
 
-						ClassResult oldResult = lastResultBox.get();
+						ClassResult<?> oldResult = lastResultBox.get();
 						if (oldResult != lastResult) {
 							lastResultBox.set(lastResult);
 							eachChild(AssemblerBuildConsumer.class, c -> c.consumeClass(lastResult, lastAssembledClass));
 						}
 						return;
+					}
+					if (astClass.range().within(caret) && !Objects.equals(lastHistoryPathBox.get(), classPath)) {
+						lastHistoryPathBox.set(classPath);
+						recordAssemblerHistory(classPath, caret);
 					}
 				}
 			}
@@ -219,9 +254,41 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 	 * 		The given path.
 	 */
 	private void lateInitForMethod(@Nonnull ClassMemberPathNode memberPathNode) {
+		Box<PathNode<?>> lastHistoryPathBox = new Box<>();
+		editor.getCaretPosEventStream().addObserver(e -> {
+			if (lastConcreteAst == null || Objects.equals(lastHistoryPathBox.get(), memberPathNode))
+				return;
+			lastHistoryPathBox.set(memberPathNode);
+			recordAssemblerHistory(memberPathNode, editor.getCodeArea().getCaretPosition());
+		});
+
 		// Common init
 		assemblerToolTabs.onUpdatePath(memberPathNode);
 		lateInit();
+	}
+
+	/**
+	 * Records the current assembler state in the navigation history.
+	 *
+	 * @param path
+	 * 		Path to record.
+	 * @param caret
+	 * 		Caret position to resolve the current assembler state.
+	 */
+	private void recordAssemblerHistory(@Nonnull PathNode<?> path, int caret) {
+		if (lastConcreteAst == null)
+			return;
+
+		ClassInfo classInfo = path.getValueOfType(ClassInfo.class);
+		if (classInfo == null)
+			return;
+
+		TargetContext targetContext = classInfo.isAndroidClass()
+				? DalvikTargetContext.INSTANCE
+				: JvmTargetContext.INSTANCE;
+		Resolution resolution = AssemblyQueries.resolveAt(lastConcreteAst, caret, targetContext);
+		AssemblerPathData data = new AssemblerPathData(editor, resolution);
+		navigationHistoryService.record(new AssemblerPathNode(path, data));
 	}
 
 	@Override
@@ -232,8 +299,8 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 			// Trigger a disassembly so the initial text is set in the editor.
 			disassemble().whenComplete((unused, error) -> {
 				editor.getCodeArea().getUndoManager().forgetHistory();
-				if (error == null && unused.isOk())
-					assemble();
+				if (error == null && unused != null)
+					unused.onSuccess(ignored -> assemble());
 			});
 		}
 	}
@@ -254,6 +321,33 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 	@Override
 	public ClassPathNode getClassPath() {
 		return Objects.requireNonNull(path.getPathOfType(ClassInfo.class), "Missing class parent path");
+	}
+
+	@Override
+	public void requestFocus(@Nonnull InnerClassInfo innerClass) {
+		if (lastConcreteAst == null)
+			return;
+
+		ASTInner astInner = findInnerClassDeclaration(lastConcreteAst, innerClass);
+		if (astInner != null) {
+			CodeArea area = editor.getCodeArea();
+			area.moveTo(astInner.range().start());
+			area.showParagraphAtCenter(area.getCurrentParagraph());
+			requestFocus();
+		}
+	}
+
+	@Nullable
+	static ASTInner findInnerClassDeclaration(@Nonnull List<ASTElement> ast, @Nonnull InnerClassInfo innerClass) {
+		for (ASTElement root : ast) {
+			if (root instanceof ASTClass astClass) {
+				for (ASTInner astInner : astClass.getInners()) {
+					if (astInner.innerClass() != null && innerClass.getInnerClassName().equals(astInner.innerClass().literal()))
+						return astInner;
+				}
+			}
+		}
+		return null;
 	}
 
 	@Override
@@ -313,8 +407,14 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 
 			// Setup from existing class data from the path.
 			lastAssembledClass = path.getValueOfType(ClassInfo.class);
+			if (tabCompleter != null && lastAssembledClass != null) {
+				tabCompleter.setEditedClass(lastAssembledClass);
+				TargetContext targetContext = lastAssembledClass.isAndroidClass()
+						? DalvikTargetContext.INSTANCE : JvmTargetContext.INSTANCE;
+				tabCompleter.setTargetContext(targetContext);
+			}
 			lastAssembledClassRepresentation = pipeline.getRepresentation(Unchecked.cast(lastAssembledClass));
-			lastResult = () -> lastAssembledClassRepresentation;
+			lastResult = representationResult(lastAssembledClassRepresentation);
 			eachChild(UpdatableNavigable.class, c -> c.onUpdatePath(path));
 			eachChild(AssemblerBuildConsumer.class, c -> c.consumeClass(lastResult, lastAssembledClass));
 
@@ -335,15 +435,23 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 	 * @return Future of disassembling completion.
 	 */
 	@Nonnull
-	private CompletableFuture<Result<String>> disassemble() {
+	private CompletableFuture<Outcome<String>> disassemble() {
 		problemTracking.removeByPhase(ProblemPhase.LINT);
 		return CompletableFuture.supplyAsync(() -> pipeline.disassemble(path), ThreadUtil.executor())
 				.orTimeout(10, TimeUnit.SECONDS)
 				.whenCompleteAsync((result, error) -> {
-					if (result != null)
-						result.ifOk(editor::setText).ifErr(errors -> processErrors(errors, ProblemPhase.LINT));
-					else
+					// If an uncaught exception was thrown, log it.
+					if (result == null) {
 						logger.error("Disassemble encountered an unexpected error", error);
+						return;
+					}
+
+					// Otherwise process the result, updating the editor text and any problems.
+					result.onPartial(partial -> processErrors(partial.errors(), ProblemPhase.LINT))
+							.onFailure(failure -> processErrors(failure.errors(), ProblemPhase.LINT))
+							.onSuccess(editor::setText);
+					if (result.hasWarnings())
+						processErrors(result.warnings(), ProblemLevel.WARN, ProblemPhase.LINT);
 				}, FxThreadUtil.executor());
 	}
 
@@ -353,7 +461,7 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 	 * @return Future of parse completion.
 	 */
 	@Nonnull
-	private CompletableFuture<Result<List<ASTElement>>> parseAST() {
+	private CompletableFuture<Outcome<List<ASTElement>>> parseAST() {
 		// Nothing to parse
 		if (editor.getText().isBlank()) return CompletableFuture.completedFuture(null);
 
@@ -362,49 +470,64 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 			FxThreadUtil.run(editor::redrawParagraphGraphics);
 
 		return CompletableFuture.supplyAsync(() -> {
-			// Tokenize the current input.
-			Result<List<Token>> tokenResult = pipeline.tokenize(editor.getText(), "<assembler>");
-
-			// Process any errors and assign the latest token list.
-			if (tokenResult.hasErr())
-				processErrors(tokenResult.errors(), ProblemPhase.LINT);
-			lastTokens = tokenResult.get();
-
-			// Attempt to parse the token list into 'rough' AST.
-			Result<List<ASTElement>> roughResult = pipeline.roughParse(lastTokens).ifOk(roughAst -> {
-				lastRoughAst = roughAst;
-			}).ifErr((partialAst, errors) -> {
-				// We failed to parse the token list fully, but may have a partial result.
-				eachChild(AssemblerAstConsumer.class, c -> c.consumeAst(partialAst, AstPhase.ROUGH_PARTIAL));
-				lastPartialAst = partialAst;
-				processErrors(errors, ProblemPhase.LINT);
-			});
-
-			// Attempt to complete parsing and transform the 'rough' AST into a 'concrete' AST.
-			if (roughResult.isOk()) {
-				return pipeline.concreteParse(roughResult.get()).ifOk(concreteAst -> {
-					// The transform was a success.
-					lastConcreteAst = concreteAst;
-					if (tabCompleter != null) tabCompleter.setAst(concreteAst);
-					eachChild(AssemblerAstConsumer.class, c -> c.consumeAst(concreteAst, AstPhase.CONCRETE));
-				}).ifErr((partialAst, errors) -> {
-					// The transform failed.
-					lastPartialAst = partialAst;
-					if (tabCompleter != null) tabCompleter.setAst(partialAst);
-					eachChild(AssemblerAstConsumer.class, c -> c.consumeAst(partialAst, AstPhase.CONCRETE_PARTIAL));
-					processErrors(errors, ProblemPhase.LINT);
-				});
-			} else {
+			// Tokenization remains separate so token warnings/errors can update lint tracking immediately.
+			Outcome<List<Token>> tokenResult = pipeline.tokenize(editor.getText(), "<assembler>");
+			tokenResult.onPartial(partial -> processErrors(partial.errors(), ProblemPhase.LINT))
+					.onFailure(failure -> processErrors(failure.errors(), ProblemPhase.LINT));
+			if (tokenResult.hasWarnings())
+				processErrors(tokenResult.warnings(), ProblemLevel.WARN, ProblemPhase.LINT);
+			if (!tokenResult.hasValue()) {
 				if (tabCompleter != null) tabCompleter.clearAst();
+				return Outcome.<List<ASTElement>>of(null, tokenResult.diagnostics());
 			}
 
-			// Fall-back to rough AST.
-			return roughResult;
+			return pipeline.fullParse(tokenResult.requireValue(), this::processParseStage);
 		}).whenComplete((res, err) -> {
 			if (err != null) {
 				logger.error("Failed to parse assembler content", err);
 				FxThreadUtil.run(() -> Animations.animateFailure(editor, 1000));
 			}
+		});
+	}
+
+	/**
+	 * Process the result of a parse stage.
+	 *
+	 * @param stage
+	 * 		The stage that was completed.
+	 * @param result
+	 * 		Result of the parse stage.
+	 */
+	private void processParseStage(@Nonnull AssemblyStage stage, @Nonnull Outcome<List<ASTElement>> result) {
+		// On explicit success, update the AST and inform any consumers.
+		if (result.isSuccess()) {
+			if (stage == AssemblyStage.CONCRETE) {
+				List<ASTElement> concreteAst = result.requireValue();
+				lastConcreteAst = concreteAst;
+				if (tabCompleter != null) tabCompleter.setAst(concreteAst);
+				eachChild(AssemblerAstConsumer.class, c -> c.consumeAst(concreteAst, AstPhase.CONCRETE));
+			}
+			if (result.hasWarnings())
+				processErrors(result.warnings(), ProblemLevel.WARN, ProblemPhase.LINT);
+			return;
+		}
+
+		// For partial/failure, we still want to update the AST and inform any consumers when possible.
+		result.onPartial(partial -> {
+			processErrors(partial.errors(), ProblemPhase.LINT);
+
+			List<ASTElement> partialAst = partial.value();
+			if (stage == AssemblyStage.ROUGH) {
+				eachChild(AssemblerAstConsumer.class, c -> c.consumeAst(partialAst, AstPhase.ROUGH_PARTIAL));
+			} else {
+				if (tabCompleter != null)
+					tabCompleter.setAst(partialAst);
+				eachChild(AssemblerAstConsumer.class, c -> c.consumeAst(partialAst, AstPhase.CONCRETE_PARTIAL));
+			}
+		}).onFailure(failure -> {
+			processErrors(failure.errors(), ProblemPhase.LINT);
+			if (tabCompleter != null)
+				tabCompleter.clearAst();
 		});
 	}
 
@@ -451,21 +574,23 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 					throw new IllegalStateException("Unsupported assembler path type: " + path);
 				}
 
-				pipeline.assemble(lastConcreteAst, localPath).ifOk(result -> {
-					ClassRepresentation representation = result.representation();
+				Outcome<? extends ClassResult<?>> assemblyOutcome = pipeline.assemble(lastConcreteAst, localPath);
+				assemblyOutcome.onPartial(partial -> processErrors(partial.errors(), ProblemPhase.BUILD))
+						.onFailure(failure -> processErrors(failure.errors(), ProblemPhase.BUILD));
+				if (assemblyOutcome.isSuccess()) {
+					ClassResult<?> result = assemblyOutcome.requireValue();
+					Object representation = result.representation();
 
 					lastResult = result;
 					lastAssembledClassRepresentation = representation;
 
-					if (representation instanceof JavaClassRepresentation javaClassRep) {
+					ClassInfo assembledClass = classInfoFromRepresentation(pipeline, representation);
+					if (assembledClass != null) {
 						// Get last class's field/method count for ensuring no duplication happened.
 						// If the user changes the definition of a field/method it inserts a new one
 						// instead of changing the existing declaration.
 						int fieldCount = lastAssembledClass.getFields().size();
 						int methodCount = lastAssembledClass.getMethods().size();
-
-						// Update last class.
-						ClassInfo assembledClass = pipeline.getClassInfo(Unchecked.cast(javaClassRep));
 
 						// Update the local path value, this will also inform sub-components of the new content.
 						// The update-lock must be set so that we don't trigger a disassembly (which would trigger an endless loop)
@@ -478,9 +603,8 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 								lastAssembledClass = assembledClass;
 							} else {
 								ASTElement sourceAst = lastConcreteAst.get(0);
-								Error err = new Error("Changing the class name is not allowed in the assembler.\n" +
-										"Use Recaf's refactoring capabilities to rename classes.", sourceAst.location());
-								processErrors(List.of(err), ProblemPhase.BUILD);
+								processError("Changing the class name is not allowed in the assembler.\n" +
+										"Use Recaf's refactoring capabilities to rename classes.", sourceAst.location(), ProblemPhase.BUILD);
 							}
 						} else if (localPath instanceof ClassMemberPathNode memberPath) {
 							ClassMember oldMember = memberPath.getValue();
@@ -489,20 +613,18 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 							if (oldMember.isMethod()) {
 								memberType = "method";
 								newMember = assembledClass.getDeclaredMethod(oldMember.getName(), oldMember.getDescriptor());
-								if (methodCount != assembledClass.getMethods().size()){
+								if (methodCount != assembledClass.getMethods().size()) {
 									ASTElement sourceAst = lastConcreteAst.get(0);
-									Error err = new Error("Assembling in this context detected a change in the number of methods.\n" +
-											"Check and see if your class has illegal duplicate method definitions.", sourceAst.location());
-									processErrors(List.of(err), ProblemPhase.BUILD);
+									processError("Assembling in this context detected a change in the number of methods.\n" +
+											"Check and see if your class has illegal duplicate method definitions.", sourceAst.location(), ProblemPhase.BUILD);
 								}
 							} else {
 								memberType = "field";
 								newMember = assembledClass.getDeclaredField(oldMember.getName(), oldMember.getDescriptor());
-								if (fieldCount != assembledClass.getFields().size()){
+								if (fieldCount != assembledClass.getFields().size()) {
 									ASTElement sourceAst = lastConcreteAst.get(0);
-									Error err = new Error("Assembling in this context detected a change in the number of fields.\n" +
-											"Check and see if your class has illegal duplicate field definitions.", sourceAst.location());
-									processErrors(List.of(err), ProblemPhase.BUILD);
+									processError("Assembling in this context detected a change in the number of fields.\n" +
+											"Check and see if your class has illegal duplicate field definitions.", sourceAst.location(), ProblemPhase.BUILD);
 								}
 							}
 
@@ -514,22 +636,16 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 								onUpdatePath(newPath);
 							} else {
 								ASTElement sourceAst = lastConcreteAst.get(0);
-								Error err = new Error("Changing the " + memberType + " name/type is not allowed in the assembler.\n" +
-										"Use Recaf's refactoring capabilities to rename fields & methods.", sourceAst.location());
-								processErrors(List.of(err), ProblemPhase.BUILD);
+								processError("Changing the " + memberType + " name/type is not allowed in the assembler.\n" +
+										"Use Recaf's refactoring capabilities to rename fields & methods.", sourceAst.location(), ProblemPhase.BUILD);
 							}
 						}
 						updateLock.set(false);
 					}
-					/*
-					else if (representation instanceof AndroidClassRepresentation androidClassRep) {
-						lastAssembledClass = pipeline.getClassInfo(Unchecked.cast(androidClassRep));
-					}
-					 */
-
 					eachChild(AssemblerBuildConsumer.class, c -> c.consumeClass(result, lastAssembledClass));
-				}).ifErr(errors -> processErrors(errors, ProblemPhase.BUILD))
-						.ifWarn(warns -> processErrors(warns, ProblemLevel.WARN, ProblemPhase.BUILD));
+				}
+				if (assemblyOutcome.hasWarnings())
+					processErrors(assemblyOutcome.warnings(), ProblemLevel.WARN, ProblemPhase.BUILD);
 			} catch (Throwable ex) {
 				logger.error("Uncaught exception when assembling contents of {}", path, ex);
 				FxThreadUtil.run(() -> Animations.animateFailure(editor, 1000));
@@ -537,6 +653,11 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 		});
 	}
 
+	/**
+	 * Assemble the current editor's text and update the workspace when successful.
+	 *
+	 * @return Future of parse completion.
+	 */
 	@Nonnull
 	@SuppressWarnings("unchecked")
 	private CompletableFuture<Void> assembleAndUpdateWorkspace() {
@@ -547,7 +668,10 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 					Bundle<ClassInfo> bundle = path.getValueOfType(Bundle.class);
 					if (bundle == null)
 						throw new IllegalStateException("Bundle not included in assembler pane's path");
-					bundle.put(lastAssembledClass);
+					Workspace workspace = path.getValueOfType(Workspace.class);
+					if (workspace == null)
+						throw new IllegalStateException("Workspace not included in assembler pane's path");
+					saveService.commit(workspace, bundle, lastAssembledClass);
 					FxThreadUtil.run(() -> Animations.animateSuccess(editor, 1000));
 				} catch (Throwable t) {
 					logger.error("Uncaught exception when updating class of {}", lastAssembledClass.getName(), t);
@@ -564,46 +688,55 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 	/**
 	 * Add the given errors to {@link #problemTracking} and refresh the UI.
 	 *
-	 * @param errors
+	 * @param diagnostics
 	 * 		Problems to add.
 	 * @param phase
 	 * 		Phase the problems belong to.
 	 */
-	private void processErrors(@Nonnull Collection<Error> errors, @Nonnull ProblemPhase phase) {
-		processErrors(errors, ProblemLevel.ERROR, phase);
+	private void processErrors(@Nonnull Collection<Diagnostic> diagnostics, @Nonnull ProblemPhase phase) {
+		processErrors(diagnostics, ProblemLevel.ERROR, phase);
 	}
 
 	/**
-	 * Add the given errors to {@link #problemTracking} and refresh the UI.
+	 * Add the given diagnostics to {@link #problemTracking} and refresh the UI.
 	 *
-	 * @param errors
+	 * @param diagnostics
 	 * 		Problems to add.
 	 * @param level
 	 * 		Severity level of problems.
 	 * @param phase
 	 * 		Phase the problems belong to.
 	 */
-	private void processErrors(@Nonnull Collection<? extends Error> errors, @Nonnull ProblemLevel level, @Nonnull ProblemPhase phase) {
-		for (Error error : errors) {
-			Location location = error.getLocation();
+	private void processErrors(@Nonnull Collection<? extends Diagnostic> diagnostics, @Nonnull ProblemLevel level, @Nonnull ProblemPhase phase) {
+		for (Diagnostic diagnostic : diagnostics) {
+			Location location = diagnostic.location();
 			int line = location == null ? 1 : location.line();
 			int start = location == null ? 1 : location.column();
 			int length = location == null ? 1 : location.length();
-			Problem problem = new Problem(line, start, length, level, phase, error.getMessage());
-			problemTracking.addItem(problem);
-
-			// REMOVE IS TRACING PARSER ERRORS
-			/*
-			Throwable trace = new Throwable();
-			trace.setStackTrace(error.getInCodeSource());
-			logger.trace("Assembler error", trace);
-			System.err.println(error);
-			*/
+			problemTracking.addItem(new Problem(line, start, length, level, phase, diagnostic.message()));
 		}
 		FxThreadUtil.run(() -> {
-			if (!errors.isEmpty())
+			if (!diagnostics.isEmpty())
 				editor.redrawParagraphGraphics();
 		});
+	}
+
+	/**
+	 * Add the given error to {@link #problemTracking} and refresh the UI.
+	 *
+	 * @param message
+	 * 		Error message.
+	 * @param location
+	 * 		Error location.
+	 * @param phase
+	 * 		Phase the problem belongs to.
+	 */
+	private void processError(@Nonnull String message, @Nullable Location location, @Nonnull ProblemPhase phase) {
+		int line = location == null ? 1 : location.line();
+		int start = location == null ? 1 : location.column();
+		int length = location == null ? 1 : location.length();
+		problemTracking.addItem(new Problem(line, start, length, ProblemLevel.ERROR, phase, message));
+		FxThreadUtil.run(editor::redrawParagraphGraphics);
 	}
 
 	/**
@@ -612,5 +745,34 @@ public class AssemblerPane extends AbstractContentPane<PathNode<?>> implements U
 	@Nonnull
 	public Editor getEditor() {
 		return editor;
+	}
+
+	/**
+	 * @param representation
+	 * 		Class representation to wrap in a {@link ClassResult}.
+	 * @param <T>
+	 * 		Type of representation.
+	 *
+	 * @return Class result that returns the given representation.
+	 */
+	@Nonnull
+	private static <T> ClassResult<T> representationResult(T representation) {
+		return () -> representation;
+	}
+
+	/**
+	 * @param pipeline
+	 * 		Pipeline to use for looking up class info.
+	 * @param representation
+	 * 		Class representation to look up.
+	 *
+	 * @return Class info for the given representation, or {@code null} if the representation is not a class.
+	 */
+	@Nullable
+	private static ClassInfo classInfoFromRepresentation(@Nonnull AssemblerPipeline<?, ?, ?> pipeline,
+	                                                     @Nonnull Object representation) {
+		if (representation instanceof JavaClassRepresentation || representation instanceof DalvikClassRepresentation)
+			return pipeline.getClassInfo(Unchecked.cast(representation));
+		return null;
 	}
 }

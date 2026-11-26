@@ -10,6 +10,7 @@ import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
@@ -26,7 +27,7 @@ import software.coley.recaf.util.Icons;
 import java.util.List;
 
 /**
- * Common base for text-targeting search bar controls.
+ * Common base for editor search bar controls.
  * After constructing, call {@link #setup()}.
  *
  * @author Matt Coley
@@ -104,17 +105,7 @@ public abstract class AbstractSearchBar extends VBox {
 			button.getStyleClass().addAll(Styles.BUTTON_ICON, Styles.ACCENT, Styles.FLAT, Styles.SMALL);
 		});
 
-		// Create toggles for search input query modes.
-		BoundToggleIcon toggleSensitivity = new BoundToggleIcon(new FontIconView(CarbonIcons.LETTER_CC), caseSensitivity).withTooltip("misc.casesensitive");
-		BoundToggleIcon toggleRegex = new BoundToggleIcon(Icons.REGEX, regex).withTooltip("misc.regex");
-		toggleSensitivity.getStyleClass().addAll(Styles.BUTTON_ICON, Styles.ACCENT, Styles.FLAT, Styles.SMALL);
-		toggleRegex.getStyleClass().addAll(Styles.BUTTON_ICON, Styles.ACCENT, Styles.FLAT, Styles.SMALL);
-		HBox inputToggles = new HBox(
-				toggleSensitivity,
-				toggleRegex
-		);
-		inputToggles.setAlignment(Pos.CENTER_RIGHT);
-		searchInput.setRight(inputToggles);
+		searchInput.setRight(createSearchInputOptions());
 		caseSensitivity.addListener((ob, old, cur) -> refreshResults());
 		regex.addListener((ob, old, cur) -> refreshResults());
 
@@ -147,6 +138,20 @@ public abstract class AbstractSearchBar extends VBox {
 
 		// Layout
 		setupLayout();
+	}
+
+	/**
+	 * @return Controls shown on the right side of the search input.
+	 */
+	@Nonnull
+	protected Node createSearchInputOptions() {
+		BoundToggleIcon toggleSensitivity = new BoundToggleIcon(new FontIconView(CarbonIcons.LETTER_CC), caseSensitivity).withTooltip("misc.casesensitive");
+		BoundToggleIcon toggleRegex = new BoundToggleIcon(Icons.REGEX, regex).withTooltip("misc.regex");
+		toggleSensitivity.getStyleClass().addAll(Styles.BUTTON_ICON, Styles.ACCENT, Styles.FLAT, Styles.SMALL);
+		toggleRegex.getStyleClass().addAll(Styles.BUTTON_ICON, Styles.ACCENT, Styles.FLAT, Styles.SMALL);
+		HBox inputToggles = new HBox(toggleSensitivity, toggleRegex);
+		inputToggles.setAlignment(Pos.CENTER_RIGHT);
+		return inputToggles;
 	}
 
 	/**

@@ -9,6 +9,7 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import org.kordamp.ikonli.carbonicons.CarbonIcons;
+import software.coley.recaf.info.InnerClassInfo;
 import software.coley.recaf.info.member.ClassMember;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.path.ClassMemberPathNode;
@@ -111,6 +112,11 @@ public class MethodCallGraphTreesPane extends TabPane implements ClassNavigable,
 	@Override
 	public void disable() {
 		getTabs().clear();
+	}
+
+	@Override
+	public void requestFocus(@Nonnull InnerClassInfo innerClass) {
+		// no-op, inner classes have no call-graph tree anchor in this representation.
 	}
 
 	@Override

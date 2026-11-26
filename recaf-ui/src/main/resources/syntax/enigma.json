@@ -13,7 +13,7 @@
     },
     {
       "name": "Keywords",
-      "regex": "(?:^|\\n)\\s*(?:CLASS|FIELD|METHOD|ARG)",
+      "regex": "(?:^|\\n)\\s*(?:CLASS|FIELD|METHOD|ARG|VAR)",
       "classes": [
         "keyword"
       ],

@@ -29,6 +29,7 @@ public class ArrayValueImpl implements ArrayValue {
 	private final Nullness nullness;
 	private final OptionalInt length;
 	private final List<ReValue> contents;
+	private final boolean containsSubArray;
 
 	/**
 	 * New array value where we don't know the exact length.
@@ -44,6 +45,7 @@ public class ArrayValueImpl implements ArrayValue {
 		this.nullness = nullness;
 		this.length = OptionalInt.empty();
 		this.contents = null;
+		this.containsSubArray = false;
 	}
 
 	/**
@@ -84,57 +86,74 @@ public class ArrayValueImpl implements ArrayValue {
 		if (length >= 0) {
 			this.length = OptionalInt.of(length);
 			this.contents = new ArrayList<>(length);
-			for (int i = 0; i < length; i++)
-				contents.add(indexValueFunction.apply(i));
+			boolean containsTrackedArray = false;
+			for (int i = 0; i < length; i++) {
+				ReValue value = indexValueFunction.apply(i);
+				contents.add(value);
+				containsTrackedArray |= value instanceof ArrayValue;
+			}
+			this.containsSubArray = containsTrackedArray;
 		} else {
 			// Array length is negative. So we have two possibilities:
 			// - We have a bug in our stack evaluation
 			// - We are looking at obfuscated code intentionally trying to throw exceptions
 			this.length = OptionalInt.empty();
 			this.contents = null;
+			this.containsSubArray = false;
 		}
 	}
 
 	@Nonnull
 	@Override
-	@SuppressWarnings("OptionalGetWithoutIsPresent")
 	public ArrayValue setValue(int index, @Nonnull ReValue value) {
-		if (hasKnownValue()) {
-			ArrayValueImpl copy = new ArrayValueImpl(type, nullness, length.getAsInt());
-			for (int i = 0; i < contents.size(); i++) {
-				ReValue valueAtIndex = i == index ? value : contents.get(i);
-				copy.contents.set(i, valueAtIndex);
-			}
-			return copy;
+		// A known non-null array can retain per-slot knowledge even when another slot is unknown.
+		if (nullness == Nullness.NOT_NULL
+				&& length.isPresent()
+				&& contents != null
+				&& index >= 0
+				&& index < contents.size()) {
+			return new ArrayValueImpl(type, nullness, length.getAsInt(), i -> i == index ? value : contents.get(i));
 		}
 
-		// Values not known, so no need to create a copy.
+		// Unknown-length arrays cannot safely retain an indexed write.
 		return this;
 	}
 
 	@Nonnull
 	@Override
 	public ArrayValue updatedCopyIfContained(@Nonnull ReValue originalValue, @Nonnull ReValue updatedValue) {
-		if (hasKnownValue()) {
-			for (int i = 0; i < contents.size(); i++) {
-				ReValue content = contents.get(i);
+		if (originalValue instanceof ArrayValue && !containsTrackedSubArray())
+			return this;
 
-				// Case 1: The value is a direct entry in this array.
-				if (content == originalValue) {
-					return setValue(i, updatedValue);
-				}
+		// Slight variation of the 'hasKnownValue' check, but we don't check for all contents being known.
+		// 1. That is slow.
+		// 2. We don't need to check for all contents being known, we just need to know if the value is contained.
+		if (nullness == Nullness.UNKNOWN || nullness == Nullness.NULL || length.isEmpty() || contents == null)
+			return this;
 
-				// Case 2: This array is multidimensional and the value is in a nested sub array.
-				else if (content instanceof ArrayValue subArray) {
-					ArrayValue updatedSubArray = subArray.updatedCopyIfContained(originalValue, updatedValue);
-					if (subArray != updatedSubArray)
-						return setValue(i, updatedSubArray);
-				}
+		int size = contents.size();
+		for (int i = 0; i < size; i++) {
+			ReValue content = contents.get(i);
+
+			// Case 1: The value is a direct entry in this array.
+			if (content == originalValue)
+				return setValue(i, updatedValue);
+
+			// Case 2: This array is multidimensional and the value is in a nested sub array.
+			if (content instanceof ArrayValue subArray && subArray.canStore(updatedValue, true)) {
+				ArrayValue updatedSubArray = subArray.updatedCopyIfContained(originalValue, updatedValue);
+				if (subArray != updatedSubArray)
+					return setValue(i, updatedSubArray);
 			}
 		}
 
 		// Not contained, no changes needed.
 		return this;
+	}
+
+	@Override
+	public boolean containsTrackedSubArray() {
+		return containsSubArray;
 	}
 
 	@Nonnull
@@ -160,7 +179,7 @@ public class ArrayValueImpl implements ArrayValue {
 					&& nullness() == otherArray.nullness()
 					&& dimensions() == otherArray.dimensions()) {
 				int length = getFirstDimensionLength().getAsInt();
-				ArrayValueImpl merged = new ArrayValueImpl(type, nullness, length, i -> {
+				return new ArrayValueImpl(type, nullness, length, i -> {
 					try {
 						ReValue value = Objects.requireNonNull(otherArray.getValue(i));
 						return contents.get(i).mergeWith(value);
@@ -220,7 +239,6 @@ public class ArrayValueImpl implements ArrayValue {
 	public String toString() {
 		return type().getInternalName();
 	}
-
 
 	@Nonnull
 	private static ReValue getSubTypedValue(@Nonnull Type arrayType, @Nonnull UncheckedFunction<Type, ReValue> function) {
