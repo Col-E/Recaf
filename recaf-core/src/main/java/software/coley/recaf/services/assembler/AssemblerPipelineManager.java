@@ -27,13 +27,13 @@ import java.util.Objects;
 @ApplicationScoped
 public class AssemblerPipelineManager implements Service {
 	public static final String SERVICE_ID = "assembler-pipeline";
-	private final WorkspaceManager workspaceManager;
 	private final InheritanceGraphService graphService;
 	private final JvmAssemblerPipelineConfig jvmConfig;
 	private final AndroidAssemblerPipelineConfig androidConfig;
 	private final AssemblerPipelineGeneralConfig config;
 	private JvmAssemblerPipeline currentJvmPipeline;
 	private AndroidAssemblerPipeline currentAndroidPipeline;
+	private Workspace currentWorkspace;
 
 	@Inject
 	public AssemblerPipelineManager(@Nonnull WorkspaceManager workspaceManager,
@@ -41,7 +41,6 @@ public class AssemblerPipelineManager implements Service {
 	                                @Nonnull AssemblerPipelineGeneralConfig config,
 	                                @Nonnull AndroidAssemblerPipelineConfig androidConfig,
 	                                @Nonnull JvmAssemblerPipelineConfig jvmConfig) {
-		this.workspaceManager = workspaceManager;
 		this.graphService = graphService;
 		this.config = config;
 		this.jvmConfig = jvmConfig;
@@ -83,12 +82,16 @@ public class AssemblerPipelineManager implements Service {
 	 * @return Assembler pipeline for JVM classes.
 	 */
 	@Nonnull
-	public JvmAssemblerPipeline newJvmAssemblerPipeline(@Nonnull Workspace workspace) {
-		if (currentJvmPipeline != null && workspace == workspaceManager.getCurrent())
+	public synchronized JvmAssemblerPipeline newJvmAssemblerPipeline(@Nonnull Workspace workspace) {
+		boolean isOpen = workspace == currentWorkspace;
+		if (isOpen && currentJvmPipeline != null)
 			return currentJvmPipeline;
 
 		InheritanceGraph graph = graphService.getOrCreateInheritanceGraph(workspace);
-		return new JvmAssemblerPipeline(workspace, Objects.requireNonNull(graph), config, jvmConfig);
+		JvmAssemblerPipeline pipeline = new JvmAssemblerPipeline(workspace, Objects.requireNonNull(graph), config, jvmConfig);
+		if (isOpen)
+			currentJvmPipeline = pipeline;
+		return pipeline;
 	}
 
 	/**
@@ -98,12 +101,16 @@ public class AssemblerPipelineManager implements Service {
 	 * @return Assembler pipeline for Dalvik classes.
 	 */
 	@Nonnull
-	public AndroidAssemblerPipeline newAndroidAssemblerPipeline(@Nonnull Workspace workspace) {
-		if (currentAndroidPipeline != null && workspace == workspaceManager.getCurrent())
+	public synchronized AndroidAssemblerPipeline newAndroidAssemblerPipeline(@Nonnull Workspace workspace) {
+		boolean isOpen = workspace == currentWorkspace;
+		if (isOpen && currentAndroidPipeline != null)
 			return currentAndroidPipeline;
 
 		InheritanceGraph graph = graphService.getOrCreateInheritanceGraph(workspace);
-		return new AndroidAssemblerPipeline(Objects.requireNonNull(graph), config, androidConfig);
+		AndroidAssemblerPipeline pipeline = new AndroidAssemblerPipeline(Objects.requireNonNull(graph), config, androidConfig);
+		if (isOpen)
+			currentAndroidPipeline = pipeline;
+		return pipeline;
 	}
 
 	@Nonnull
@@ -121,19 +128,24 @@ public class AssemblerPipelineManager implements Service {
 	private class ListenerHost implements WorkspaceOpenListener, WorkspaceCloseListener {
 		@Override
 		public void onWorkspaceOpened(@Nonnull Workspace workspace) {
-			currentJvmPipeline = newJvmAssemblerPipeline(workspace);
-			currentAndroidPipeline = newAndroidAssemblerPipeline(workspace);
+			synchronized (AssemblerPipelineManager.this) {
+				currentWorkspace = workspace;
+			}
 		}
 
 		@Override
 		public void onWorkspaceClosed(@Nonnull Workspace workspace) {
-			if (currentJvmPipeline != null) {
-				currentJvmPipeline.close();
-				currentJvmPipeline = null;
-			}
-			if (currentAndroidPipeline != null) {
-				currentAndroidPipeline.close();
-				currentAndroidPipeline = null;
+			synchronized (AssemblerPipelineManager.this) {
+				currentWorkspace = null;
+
+				if (currentJvmPipeline != null) {
+					currentJvmPipeline.close();
+					currentJvmPipeline = null;
+				}
+				if (currentAndroidPipeline != null) {
+					currentAndroidPipeline.close();
+					currentAndroidPipeline = null;
+				}
 			}
 		}
 	}
