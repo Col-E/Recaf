@@ -937,7 +937,7 @@ public class Evaluator {
 	 * @return Class node for the given class, or {@code null} if it is unavailable.
 	 */
 	@Nullable
-	private ClassNode getNode(@Nonnull String className, @Nullable EvaluationContext context) {
+	ClassNode getNode(@Nonnull String className, @Nullable EvaluationContext context) {
 		// Prefer the evaluation snapshot so nested calls use overrides from the current evaluation.
 		ClassNode override = context == null
 				? classNodeOverrides.get(className)

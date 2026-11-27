@@ -695,13 +695,12 @@ public class ReInterpreter extends Interpreter<ReValue> implements Opcodes {
 
 		// Special case for the type of the "null" literal.
 		//
-		// A null reference can take the other reference's type, but two typed nulls still need
-		// their types merged. Returning either operand for that case makes the result depend on
-		// work-list order, so cyclic control flow can keep changing a frame forever.
+		// If merging into a non-null value, we want to degrade the nullness to unknown since it could
+		// be null or not null. This way the type is retained.
 		boolean value1IsNull = value1 instanceof ObjectValue ov1 && ov1.isNull();
 		boolean value2IsNull = value2 instanceof ObjectValue ov2 && ov2.isNull();
 		if (value1IsNull != value2IsNull)
-			return value1IsNull ? value2 : value1;
+			return mergeWithNullOfType(value1IsNull ? value2 : value1);
 
 		// Convert type1 to its element type and array dimension. Arrays of primitive values are seen as
 		// Object arrays with one dimension less. Hence, the element type is always of Type.OBJECT sort.
@@ -761,6 +760,26 @@ public class ReInterpreter extends Interpreter<ReValue> implements Opcodes {
 		}
 
 		return newArrayValue(Types.OBJECT_TYPE, dim1);
+	}
+
+	/**
+	 * @param value
+	 * 		Non-null value to merge with a {@code null}.
+	 *
+	 * @return Merge of the value with a {@code null} of the value's type.
+	 */
+	@Nonnull
+	private ReValue mergeWithNullOfType(@Nonnull ReValue value) {
+		Type type = value.type();
+		ReValue nullOfType = value instanceof ArrayValue
+				? ArrayValue.of(type, Nullness.NULL)
+				: ObjectValue.object(type, Nullness.NULL);
+		try {
+			return value.mergeWith(nullOfType);
+		} catch (IllegalValueException t) {
+			logger.error("Failed ReValue merge of null with {}", value.getClass().getSimpleName(), t);
+			throw new IllegalStateException("Failed ReValue merge of null", t);
+		}
 	}
 
 	@Nonnull
