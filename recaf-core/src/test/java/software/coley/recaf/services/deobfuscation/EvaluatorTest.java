@@ -11,6 +11,7 @@ import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.FieldNode;
+import org.objectweb.asm.tree.InnerClassNode;
 import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
@@ -20,6 +21,7 @@ import org.objectweb.asm.tree.VarInsnNode;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.transform.JvmTransformerContext;
+import software.coley.recaf.services.workspace.io.ResourceImporter;
 import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.util.ClassMethodPair;
 import software.coley.recaf.util.analysis.Nullness;
@@ -47,8 +49,13 @@ import software.coley.recaf.util.analysis.value.ThrowableValue;
 import software.coley.recaf.util.analysis.value.UninitializedValue;
 import software.coley.recaf.util.analysis.value.impl.ArrayValueImpl;
 import software.coley.recaf.util.analysis.value.impl.ClassLiteralValueImpl;
+import software.coley.recaf.util.io.ByteSources;
+import software.coley.recaf.util.io.ZipCreationUtils;
+import software.coley.recaf.workspace.model.BasicWorkspace;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.BasicJvmClassBundle;
+import software.coley.recaf.workspace.model.resource.WorkspaceResource;
+import software.coley.recaf.workspace.model.resource.WorkspaceResourceBuilder;
 
 import javax.crypto.AEADBadTagException;
 import javax.crypto.Cipher;
@@ -189,7 +196,7 @@ public class EvaluatorTest extends TransformerTestBase {
 		assertEquals("java/lang/NullPointerException", nullException.type().getInternalName());
 
 		// Passing in a null value with a message should throw a NullPointerException with the message.
-		EvaluationResult nullMessageResult = evaluateResult(compiled, "requireWithMessage", "(Ljava/lang/String;)Ljava/lang/String;", null,List.of(ObjectValue.VAL_OBJECT_NULL));
+		EvaluationResult nullMessageResult = evaluateResult(compiled, "requireWithMessage", "(Ljava/lang/String;)Ljava/lang/String;", null, List.of(ObjectValue.VAL_OBJECT_NULL));
 		ThrowableValue nullMessageException = assertInstanceOf(ThrowableValue.class, assertInstanceOf(EvaluationThrowsResult.class, nullMessageResult).exception());
 		assertEquals("java/lang/NullPointerException", nullMessageException.type().getInternalName());
 		assertEquals("value", nullMessageException.getBackingException().getMessage());
@@ -3269,7 +3276,11 @@ public class EvaluatorTest extends TransformerTestBase {
 
 	@Nonnull
 	private static Evaluator evaluatorWithOverrides(@Nonnull List<JvmClassInfo> workspaceClasses, @Nonnull ClassNode... overrides) {
-		Workspace workspace = TestClassUtils.fromBundle(TestClassUtils.fromClasses(workspaceClasses.toArray(JvmClassInfo[]::new)));
+		return evaluatorWithOverrides(TestClassUtils.fromBundle(TestClassUtils.fromClasses(workspaceClasses.toArray(JvmClassInfo[]::new))), overrides);
+	}
+
+	@Nonnull
+	private static Evaluator evaluatorWithOverrides(@Nonnull Workspace workspace, @Nonnull ClassNode... overrides) {
 		JvmTransformerContext context = new JvmTransformerContext(workspace, workspace.getPrimaryResource(), Collections.emptyList());
 		Evaluator evaluator = new Evaluator(workspace, context.newInterpreter(new InheritanceGraph(workspace)),
 				new FieldCacheManager(), 1000, false, false);
@@ -3400,6 +3411,353 @@ public class EvaluatorTest extends TransformerTestBase {
 		// A possibly-null class value still makes the merge possibly null, whether or not the literal is named.
 		assertEquals(ObjectValue.VAL_CLASS_MAYBE_NULL, interpreter.merge(foo, ObjectValue.VAL_CLASS_NULL));
 		assertEquals(ObjectValue.VAL_CLASS_MAYBE_NULL, interpreter.merge(ObjectValue.VAL_CLASS_NULL, foo));
+	}
+
+	@Test
+	void classLiteralGetName() {
+		// Package separators become dots, and nested classes keep their '$'.
+		assertStringValue("a.b.C", evaluateClassName(Type.getObjectType("a/b/C"), "getName", List.of()));
+		assertStringValue("a.b.C$D", evaluateClassName(Type.getObjectType("a/b/C$D"), "getName", List.of()));
+
+		// Arrays have no binary name, so the descriptor is returned instead.
+		assertStringValue("[I", evaluateClassName(Type.getType("[I"), "getName", List.of()));
+		assertStringValue("[La.b.C;", evaluateClassName(Type.getType("[La/b/C;"), "getName", List.of()));
+	}
+
+	@Test
+	void classLiteralGetSimpleName() {
+		// Name after last package separator.
+		JvmClassInfo topLevel = TestClassUtils.createClass("a/b/C", null);
+		assertStringValue("C", evaluateClassName(Type.getObjectType("a/b/C"), "getSimpleName", List.of(topLevel)));
+
+		// Name after last '$' for member classes.
+		JvmClassInfo member = nestedClass("a/b/C$D", "a/b/C", "D");
+		assertStringValue("D", evaluateClassName(Type.getObjectType("a/b/C$D"), "getSimpleName", List.of(member)));
+
+		// Anonymous classes have an enclosing method, and their InnerClasses entry has no inner name.
+		JvmClassInfo anonymous = TestClassUtils.createClass("a/b/C$1", node -> {
+			node.outerClass = "a/b/C";
+			node.outerMethod = "run";
+			node.outerMethodDesc = "()V";
+			node.innerClasses.add(new InnerClassNode("a/b/C$1", null, null, 0));
+		});
+		assertStringValue("", evaluateClassName(Type.getObjectType("a/b/C$1"), "getSimpleName", List.of(anonymous)));
+
+		// Dimension size is kept for arrays.
+		member = nestedClass("a/b/C$D", "a/b/C", "D");
+		assertStringValue("D[][]", evaluateClassName(Type.getType("[[La/b/C$D;"), "getSimpleName", List.of(member)));
+		assertStringValue("int[]", evaluateClassName(Type.getType("[I"), "getSimpleName", List.of()));
+
+		// In these cases the evaluator isn't configured to evaluate internal resources of the workspace, which
+		// would be where 'java/lang/String' is defined, so the evaluation fails. The idea applies though to any
+		// type not in the workspace. This would work when setting internal evaluation to true.
+		assertInstanceOf(EvaluationFailureResult.class, evaluateClassNameResult(Type.getObjectType("java/lang/String"), "getSimpleName", List.of()));
+		assertInstanceOf(EvaluationFailureResult.class, evaluateClassNameResult(Type.getType("[Ljava/lang/String;"), "getSimpleName", List.of()));
+	}
+
+	@Test
+	void unnamedClassValueAbortsForBothNames() {
+		// A class value from an unknown source has no known name.
+		for (String method : List.of("getName", "getSimpleName")) {
+			ClassNode runner = syntheticClass("synthetic/UnnamedClassRunner", Opcodes.ACC_PUBLIC);
+			runner.methods.add(syntheticMethod("run", "(Ljava/lang/Class;)Ljava/lang/String;", Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,
+					new VarInsnNode(Opcodes.ALOAD, 0),
+					new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/Class", method, "()Ljava/lang/String;", false),
+					new InsnNode(Opcodes.ARETURN)));
+
+			EvaluationResult result = evaluatorWithOverrides(List.of(), runner).evaluate(runner.name, "run", "(Ljava/lang/Class;)Ljava/lang/String;", null, List.of(ObjectValue.VAL_CLASS));
+			assertInstanceOf(EvaluationFailureResult.class, result);
+		}
+	}
+
+	@Nonnull
+	private static ClassNode classNameRunner(@Nonnull Type literal, @Nonnull String method) {
+		// class ClassNameRunner {
+		//   static String run() {
+		//    return <literal>.<method>();
+		//   }
+		// }
+		//
+		// Intention is to use 'getName' or 'getSimpleName' on a class literal.
+		ClassNode runner = syntheticClass("synthetic/ClassNameRunner", Opcodes.ACC_PUBLIC);
+		runner.methods.add(syntheticMethod("run", "()Ljava/lang/String;", Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,
+				new LdcInsnNode(literal),
+				new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/Class", method, "()Ljava/lang/String;", false),
+				new InsnNode(Opcodes.ARETURN)));
+		return runner;
+	}
+
+	@Nonnull
+	private static ReValue evaluateClassName(@Nonnull Type literal, @Nonnull String method,
+	                                         @Nonnull List<JvmClassInfo> workspaceClasses,
+	                                         @Nonnull ClassNode... overrides) {
+		return assertInstanceOf(EvaluationYieldResult.class, evaluateClassNameResult(literal, method, workspaceClasses, overrides)).value();
+	}
+
+	@Nonnull
+	private static EvaluationResult evaluateClassNameResult(@Nonnull Type literal, @Nonnull String method,
+	                                                        @Nonnull List<JvmClassInfo> workspaceClasses,
+	                                                        @Nonnull ClassNode... overrides) {
+		ClassNode runner = classNameRunner(literal, method);
+		ClassNode[] allOverrides = new ClassNode[overrides.length + 1];
+		allOverrides[0] = runner;
+		System.arraycopy(overrides, 0, allOverrides, 1, overrides.length);
+		return evaluatorWithOverrides(workspaceClasses, allOverrides)
+				.evaluate(runner.name, "run", "()Ljava/lang/String;", null, List.of());
+	}
+
+	@Test
+	void resourceStreamReadsAbsoluteNames() throws Exception {
+		// A workspace that defines some text files should let the evaluator read them with absolute names.
+		Workspace workspace = TestClassUtils.fromBundle(TestClassUtils.fromFiles(
+				TestClassUtils.createFile("a/b/data.txt", "abc".getBytes(StandardCharsets.UTF_8)),
+				TestClassUtils.createFile("META-INF/x.txt", "meta".getBytes(StandardCharsets.UTF_8))));
+		assertEquals("abc", readResourceStream(resourceStreamResult(workspace, Type.getObjectType("x/Y"), "/a/b/data.txt")));
+		assertEquals("meta", readResourceStream(resourceStreamResult(workspace, Type.getObjectType("x/Y"), "/META-INF/x.txt")));
+	}
+
+	@Test
+	void resourceStreamResolvesRelativeNameFromThePackage() throws Exception {
+		// Relative names to the class's package should be resolved to absolute names, and then read from the workspace.
+		Workspace workspace = resourceWorkspace("a/b/data.txt", "abc");
+		assertEquals("abc", readResourceStream(resourceStreamResult(workspace, Type.getObjectType("a/b/C"), "data.txt")));
+	}
+
+	@Test
+	void resourceStreamInTheDefaultPackageUsesTheNameAsIs() throws Exception {
+		// For a resource not in some directory, the name itself is effectively absolute, and should be read from the workspace as-is.
+		Workspace workspace = resourceWorkspace("data.txt", "abc");
+		assertEquals("abc", readResourceStream(resourceStreamResult(workspace, Type.getObjectType("C"), "data.txt")));
+	}
+
+	@Test
+	void resourceStreamMissReturnsNull() {
+		// Some path that doesn't actually exist in the workspace should return null.
+		Workspace workspace = resourceWorkspace("a/b/data.txt", "abc");
+		assertNullResource(resourceStreamResult(workspace, Type.getObjectType("a/b/C"), "missing.txt"));
+	}
+
+	@Test
+	void resourceStreamMissOutsideTheJdkReturnsNull() {
+		// Library packages are not JDK packages, so a miss there is answered.
+		Workspace workspace = resourceWorkspace("a/b/data.txt", "abc");
+		assertNullResource(resourceStreamResult(workspace, Type.getObjectType("a/b/C"), "/org/apache/missing.txt"));
+	}
+
+	@Test
+	void resourceStreamOnJdkClassAborts() {
+		// Class.getResourceAsStream on a JDK class searches the JDK module, not the classpath.
+		// So the evaluator shouldn't yield the workspace defined resource.
+		Workspace workspace = resourceWorkspace("java/lang/data.txt", "abc");
+		assertInstanceOf(EvaluationFailureResult.class, resourceStreamResult(workspace, Type.getObjectType("java/lang/String"), "data.txt"));
+	}
+
+	@Test
+	void resourceStreamOnArrayClassAborts() {
+		// Array classes search the package of their element type, which is not modeled.
+		Workspace workspace = resourceWorkspace("a/b/data.txt", "abc");
+		assertInstanceOf(EvaluationFailureResult.class, resourceStreamResult(workspace, Type.getType("[La/b/C;"), "data.txt"));
+	}
+
+	@Test
+	void resourceStreamWithDirectoryNameAborts() {
+		// Directories aren't resources.
+		Workspace workspace = resourceWorkspace("a/b/data.txt", "abc");
+		assertInstanceOf(EvaluationFailureResult.class, resourceStreamResult(workspace, Type.getObjectType("a/b/C"), "sub/"));
+		assertInstanceOf(EvaluationFailureResult.class, resourceStreamResult(workspace, Type.getObjectType("a/b/C"), ""));
+	}
+
+	@Test
+	void resourceStreamWithNonCanonicalNameAborts() {
+		// The class loader does not normalize these names.
+		Workspace workspace = resourceWorkspace("a/b/data.txt", "abc");
+		for (String name : List.of("../data.txt", "./data.txt", "x//data.txt", "/a/b/../data.txt", "/a\\b\\data.txt")) {
+			EvaluationResult result = resourceStreamResult(workspace, Type.getObjectType("a/b/C"), name);
+			assertInstanceOf(EvaluationFailureResult.class, result, name);
+		}
+	}
+
+	@Test
+	void resourceStreamWithUnknownOrNullNameAborts() {
+		// For class resource operations on values that are null or unknown,
+		// we can't trust the resolution has a reference to operate off of.
+		Workspace workspace = resourceWorkspace("a/b/data.txt", "abc");
+		Type literal = Type.getObjectType("a/b/C");
+		assertInstanceOf(EvaluationFailureResult.class, resourceStreamResult(workspace, literal, StringValue.VAL_STRING));
+		assertInstanceOf(EvaluationFailureResult.class, resourceStreamResult(workspace, literal, StringValue.VAL_STRING_NULL));
+	}
+
+	@Test
+	void resourceStreamOnUnnamedClassValueAborts() {
+		// A class reference from an unknown source has no known name,
+		// so we can't resolve the resource relative to its package.
+		Workspace workspace = resourceWorkspace("a/b/data.txt", "abc");
+		ClassNode runner = syntheticClass("synthetic/UnnamedResourceRunner", Opcodes.ACC_PUBLIC);
+		runner.methods.add(syntheticMethod("run", "(Ljava/lang/Class;)Ljava/io/InputStream;", Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,
+				new VarInsnNode(Opcodes.ALOAD, 0),
+				new LdcInsnNode("data.txt"),
+				new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/Class", "getResourceAsStream", "(Ljava/lang/String;)Ljava/io/InputStream;", false),
+				new InsnNode(Opcodes.ARETURN)));
+		EvaluationResult result = evaluatorWithOverrides(workspace, runner).evaluate(runner.name, "run", "(Ljava/lang/Class;)Ljava/io/InputStream;", null, List.of(ObjectValue.VAL_CLASS));
+		assertInstanceOf(EvaluationFailureResult.class, result);
+	}
+
+	@Test
+	void resourceStreamCopiesTheWorkspaceBytes() throws Exception {
+		// The stream is copied when the lookup is evaluated, so later changes to the workspace bytes do not reach it.
+		byte[] content = "abc".getBytes(StandardCharsets.UTF_8);
+		Workspace workspace = resourceWorkspace("a/b/data.txt", content);
+		EvaluationResult result = resourceStreamResult(workspace, Type.getObjectType("a/b/C"), "data.txt");
+		content[0] = 'z';
+		assertEquals("abc", readResourceStream(result));
+	}
+
+	@Test
+	void resourceStreamAbortsLargeResource() {
+		int large = 32 * 1024 * 1024;
+		Workspace workspace = resourceWorkspace("a/b/big.bin", new byte[large]);
+		assertInstanceOf(EvaluationFailureResult.class, resourceStreamResult(workspace, Type.getObjectType("a/b/C"), "big.bin"));
+	}
+
+	@Test
+	void resourceStreamPrefersThePrimaryResource() throws Exception {
+		Workspace workspace = resourceWorkspace("a/b/data.txt", "primary");
+		workspace.addSupportingResource(supportingResource("a/b/data.txt", "supporting"));
+		assertEquals("primary", readResourceStream(resourceStreamResult(workspace, Type.getObjectType("a/b/C"), "data.txt")));
+	}
+
+	@Test
+	void resourceStreamSearchesSupportingResources() throws Exception {
+		Workspace workspace = TestClassUtils.fromBundle(TestClassUtils.fromFiles());
+		workspace.addSupportingResource(supportingResource("a/b/data.txt", "supporting"));
+		assertEquals("supporting", readResourceStream(resourceStreamResult(workspace, Type.getObjectType("a/b/C"), "data.txt")));
+	}
+
+	@Test
+	void resourceStreamReadsAnEmptyEntry() throws Exception {
+		Workspace workspace = resourceWorkspace("a/b/empty.txt", new byte[0]);
+		assertEquals(0, readResourceStreamBytes(resourceStreamResult(workspace, Type.getObjectType("a/b/C"), "empty.txt")).length);
+	}
+
+	@Nonnull
+	private static Workspace resourceWorkspace(@Nonnull String name, @Nonnull String content) {
+		return resourceWorkspace(name, content.getBytes(StandardCharsets.UTF_8));
+	}
+
+	@Nonnull
+	private static Workspace resourceWorkspace(@Nonnull String name, @Nonnull byte[] content) {
+		return TestClassUtils.fromBundle(TestClassUtils.fromFiles(TestClassUtils.createFile(name, content)));
+	}
+
+	@Nonnull
+	private static WorkspaceResource supportingResource(@Nonnull String name, @Nonnull String content) {
+		return new WorkspaceResourceBuilder()
+				.withFileBundle(TestClassUtils.fromFiles(TestClassUtils.createFile(name, content.getBytes(StandardCharsets.UTF_8))))
+				.build();
+	}
+
+	@Nonnull
+	private static EvaluationResult resourceStreamResult(@Nonnull Workspace workspace, @Nonnull Type literal,
+	                                                     @Nonnull String name) {
+		return resourceStreamResult(workspace, literal, ObjectValue.string(name));
+	}
+
+	@Nonnull
+	private static EvaluationResult resourceStreamResult(@Nonnull Workspace workspace, @Nonnull Type literal,
+	                                                     @Nonnull ReValue name) {
+		ClassNode runner = syntheticClass("synthetic/ResourceStreamRunner", Opcodes.ACC_PUBLIC);
+		runner.methods.add(syntheticMethod("run", "(Ljava/lang/String;)Ljava/io/InputStream;", Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,
+				new LdcInsnNode(literal),
+				new VarInsnNode(Opcodes.ALOAD, 0),
+				new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/Class", "getResourceAsStream", "(Ljava/lang/String;)Ljava/io/InputStream;", false),
+				new InsnNode(Opcodes.ARETURN)));
+		return evaluatorWithOverrides(workspace, runner)
+				.evaluate(runner.name, "run", "(Ljava/lang/String;)Ljava/io/InputStream;", null, List.of(name));
+	}
+
+	@Nonnull
+	private static byte[] readResourceStreamBytes(@Nonnull EvaluationResult result) throws Exception {
+		ReValue value = assertInstanceOf(EvaluationYieldResult.class, result).value();
+		InstancedObjectValue<?> stream = assertInstanceOf(InstancedObjectValue.class, value);
+		return ((ByteArrayInputStream) stream.getRealInstance()).readAllBytes();
+	}
+
+	@Nonnull
+	private static String readResourceStream(@Nonnull EvaluationResult result) throws Exception {
+		return new String(readResourceStreamBytes(result), StandardCharsets.UTF_8);
+	}
+
+	private static void assertNullResource(@Nonnull EvaluationResult result) {
+		ReValue value = assertInstanceOf(EvaluationYieldResult.class, result).value();
+		assertTrue(value instanceof ObjectValue object && object.isNull());
+	}
+
+	@Nonnull
+	private static JvmClassInfo nestedClass(@Nonnull String name, @Nonnull String outer, @Nonnull String inner) {
+		return TestClassUtils.createClass(name, node ->
+				node.innerClasses.add(new InnerClassNode(name, outer, inner, Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC)));
+	}
+
+	@Test
+	void nullMergedWithAnotherTypeIsMaybeNullInEitherOrder() throws Exception {
+		// A null takes the other value's type, but the merged value has unknown nullness.
+		ReInterpreter interpreter = newEmptyInterpreter();
+		ReValue foo = interpreter.newOperation(new LdcInsnNode(Type.getObjectType("a/Foo")));
+		ReValue text = ObjectValue.string("text");
+		ReValue ints = ArrayValue.of(Type.getType("[I"), Nullness.NOT_NULL);
+
+		// A named class literal loses its name, since the merged value may be null.
+		assertEquals(ObjectValue.VAL_CLASS_MAYBE_NULL, interpreter.merge(ObjectValue.VAL_OBJECT_NULL, foo));
+		assertEquals(ObjectValue.VAL_CLASS_MAYBE_NULL, interpreter.merge(foo, ObjectValue.VAL_OBJECT_NULL));
+
+		// A typed null of another type gives the same result in either order.
+		assertEquals(ObjectValue.VAL_OBJECT_MAYBE_NULL, interpreter.merge(ObjectValue.VAL_CLASS_NULL, ObjectValue.VAL_OBJECT));
+		assertEquals(ObjectValue.VAL_OBJECT_MAYBE_NULL, interpreter.merge(ObjectValue.VAL_OBJECT, ObjectValue.VAL_CLASS_NULL));
+
+		// Strings and arrays keep their type, and the merged value is maybe-null in either order.
+		for (ReValue value : List.of(text, ints)) {
+			ObjectValue merged = (ObjectValue) interpreter.merge(ObjectValue.VAL_OBJECT_NULL, value);
+			assertEquals(value.type(), merged.type());
+			assertEquals(Nullness.UNKNOWN, merged.nullness());
+			assertEquals(merged, interpreter.merge(value, ObjectValue.VAL_OBJECT_NULL));
+		}
+	}
+
+	@Test
+	void arrayMergedWithNonArrayObjectKeepsItsNullness() {
+		// The array takes the object's type. The merged nullness is the merge of both, so an unknown object stays unknown.
+		ReInterpreter interpreter = newEmptyInterpreter();
+		ReValue ints = ArrayValue.of(Type.getType("[I"), Nullness.NOT_NULL);
+		assertEquals(ObjectValue.VAL_OBJECT_MAYBE_NULL, interpreter.merge(ints, ObjectValue.VAL_OBJECT_MAYBE_NULL));
+		assertEquals(ObjectValue.VAL_OBJECT_MAYBE_NULL, interpreter.merge(ObjectValue.VAL_OBJECT_MAYBE_NULL, ints));
+	}
+
+	@Test
+	void arraysOfOtherElementTypesKeepTheirNullness() {
+		// The merged array is maybe-null when either side is maybe-null, in either order.
+		ReInterpreter interpreter = newEmptyInterpreter();
+		ReValue objectsMaybe = ArrayValue.of(Type.getType("[Ljava/lang/Object;"), Nullness.UNKNOWN);
+		ReValue classesNotNull = ArrayValue.of(Type.getType("[Ljava/lang/Class;"), Nullness.NOT_NULL);
+		assertEquals(Nullness.UNKNOWN, ((ObjectValue) interpreter.merge(objectsMaybe, classesNotNull)).nullness());
+		assertEquals(Nullness.UNKNOWN, ((ObjectValue) interpreter.merge(classesNotNull, objectsMaybe)).nullness());
+	}
+
+	@Test
+	void nullArrayMergedWithNullObjectStaysNull() {
+		// Both values are null, so the merge is null in either order.
+		ReInterpreter interpreter = newEmptyInterpreter();
+		ReValue ints = ArrayValue.of(Type.getType("[I"), Nullness.NULL);
+		assertEquals(ObjectValue.VAL_OBJECT_NULL, interpreter.merge(ints, ObjectValue.VAL_OBJECT_NULL));
+		assertEquals(ObjectValue.VAL_OBJECT_NULL, interpreter.merge(ObjectValue.VAL_OBJECT_NULL, ints));
+	}
+
+	@Test
+	void notNullValuesOfDifferentDimensionsStayNotNull() {
+		// Two values that are never null merge to a value that is never null.
+		ReInterpreter interpreter = newEmptyInterpreter();
+		ReValue strings = ArrayValue.of(Type.getType("[Ljava/lang/String;"), Nullness.NOT_NULL);
+		assertEquals(ObjectValue.VAL_OBJECT, interpreter.merge(strings, ObjectValue.VAL_OBJECT));
+		assertEquals(ObjectValue.VAL_OBJECT, interpreter.merge(ObjectValue.VAL_OBJECT, strings));
 	}
 
 	@Nonnull
