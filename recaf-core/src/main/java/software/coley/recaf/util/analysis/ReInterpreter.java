@@ -128,11 +128,11 @@ public class ReInterpreter extends Interpreter<ReValue> implements Opcodes {
 
 	@Nonnull
 	@SuppressWarnings("DataFlowIssue") // Won't happen because we use arrays
-	private ReValue newArrayValue(@Nonnull Type type, int dimensions) {
+	private ReValue newArrayValue(@Nonnull Type type, int dimensions, @Nonnull Nullness nullness) {
 		if (dimensions == 0)
-			return newValue(type);
+			return newValue(type, nullness);
 		String descriptor = "[".repeat(Math.max(0, dimensions)) + type.getDescriptor();
-		return newValue(Type.getType(descriptor), Nullness.NOT_NULL);
+		return newValue(Type.getType(descriptor), nullness);
 	}
 
 	@Nullable
@@ -702,6 +702,10 @@ public class ReInterpreter extends Interpreter<ReValue> implements Opcodes {
 		if (value1IsNull != value2IsNull)
 			return mergeWithNullOfType(value1IsNull ? value2 : value1);
 
+		// Both values are null, or neither is.
+		// The merged array keeps the nullness that both operands share.
+		Nullness nullness = nullnessOf(value1).mergeWith(nullnessOf(value2));
+
 		// Convert type1 to its element type and array dimension. Arrays of primitive values are seen as
 		// Object arrays with one dimension less. Hence, the element type is always of Type.OBJECT sort.
 		int dim1 = 0;
@@ -727,7 +731,7 @@ public class ReInterpreter extends Interpreter<ReValue> implements Opcodes {
 
 		// The merge of array types of different dimensions is an Object array type.
 		if (dim1 != dim2)
-			return newArrayValue(Types.OBJECT_TYPE, Math.min(dim1, dim2));
+			return newArrayValue(Types.OBJECT_TYPE, Math.min(dim1, dim2), nullness);
 
 		// If the dimensions are the same, and there is no array aspect of these values
 		// then we want to merge the values in such a way that tracks state if possible.
@@ -747,19 +751,19 @@ public class ReInterpreter extends Interpreter<ReValue> implements Opcodes {
 		// Type1 and type2 have a Type.OBJECT sort by construction (see above),
 		// as expected by isAssignableFrom.
 		if (isAssignableFrom(type1, type2))
-			return newArrayValue(type1, dim1);
+			return newArrayValue(type1, dim1, nullness);
 		if (isAssignableFrom(type2, type1))
-			return newArrayValue(type2, dim1);
+			return newArrayValue(type2, dim1, nullness);
 
 		if (!isInterface(type1)) {
 			while (!Types.OBJECT_TYPE.equals(type1)) {
 				type1 = getSuperClass(type1);
 				if (isAssignableFrom(type1, type2))
-					return newArrayValue(type1, dim1);
+					return newArrayValue(type1, dim1, nullness);
 			}
 		}
 
-		return newArrayValue(Types.OBJECT_TYPE, dim1);
+		return newArrayValue(Types.OBJECT_TYPE, dim1, nullness);
 	}
 
 	/**
@@ -948,6 +952,18 @@ public class ReInterpreter extends Interpreter<ReValue> implements Opcodes {
 			}
 			default -> throw new IllegalArgumentException("Unsupported array component type: " + componentType);
 		};
+	}
+
+	/**
+	 * @param value
+	 * 		Value to get the nullness of.
+	 * 		Values that are not objects are treated as possibly null.
+	 *
+	 * @return Nullness of the value.
+	 */
+	@Nonnull
+	private static Nullness nullnessOf(@Nonnull ReValue value) {
+		return value instanceof ObjectValue object ? object.nullness() : Nullness.UNKNOWN;
 	}
 
 	private static int knownInt(@Nonnull ReValue value) {

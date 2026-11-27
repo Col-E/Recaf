@@ -113,6 +113,14 @@ public class Evaluator {
 	}
 
 	/**
+	 * @return Workspace that classes and resources are read from.
+	 */
+	@Nonnull
+	public Workspace getWorkspace() {
+		return workspace;
+	}
+
+	/**
 	 * Registers a class node to override a definition from the workspace.
 	 * This allows evaluation of transformed or synthetic classes before they are inserted into the workspace.
 	 *
@@ -937,7 +945,7 @@ public class Evaluator {
 	 * @return Class node for the given class, or {@code null} if it is unavailable.
 	 */
 	@Nullable
-	ClassNode getNode(@Nonnull String className, @Nullable EvaluationContext context) {
+	public ClassNode getNode(@Nonnull String className, @Nullable EvaluationContext context) {
 		// Prefer the evaluation snapshot so nested calls use overrides from the current evaluation.
 		ClassNode override = context == null
 				? classNodeOverrides.get(className)
@@ -1019,7 +1027,7 @@ public class Evaluator {
 	 *
 	 * @return {@code true} when {@code parent} can be assigned from {@code child}.
 	 */
-	boolean isAssignableFrom(@Nonnull String parent, @Nonnull String child) {
+	public boolean isAssignableFrom(@Nonnull String parent, @Nonnull String child) {
 		// Delegate since the interpreter isn't exposed directly.
 		return interpreter.isAssignableFrom(parent, child);
 	}

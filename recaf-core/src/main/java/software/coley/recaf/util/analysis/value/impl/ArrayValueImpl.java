@@ -190,7 +190,7 @@ public class ArrayValueImpl implements ArrayValue {
 			}
 			return ArrayValue.of(type, nullness.mergeWith(otherArray.nullness()));
 		} else if (other instanceof ObjectValue otherObject) {
-			return ObjectValue.VAL_OBJECT;
+			return ObjectValue.object(Types.OBJECT_TYPE, nullness().mergeWith(otherObject.nullness()));
 		}
 		throw new IllegalValueException("Cannot merge with: " + other);
 	}
