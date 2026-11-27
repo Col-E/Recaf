@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Basic implementation of property container.
@@ -28,13 +29,13 @@ public class BasicPropertyContainer implements PropertyContainer {
 	 * 		Pre-defined property map.
 	 */
 	public BasicPropertyContainer(@Nullable Map<String, Property<?>> properties) {
-		this.properties = properties == null || properties.isEmpty() ? null : new HashMap<>(properties);
+		this.properties = properties == null || properties.isEmpty() ? null : new ConcurrentHashMap<>(properties);
 	}
 
 	@Override
 	public <V> void setProperty(Property<V> property) {
 		if (properties == null) // Memory optimization to keep null by default
-			properties = new HashMap<>();
+			properties = new ConcurrentHashMap<>();
 		properties.put(property.key(), property);
 	}
 
