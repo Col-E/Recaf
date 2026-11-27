@@ -121,6 +121,7 @@ public final class ArrayValueMutableImpl implements ArrayValue {
 		return containsSubArray;
 	}
 
+	@Nonnull
 	@Override
 	public Type type() {
 		return type;
@@ -146,6 +147,7 @@ public final class ArrayValueMutableImpl implements ArrayValue {
 		return snapshot.mergeWith(other);
 	}
 
+	@Nonnull
 	@Override
 	public Nullness nullness() {
 		return nullness;

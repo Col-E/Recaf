@@ -5,6 +5,7 @@ import jakarta.annotation.Nullable;
 import org.objectweb.asm.Type;
 import software.coley.recaf.util.Types;
 import software.coley.recaf.util.analysis.Nullness;
+import software.coley.recaf.util.analysis.value.impl.ClassLiteralValueImpl;
 import software.coley.recaf.util.analysis.value.impl.ObjectValueImpl;
 import software.coley.recaf.util.analysis.value.impl.StringValueImpl;
 
@@ -13,7 +14,8 @@ import software.coley.recaf.util.analysis.value.impl.StringValueImpl;
  * <table>
  *     <tr><th>Content</th><th>Value usage</th></tr>
  *     <tr><td>{@code null}</td><td>{@link #VAL_OBJECT_NULL}</td></tr>
- *     <tr><td>{@code Any.class}</td><td>{@link #VAL_CLASS}</td></tr>
+ *     <tr><td>{@code Any.class} literal</td><td>{@link #classLiteral(Type)}</td></tr>
+ *     <tr><td>Unnamed {@link Class} value</td><td>{@link #VAL_CLASS}</td></tr>
  *     <tr><td>{@code Method::reference}</td><td>{@link #VAL_METHOD_HANDLE}</td></tr>
  *     <tr><td>{@code "strings"}</td><td>{@link #string(String)} or {@link #string(Nullness)}</td></tr>
  * </table>
@@ -49,7 +51,9 @@ public non-sealed interface ObjectValue extends ReValue {
 	 * @param nullness
 	 * 		Null state of the {@link Class}.
 	 *
-	 * @return Object value for a class literal of the given nullness.
+	 * @return Unnamed class value of the given nullness.
+	 *
+	 * @see #classLiteral(Type) Named class value of a specific type.
 	 */
 	@Nonnull
 	static ObjectValue clazz(@Nonnull Nullness nullness) {
@@ -58,6 +62,17 @@ public non-sealed interface ObjectValue extends ReValue {
 			case NOT_NULL -> VAL_CLASS;
 			case UNKNOWN -> VAL_CLASS_MAYBE_NULL;
 		};
+	}
+
+	/**
+	 * @param literal
+	 * 		Type of a class literal, such as {@code Foo.class} or {@code int[].class}.
+	 *
+	 * @return Class value recording the literal it was loaded from.
+	 */
+	@Nonnull
+	static ObjectValue classLiteral(@Nonnull Type literal) {
+		return new ClassLiteralValueImpl(literal);
 	}
 
 	/**

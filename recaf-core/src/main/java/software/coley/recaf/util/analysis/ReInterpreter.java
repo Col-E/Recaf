@@ -207,7 +207,7 @@ public class ReInterpreter extends Interpreter<ReValue> implements Opcodes {
 					case Type type -> {
 						int sort = type.getSort();
 						if (sort == Type.OBJECT || sort == Type.ARRAY) {
-							return ObjectValue.VAL_CLASS;
+							return ObjectValue.classLiteral(type);
 						} else if (sort == Type.METHOD) {
 							return ObjectValue.VAL_METHOD_TYPE;
 						} else {

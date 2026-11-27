@@ -43,7 +43,7 @@ public sealed interface ReValue extends Value permits IntValue, FloatValue, Doub
 			case Type type -> {
 				int sort = type.getSort();
 				if (sort == Type.OBJECT || sort == Type.ARRAY)
-					yield ObjectValue.VAL_CLASS;
+					yield ObjectValue.classLiteral(type);
 				if (sort == Type.METHOD)
 					yield ObjectValue.VAL_METHOD_TYPE;
 				throw new IllegalValueException("Illegal LDC value " + value);

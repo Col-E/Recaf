@@ -12,6 +12,7 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TypeInsnNode;
@@ -45,7 +46,9 @@ import software.coley.recaf.util.analysis.value.StringValue;
 import software.coley.recaf.util.analysis.value.ThrowableValue;
 import software.coley.recaf.util.analysis.value.UninitializedValue;
 import software.coley.recaf.util.analysis.value.impl.ArrayValueImpl;
+import software.coley.recaf.util.analysis.value.impl.ClassLiteralValueImpl;
 import software.coley.recaf.workspace.model.Workspace;
+import software.coley.recaf.workspace.model.bundle.BasicJvmClassBundle;
 
 import javax.crypto.AEADBadTagException;
 import javax.crypto.Cipher;
@@ -3368,4 +3371,41 @@ public class EvaluatorTest extends TransformerTestBase {
 		throw new IllegalStateException();
 	}
 
+	@Test
+	void classLiteralsKeepTheirNameUntilMerged() throws Exception {
+		ReInterpreter interpreter = newEmptyInterpreter();
+		ReValue foo = interpreter.newOperation(new LdcInsnNode(Type.getObjectType("a/Foo")));
+		ReValue fooAgain = interpreter.newOperation(new LdcInsnNode(Type.getObjectType("a/Foo")));
+		ReValue bar = interpreter.newOperation(new LdcInsnNode(Type.getObjectType("a/Bar")));
+		ReValue array = interpreter.newOperation(new LdcInsnNode(Type.getType("[I")));
+
+		// Validate that the class literal values have the expected types and names.
+		assertEquals(Type.getObjectType("a/Foo"), ((ClassLiteralValueImpl) foo).literal());
+		assertEquals(Type.getType("[I"), ((ClassLiteralValueImpl) array).literal());
+		assertEquals(foo, ReValue.ofConstant(Type.getObjectType("a/Foo")));
+		assertEquals(Type.getObjectType("java/lang/Class"), foo.type());
+		assertEquals(Nullness.NOT_NULL, ((ObjectValue) foo).nullness());
+
+		// Merging a literal with the same literal keeps the name.
+		assertEquals(foo, interpreter.merge(foo, fooAgain));
+
+		// Merging different literals loses the name, in either order.
+		assertEquals(ObjectValue.VAL_CLASS, interpreter.merge(foo, bar));
+		assertEquals(ObjectValue.VAL_CLASS, interpreter.merge(bar, foo));
+
+		// Merging a literal with an unnamed class value loses the name, in either order.
+		assertEquals(ObjectValue.VAL_CLASS, interpreter.merge(foo, ObjectValue.VAL_CLASS));
+		assertEquals(ObjectValue.VAL_CLASS, interpreter.merge(ObjectValue.VAL_CLASS, foo));
+
+		// A possibly-null class value still makes the merge possibly null, whether or not the literal is named.
+		assertEquals(ObjectValue.VAL_CLASS_MAYBE_NULL, interpreter.merge(foo, ObjectValue.VAL_CLASS_NULL));
+		assertEquals(ObjectValue.VAL_CLASS_MAYBE_NULL, interpreter.merge(ObjectValue.VAL_CLASS_NULL, foo));
+	}
+
+	@Nonnull
+	private static ReInterpreter newEmptyInterpreter() {
+		Workspace workspace = TestClassUtils.fromBundle(new BasicJvmClassBundle());
+		JvmTransformerContext ctx = new JvmTransformerContext(workspace, workspace.getPrimaryResource(), Collections.emptyList());
+		return ctx.newInterpreter(new InheritanceGraph(workspace));
+	}
 }
