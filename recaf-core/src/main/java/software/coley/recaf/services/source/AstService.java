@@ -27,7 +27,6 @@ import software.coley.recaf.services.Service;
 import software.coley.recaf.services.mapping.Mappings;
 import software.coley.recaf.services.workspace.WorkspaceCloseListener;
 import software.coley.recaf.services.workspace.WorkspaceManager;
-import software.coley.recaf.services.workspace.WorkspaceOpenListener;
 import software.coley.recaf.util.ClasspathUtil;
 import software.coley.recaf.util.ReflectUtil;
 import software.coley.recaf.workspace.model.Workspace;
@@ -55,7 +54,6 @@ import software.coley.sourcesolver.resolve.generic.GenericTypeParameter;
 import software.coley.sourcesolver.resolve.generic.GenericTypes;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -64,6 +62,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
@@ -91,7 +90,6 @@ public class AstService implements Service {
 			.maximumSize(1) // Users will only ever operate on one workspace, so this is free pruning when they switch
 			.expireAfterWrite(20, TimeUnit.MINUTES)
 			.build();
-	private EntryPool currentWorkspacePool;
 
 	static {
 		// We need to have this reflection patch call before we create a parser because of the
@@ -107,7 +105,6 @@ public class AstService implements Service {
 		this.config = config;
 
 		ListenerHost host = new ListenerHost();
-		workspaceManager.addWorkspaceOpenListener(host);
 		workspaceManager.addWorkspaceCloseListener(host);
 	}
 
@@ -261,12 +258,11 @@ public class AstService implements Service {
 	 */
 	@Nonnull
 	private EntryPool poolFromWorkspace(@Nonnull Workspace workspace) {
-		EntryPool pool = entryPoolCache.getIfPresent(workspace);
-		if (pool == null) {
-			pool = new WorkspaceBackedEntryPool(workspace);
-			entryPoolCache.put(workspace, pool);
+		try {
+			return entryPoolCache.get(workspace, () -> new WorkspaceBackedEntryPool(workspace));
+		} catch (ExecutionException ex) {
+			throw new IllegalStateException("Failed to create entry pool for workspace", ex.getCause());
 		}
-		return pool;
 	}
 
 	@Nonnull
@@ -307,30 +303,6 @@ public class AstService implements Service {
 	private static class StubClassEntry extends BasicClassEntry {
 		public StubClassEntry(@Nonnull String className, @Nonnull ClassEntry superEntry) {
 			super(className, Opcodes.ACC_PUBLIC, superEntry, List.of(), List.of(), null, List.of(), null, List.of(), List.of(), List.of());
-		}
-	}
-
-	/**
-	 * Empty pool that yields nothing.
-	 */
-	private static class EmptyEntryPool implements EntryPool {
-		private static final EmptyEntryPool INSTANCE = new EmptyEntryPool();
-
-		@Override
-		public void register(@Nonnull ClassEntry entry) {
-			// no-op
-		}
-
-		@Nullable
-		@Override
-		public ClassEntry getClass(@Nonnull String name) {
-			return null;
-		}
-
-		@Nonnull
-		@Override
-		public List<ClassEntry> getClassesInPackage(@Nullable String packageName) {
-			return Collections.emptyList();
 		}
 	}
 
@@ -1250,16 +1222,10 @@ public class AstService implements Service {
 		}
 	}
 
-	private class ListenerHost implements WorkspaceOpenListener, WorkspaceCloseListener {
-		@Override
-		public void onWorkspaceOpened(@Nonnull Workspace workspace) {
-			currentWorkspacePool = poolFromWorkspace(workspace);
-		}
-
+	private class ListenerHost implements WorkspaceCloseListener {
 		@Override
 		public void onWorkspaceClosed(@Nonnull Workspace workspace) {
 			entryPoolCache.invalidate(workspace);
-			currentWorkspacePool = EmptyEntryPool.INSTANCE;
 		}
 	}
 }
