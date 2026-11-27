@@ -1,8 +1,14 @@
-package software.coley.recaf.util.analysis.eval;
+package software.coley.recaf.util.analysis.eval.model;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import org.objectweb.asm.tree.MethodInsnNode;
+import software.coley.recaf.util.analysis.eval.EvaluationContext;
+import software.coley.recaf.util.analysis.eval.EvaluationFailureResult;
+import software.coley.recaf.util.analysis.eval.EvaluationResult;
+import software.coley.recaf.util.analysis.eval.EvaluationThrowsResult;
+import software.coley.recaf.util.analysis.eval.EvaluationYieldResult;
+import software.coley.recaf.util.analysis.eval.InvokeDynamicExecutor;
 import software.coley.recaf.util.analysis.value.IntValue;
 import software.coley.recaf.util.analysis.value.LongValue;
 import software.coley.recaf.util.analysis.value.ObjectValue;
@@ -18,7 +24,7 @@ import java.util.concurrent.CompletableFuture;
  *
  * @author Matt Coley
  */
-final class CompletableFutureModel implements EvaluatorModel {
+public final class CompletableFutureModel implements EvaluatorModel {
 	private static final String FUTURE = "java/util/concurrent/CompletableFuture";
 
 	@Override
@@ -48,14 +54,14 @@ final class CompletableFutureModel implements EvaluatorModel {
 	@Override
 	@Nullable
 	public ObjectValue allocate(@Nonnull String type, @Nonnull EvaluationContext context) {
-		return supportsAllocation(type) ? context.modelHeap.createFuture().value : null;
+		return supportsAllocation(type) ? context.getModelHeap().createFuture().value : null;
 	}
 
 	@Override
 	@Nonnull
 	public ModelResult invokeConstructor(@Nonnull MethodInsnNode instruction, @Nonnull ReValue receiver,
 	                                     @Nonnull List<ReValue> arguments, @Nonnull EvaluationContext context) {
-		return context.modelHeap.future(receiver) == null
+		return context.getModelHeap().future(receiver) == null
 				? ModelResult.failed("CompletableFuture constructor receiver is not model-owned") : voidResult();
 	}
 
@@ -65,12 +71,12 @@ final class CompletableFutureModel implements EvaluatorModel {
 	                                @Nonnull EvaluationContext context) {
 		return switch (instruction.name) {
 			case "completedFuture" -> {
-				EvaluationModelHeap.FutureState future = context.modelHeap.createFuture();
+				EvaluationModelHeap.FutureState future = context.getModelHeap().createFuture();
 				complete(future, arguments.isEmpty() ? ObjectValue.VAL_OBJECT_NULL : arguments.getFirst(), null, context);
 				yield ModelResult.yielded(future.value);
 			}
 			case "failedFuture" -> {
-				EvaluationModelHeap.FutureState future = context.modelHeap.createFuture();
+				EvaluationModelHeap.FutureState future = context.getModelHeap().createFuture();
 				complete(future, null, arguments.isEmpty() ? context.throwable("java/lang/Throwable") : arguments.getFirst(), context);
 				yield ModelResult.yielded(future.value);
 			}
@@ -84,7 +90,7 @@ final class CompletableFutureModel implements EvaluatorModel {
 	@Nonnull
 	public ModelResult invokeInstance(@Nonnull MethodInsnNode instruction, @Nonnull ReValue receiver,
 	                                  @Nonnull List<ReValue> arguments, @Nonnull EvaluationContext context) {
-		EvaluationModelHeap.FutureState state = context.modelHeap.future(receiver);
+		EvaluationModelHeap.FutureState state = context.getModelHeap().future(receiver);
 		if (state == null)
 			return ModelResult.NOT_HANDLED;
 		return switch (instruction.name) {
@@ -135,12 +141,12 @@ final class CompletableFutureModel implements EvaluatorModel {
 			return ModelResult.failed("Async operation requires a modeled callable");
 
 		// Set up a future to represent the async task, and a thread to run it.
-		EvaluationModelHeap.FutureState future = context.modelHeap.createFuture();
-		EvaluationModelHeap.ThreadState task = context.modelHeap.createThread("java/lang/Thread", context.currentThread);
+		EvaluationModelHeap.FutureState future = context.getModelHeap().createFuture();
+		EvaluationModelHeap.ThreadState task = context.getModelHeap().createThread("java/lang/Thread", context.getCurrentThread());
 		task.runnable = lambda;
 
 		// Execute the task, and handle the result.
-		EvaluationResult result = context.scheduler.start(task);
+		EvaluationResult result = context.getScheduler().start(task);
 		switch (result) {
 			case EvaluationYieldResult(ReValue value) -> {
 				complete(future, voidTask ? UninitializedValue.UNINITIALIZED_VALUE : value, null, context);
@@ -168,7 +174,7 @@ final class CompletableFutureModel implements EvaluatorModel {
 			return ModelResult.failed("Future dependent operation requires a modeled callable");
 
 		// Set up a future to represent the dependent task, and register it as a dependent of the source future.
-		EvaluationModelHeap.FutureState target = context.modelHeap.createFuture();
+		EvaluationModelHeap.FutureState target = context.getModelHeap().createFuture();
 		source.dependents.add(new EvaluationModelHeap.Dependent(lambda, target, kind));
 		if (source.status != EvaluationModelHeap.FutureStatus.INCOMPLETE)
 			trigger(source, context);
@@ -207,7 +213,7 @@ final class CompletableFutureModel implements EvaluatorModel {
 				&& arguments.getFirst() instanceof LongValue timeout) {
 			long millis = timeout.value().orElse(0L);
 			if (millis > 0)
-				context.clock.advance(Math.min(Long.MAX_VALUE / 1_000_000L, millis) * 1_000_000L);
+				context.getClock().advance(Math.min(Long.MAX_VALUE / 1_000_000L, millis) * 1_000_000L);
 			if (state.status == EvaluationModelHeap.FutureStatus.INCOMPLETE)
 				return ModelResult.thrown(context.throwable("java/util/concurrent/TimeoutException"));
 		}
@@ -233,7 +239,7 @@ final class CompletableFutureModel implements EvaluatorModel {
 					&& arguments.get(timeoutIndex) instanceof LongValue timeout
 					? timeout.value().orElse(0L) : 0L;
 			if (millis > 0)
-				context.clock.advance(Math.min(Long.MAX_VALUE / 1_000_000L, millis) * 1_000_000L);
+				context.getClock().advance(Math.min(Long.MAX_VALUE / 1_000_000L, millis) * 1_000_000L);
 			if (state.status == EvaluationModelHeap.FutureStatus.INCOMPLETE) {
 				if (completeWithFallback)
 					complete(state, arguments.isEmpty() ? ObjectValue.VAL_OBJECT_NULL : arguments.getFirst(), null, context);
@@ -288,7 +294,7 @@ final class CompletableFutureModel implements EvaluatorModel {
 			EvaluationResult callback = context.invokeCallable(dependent.callable, args);
 			if (callback instanceof EvaluationYieldResult(ReValue value)) {
 				if (dependent.kind == EvaluationModelHeap.CompletionKind.COMPOSE) {
-					EvaluationModelHeap.FutureState inner = context.modelHeap.future(value);
+					EvaluationModelHeap.FutureState inner = context.getModelHeap().future(value);
 					if (inner == null) {
 						complete(dependent.target, null, context.throwable("java/lang/ClassCastException"), context);
 					} else if (inner.status == EvaluationModelHeap.FutureStatus.INCOMPLETE) {

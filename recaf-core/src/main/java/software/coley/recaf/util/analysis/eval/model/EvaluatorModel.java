@@ -1,8 +1,12 @@
-package software.coley.recaf.util.analysis.eval;
+package software.coley.recaf.util.analysis.eval.model;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import org.objectweb.asm.tree.MethodInsnNode;
+import software.coley.recaf.util.analysis.eval.EvaluationContext;
+import software.coley.recaf.util.analysis.eval.EvaluationResult;
+import software.coley.recaf.util.analysis.eval.Evaluator;
+import software.coley.recaf.util.analysis.eval.InstanceFactory;
 import software.coley.recaf.util.analysis.lookup.InvokeStaticLookup;
 import software.coley.recaf.util.analysis.lookup.InvokeVirtualLookup;
 import software.coley.recaf.util.analysis.value.ObjectValue;
@@ -24,7 +28,7 @@ import java.util.List;
  *
  * @author Matt Coley
  */
-interface EvaluatorModel {
+public interface EvaluatorModel {
 	/**
 	 * @param type
 	 * 		Internal name of the type being allocated.

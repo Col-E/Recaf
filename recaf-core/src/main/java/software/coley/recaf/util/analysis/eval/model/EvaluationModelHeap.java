@@ -1,9 +1,11 @@
-package software.coley.recaf.util.analysis.eval;
+package software.coley.recaf.util.analysis.eval.model;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import org.objectweb.asm.Type;
 import software.coley.recaf.util.analysis.Nullness;
+import software.coley.recaf.util.analysis.eval.EvaluationResult;
+import software.coley.recaf.util.analysis.eval.InvokeDynamicExecutor;
 import software.coley.recaf.util.analysis.value.ObjectValue;
 import software.coley.recaf.util.analysis.value.ReValue;
 import software.coley.recaf.util.analysis.value.impl.ObjectValueImpl;
@@ -19,7 +21,7 @@ import java.util.Map;
  *
  * @author Matt Coley
  */
-final class EvaluationModelHeap {
+public final class EvaluationModelHeap {
 	private final Map<ObjectValue, Object> states = new IdentityHashMap<>();
 	private long nextThreadId = 1;
 
@@ -29,10 +31,10 @@ final class EvaluationModelHeap {
 	 * @return Main thread state.
 	 */
 	@Nonnull
-	ThreadState createMainThread() {
+	public ThreadState createMainThread() {
 		ObjectValue value = object("java/lang/Thread");
 		ThreadState state = new ThreadState(value, "java/lang/Thread", nextThreadId++, "main", null);
-		state.status = ThreadStatus.RUNNING;
+		state.setStatus(ThreadStatus.RUNNING);
 		states.put(value, state);
 		return state;
 	}
@@ -46,7 +48,7 @@ final class EvaluationModelHeap {
 	 * @return New thread state.
 	 */
 	@Nonnull
-	ThreadState createThread(@Nonnull String type, @Nullable ThreadState parent) {
+	public ThreadState createThread(@Nonnull String type, @Nullable ThreadState parent) {
 		ObjectValue value = object(type);
 		ThreadState state = new ThreadState(value, type, nextThreadId++, "Thread-" + (nextThreadId - 2), parent == null ? null : parent.value);
 		states.put(value, state);
@@ -57,7 +59,7 @@ final class EvaluationModelHeap {
 	 * @return New future state.
 	 */
 	@Nonnull
-	FutureState createFuture() {
+	public FutureState createFuture() {
 		ObjectValue value = object("java/util/concurrent/CompletableFuture");
 		FutureState state = new FutureState(value);
 		states.put(value, state);
@@ -73,7 +75,7 @@ final class EvaluationModelHeap {
 	 * @return Thread state, or {@code null} when it is not model-owned.
 	 */
 	@Nullable
-	ThreadState thread(@Nullable ReValue value) {
+	public ThreadState thread(@Nullable ReValue value) {
 		return value instanceof ObjectValue object ? states.get(object) instanceof ThreadState state ? state : null : null;
 	}
 
@@ -86,7 +88,7 @@ final class EvaluationModelHeap {
 	 * @return Future state, or {@code null} when it is not model-owned.
 	 */
 	@Nullable
-	FutureState future(@Nullable ReValue value) {
+	public FutureState future(@Nullable ReValue value) {
 		return value instanceof ObjectValue object ? states.get(object) instanceof FutureState state ? state : null : null;
 	}
 
@@ -98,9 +100,25 @@ final class EvaluationModelHeap {
 		return new ObjectValueImpl(Type.getObjectType(internalName), Nullness.NOT_NULL);
 	}
 
-	enum ThreadStatus {NEW, READY, RUNNING, WAITING, TERMINATED, FAILED}
+	/**
+	 * Thread lifecycle state.
+	 */
+	public enum ThreadStatus {NEW, READY, RUNNING, WAITING, TERMINATED, FAILED}
 
-	static final class ThreadState {
+	/**
+	 * Future lifecycle state.
+	 */
+	public enum FutureStatus {INCOMPLETE, SUCCESS, EXCEPTIONAL, CANCELLED}
+
+	/**
+	 * Completion kind for dependent futures.
+	 */
+	public enum CompletionKind {APPLY, ACCEPT, RUN, COMPOSE, EXCEPTIONALLY, HANDLE}
+
+	/**
+	 * Thread state for a model-owned thread.
+	 */
+	public static final class ThreadState {
 		final ObjectValue value;
 		final String type;
 		final long id;
@@ -109,11 +127,11 @@ final class EvaluationModelHeap {
 		@Nullable
 		InvokeDynamicExecutor.EvaluatedLambdaValue runnable;
 		String name;
-		ThreadStatus status = ThreadStatus.NEW;
-		boolean started;
+		private ThreadStatus status = ThreadStatus.NEW;
+		private boolean started;
 		boolean interrupted;
 		@Nullable
-		EvaluationResult failure;
+		private EvaluationResult failure;
 
 		private ThreadState(ObjectValue value, String type, long id, String name, ObjectValue parent) {
 			this.value = value;
@@ -123,11 +141,59 @@ final class EvaluationModelHeap {
 			this.defaultName = name;
 			this.parent = parent;
 		}
+
+		/**
+		 * @return {@code true} once the thread has been started.
+		 */
+		public boolean isStarted() {
+			return started;
+		}
+
+		/**
+		 * @param started
+		 * 		Whether the thread has been started.
+		 */
+		public void setStarted(boolean started) {
+			this.started = started;
+		}
+
+		/**
+		 * @return Current lifecycle status.
+		 */
+		@Nonnull
+		public ThreadStatus getStatus() {
+			return status;
+		}
+
+		/**
+		 * @param status
+		 * 		New lifecycle status.
+		 */
+		public void setStatus(@Nonnull ThreadStatus status) {
+			this.status = status;
+		}
+
+		/**
+		 * @return Retained task failure, or {@code null} when the task has not failed.
+		 */
+		@Nullable
+		public EvaluationResult getFailure() {
+			return failure;
+		}
+
+		/**
+		 * @param failure
+		 * 		Retained task failure, or {@code null} when the task has not failed.
+		 */
+		public void setFailure(@Nullable EvaluationResult failure) {
+			this.failure = failure;
+		}
 	}
 
-	enum FutureStatus {INCOMPLETE, SUCCESS, EXCEPTIONAL, CANCELLED}
-
-	static final class FutureState {
+	/**
+	 * Future state for a model-owned future.
+	 */
+	public static final class FutureState {
 		final ObjectValue value;
 		FutureStatus status = FutureStatus.INCOMPLETE;
 		@Nullable
@@ -141,7 +207,10 @@ final class EvaluationModelHeap {
 		}
 	}
 
-	static final class Dependent {
+	/**
+	 * Dependent future state for a model-owned future.
+	 */
+	public static final class Dependent {
 		@Nullable
 		final InvokeDynamicExecutor.EvaluatedLambdaValue callable;
 		final FutureState target;
@@ -154,5 +223,4 @@ final class EvaluationModelHeap {
 		}
 	}
 
-	enum CompletionKind {APPLY, ACCEPT, RUN, COMPOSE, EXCEPTIONALLY, HANDLE}
 }

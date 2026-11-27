@@ -1,6 +1,7 @@
 package software.coley.recaf.util.analysis.eval;
 
 import jakarta.annotation.Nonnull;
+import software.coley.recaf.util.analysis.eval.model.EvaluationModelHeap;
 import software.coley.recaf.util.analysis.value.ReValue;
 import software.coley.recaf.util.analysis.value.UninitializedValue;
 
@@ -29,12 +30,12 @@ public final class SimulatedScheduler {
 	 * @return Task result, including modeled throws and failures.
 	 */
 	@Nonnull
-	EvaluationResult start(@Nonnull EvaluationModelHeap.ThreadState state) {
+	public EvaluationResult start(@Nonnull EvaluationModelHeap.ThreadState state) {
 		// Check if already started, and if so, throw an exception to match the JVM's behavior.
-		if (state.started)
+		if (state.isStarted())
 			return new EvaluationThrowsResult(context.throwable("java/lang/IllegalThreadStateException"));
-		state.started = true;
-		state.status = EvaluationModelHeap.ThreadStatus.READY;
+		state.setStarted(true);
+		state.setStatus(EvaluationModelHeap.ThreadStatus.READY);
 		return run(state);
 	}
 
@@ -48,27 +49,27 @@ public final class SimulatedScheduler {
 	 */
 	@Nonnull
 	private EvaluationResult run(@Nonnull EvaluationModelHeap.ThreadState state) {
-		EvaluationModelHeap.ThreadState previous = context.currentThread;
+		EvaluationModelHeap.ThreadState previous = context.getCurrentThread();
 
 		// Mark the thread as running and set it as the current thread for the duration of its execution.
-		state.status = EvaluationModelHeap.ThreadStatus.RUNNING;
-		context.currentThread = state;
+		state.setStatus(EvaluationModelHeap.ThreadStatus.RUNNING);
+		context.setCurrentThread(state);
 		try {
 			EvaluationResult result;
 			try {
-				result = context.models.runTask(state, context);
+				result = context.getModels().runTask(state, context);
 			} catch (Evaluator.UnknownValueException e) {
 				result = EvaluationResult.cannotEvaluate("Unknown value while executing simulated thread", e);
 			}
 
 			// Retain erroneous completion so a later Thread.join() can observe the task's failure.
-			state.failure = result instanceof EvaluationYieldResult ? null : result;
-			state.status = result instanceof EvaluationFailureResult || result instanceof EvaluationThrowsResult
-					? EvaluationModelHeap.ThreadStatus.FAILED : EvaluationModelHeap.ThreadStatus.TERMINATED;
+			state.setFailure(result instanceof EvaluationYieldResult ? null : result);
+			state.setStatus(result instanceof EvaluationFailureResult || result instanceof EvaluationThrowsResult
+					? EvaluationModelHeap.ThreadStatus.FAILED : EvaluationModelHeap.ThreadStatus.TERMINATED);
 			return result;
 		} finally {
 			// Resume the previous thread.
-			context.currentThread = previous;
+			context.setCurrentThread(previous);
 		}
 	}
 
@@ -81,9 +82,9 @@ public final class SimulatedScheduler {
 	 * @return Direct invocation result.
 	 */
 	@Nonnull
-	EvaluationResult runDirect(@Nonnull EvaluationModelHeap.ThreadState state) {
+	public EvaluationResult runDirect(@Nonnull EvaluationModelHeap.ThreadState state) {
 		try {
-			return context.models.runTask(state, context);
+			return context.getModels().runTask(state, context);
 		} catch (Evaluator.UnknownValueException e) {
 			return EvaluationResult.cannotEvaluate("Unknown value while executing simulated thread", e);
 		}
@@ -100,8 +101,8 @@ public final class SimulatedScheduler {
 	 * @return Callable result.
 	 */
 	@Nonnull
-	EvaluationResult invokeCallable(@Nonnull InvokeDynamicExecutor.EvaluatedLambdaValue lambda,
-	                                @Nonnull List<ReValue> arguments) {
+	public EvaluationResult invokeCallable(@Nonnull InvokeDynamicExecutor.EvaluatedLambdaValue lambda,
+	                                       @Nonnull List<ReValue> arguments) {
 		try {
 			return evaluator.evaluateLambda(lambda, arguments, context);
 		} catch (Evaluator.UnknownValueException e) {
@@ -122,15 +123,15 @@ public final class SimulatedScheduler {
 	 * @return Retained task failure, or a void result ({@link UninitializedValue}) after completion or for a new thread.
 	 */
 	@Nonnull
-	EvaluationResult join(@Nonnull EvaluationModelHeap.ThreadState state) {
+	public EvaluationResult join(@Nonnull EvaluationModelHeap.ThreadState state) {
 		// If the thread has not been started, then joining it is a no-op.
-		if (!state.started)
+		if (!state.isStarted())
 			return new EvaluationYieldResult(UninitializedValue.UNINITIALIZED_VALUE);
 
 		// Eager execution has already reached a terminal state by this synchronization point.
-		return state.failure == null
+		return state.getFailure() == null
 				? new EvaluationYieldResult(UninitializedValue.UNINITIALIZED_VALUE)
-				: state.failure;
+				: state.getFailure();
 	}
 
 	/**
@@ -142,11 +143,11 @@ public final class SimulatedScheduler {
 	 * @return Normal void result, or a modeled argument failure.
 	 */
 	@Nonnull
-	EvaluationResult sleep(long millis) {
+	public EvaluationResult sleep(long millis) {
 		if (millis < 0)
 			return new EvaluationThrowsResult(context.throwable("java/lang/IllegalArgumentException"));
 		if (millis != 0)
-			context.clock.advance(Math.min(Long.MAX_VALUE / 1_000_000L, millis) * 1_000_000L);
+			context.getClock().advance(Math.min(Long.MAX_VALUE / 1_000_000L, millis) * 1_000_000L);
 		return new EvaluationYieldResult(software.coley.recaf.util.analysis.value.UninitializedValue.UNINITIALIZED_VALUE);
 	}
 
@@ -161,7 +162,7 @@ public final class SimulatedScheduler {
 	 * @return Normal void result, or a modeled argument failure.
 	 */
 	@Nonnull
-	EvaluationResult sleep(long millis, int nanos) {
+	public EvaluationResult sleep(long millis, int nanos) {
 		// Validate nanos.
 		if (nanos < 0 || nanos > 999_999)
 			return new EvaluationThrowsResult(context.throwable("java/lang/IllegalArgumentException"));
@@ -171,7 +172,7 @@ public final class SimulatedScheduler {
 		if (result instanceof EvaluationThrowsResult)
 			return result;
 		if (nanos != 0)
-			context.clock.advance(nanos);
+			context.getClock().advance(nanos);
 
 		return result;
 	}

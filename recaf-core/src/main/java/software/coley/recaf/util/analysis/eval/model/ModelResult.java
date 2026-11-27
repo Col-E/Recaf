@@ -1,7 +1,11 @@
-package software.coley.recaf.util.analysis.eval;
+package software.coley.recaf.util.analysis.eval.model;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import software.coley.recaf.util.analysis.eval.EvaluationFailureResult;
+import software.coley.recaf.util.analysis.eval.EvaluationResult;
+import software.coley.recaf.util.analysis.eval.EvaluationThrowsResult;
+import software.coley.recaf.util.analysis.eval.EvaluationYieldResult;
 import software.coley.recaf.util.analysis.value.ReValue;
 
 /**

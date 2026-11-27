@@ -7,6 +7,8 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import software.coley.recaf.util.ClassMethodPair;
+import software.coley.recaf.util.analysis.eval.model.EvaluationModelHeap;
+import software.coley.recaf.util.analysis.eval.model.EvaluationModelRegistry;
 import software.coley.recaf.util.analysis.value.ReValue;
 import software.coley.recaf.util.analysis.value.ThrowableValue;
 import software.coley.recaf.util.analysis.value.impl.ThrowableValueImpl;
@@ -25,20 +27,20 @@ import java.util.Set;
  * @author Matt Coley
  */
 public final class EvaluationContext {
-	final List<ClassMethodPair> callStack;
-	final Set<String> initializedClasses;
-	final Set<String> initializingClasses;
-	final Map<String, EvaluationResult> failedClassInitializers;
-	final Map<String, ClassNode> classNodeOverrides;
-	final Map<String, ClassNode> workspaceNodeCache;
-	final Map<FieldInsnNode, String> fieldOwners;
-	final EvaluationModelHeap modelHeap;
-	final VirtualClock clock;
-	final SimulatedScheduler scheduler;
-	final EvaluationModelRegistry models;
-	final int callStackSeedSize;
-	int stepAllocation;
-	EvaluationModelHeap.ThreadState currentThread;
+	private final List<ClassMethodPair> callStack;
+	private final Set<String> initializedClasses;
+	private final Set<String> initializingClasses;
+	private final Map<String, EvaluationResult> failedClassInitializers;
+	private final Map<String, ClassNode> classNodeOverrides;
+	private final Map<String, ClassNode> workspaceNodeCache;
+	private final Map<FieldInsnNode, String> fieldOwners;
+	private final EvaluationModelHeap modelHeap;
+	private final VirtualClock clock;
+	private final SimulatedScheduler scheduler;
+	private final EvaluationModelRegistry models;
+	private final int callStackSeedSize;
+	private int stepAllocation;
+	private EvaluationModelHeap.ThreadState currentThread;
 
 	EvaluationContext(@Nonnull Evaluator evaluator, int stepAllocation) {
 		this(evaluator, stepAllocation, null);
@@ -62,6 +64,131 @@ public final class EvaluationContext {
 	}
 
 	/**
+	 * @return Call stack of the current evaluation, including any seeded frames.
+	 */
+	@Nonnull
+	public List<ClassMethodPair> getCallStack() {
+		return callStack;
+	}
+
+	/**
+	 * @return Number of seeded frames at the start of the call stack, which do not count towards the call depth limit.
+	 */
+	public int getCallStackSeedSize() {
+		return callStackSeedSize;
+	}
+
+	/**
+	 * @return Set of classes whose static initializers have completed.
+	 */
+	@Nonnull
+	public Set<String> getInitializedClasses() {
+		return initializedClasses;
+	}
+
+	/**
+	 * @return Set of classes whose static initializers are currently running.
+	 */
+	@Nonnull
+	public Set<String> getInitializingClasses() {
+		return initializingClasses;
+	}
+
+	/**
+	 * @return Map of classes to the failure result of their static initializer.
+	 */
+	@Nonnull
+	public Map<String, EvaluationResult> getFailedClassInitializers() {
+		return failedClassInitializers;
+	}
+
+	/**
+	 * @return Map of class node overrides for this evaluation.
+	 */
+	@Nonnull
+	public Map<String, ClassNode> getClassNodeOverrides() {
+		return classNodeOverrides;
+	}
+
+	/**
+	 * @return Map of cached class nodes read from the workspace.
+	 */
+	@Nonnull
+	public Map<String, ClassNode> getWorkspaceNodeCache() {
+		return workspaceNodeCache;
+	}
+
+	/**
+	 * @return Map of cached resolved field owners.
+	 */
+	@Nonnull
+	public Map<FieldInsnNode, String> getFieldOwners() {
+		return fieldOwners;
+	}
+
+	/**
+	 * @return Identity-based heap of model-owned concurrency objects.
+	 */
+	@Nonnull
+	public EvaluationModelHeap getModelHeap() {
+		return modelHeap;
+	}
+
+	/**
+	 * @return Virtual clock of this evaluation.
+	 */
+	@Nonnull
+	public VirtualClock getClock() {
+		return clock;
+	}
+
+	/**
+	 * @return Scheduler for simulated threads and futures.
+	 */
+	@Nonnull
+	public SimulatedScheduler getScheduler() {
+		return scheduler;
+	}
+
+	/**
+	 * @return Registry of evaluator models.
+	 */
+	@Nonnull
+	public EvaluationModelRegistry getModels() {
+		return models;
+	}
+
+	/**
+	 * @return Remaining instruction steps available to the evaluation.
+	 */
+	public int getStepAllocation() {
+		return stepAllocation;
+	}
+
+	/**
+	 * Consumes one instruction step. Callers must check {@link #getStepAllocation()} is positive first.
+	 */
+	public void consumeStep() {
+		stepAllocation--;
+	}
+
+	/**
+	 * @return Simulated thread currently executing.
+	 */
+	@Nonnull
+	public EvaluationModelHeap.ThreadState getCurrentThread() {
+		return currentThread;
+	}
+
+	/**
+	 * @param currentThread
+	 * 		Simulated thread that is now executing.
+	 */
+	public void setCurrentThread(@Nonnull EvaluationModelHeap.ThreadState currentThread) {
+		this.currentThread = currentThread;
+	}
+
+	/**
 	 * Invokes a retained evaluator lambda through the normal workspace path.
 	 *
 	 * @param lambda
@@ -72,8 +199,8 @@ public final class EvaluationContext {
 	 * @return Nested evaluator result.
 	 */
 	@Nonnull
-	EvaluationResult invokeCallable(@Nonnull InvokeDynamicExecutor.EvaluatedLambdaValue lambda,
-	                                @Nonnull List<ReValue> arguments) {
+	public EvaluationResult invokeCallable(@Nonnull InvokeDynamicExecutor.EvaluatedLambdaValue lambda,
+	                                       @Nonnull List<ReValue> arguments) {
 		return scheduler.invokeCallable(lambda, arguments);
 	}
 
@@ -86,7 +213,7 @@ public final class EvaluationContext {
 	 * @return Evaluator throwable value.
 	 */
 	@Nonnull
-	ThrowableValue throwable(@Nonnull String internalName) {
+	public ThrowableValue throwable(@Nonnull String internalName) {
 		return new ThrowableValueImpl(Type.getObjectType(internalName), stackTrace(), null);
 	}
 
@@ -94,7 +221,7 @@ public final class EvaluationContext {
 	 * @return Current root-relative evaluator stack in throwable order.
 	 */
 	@Nonnull
-	List<StackTraceElement> stackTrace() {
+	public List<StackTraceElement> stackTrace() {
 		List<StackTraceElement> trace = new ArrayList<>(callStack.size());
 		for (int i = callStack.size() - 1; i >= 0; i--) {
 			ClassMethodPair pair = callStack.get(i);

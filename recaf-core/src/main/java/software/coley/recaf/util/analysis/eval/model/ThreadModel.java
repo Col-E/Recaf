@@ -1,9 +1,16 @@
-package software.coley.recaf.util.analysis.eval;
+package software.coley.recaf.util.analysis.eval.model;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import org.objectweb.asm.tree.MethodInsnNode;
 import software.coley.recaf.util.ClassMethodPair;
+import software.coley.recaf.util.analysis.eval.EvaluationContext;
+import software.coley.recaf.util.analysis.eval.EvaluationFailureResult;
+import software.coley.recaf.util.analysis.eval.EvaluationResult;
+import software.coley.recaf.util.analysis.eval.EvaluationThrowsResult;
+import software.coley.recaf.util.analysis.eval.EvaluationYieldResult;
+import software.coley.recaf.util.analysis.eval.Evaluator;
+import software.coley.recaf.util.analysis.eval.InvokeDynamicExecutor;
 import software.coley.recaf.util.analysis.value.IntValue;
 import software.coley.recaf.util.analysis.value.LongValue;
 import software.coley.recaf.util.analysis.value.ObjectValue;
@@ -18,7 +25,7 @@ import java.util.List;
  *
  * @author Matt Coley
  */
-final class ThreadModel implements EvaluatorModel {
+public final class ThreadModel implements EvaluatorModel {
 	private static final String THREAD = "java/lang/Thread";
 	private final Evaluator evaluator;
 
@@ -55,14 +62,14 @@ final class ThreadModel implements EvaluatorModel {
 	@Override
 	@Nullable
 	public ObjectValue allocate(@Nonnull String type, @Nonnull EvaluationContext context) {
-		return supportsAllocation(type) ? context.modelHeap.createThread(type, context.currentThread).value : null;
+		return supportsAllocation(type) ? context.getModelHeap().createThread(type, context.getCurrentThread()).value : null;
 	}
 
 	@Override
 	@Nonnull
 	public ModelResult invokeConstructor(@Nonnull MethodInsnNode instruction, @Nonnull ReValue receiver,
 	                                     @Nonnull List<ReValue> arguments, @Nonnull EvaluationContext context) {
-		EvaluationModelHeap.ThreadState state = context.modelHeap.thread(receiver);
+		EvaluationModelHeap.ThreadState state = context.getModelHeap().thread(receiver);
 		if (state == null)
 			return ModelResult.failed("Thread constructor receiver is not model-owned");
 		if (!arguments.isEmpty() && arguments.getFirst() instanceof InvokeDynamicExecutor.EvaluatedLambdaValue lambda)
@@ -77,10 +84,10 @@ final class ThreadModel implements EvaluatorModel {
 	public ModelResult invokeStatic(@Nonnull MethodInsnNode instruction, @Nonnull List<ReValue> arguments,
 	                                @Nonnull EvaluationContext context) {
 		return switch (instruction.name) {
-			case "currentThread" -> ModelResult.yielded(context.currentThread.value);
+			case "currentThread" -> ModelResult.yielded(context.getCurrentThread().value);
 			case "sleep" -> result(arguments.size() > 1
-					? context.scheduler.sleep(milliseconds(arguments), nanoseconds(arguments))
-					: context.scheduler.sleep(milliseconds(arguments)));
+					? context.getScheduler().sleep(milliseconds(arguments), nanoseconds(arguments))
+					: context.getScheduler().sleep(milliseconds(arguments)));
 			case "yield" -> voidResult();
 			default -> ModelResult.NOT_HANDLED;
 		};
@@ -90,7 +97,7 @@ final class ThreadModel implements EvaluatorModel {
 	@Nonnull
 	public ModelResult invokeInstance(@Nonnull MethodInsnNode instruction, @Nonnull ReValue receiver,
 	                                  @Nonnull List<ReValue> arguments, @Nonnull EvaluationContext context) {
-		EvaluationModelHeap.ThreadState state = context.modelHeap.thread(receiver);
+		EvaluationModelHeap.ThreadState state = context.getModelHeap().thread(receiver);
 		if (state == null)
 			return ModelResult.NOT_HANDLED;
 		return switch (instruction.name) {
@@ -98,18 +105,18 @@ final class ThreadModel implements EvaluatorModel {
 				// Start the thread, and yield control to the scheduler.
 				// - Throws and failures are propagated to the caller (Handled by Evaluator).
 				// - Yielding is ignored, as the thread is now running and will be scheduled when the scheduler is next ticked.
-				EvaluationResult result = context.scheduler.start(state);
+				EvaluationResult result = context.getScheduler().start(state);
 				yield switch (result) {
 					case EvaluationThrowsResult thrown -> ModelResult.thrown(thrown.exception());
 					case EvaluationFailureResult failure -> ModelResult.failed(failure.reason());
 					case EvaluationYieldResult ignored -> voidResult();
 				};
 			}
-			case "run" -> result(context.scheduler.runDirect(state));
-			case "join" -> result(context.scheduler.join(state));
-			case "isAlive" -> ModelResult.yielded(IntValue.of(state.status == EvaluationModelHeap.ThreadStatus.READY
-					|| state.status == EvaluationModelHeap.ThreadStatus.RUNNING
-					|| state.status == EvaluationModelHeap.ThreadStatus.WAITING ? 1 : 0));
+			case "run" -> result(context.getScheduler().runDirect(state));
+			case "join" -> result(context.getScheduler().join(state));
+			case "isAlive" -> ModelResult.yielded(IntValue.of(state.getStatus() == EvaluationModelHeap.ThreadStatus.READY
+					|| state.getStatus() == EvaluationModelHeap.ThreadStatus.RUNNING
+					|| state.getStatus() == EvaluationModelHeap.ThreadStatus.WAITING ? 1 : 0));
 			case "getName" -> ModelResult.yielded(ObjectValue.string(state.name));
 			case "setName" -> {
 				if (!arguments.isEmpty() && arguments.getFirst() instanceof StringValue name)

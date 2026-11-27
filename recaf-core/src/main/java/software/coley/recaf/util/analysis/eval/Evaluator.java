@@ -36,6 +36,7 @@ import software.coley.recaf.util.analysis.Branching;
 import software.coley.recaf.util.analysis.Nullness;
 import software.coley.recaf.util.analysis.ReFrame;
 import software.coley.recaf.util.analysis.ReInterpreter;
+import software.coley.recaf.util.analysis.eval.model.ModelResult;
 import software.coley.recaf.util.analysis.lookup.InvokeStaticLookup;
 import software.coley.recaf.util.analysis.lookup.InvokeVirtualLookup;
 import software.coley.recaf.util.analysis.value.ArrayValue;
@@ -349,9 +350,9 @@ public class Evaluator {
 	                                  @Nonnull List<ReValue> parameters,
 	                                  @Nonnull EvaluationContext context) throws UnknownValueException {
 		// Get the class node from the workspace or the per-evaluation override.
-		ClassNode classNode = context.classNodeOverrides.get(className);
+		ClassNode classNode = context.getClassNodeOverrides().get(className);
 		if (classNode == null)
-			classNode = context.workspaceNodeCache.get(className);
+			classNode = context.getWorkspaceNodeCache().get(className);
 		if (classNode == null) {
 			ClassPathNode classPath = workspace.findClass(evaluateInternals, className);
 			if (classPath == null)
@@ -364,7 +365,7 @@ public class Evaluator {
 			classNode = new ClassNode();
 			ClassReader reader = classInfo.getClassReader();
 			reader.accept(classNode, ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG);
-			context.workspaceNodeCache.put(className, classNode);
+			context.getWorkspaceNodeCache().put(className, classNode);
 		}
 
 		// Find the method node in the class node and evaluate it.
@@ -419,13 +420,13 @@ public class Evaluator {
 	 * @return Result of evaluating the target method with the given parameters.
 	 */
 	@Nonnull
-	protected EvaluationResult evaluate(@Nonnull ClassNode classNode,
+	public EvaluationResult evaluate(@Nonnull ClassNode classNode,
 	                                    @Nonnull MethodNode methodNode,
 	                                    @Nullable ObjectValue classInstance,
 	                                    @Nonnull List<ReValue> parameters,
 	                                    @Nonnull EvaluationContext context) throws UnknownValueException {
 		// Cannot exceed max call depth.
-		if (context.callStack.size() - context.callStackSeedSize >= MAX_EVALUATION_CALL_DEPTH)
+		if (context.getCallStack().size() - context.getCallStackSeedSize() >= MAX_EVALUATION_CALL_DEPTH)
 			return EvaluationResult.cannotEvaluate("Maximum evaluator call depth exceeded");
 
 		// Active method entry is a JVM class-initialization boundary.
@@ -480,14 +481,14 @@ public class Evaluator {
 		}
 
 		// Handle execution
-		context.callStack.add(new ClassMethodPair(classNode, methodNode));
-		List<ClassMethodPair> stack = List.copyOf(context.callStack);
+		context.getCallStack().add(new ClassMethodPair(classNode, methodNode));
+		List<ClassMethodPair> stack = List.copyOf(context.getCallStack());
 		InsnList instructions = methodNode.instructions;
 		notifyMethodEnter(classNode, methodNode, frame, stack);
 		try {
 			AbstractInsnNode pc = instructions.getFirst();
-			while (context.stepAllocation > 0) {
-				context.stepAllocation--;
+			while (context.getStepAllocation() > 0) {
+				context.consumeStep();
 				try {
 					// Evaluate the instruction and advance the program counter.
 					AbstractInsnNode executedInstruction = pc;
@@ -526,7 +527,7 @@ public class Evaluator {
 			}
 			return EvaluationResult.cannotEvaluate("Method did not yield an value in " + maxSteps + " steps");
 		} finally {
-			context.callStack.removeLast();
+			context.getCallStack().removeLast();
 		}
 	}
 
@@ -549,7 +550,7 @@ public class Evaluator {
 		while (className != null && visited.add(className)) {
 			// Overrides replace the workspace copy of a class, so they supply both its fields and its parent.
 			String superName;
-			ClassNode override = context.classNodeOverrides.get(className);
+			ClassNode override = context.getClassNodeOverrides().get(className);
 			if (override != null) {
 				for (FieldNode field : override.fields)
 					seedInstanceField(cache, className, field.access, field.name, field.desc);
@@ -615,21 +616,21 @@ public class Evaluator {
 	private EvaluationResult initializeClassIfNeeded(@Nonnull String className, @Nonnull EvaluationContext context) {
 		// Skip if initializer evaluation is disabled.
 		// A supplied root node may be outside the workspace, so only require a workspace class when no per-evaluation override exists.
-		if (!evaluateClassInitializers || (context.classNodeOverrides.get(className) == null && workspace.findClass(evaluateInternals, className) == null))
+		if (!evaluateClassInitializers || (context.getClassNodeOverrides().get(className) == null && workspace.findClass(evaluateInternals, className) == null))
 			return null;
 
 		// Skip if the class has already been initialized in this evaluation.
-		if (context.initializedClasses.contains(className))
+		if (context.getInitializedClasses().contains(className))
 			return null;
 
 		// An initializer that previously failed isn't going to magically work the next time around.
 		// Skip if we already tried and saw a failure, and return the same failure result.
-		EvaluationResult failed = context.failedClassInitializers.get(className);
+		EvaluationResult failed = context.getFailedClassInitializers().get(className);
 		if (failed != null)
 			return failed;
 
 		// Skip if the class is already being initialized in this evaluation (cycle-breaking).
-		if (!context.initializingClasses.add(className))
+		if (!context.getInitializingClasses().add(className))
 			return null;
 
 		try {
@@ -644,7 +645,7 @@ public class Evaluator {
 			if (classNode.superName != null) {
 				EvaluationResult superclassResult = initializeClassIfNeeded(classNode.superName, context);
 				if (superclassResult != null) {
-					context.failedClassInitializers.put(className, superclassResult);
+					context.getFailedClassInitializers().put(className, superclassResult);
 					return superclassResult;
 				}
 			}
@@ -660,7 +661,7 @@ public class Evaluator {
 
 			// Classes without executable static initialization are complete after default seeding.
 			if (clinit == null) {
-				context.initializedClasses.add(className);
+				context.getInitializedClasses().add(className);
 				return null;
 			}
 
@@ -672,13 +673,13 @@ public class Evaluator {
 				result = EvaluationResult.cannotEvaluate(UNKNOWN_VALUE_REASON, e);
 			}
 			if (result instanceof EvaluationYieldResult) {
-				context.initializedClasses.add(className);
+				context.getInitializedClasses().add(className);
 				return null;
 			}
-			context.failedClassInitializers.put(className, result);
+			context.getFailedClassInitializers().put(className, result);
 			return result;
 		} finally {
-			context.initializingClasses.remove(className);
+			context.getInitializingClasses().remove(className);
 		}
 	}
 
@@ -751,8 +752,8 @@ public class Evaluator {
 
 		// Handle execution
 		AbstractInsnNode pc = instructionBlock.getFirst();
-		while (context.stepAllocation > 0) {
-			context.stepAllocation--;
+		while (context.getStepAllocation() > 0) {
+			context.consumeStep();
 			try {
 				// Evaluate the instruction and advance the program counter.
 				AbstractInsnNode executedInstruction = pc;
@@ -949,7 +950,7 @@ public class Evaluator {
 		// Prefer the evaluation snapshot so nested calls use overrides from the current evaluation.
 		ClassNode override = context == null
 				? classNodeOverrides.get(className)
-				: context.classNodeOverrides.get(className);
+				: context.getClassNodeOverrides().get(className);
 		if (override != null)
 			return override;
 
@@ -976,7 +977,7 @@ public class Evaluator {
 		// Check the override snapshot first.
 		ClassNode override = context == null
 				? classNodeOverrides.get(className)
-				: context.classNodeOverrides.get(className);
+				: context.getClassNodeOverrides().get(className);
 		if (override != null)
 			return !AccessFlag.isAbstract(override.access) && !AccessFlag.isInterface(override.access);
 
@@ -998,7 +999,7 @@ public class Evaluator {
 	 * @return {@code true} when the class can be resolved from the workspace or an override.
 	 */
 	private boolean hasClass(@Nonnull String className, @Nullable EvaluationContext context) {
-		if (context != null && context.classNodeOverrides.containsKey(className))
+		if (context != null && context.getClassNodeOverrides().containsKey(className))
 			return true;
 		if (context == null && classNodeOverrides.containsKey(className))
 			return true;
@@ -1014,7 +1015,7 @@ public class Evaluator {
 	 * @return {@code true} when the class is defined by a non-internal workspace resource, or an override.
 	 */
 	private boolean isWorkspaceClass(@Nonnull String className, @Nonnull EvaluationContext context) {
-		return context.classNodeOverrides.containsKey(className) || workspace.findClass(false, className) != null;
+		return context.getClassNodeOverrides().containsKey(className) || workspace.findClass(false, className) != null;
 	}
 
 	/**
@@ -1188,7 +1189,7 @@ public class Evaluator {
 	 * @return The concrete method if found, or {@code null} if no concrete implementation exists in the class hierarchy.
 	 */
 	@Nullable
-	protected ClassMethodPair resolveConcreteMethod(@Nonnull String className,
+	public ClassMethodPair resolveConcreteMethod(@Nonnull String className,
 	                                                @Nonnull String methodName,
 	                                                @Nonnull String descriptor) {
 		Set<String> visited = new HashSet<>();
@@ -1256,7 +1257,7 @@ public class Evaluator {
 		while (className != null) {
 			// Check if this class declares the method, and take note of its parent in case it does not.
 			String superName;
-			ClassNode override = context.classNodeOverrides.get(className);
+			ClassNode override = context.getClassNodeOverrides().get(className);
 			if (override != null) {
 				for (MethodNode method : override.methods)
 					if (instruction.name.equals(method.name) && instruction.desc.equals(method.desc))
@@ -1295,10 +1296,10 @@ public class Evaluator {
 	 */
 	@Nonnull
 	private String resolveFieldOwner(@Nonnull FieldInsnNode instruction, @Nonnull EvaluationContext context) {
-		String owner = context.fieldOwners.get(instruction);
+		String owner = context.getFieldOwners().get(instruction);
 		if (owner == null) {
 			owner = searchFieldOwner(instruction, context);
-			context.fieldOwners.put(instruction, owner);
+			context.getFieldOwners().put(instruction, owner);
 		}
 		return owner;
 	}
@@ -1324,7 +1325,7 @@ public class Evaluator {
 			// Check if this class declares the field, and take note of its parents in case it does not.
 			String superName;
 			List<String> interfaces;
-			ClassNode override = context.classNodeOverrides.get(className);
+			ClassNode override = context.getClassNodeOverrides().get(className);
 			if (override != null) {
 				for (FieldNode field : override.fields)
 					if (instruction.name.equals(field.name) && instruction.desc.equals(field.desc))
@@ -1502,7 +1503,7 @@ public class Evaluator {
 				}
 				case ATHROW -> true;
 				case NEW -> insn instanceof TypeInsnNode tin &&
-						(context.models.supportsAllocation(tin.desc)
+						(context.getModels().supportsAllocation(tin.desc)
 								|| instanceFactory.isSupportedType(tin.desc)
 								|| exceptionHandler.isThrowableType(tin.desc)
 								|| isConcreteClass(tin.desc, context));
@@ -1525,7 +1526,7 @@ public class Evaluator {
 							yield true;
 
 						// Check if the method is a known constructor supported by one of the model types.
-						if (min.getOpcode() == INVOKESPECIAL && context.models.supportsConstructor(min))
+						if (min.getOpcode() == INVOKESPECIAL && context.getModels().supportsConstructor(min))
 							yield true;
 
 						// Check if the method can be instanced.
@@ -1537,7 +1538,7 @@ public class Evaluator {
 							yield true;
 
 						// Check if the method is supported by the model types for instance dispatch.
-						if (min.getOpcode() != INVOKESPECIAL && context.models.supportsInstance(min))
+						if (min.getOpcode() != INVOKESPECIAL && context.getModels().supportsInstance(min))
 							yield true;
 
 						// Check if the symbolic owner exists for runtime receiver dispatch.
@@ -1555,7 +1556,7 @@ public class Evaluator {
 				case INVOKESTATIC -> {
 					if (insn instanceof MethodInsnNode min) {
 						// Check if the method is supported by the model types for static dispatch.
-						if (context.models.supportsStatic(min))
+						if (context.getModels().supportsStatic(min))
 							yield true;
 
 						// Check if we have a static method handler for the method.
@@ -1698,7 +1699,7 @@ public class Evaluator {
 
 						// Try to get a modeled instance for the type.
 						// If we don't have a model implementation for the type we'll fall back to normal allocation.
-						ObjectValue modeledInstance = context.models.allocate(tin.desc, context);
+						ObjectValue modeledInstance = context.getModels().allocate(tin.desc, context);
 						if (modeledInstance != null) {
 							push(modeledInstance);
 							yield insn.getNext();
@@ -1834,7 +1835,7 @@ public class Evaluator {
 
 						// First try to dispatch the constructor through the model types, which can handle some special cases.
 						// If the model handles the constructor, we can skip normal evaluation.
-						ModelResult modeledConstructor = context.models.invokeConstructor(min, receiver, valueList, context);
+						ModelResult modeledConstructor = context.getModels().invokeConstructor(min, receiver, valueList, context);
 						if (modeledConstructor.handled()) yield switch (modeledConstructor.result()) {
 							case EvaluationYieldResult ignored -> insn.getNext();
 							case EvaluationThrowsResult thrown ->
@@ -1943,7 +1944,7 @@ public class Evaluator {
 
 						// Check if the method is supported by the model types for instance dispatch.
 						boolean isVoid = Type.getReturnType(min.desc) == Type.VOID_TYPE;
-						ModelResult modeledInstance = context.models.invokeInstance(min, receiver, valueList, context);
+						ModelResult modeledInstance = context.getModels().invokeInstance(min, receiver, valueList, context);
 						if (modeledInstance.handled()) yield switch (modeledInstance.result()) {
 							case EvaluationYieldResult yielded -> {
 								if (!isVoid)
@@ -2050,7 +2051,7 @@ public class Evaluator {
 							valueList.addFirst(pop());
 
 						// Check if the method is supported by the model types for static dispatch.
-						ModelResult modeledStatic = context.models.invokeStatic(min, valueList, context);
+						ModelResult modeledStatic = context.getModels().invokeStatic(min, valueList, context);
 						if (modeledStatic.handled()) yield switch (modeledStatic.result()) {
 							case EvaluationYieldResult yielded -> {
 								if (Type.getReturnType(min.desc) != Type.VOID_TYPE)

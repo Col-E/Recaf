@@ -1,8 +1,9 @@
-package software.coley.recaf.util.analysis.eval;
+package software.coley.recaf.util.analysis.eval.model;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import org.objectweb.asm.tree.MethodInsnNode;
+import software.coley.recaf.util.analysis.eval.EvaluationContext;
 import software.coley.recaf.util.analysis.value.LongValue;
 import software.coley.recaf.util.analysis.value.ObjectValue;
 import software.coley.recaf.util.analysis.value.ReValue;
@@ -18,7 +19,7 @@ import java.util.List;
  *
  * @author Matt Coley
  */
-final class TimeModel implements EvaluatorModel {
+public final class TimeModel implements EvaluatorModel {
 	@Override
 	public boolean supportsAllocation(@Nonnull String type) {
 		return false;
@@ -64,7 +65,7 @@ final class TimeModel implements EvaluatorModel {
 	                                @Nonnull EvaluationContext context) {
 		// Will either be millis or nanos based on supported method check above.
 		return ModelResult.yielded(LongValue.of(instruction.name.equals("nanoTime")
-				? context.clock.nanos() : context.clock.millis()));
+				? context.getClock().nanos() : context.getClock().millis()));
 	}
 
 	@Override

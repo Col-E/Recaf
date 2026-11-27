@@ -1,7 +1,9 @@
-package software.coley.recaf.util.analysis.eval;
+package software.coley.recaf.util.analysis.eval.model;
 
 import jakarta.annotation.Nonnull;
 import org.objectweb.asm.tree.MethodInsnNode;
+import software.coley.recaf.util.analysis.eval.EvaluationContext;
+import software.coley.recaf.util.analysis.eval.Evaluator;
 import software.coley.recaf.util.analysis.value.ObjectValue;
 import software.coley.recaf.util.analysis.value.ReValue;
 import software.coley.recaf.util.analysis.value.UninitializedValue;
@@ -20,7 +22,7 @@ import java.util.Map;
  *
  * @author Matt Coley
  */
-final class EnumModel implements EvaluatorModel {
+public final class EnumModel implements EvaluatorModel {
 	private static final String ENUM = "java/lang/Enum";
 	private final Evaluator evaluator;
 	private final Map<ReValue, State> states = new IdentityHashMap<>();

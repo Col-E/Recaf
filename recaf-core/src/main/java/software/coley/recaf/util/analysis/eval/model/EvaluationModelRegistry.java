@@ -1,10 +1,17 @@
-package software.coley.recaf.util.analysis.eval;
+package software.coley.recaf.util.analysis.eval.model;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.MethodInsnNode;
 import software.coley.recaf.util.analysis.Nullness;
+
+import software.coley.recaf.util.analysis.eval.EvaluationContext;
+import software.coley.recaf.util.analysis.eval.EvaluationResult;
+import software.coley.recaf.util.analysis.eval.EvaluationYieldResult;
+import software.coley.recaf.util.analysis.eval.Evaluator;
+import software.coley.recaf.util.analysis.eval.InstanceFactory;
+import software.coley.recaf.util.analysis.eval.SimulatedScheduler;
 import software.coley.recaf.util.analysis.lookup.InvokeStaticLookup;
 import software.coley.recaf.util.analysis.lookup.InvokeVirtualLookup;
 import software.coley.recaf.util.analysis.value.ObjectValue;
@@ -25,7 +32,7 @@ import java.util.List;
 public final class EvaluationModelRegistry {
 	private final List<EvaluatorModel> models;
 
-	EvaluationModelRegistry(@Nonnull Evaluator evaluator) {
+	public EvaluationModelRegistry(@Nonnull Evaluator evaluator) {
 		models = List.of(
 				new ThreadModel(evaluator),
 				new CompletableFutureModel(),
@@ -190,7 +197,7 @@ public final class EvaluationModelRegistry {
 	 * @see SimulatedScheduler Thread scheduler usage.
 	 */
 	@Nonnull
-	EvaluationResult runTask(@Nonnull EvaluationModelHeap.ThreadState state,
+	public EvaluationResult runTask(@Nonnull EvaluationModelHeap.ThreadState state,
 	                         @Nonnull EvaluationContext context) throws Evaluator.UnknownValueException {
 		for (EvaluatorModel model : models) {
 			EvaluationResult result = model.runTask(state, context);
