@@ -25,6 +25,6 @@ public class ImageFileInfoBuilder extends FileInfoBuilder<ImageFileInfoBuilder> 
 	@Nonnull
 	@Override
 	public BasicImageFileInfo build() {
-		return new BasicImageFileInfo(this);
+		return applyInheritedProperties(new BasicImageFileInfo(this));
 	}
 }

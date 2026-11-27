@@ -25,6 +25,13 @@ public class UnknownAttributesProperty extends BasicProperty<Collection<String>>
 		super(KEY, unknownAttributeNames);
 	}
 
+	@Override
+	public boolean persistent() {
+		// We set this when the class is built by looking at the attributes of the class,
+		// so since its derived, we don't want to persist this.
+		return false;
+	}
+
 	/**
 	 * @param info
 	 * 		Class to strip this marker from.

@@ -49,6 +49,6 @@ public class ZipFileInfoBuilder extends FileInfoBuilder<ZipFileInfoBuilder> {
 	@Nonnull
 	@Override
 	public BasicZipFileInfo build() {
-		return new BasicZipFileInfo(this);
+		return applyInheritedProperties(new BasicZipFileInfo(this));
 	}
 }

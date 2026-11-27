@@ -46,6 +46,6 @@ public class TextFileInfoBuilder extends FileInfoBuilder<TextFileInfoBuilder> {
 	@Nonnull
 	@Override
 	public BasicTextFileInfo build() {
-		return new BasicTextFileInfo(this);
+		return applyInheritedProperties(new BasicTextFileInfo(this));
 	}
 }

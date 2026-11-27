@@ -6,11 +6,9 @@ import software.coley.recaf.info.annotation.TypeAnnotationInfo;
 import software.coley.recaf.info.builder.AbstractClassInfoBuilder;
 import software.coley.recaf.info.member.BasicMember;
 import software.coley.recaf.info.member.FieldMember;
-import software.coley.recaf.info.member.LocalVariable;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.info.properties.Property;
 import software.coley.recaf.info.properties.PropertyContainer;
-import software.coley.recaf.util.Types;
 
 import java.util.ArrayList;
 import java.util.Collections;

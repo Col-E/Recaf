@@ -266,27 +266,9 @@ public class JvmDecompilerPane extends AbstractDecompilePane {
 				List<JvmClassInfo> updatedClasses = new ArrayList<>(compilations.size());
 				try {
 					compilations.forEach((name, bytecode) -> {
-						JvmClassInfo newInfo;
-						if (infoName.equals(name)) {
-							// Adapt from existing.
-							newInfo = info.toJvmClassBuilder()
-									.adaptFrom(bytecode)
-									.build();
+						JvmClassInfo newInfo = new JvmClassInfoBuilder(bytecode).build();
+						if (infoName.equals(name))
 							path = Objects.requireNonNull(path.getParent(), "Class missing parent in path").child(newInfo);
-						} else {
-							// Handle inner classes.
-							JvmClassInfo originalClass = bundle.get(name);
-							if (originalClass != null) {
-								// Adapt from existing.
-								newInfo = originalClass
-										.toJvmClassBuilder()
-										.adaptFrom(bytecode)
-										.build();
-							} else {
-								// Class is new.
-								newInfo = new JvmClassInfoBuilder(bytecode).build();
-							}
-						}
 
 						// Update cached decompile property to current editor text.
 						// If the class is opened later, we can use the code we compiled with.

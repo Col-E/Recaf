@@ -4,7 +4,6 @@ import jakarta.annotation.Nonnull;
 import software.coley.recaf.info.AndroidClassInfo;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.JvmClassInfo;
-import software.coley.recaf.info.properties.Property;
 import software.coley.recaf.workspace.model.BasicWorkspace;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.AndroidClassBundle;
@@ -72,7 +71,7 @@ public class WorkspacePromotion {
 				.withFileBundle(cloneFileBundle(resource.getFileBundle()))
 				.withEmbeddedResources(cloneEmbeddedResources(resource.getEmbeddedResources()));
 		WorkspaceResource clone = builder.build();
-		copyProperties(resource, clone);
+		clone.inheritPersistentPropertiesFrom(resource);
 		return clone;
 	}
 
@@ -150,11 +149,5 @@ public class WorkspacePromotion {
 	@Nonnull
 	private static FileInfo cloneFileInfo(@Nonnull FileInfo fileInfo) {
 		return fileInfo.toFileBuilder().build();
-	}
-
-	private static void copyProperties(@Nonnull WorkspaceResource source, @Nonnull WorkspaceResource destination) {
-		for (Property<?> property : source.getProperties().values())
-			if (property.persistent())
-				destination.setProperty(property);
 	}
 }

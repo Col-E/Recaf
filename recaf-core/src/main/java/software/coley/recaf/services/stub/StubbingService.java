@@ -9,6 +9,7 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.info.builder.JvmClassInfoBuilder;
 import software.coley.recaf.info.member.MethodMember;
 import software.coley.recaf.services.Service;
 import software.coley.recaf.util.visitors.MethodNoopingVisitor;
@@ -178,9 +179,7 @@ public class StubbingService implements Service {
 		ClassWriter writer = new ClassWriter(reader, 0);
 		MethodNoopingVisitor visitor = new MethodNoopingVisitor(writer, MethodPredicate.of(methods), strategy.action());
 		reader.accept(visitor, declaringClass.getClassReaderFlags());
-		bundle.put(declaringClass.toJvmClassBuilder()
-				.adaptFrom(writer.toByteArray())
-				.build());
+		bundle.put(new JvmClassInfoBuilder(writer.toByteArray()).build());
 	}
 
 	@Nonnull

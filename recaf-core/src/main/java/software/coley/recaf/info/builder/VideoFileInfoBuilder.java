@@ -25,6 +25,6 @@ public class VideoFileInfoBuilder extends FileInfoBuilder<VideoFileInfoBuilder> 
 	@Nonnull
 	@Override
 	public BasicVideoFileInfo build() {
-		return new BasicVideoFileInfo(this);
+		return applyInheritedProperties(new BasicVideoFileInfo(this));
 	}
 }

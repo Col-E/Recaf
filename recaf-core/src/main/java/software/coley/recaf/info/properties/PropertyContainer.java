@@ -96,4 +96,18 @@ public interface PropertyContainer {
 				.filter((e) -> e.getValue().persistent())
 				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 	}
+
+	/**
+	 * Copies persistent properties from another container into this one.
+	 * If a property already exists in this container, it will not be overwritten.
+	 *
+	 * @param source
+	 * 		Container to copy persistent properties from.
+	 */
+	default void inheritPersistentPropertiesFrom(@Nonnull PropertyContainer source) {
+		for (Map.Entry<String, Property<?>> entry : source.getPersistentProperties().entrySet()) {
+			if (getProperty(entry.getKey()) == null)
+				setProperty(entry.getValue());
+		}
+	}
 }

@@ -1,6 +1,7 @@
 package software.coley.recaf.info.builder;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import software.coley.recaf.info.*;
 import software.coley.recaf.info.properties.BasicPropertyContainer;
 import software.coley.recaf.info.properties.Property;
@@ -21,6 +22,7 @@ public class FileInfoBuilder<B extends FileInfoBuilder<?>> {
 	private String name;
 	private byte[] rawContent;
 	protected StringDecodingResult decodingResult;
+	private Info inheritFrom;
 
 	public FileInfoBuilder() {
 		// default
@@ -95,6 +97,18 @@ public class FileInfoBuilder<B extends FileInfoBuilder<?>> {
 		return (B) this;
 	}
 
+	@SuppressWarnings("unchecked")
+	public B inheritPropertiesOf(@Nonnull Info info) {
+		this.inheritFrom = info;
+		return (B) this;
+	}
+
+	protected <I extends Info> I applyInheritedProperties(@Nonnull I info) {
+		if (inheritFrom != null)
+			info.inheritPersistentPropertiesFrom(inheritFrom);
+		return info;
+	}
+
 	public PropertyContainer getProperties() {
 		return properties;
 	}
@@ -122,8 +136,8 @@ public class FileInfoBuilder<B extends FileInfoBuilder<?>> {
 		if (name == null) throw new IllegalArgumentException("Name is required");
 		if (rawContent == null) throw new IllegalArgumentException("Content is required");
 		if (getDecodingResult().couldDecode())
-			return new TextFileInfoBuilder(this, getDecodingResult()).build();
+			return applyInheritedProperties(new TextFileInfoBuilder(this, getDecodingResult()).build());
 		else
-			return new BasicFileInfo(this);
+			return applyInheritedProperties(new BasicFileInfo(this));
 	}
 }

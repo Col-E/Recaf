@@ -9,6 +9,7 @@ import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.ClassInfo;
 import software.coley.recaf.info.FileInfo;
 import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.info.builder.JvmClassInfoBuilder;
 import software.coley.recaf.path.BundlePathNode;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.FilePathNode;
@@ -129,7 +130,9 @@ public class HexAdapter extends BorderPane implements UpdatableNavigable {
 						try {
 							BundlePathNode parent = classPath.getParent().getParent();
 							JvmClassBundle bundle = (JvmClassBundle) parent.getValue();
-							JvmClassInfo newClass = classInfo.asJvmClass().toJvmClassBuilder().adaptFrom(data).build();
+							JvmClassInfo newClass = new JvmClassInfoBuilder(data)
+									.inheritPropertiesOf(classInfo)
+									.build();
 							Workspace workspace = classPath.getValueOfType(Workspace.class);
 							if (workspace == null)
 								throw new IllegalStateException("Workspace missing from class path node");

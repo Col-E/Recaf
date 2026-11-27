@@ -25,6 +25,6 @@ public class ModulesFileInfoBuilder extends FileInfoBuilder<ModulesFileInfoBuild
 	@Nonnull
 	@Override
 	public BasicModulesFileInfo build() {
-		return new BasicModulesFileInfo(this);
+		return applyInheritedProperties(new BasicModulesFileInfo(this));
 	}
 }

@@ -6,7 +6,6 @@ import software.coley.recaf.info.properties.Property;
 import software.coley.recaf.info.properties.PropertyContainer;
 import software.coley.recaf.info.properties.builtin.OriginalFileHashesProperty;
 
-import java.util.Arrays;
 import java.util.Map;
 
 /**

@@ -22,6 +22,12 @@ public class BinaryXmlDecodedProperty extends BasicProperty<String> {
 		super(KEY, value);
 	}
 
+	@Override
+	public boolean persistent() {
+		// We should disregard decoded results between 'versions' of an info object.
+		return false;
+	}
+
 	/**
 	 * @param info
 	 * 		Info instance.

@@ -2165,9 +2165,7 @@ public class Actions implements Service {
 		ClassWriter writer = new ClassWriter(reader, 0);
 		MemberRemovingVisitor visitor = new MemberRemovingVisitor(writer, FieldPredicate.of(fields));
 		reader.accept(visitor, declaringClass.getClassReaderFlags());
-		bundle.put(declaringClass.toJvmClassBuilder()
-				.adaptFrom(writer.toByteArray())
-				.build());
+		bundle.put(new JvmClassInfoBuilder(writer.toByteArray()).build());
 	}
 
 	/**

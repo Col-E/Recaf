@@ -24,6 +24,6 @@ public class WarFileInfoBuilder extends ZipFileInfoBuilder {
 	@Nonnull
 	@Override
 	public BasicWarFileInfo build() {
-		return new BasicWarFileInfo(this);
+		return applyInheritedProperties(new BasicWarFileInfo(this));
 	}
 }

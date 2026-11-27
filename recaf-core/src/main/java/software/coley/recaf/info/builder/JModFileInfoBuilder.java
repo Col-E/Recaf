@@ -24,6 +24,6 @@ public class JModFileInfoBuilder extends ZipFileInfoBuilder {
 	@Nonnull
 	@Override
 	public BasicJModFileInfo build() {
-		return new BasicJModFileInfo(this);
+		return applyInheritedProperties(new BasicJModFileInfo(this));
 	}
 }

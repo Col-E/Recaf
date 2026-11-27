@@ -284,7 +284,7 @@ public class JvmClassInfoBuilder extends AbstractClassInfoBuilder<JvmClassInfoBu
 		if (adapter != null && adapter.hasCustomAttributes())
 			getPropertyContainer().setProperty(new UnknownAttributesProperty(adapter.getCustomAttributeNames()));
 		verify();
-		return new BasicJvmClassInfo(this);
+		return applyInheritedProperties(new BasicJvmClassInfo(this));
 	}
 
 	@Override

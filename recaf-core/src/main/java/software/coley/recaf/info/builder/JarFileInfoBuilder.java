@@ -25,6 +25,6 @@ public class JarFileInfoBuilder extends ZipFileInfoBuilder {
 	@Nonnull
 	@Override
 	public BasicJarFileInfo build() {
-		return new BasicJarFileInfo(this);
+		return applyInheritedProperties(new BasicJarFileInfo(this));
 	}
 }

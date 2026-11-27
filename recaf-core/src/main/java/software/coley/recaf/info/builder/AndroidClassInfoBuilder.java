@@ -99,7 +99,7 @@ public class AndroidClassInfoBuilder extends AbstractClassInfoBuilder<AndroidCla
 	@Override
 	public AndroidClassInfo build() {
 		verify();
-		return new BasicAndroidClassInfo(this);
+		return applyInheritedProperties(new BasicAndroidClassInfo(this));
 	}
 
 	/**

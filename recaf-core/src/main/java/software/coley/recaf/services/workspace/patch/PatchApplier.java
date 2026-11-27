@@ -15,6 +15,7 @@ import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.Info;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.info.TextFileInfo;
+import software.coley.recaf.info.builder.JvmClassInfoBuilder;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.FilePathNode;
 import software.coley.recaf.path.PathNode;
@@ -129,8 +130,8 @@ public class PatchApplier implements Service {
 			JavaClassRepresentation representation = patchResult.requireValue().representation();
 			if (representation != null) {
 				tasks.add(() -> {
-					JvmClassInfo patchedClass = jvmClass.toJvmClassBuilder()
-							.adaptFrom(representation.classFile())
+					JvmClassInfo patchedClass = new JvmClassInfoBuilder(representation.classFile())
+							.inheritPropertiesOf(jvmClass)
 							.build();
 					jvmBundle.put(patchedClass);
 				});

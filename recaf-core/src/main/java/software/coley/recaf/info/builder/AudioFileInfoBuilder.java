@@ -25,6 +25,6 @@ public class AudioFileInfoBuilder extends FileInfoBuilder<AudioFileInfoBuilder> 
 	@Nonnull
 	@Override
 	public BasicAudioFileInfo build() {
-		return new BasicAudioFileInfo(this);
+		return applyInheritedProperties(new BasicAudioFileInfo(this));
 	}
 }

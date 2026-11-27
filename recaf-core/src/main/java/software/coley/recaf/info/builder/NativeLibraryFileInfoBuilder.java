@@ -25,6 +25,6 @@ public class NativeLibraryFileInfoBuilder extends FileInfoBuilder<NativeLibraryF
 	@Nonnull
 	@Override
 	public BasicNativeLibraryFileInfo build() {
-		return new BasicNativeLibraryFileInfo(this);
+		return applyInheritedProperties(new BasicNativeLibraryFileInfo(this));
 	}
 }

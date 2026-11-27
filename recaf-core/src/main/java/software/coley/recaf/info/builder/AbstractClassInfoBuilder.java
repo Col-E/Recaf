@@ -1,8 +1,10 @@
 package software.coley.recaf.info.builder;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import software.coley.recaf.info.Accessed;
 import software.coley.recaf.info.ClassInfo;
+import software.coley.recaf.info.Info;
 import software.coley.recaf.info.InnerClassInfo;
 import software.coley.recaf.info.annotation.AnnotationInfo;
 import software.coley.recaf.info.annotation.TypeAnnotationInfo;
@@ -41,6 +43,7 @@ public abstract class AbstractClassInfoBuilder<B extends AbstractClassInfoBuilde
 	private List<FieldMember> fields = Collections.emptyList();
 	private List<MethodMember> methods = Collections.emptyList();
 	private PropertyContainer propertyContainer = new BasicPropertyContainer();
+	private Info inheritFrom;
 
 	protected AbstractClassInfoBuilder() {
 		// default
@@ -179,6 +182,18 @@ public abstract class AbstractClassInfoBuilder<B extends AbstractClassInfoBuilde
 	public B withPropertyContainer(PropertyContainer propertyContainer) {
 		this.propertyContainer = Objects.requireNonNullElseGet(propertyContainer, BasicPropertyContainer::new);
 		return (B) this;
+	}
+
+	@SuppressWarnings("unchecked")
+	public B inheritPropertiesOf(@Nonnull Info info) {
+		this.inheritFrom = info;
+		return (B) this;
+	}
+
+	protected <I extends Info> I applyInheritedProperties(@Nonnull I info) {
+		if (inheritFrom != null)
+			info.inheritPersistentPropertiesFrom(inheritFrom);
+		return info;
 	}
 
 	public String getName() {

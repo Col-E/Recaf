@@ -21,6 +21,6 @@ public class BinaryXmlFileInfoBuilder extends ChunkFileInfoBuilder<BinaryXmlFile
 	@Nonnull
 	@Override
 	public BasicBinaryXmlFileInfo build() {
-		return new BasicBinaryXmlFileInfo(this);
+		return applyInheritedProperties(new BasicBinaryXmlFileInfo(this));
 	}
 }

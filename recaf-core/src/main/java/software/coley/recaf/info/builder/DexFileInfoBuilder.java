@@ -25,6 +25,6 @@ public class DexFileInfoBuilder extends FileInfoBuilder<DexFileInfoBuilder> {
 	@Nonnull
 	@Override
 	public BasicDexFileInfo build() {
-		return new BasicDexFileInfo(this);
+		return applyInheritedProperties(new BasicDexFileInfo(this));
 	}
 }

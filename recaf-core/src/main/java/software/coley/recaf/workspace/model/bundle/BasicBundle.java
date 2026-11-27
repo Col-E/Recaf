@@ -6,6 +6,7 @@ import software.coley.collections.Unchecked;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.behavior.PrioritySortable;
 import software.coley.recaf.info.Info;
+import software.coley.recaf.info.properties.builtin.RemapOriginTaskProperty;
 import software.coley.recaf.workspace.model.resource.BasicWorkspaceResource;
 
 import java.util.Collection;
@@ -208,7 +209,14 @@ public class BasicBundle<I extends Info> implements Bundle<I> {
 
 	@Override
 	public I put(@Nonnull String key, @Nonnull I newValue) {
-		I oldValue = backing.put(key, newValue);
+		I oldValue = backing.get(key);
+
+		// Copy persistent properties from the old value to the new value, if applicable.
+		if (oldValue != null && oldValue != newValue && newValue.getProperty(RemapOriginTaskProperty.KEY) == null)
+			newValue.inheritPersistentPropertiesFrom(oldValue);
+
+		// Update the backing map with the new value.
+		backing.put(key, newValue);
 
 		// Ensure we don't track entries by this name as 'removed'
 		removed.remove(key);

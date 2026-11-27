@@ -24,6 +24,6 @@ public class ApkFileInfoBuilder extends ZipFileInfoBuilder {
 	@Nonnull
 	@Override
 	public BasicApkFileInfo build() {
-		return new BasicApkFileInfo(this);
+		return applyInheritedProperties(new BasicApkFileInfo(this));
 	}
 }

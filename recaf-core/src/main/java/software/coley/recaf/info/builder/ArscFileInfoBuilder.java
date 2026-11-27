@@ -22,6 +22,6 @@ public class ArscFileInfoBuilder extends ChunkFileInfoBuilder<ArscFileInfoBuilde
 	@Nonnull
 	@Override
 	public BasicArscFileInfo build() {
-		return new BasicArscFileInfo(this);
+		return applyInheritedProperties(new BasicArscFileInfo(this));
 	}
 }

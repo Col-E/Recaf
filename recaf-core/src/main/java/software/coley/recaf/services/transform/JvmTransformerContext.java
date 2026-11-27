@@ -12,6 +12,7 @@ import org.objectweb.asm.tree.analysis.Frame;
 import org.slf4j.Logger;
 import software.coley.recaf.analytics.logging.Logging;
 import software.coley.recaf.info.JvmClassInfo;
+import software.coley.recaf.info.builder.JvmClassInfoBuilder;
 import software.coley.recaf.path.ClassPathNode;
 import software.coley.recaf.path.PathNodes;
 import software.coley.recaf.path.ResourcePathNode;
@@ -182,8 +183,8 @@ public class JvmTransformerContext extends AbstractTransformerContext<JvmClassTr
 
 						// Update output map
 						byte[] modifiedBytes = writer.toByteArray();
-						JvmClassInfo modifiedClass = data.initialClass.toJvmClassBuilder()
-								.adaptFrom(modifiedBytes)
+						JvmClassInfo modifiedClass = new JvmClassInfoBuilder(modifiedBytes)
+								.inheritPropertiesOf(data.initialClass)
 								.build();
 						ClassPathNode classPath = resourcePath.child(data.bundle)
 								.child(modifiedClass.getPackageName())
@@ -200,8 +201,8 @@ public class JvmTransformerContext extends AbstractTransformerContext<JvmClassTr
 					// Update output map if the bytecode is not the same as the initial state
 					byte[] bytecode = data.getBytecode();
 					if (!Arrays.equals(bytecode, data.initialClass.getBytecode())) {
-						JvmClassInfo modifiedClass = data.initialClass.toJvmClassBuilder()
-								.adaptFrom(bytecode)
+						JvmClassInfo modifiedClass = new JvmClassInfoBuilder(bytecode)
+								.inheritPropertiesOf(data.initialClass)
 								.build();
 						ClassPathNode classPath = resourcePath.child(data.bundle)
 								.child(modifiedClass.getPackageName())
