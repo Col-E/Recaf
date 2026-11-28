@@ -6,6 +6,7 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.analysis.AnalyzerException;
+import software.coley.recaf.util.Types;
 import software.coley.recaf.util.analysis.ReFrame;
 import software.coley.recaf.util.analysis.ReInterpreter;
 import software.coley.recaf.util.analysis.gen.InstanceMapperGenerator;
@@ -20,7 +21,9 @@ import software.coley.recaf.util.analysis.value.IntValue;
 import software.coley.recaf.util.analysis.value.LongValue;
 import software.coley.recaf.util.analysis.value.ObjectValue;
 import software.coley.recaf.util.analysis.value.ReValue;
+import software.coley.recaf.util.analysis.value.StringValue;
 import software.coley.recaf.util.analysis.value.impl.ArrayValueImpl;
+import software.coley.recaf.util.analysis.value.impl.ObjectValueBoxImpl;
 
 import javax.crypto.Cipher;
 import javax.crypto.CipherInputStream;
@@ -39,6 +42,7 @@ import java.io.DataInput;
 import java.io.DataInputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Array;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -72,6 +76,7 @@ import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.function.IntFunction;
 import java.util.function.Supplier;
 import java.util.zip.Inflater;
 
@@ -1779,8 +1784,8 @@ public class InstanceFactory extends BasicLookupUtils {
 					throw new ArrayIndexOutOfBoundsException();
 
 				// Primitive arrays require exact component types while reference elements are checked individually.
-				Type sourceComponentType = getComponentType(source);
-				Type destinationComponentType = getComponentType(destination);
+				Type sourceComponentType = Types.undimension(source.type());
+				Type destinationComponentType = Types.undimension(destination.type());
 				boolean sourceReferenceArray = sourceComponentType.getSort() == Type.OBJECT || sourceComponentType.getSort() == Type.ARRAY;
 				boolean destinationReferenceArray = destinationComponentType.getSort() == Type.OBJECT || destinationComponentType.getSort() == Type.ARRAY;
 				if (sourceReferenceArray != destinationReferenceArray || !sourceReferenceArray && !sourceComponentType.equals(destinationComponentType))
@@ -1837,13 +1842,6 @@ public class InstanceFactory extends BasicLookupUtils {
 				return array;
 			}
 
-			private static int requireIndex(@Nonnull ReValue value, @Nonnull MethodInsnNode instruction,
-			                                @Nonnull String role) throws AnalyzerException {
-				if (value instanceof IntValue intValue && intValue.value().isPresent())
-					return intValue.value().getAsInt();
-				throw new AnalyzerException(instruction, "System.arraycopy " + role + " is unknown");
-			}
-
 			private static int requireLength(@Nonnull ArrayValue array, @Nonnull MethodInsnNode instruction,
 			                                 @Nonnull String role) throws AnalyzerException {
 				if (array.getFirstDimensionLength().isPresent())
@@ -1851,22 +1849,6 @@ public class InstanceFactory extends BasicLookupUtils {
 				throw new AnalyzerException(instruction, "System.arraycopy " + role + " length is unknown");
 			}
 
-			@Nonnull
-			private static Type getComponentType(@Nonnull ArrayValue array) {
-				return Type.getType(array.type().getDescriptor().substring(1));
-			}
-
-			private static void validateReference(@Nonnull Type destinationComponentType, @Nonnull ReValue value,
-			                                      @Nonnull ReInterpreter interpreter, @Nonnull MethodInsnNode instruction) throws AnalyzerException {
-				if (!(value instanceof ObjectValue object))
-					throw new AnalyzerException(instruction, "System.arraycopy contains an unknown reference value");
-				if (object.isNull())
-					return;
-				if (!object.isNotNull())
-					throw new AnalyzerException(instruction, "System.arraycopy contains a possibly null reference value");
-				if (!interpreter.isAssignableFrom(destinationComponentType.getInternalName(), object.type().getInternalName()))
-					throw new ArrayStoreException();
-			}
 		});
 	}
 
@@ -1876,20 +1858,43 @@ public class InstanceFactory extends BasicLookupUtils {
 	 * @see BasicInvokeStaticLookup #arrays() for static methods that yield values.
 	 */
 	private void registerStaticArrays() {
-		// TODO: Other fill variants
-		registerStaticMethodHandler("java/util/Arrays", "fill", "([BB)V", (frame, interpreter, instruction, args) -> {
-			ReValue destinationValue = args.get(0);
-			byte[] destination = arrb(destinationValue);
-			Arrays.fill(destination, b((IntValue) args.get(1)));
-			replaceByteArrayContents(frame, destinationValue, destination, 0, destination.length);
-			return null;
-		});
+		// fill(array, value) and fill(array, from, to, value) for every element type.
+		for (String element : List.of("Z", "C", "B", "S", "I", "J", "F", "D", "Ljava/lang/Object;")) {
+			String array = "[" + element;
+			registerStaticMethodHandler("java/util/Arrays", "fill", "(" + array + element + ")V", (frame, interpreter, instruction, args) -> {
+				fillArray(frame, interpreter, instruction, args.getFirst(), null, null, args.get(1));
+				return null;
+			});
+			registerStaticMethodHandler("java/util/Arrays", "fill", "(" + array + "II" + element + ")V", (frame, interpreter, instruction, args) -> {
+				fillArray(frame, interpreter, instruction, args.getFirst(), args.get(1), args.get(2), args.get(3));
+				return null;
+			});
+		}
 
-		// TODO: Parallel methods
+		// The parallel variants produce the same results as the sequential sorts, so they share the same handlers.
+		for (String method : List.of("sort", "parallelSort")) {
+			for (String element : List.of("B", "C", "S", "I", "J", "F", "D", "Ljava/lang/Object;")) {
+				String array = "[" + element;
+				registerStaticMethodHandler("java/util/Arrays", method, "(" + array + ")V", (frame, interpreter, instruction, args) -> {
+					sortArray(frame, instruction, args.getFirst(), null, null, null);
+					return null;
+				});
+				registerStaticMethodHandler("java/util/Arrays", method, "(" + array + "II)V", (frame, interpreter, instruction, args) -> {
+					sortArray(frame, instruction, args.getFirst(), args.get(1), args.get(2), null);
+					return null;
+				});
+			}
+			registerStaticMethodHandler("java/util/Arrays", method, "([Ljava/lang/Object;Ljava/util/Comparator;)V", (frame, interpreter, instruction, args) -> {
+				sortArray(frame, instruction, args.getFirst(), null, null, args.get(1));
+				return null;
+			});
+			registerStaticMethodHandler("java/util/Arrays", method, "([Ljava/lang/Object;IILjava/util/Comparator;)V", (frame, interpreter, instruction, args) -> {
+				sortArray(frame, instruction, args.getFirst(), args.get(1), args.get(2), args.get(3));
+				return null;
+			});
+		}
 
-		// TODO: sort
-
-		// TODO: setAll
+		// TODO: Lambda-taking overloads are not supported yet.
 	}
 
 	/**
@@ -2075,6 +2080,315 @@ public class InstanceFactory extends BasicLookupUtils {
 		for (int i = 0; i < entries.length; i++)
 			mapEntries[i] = (Map.Entry<?, ?>) entries[i];
 		return Map.ofEntries(mapEntries);
+	}
+
+	/**
+	 * Fills a range of an array.
+	 * @see #registerStaticArrays()
+	 */
+	private static void fillArray(@Nonnull ReFrame frame,
+	                              @Nonnull ReInterpreter interpreter,
+	                              @Nonnull MethodInsnNode instruction,
+	                              @Nonnull ReValue arrayValue,
+	                              @Nullable ReValue fromValue,
+	                              @Nullable ReValue toValue,
+	                              @Nonnull ReValue value) throws AnalyzerException {
+		if (isReferenceArrayCall(instruction))
+			fillReferenceArray(frame, interpreter, instruction, arrayValue, fromValue, toValue, value);
+		else
+			fillPrimitiveArray(frame, instruction, arrayValue, fromValue, toValue, value);
+	}
+
+	/**
+	 * Fills a range of a primitive array.
+	 */
+	private static void fillPrimitiveArray(@Nonnull ReFrame frame,
+	                                       @Nonnull MethodInsnNode instruction,
+	                                       @Nonnull ReValue arrayValue,
+	                                       @Nullable ReValue fromValue,
+	                                       @Nullable ReValue toValue,
+	                                       @Nonnull ReValue value) throws AnalyzerException {
+		Object host = requireHostPrimitiveArray(instruction, arrayValue);
+		int length = Array.getLength(host);
+		int from = fromValue == null ? 0 : requireIndex(fromValue, instruction, "Arrays.fill from index");
+		int to = toValue == null ? length : requireIndex(toValue, instruction, "Arrays.fill to index");
+		if (!value.hasKnownValue())
+			throw new AnalyzerException(instruction, "Arrays.fill value is unknown");
+		fillHostArray(host, from, to, value);
+		replaceHostArray(frame, arrayValue, host);
+	}
+
+	/**
+	 * Fills a range of a reference array.
+	 */
+	private static void fillReferenceArray(@Nonnull ReFrame frame,
+	                                       @Nonnull ReInterpreter interpreter,
+	                                       @Nonnull MethodInsnNode instruction,
+	                                       @Nonnull ReValue arrayValue,
+	                                       @Nullable ReValue fromValue,
+	                                       @Nullable ReValue toValue,
+	                                       @Nonnull ReValue value) throws AnalyzerException {
+		ArrayValue array = requireKnownArray(instruction, arrayValue);
+		int length = array.getFirstDimensionLength().getAsInt();
+		int from = fromValue == null ? 0 : requireIndex(fromValue, instruction, "Arrays.fill from index");
+		int to = toValue == null ? length : requireIndex(toValue, instruction, "Arrays.fill to index");
+		checkRange(length, from, to);
+
+		// Only a non-empty range performs stores, and only a store can fail the array store check.
+		if (from < to) {
+			validateReference(Types.undimension(array.type()), value, interpreter, instruction);
+			replaceElements(frame, array, from, to, index -> value);
+		}
+	}
+
+	/**
+	 * Sorts a range of an array. Null bounds select the whole array.
+	 */
+	private static void sortArray(@Nonnull ReFrame frame,
+	                              @Nonnull MethodInsnNode instruction,
+	                              @Nonnull ReValue arrayValue,
+	                              @Nullable ReValue fromValue,
+	                              @Nullable ReValue toValue,
+	                              @Nullable ReValue comparator) throws AnalyzerException {
+		if (isReferenceArrayCall(instruction))
+			sortReferenceArray(frame, instruction, arrayValue, fromValue, toValue, comparator);
+		else
+			sortPrimitiveArray(frame, instruction, arrayValue, fromValue, toValue);
+	}
+
+	/**
+	 * Sorts a range of a primitive array with the JDK method, run on a host array that is then written back.
+	 */
+	private static void sortPrimitiveArray(@Nonnull ReFrame frame,
+	                                       @Nonnull MethodInsnNode instruction,
+	                                       @Nonnull ReValue arrayValue,
+	                                       @Nullable ReValue fromValue,
+	                                       @Nullable ReValue toValue) throws AnalyzerException {
+		Object host = requireHostPrimitiveArray(instruction, arrayValue);
+		int length = Array.getLength(host);
+		int from = fromValue == null ? 0 : requireIndex(fromValue, instruction, "Arrays.sort from index");
+		int to = toValue == null ? length : requireIndex(toValue, instruction, "Arrays.sort to index");
+		sortHostArray(host, from, to);
+		replaceHostArray(frame, arrayValue, host);
+	}
+
+	/**
+	 * Sorts a range of a reference array by natural ordering, which is also what a null comparator selects.
+	 */
+	private static void sortReferenceArray(@Nonnull ReFrame frame,
+	                                       @Nonnull MethodInsnNode instruction,
+	                                       @Nonnull ReValue arrayValue,
+	                                       @Nullable ReValue fromValue,
+	                                       @Nullable ReValue toValue,
+	                                       @Nullable ReValue comparator) throws AnalyzerException {
+		ArrayValue array = requireKnownArray(instruction, arrayValue);
+		int length = array.getFirstDimensionLength().getAsInt();
+		int from = fromValue == null ? 0 : requireIndex(fromValue, instruction, "Arrays.sort from index");
+		int to = toValue == null ? length : requireIndex(toValue, instruction, "Arrays.sort to index");
+		checkRange(length, from, to);
+
+		// A null comparator selects natural ordering.
+		if (comparator != null && !(comparator instanceof ObjectValue object && object.isNull()))
+			throw new AnalyzerException(instruction, "Arrays.sort with a non-null Comparator is not modeled");
+
+		// Sorting fewer than two elements makes no comparisons, so the JDK never reads their contents.
+		int count = to - from;
+		if (count < 2)
+			return;
+
+		ReValue[] values = new ReValue[count];
+		Object[] keys = new Object[count];
+		for (int k = 0; k < count; k++) {
+			values[k] = array.getValue(from + k);
+			keys[k] = requireComparableKey(instruction, values[k]);
+		}
+
+		// Sort the original positions, so the array receives the original references in their new order.
+		Integer[] order = new Integer[count];
+		for (int k = 0; k < count; k++)
+			order[k] = k;
+		try {
+			Arrays.sort(order, (left, right) -> compareKeys(keys[left], keys[right]));
+		} finally {
+			// The JDK sorts in place, so a comparison that throws leaves the range partly reordered. Keep that state.
+			replaceElements(frame, array, from, to, index -> values[order[index - from]]);
+		}
+	}
+
+	/**
+	 * @return {@code true} when the invoked {@link Arrays} overload takes a reference array.
+	 */
+	private static boolean isReferenceArrayCall(@Nonnull MethodInsnNode instruction) {
+		return Type.getArgumentTypes(instruction.desc)[0].getElementType().getSort() == Type.OBJECT;
+	}
+
+	/**
+	 * @return The array, which is known to be non-null and to have a known length.
+	 *
+	 * @throws NullPointerException
+	 * 		When the array is known to be {@code null}.
+	 * @throws AnalyzerException
+	 * 		When the array is not known well enough to model.
+	 */
+	@Nonnull
+	private static ArrayValue requireKnownArray(@Nonnull MethodInsnNode instruction, @Nonnull ReValue value) throws AnalyzerException {
+		// The JDK reads the array length first, so a known null array throws before any other operand is considered.
+		if (value instanceof ObjectValue object && object.isNull())
+			throw new NullPointerException();
+		if (value instanceof ArrayValue array && array.isNotNull() && array.getFirstDimensionLength().isPresent())
+			return array;
+		throw new AnalyzerException(instruction, "Arrays operand is not a known array");
+	}
+
+	/**
+	 * @return The host primitive array. Known evaluator arrays are copied, and host-backed arrays are used in place.
+	 *
+	 * @throws NullPointerException
+	 * 		When the array is known to be {@code null}.
+	 * @throws AnalyzerException
+	 * 		When the array is not known well enough to model.
+	 */
+	@Nonnull
+	private static Object requireHostPrimitiveArray(@Nonnull MethodInsnNode instruction, @Nonnull ReValue value) throws AnalyzerException {
+		if (value instanceof ObjectValue object && object.isNull())
+			throw new NullPointerException();
+
+		boolean knownArray = value instanceof ArrayValue array && array.hasKnownValue();
+		boolean hostArray = value instanceof InstancedObjectValue<?> instanced && instanced.getRealInstance() != null;
+		if (!knownArray && !hostArray)
+			throw new AnalyzerException(instruction, "Arrays operand is not a known primitive array");
+
+		return switch (Type.getArgumentTypes(instruction.desc)[0].getElementType().getSort()) {
+			case Type.BOOLEAN -> arrz(value);
+			case Type.BYTE -> arrb(value);
+			case Type.CHAR -> arrc(value);
+			case Type.SHORT -> arrs(value);
+			case Type.INT -> arri(value);
+			case Type.LONG -> arrj(value);
+			case Type.FLOAT -> arrf(value);
+			case Type.DOUBLE -> arrd(value);
+			default -> throw new AnalyzerException(instruction, "Expected a primitive array invocation");
+		};
+	}
+
+	private static int requireIndex(@Nonnull ReValue value, @Nonnull MethodInsnNode instruction, @Nonnull String role) throws AnalyzerException {
+		if (value instanceof IntValue intValue && intValue.value().isPresent())
+			return intValue.value().getAsInt();
+		throw new AnalyzerException(instruction, role + " is unknown");
+	}
+
+	private static void checkRange(int length, int from, int to) {
+		if (from > to)
+			throw new IllegalArgumentException("fromIndex(" + from + ") > toIndex(" + to + ")");
+		if (from < 0)
+			throw new ArrayIndexOutOfBoundsException(from);
+		if (to > length)
+			throw new ArrayIndexOutOfBoundsException(to);
+	}
+
+	/**
+	 * Replaces the slots in {@code [from, to)} of an evaluator array, keeping every other slot.
+	 *
+	 * @param element
+	 * 		Maps an index inside the range to its new value.
+	 */
+	private static void replaceElements(@Nonnull ReFrame frame, @Nonnull ArrayValue array, int from, int to,
+	                                    @Nonnull IntFunction<ReValue> element) {
+		int length = array.getFirstDimensionLength().getAsInt();
+		frame.replaceValue(array, new ArrayValueImpl(array.type(), array.nullness(), length,
+				index -> index >= from && index < to ? element.apply(index) : array.getValue(index)));
+	}
+
+	/**
+	 * Writes a host primitive array back into the frame.
+	 */
+	private static void replaceHostArray(@Nonnull ReFrame frame, @Nonnull ReValue original, @Nonnull Object host) {
+		if (original instanceof ArrayValue)
+			frame.replaceValue(original, primitiveArrayValue(host));
+	}
+
+	@Nonnull
+	private static ArrayValue primitiveArrayValue(@Nonnull Object host) {
+		return switch (host) {
+			case boolean[] array -> arrz(array);
+			case byte[] array -> arrb(array);
+			case char[] array -> arrc(array);
+			case short[] array -> arrs(array);
+			case int[] array -> arri(array);
+			case long[] array -> arrj(array);
+			case float[] array -> arrf(array);
+			case double[] array -> arrd(array);
+			default -> throw new IllegalStateException("Not a primitive array: " + host.getClass());
+		};
+	}
+
+	private static void fillHostArray(@Nonnull Object host, int from, int to, @Nonnull ReValue value) {
+		switch (host) {
+			case boolean[] array -> Arrays.fill(array, from, to, z((IntValue) value));
+			case byte[] array -> Arrays.fill(array, from, to, b((IntValue) value));
+			case char[] array -> Arrays.fill(array, from, to, c((IntValue) value));
+			case short[] array -> Arrays.fill(array, from, to, s((IntValue) value));
+			case int[] array -> Arrays.fill(array, from, to, i((IntValue) value));
+			case long[] array -> Arrays.fill(array, from, to, j((LongValue) value));
+			case float[] array -> Arrays.fill(array, from, to, f((FloatValue) value));
+			case double[] array -> Arrays.fill(array, from, to, d((DoubleValue) value));
+			default -> throw new IllegalStateException("Not a primitive array: " + host.getClass());
+		}
+	}
+
+	private static void sortHostArray(@Nonnull Object host, int from, int to) {
+		switch (host) {
+			case byte[] array -> Arrays.sort(array, from, to);
+			case char[] array -> Arrays.sort(array, from, to);
+			case short[] array -> Arrays.sort(array, from, to);
+			case int[] array -> Arrays.sort(array, from, to);
+			case long[] array -> Arrays.sort(array, from, to);
+			case float[] array -> Arrays.sort(array, from, to);
+			case double[] array -> Arrays.sort(array, from, to);
+			default -> throw new IllegalStateException("Not a sortable primitive array: " + host.getClass());
+		}
+	}
+
+	/**
+	 * @return Host object used for natural ordering, or {@code null} for a known null element.
+	 *
+	 * @throws AnalyzerException
+	 * 		When the element has no known host value to compare.
+	 */
+	@Nullable
+	private static Object requireComparableKey(@Nonnull MethodInsnNode instruction, @Nonnull ReValue value) throws AnalyzerException {
+		if (value instanceof ObjectValue object) {
+			if (object.isNull())
+				return null;
+			if (object.hasKnownValue() && (object instanceof StringValue || object instanceof ObjectValueBoxImpl<?> || object instanceof InstancedObjectValue<?>))
+				return obj(object);
+		}
+		throw new AnalyzerException(instruction, "Arrays.sort element has no known host value to compare");
+	}
+
+	@SuppressWarnings({"unchecked", "rawtypes"})
+	private static int compareKeys(@Nullable Object left, @Nullable Object right) {
+		return ((Comparable) left).compareTo(right);
+	}
+
+	/**
+	 * Checks that a reference may be stored in an array with the given component type, as the JVM does for array stores.
+	 *
+	 * @throws AnalyzerException
+	 * 		When the reference is not known well enough to decide.
+	 * @throws ArrayStoreException
+	 * 		When the reference is not assignable to the component type.
+	 */
+	private static void validateReference(@Nonnull Type componentType, @Nonnull ReValue value,
+	                                      @Nonnull ReInterpreter interpreter, @Nonnull MethodInsnNode instruction) throws AnalyzerException {
+		if (!(value instanceof ObjectValue object))
+			throw new AnalyzerException(instruction, "Array store of an unknown reference value");
+		if (object.isNull())
+			return;
+		if (!object.isNotNull())
+			throw new AnalyzerException(instruction, "Array store of a possibly null reference value");
+		if (!interpreter.isAssignableFrom(componentType, object.type()))
+			throw new ArrayStoreException();
 	}
 
 	/**
@@ -2269,6 +2583,8 @@ public class InstanceFactory extends BasicLookupUtils {
 
 	/**
 	 * Require a host-backed evaluator value of the requested type.
+	 * <p>
+	 * A known {@code null} is returned as {@code null}, so the host call reproduces the JDK's own null handling.
 	 *
 	 * @param value
 	 * 		Evaluator value to unwrap.
@@ -2277,19 +2593,21 @@ public class InstanceFactory extends BasicLookupUtils {
 	 * @param <T>
 	 * 		Required host type.
 	 *
-	 * @return The host instance.
+	 * @return The host instance, or {@code null} for a known {@code null} value.
 	 *
-	 * @throws IllegalArgumentException
-	 * 		When the value is {@code null}, evaluator-only, or backed by another type.
+	 * @throws AnalyzerException
+	 * 		When the value is evaluator-only, unknown, or backed by another type, so the host call cannot be modeled.
 	 */
-	@Nonnull
-	private static <T> T requireRealInstance(@Nonnull ReValue value, @Nonnull Class<T> type) {
+	@Nullable
+	private static <T> T requireRealInstance(@Nonnull ReValue value, @Nonnull Class<T> type) throws AnalyzerException {
+		if (value instanceof ObjectValue object && object.isNull())
+			return null;
 		if (value instanceof InstancedObjectValue<?> instanced) {
 			Object realInstance = instanced.getRealInstance();
 			if (type.isInstance(realInstance))
 				return type.cast(realInstance);
 		}
-		throw new IllegalArgumentException("Expected host-backed " + type.getName());
+		throw new AnalyzerException(null, "Expected host-backed " + type.getName());
 	}
 
 	/**

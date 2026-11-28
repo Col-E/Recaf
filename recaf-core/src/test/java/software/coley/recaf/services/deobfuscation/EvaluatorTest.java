@@ -1947,6 +1947,98 @@ public class EvaluatorTest extends TransformerTestBase {
 	}
 
 	@Test
+	void testArrayFillUnknownArrayStaysUnknown() {
+		// An array with unknown length or contents is cannot be filled.
+		String compiled = compile("""
+				static int fill(byte[] data) {
+				    Arrays.fill(data, (byte) 1);
+				    return 0;
+				}
+				""", Arrays.class);
+		EvaluationResult result = evaluateResult(compiled, "fill", "([B)I", null, List.of(ArrayValue.VAL_BYTES_MAYBE_NULL));
+		EvaluationFailureResult failure = assertInstanceOf(EvaluationFailureResult.class, result);
+		assertTrue(failure.cause().getCause().getMessage().contains("not a known primitive array"), failure.reason());
+	}
+
+	@Test
+	void testArrayFillKnownNullThrowsNullPointerException() {
+		String compiled = compile("""
+				static int fill() {
+				    byte[] data = null;
+				    Arrays.fill(data, (byte) 1);
+				    return 0;
+				}
+				""", Arrays.class);
+		assertEvaluationThrows(compiled, "fill", "()I", "java/lang/NullPointerException");
+	}
+
+	@Test
+	void testArrayFillRangeErrors() {
+		String compiled = compile("""
+				static int reversed() {
+				    Arrays.fill(new int[2], 2, 1, 0);
+				    return 0;
+				}
+				static int outOfBounds() {
+				    Arrays.fill(new int[2], 0, 3, 0);
+				    return 0;
+				}
+				""", Arrays.class);
+		assertEvaluationThrows(compiled, "reversed", "()I", "java/lang/IllegalArgumentException");
+		assertEvaluationThrows(compiled, "outOfBounds", "()I", "java/lang/ArrayIndexOutOfBoundsException");
+	}
+
+	@Test
+	void testObjectArrayFillStoreCheck() {
+		String compiled = compile("""
+				static int fill() {
+				    Object[] data = new String[2];
+				    Arrays.fill(data, new int[1]);
+				    return 0;
+				}
+				""", Arrays.class);
+		assertEvaluationThrows(compiled, "fill", "()I", "java/lang/ArrayStoreException");
+	}
+
+	@Test
+	void testReferenceArraySortOrdersByNaturalOrder() {
+		String compiled = compile("""
+				static String run() {
+				    String[] strings = {"pear", "apple", "fig"};
+				    Arrays.sort(strings);
+				    return Arrays.toString(strings);
+				}
+				""", Arrays.class);
+		assertStringValue("[apple, fig, pear]", evaluate(compiled, "run", "()Ljava/lang/String;", null, List.of()));
+	}
+
+	@Test
+	void testArrayFillHostBackedArrayInPlace() {
+		String compiled = compile("""
+				static byte[] wipe(byte[] data) {
+				    Arrays.fill(data, (byte) 0);
+				    return data;
+				}
+				""", Arrays.class);
+		byte[] host = {1, 2, 3};
+		ReValue result = evaluate(compiled, "wipe", "([B)[B", null, List.of(new InstancedObjectValue<>(host)));
+		assertArrayEquals(new byte[]{0, 0, 0}, host);
+		assertArrayEquals(new byte[]{0, 0, 0}, Values.asByteArray(result));
+	}
+
+	@Test
+	void testArraysSortMixedTypesThrowsClassCast() {
+		String compiled = compile("""
+				static int mixed() {
+				    Object[] values = {"a", Integer.valueOf(1)};
+				    Arrays.sort(values);
+				    return 0;
+				}
+				""", Arrays.class);
+		assertEvaluationThrows(compiled, "mixed", "()I", "java/lang/ClassCastException");
+	}
+
+	@Test
 	void testBase64ByteBuffers() {
 		String compiled = compile("""
 				static String bufferEncode(ByteBuffer input) {
