@@ -21,7 +21,6 @@ import org.objectweb.asm.tree.VarInsnNode;
 import software.coley.recaf.info.JvmClassInfo;
 import software.coley.recaf.services.inheritance.InheritanceGraph;
 import software.coley.recaf.services.transform.JvmTransformerContext;
-import software.coley.recaf.services.workspace.io.ResourceImporter;
 import software.coley.recaf.test.TestClassUtils;
 import software.coley.recaf.util.ClassMethodPair;
 import software.coley.recaf.util.analysis.Nullness;
@@ -47,11 +46,9 @@ import software.coley.recaf.util.analysis.value.ReValue;
 import software.coley.recaf.util.analysis.value.StringValue;
 import software.coley.recaf.util.analysis.value.ThrowableValue;
 import software.coley.recaf.util.analysis.value.UninitializedValue;
+import software.coley.recaf.util.analysis.value.Values;
 import software.coley.recaf.util.analysis.value.impl.ArrayValueImpl;
 import software.coley.recaf.util.analysis.value.impl.ClassLiteralValueImpl;
-import software.coley.recaf.util.io.ByteSources;
-import software.coley.recaf.util.io.ZipCreationUtils;
-import software.coley.recaf.workspace.model.BasicWorkspace;
 import software.coley.recaf.workspace.model.Workspace;
 import software.coley.recaf.workspace.model.bundle.BasicJvmClassBundle;
 import software.coley.recaf.workspace.model.resource.WorkspaceResource;
@@ -69,8 +66,17 @@ import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
+import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.DataInput;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.EOFException;
+import java.io.FilterInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
@@ -2016,6 +2022,351 @@ public class EvaluatorTest extends TransformerTestBase {
 				List.of(new InstancedObjectValue<>(new ByteArrayInputStream("SGVsbG8=".getBytes())))));
 		assertStringValue("Hello", evaluate(compiled, "streamDecodeCreated",
 				"()Ljava/lang/String;", null, List.of()));
+	}
+
+	@Test
+	void readNBytesReturnsAtMostTheRequestedCount() {
+		// A short read at the end returns the bytes that are left, and a zero count reads nothing.
+		String compiled = compile("""
+				static byte[] take(InputStream in, int count) throws Exception {
+				    return in.readNBytes(count);
+				}
+				""", InputStream.class);
+		String desc = "(Ljava/io/InputStream;I)[B";
+		ByteArrayInputStream input = new ByteArrayInputStream(new byte[]{1, 2, 3});
+		assertArrayEquals(new byte[]{1, 2}, Values.asByteArray(evaluate(compiled, "take", desc, null, List.of(new InstancedObjectValue<>(input), IntValue.of(2)))));
+		assertArrayEquals(new byte[]{3}, Values.asByteArray(evaluate(compiled, "take", desc, null, List.of(new InstancedObjectValue<>(input), IntValue.of(5)))));
+		assertArrayEquals(new byte[0], Values.asByteArray(evaluate(compiled, "take", desc, null, List.of(new InstancedObjectValue<>(input), IntValue.of(0)))));
+	}
+
+	@Test
+	void readNBytesWithNegativeCountThrows() {
+		String compiled = compile("""
+				static byte[] take(InputStream in, int count) throws Exception {
+				    return in.readNBytes(count);
+				}
+				""", InputStream.class);
+		assertByteBufferException(compiled, "take", "(Ljava/io/InputStream;I)[B", "java/lang/IllegalArgumentException",
+				new InstancedObjectValue<>(new ByteArrayInputStream(new byte[]{1})), IntValue.of(-1));
+	}
+
+	@Test
+	void dataInputStreamReadsIntegersBigEndian() {
+		String compiled = compile("""
+				static int first(InputStream in) throws Exception {
+				    return new DataInputStream(in).readInt();
+				}
+				""", InputStream.class, DataInputStream.class);
+		assertIntValue(0x01020304, evaluate(compiled, "first", "(Ljava/io/InputStream;)I", null,
+				List.of(new InstancedObjectValue<>(new ByteArrayInputStream(new byte[]{1, 2, 3, 4})))));
+	}
+
+	@Test
+	void dataInputStreamReadsThroughTheWrappedStream() {
+		// The wrapper reads the same stream, so the wrapped stream's position moves on after readInt.
+		String compiled = compile("""
+				static int headerThenByte(InputStream in) throws Exception {
+				    DataInputStream data = new DataInputStream(in);
+				    data.readInt();
+				    return in.read();
+				}
+				""", InputStream.class, DataInputStream.class);
+		assertIntValue(9, evaluate(compiled, "headerThenByte", "(Ljava/io/InputStream;)I", null,
+				List.of(new InstancedObjectValue<>(new ByteArrayInputStream(new byte[]{0, 0, 1, 2, 9})))));
+	}
+
+	@Test
+	void dataInputStreamReadReturnsUnsignedBytesThenMinusOne() {
+		String compiled = compile("""
+				static int twice(InputStream in) throws Exception {
+				    DataInputStream data = new DataInputStream(in);
+				    return data.read() * 1000 + data.read();
+				}
+				""", InputStream.class, DataInputStream.class);
+
+		// The first byte is 200, read unsigned, and the second read is past the end of the stream.
+		assertIntValue(199_999, evaluate(compiled, "twice", "(Ljava/io/InputStream;)I", null,
+				List.of(new InstancedObjectValue<>(new ByteArrayInputStream(new byte[]{(byte) 200})))));
+	}
+
+	@Test
+	void dataInputStreamReadFullyFillsTheArray() {
+		String compiled = compile("""
+				static byte[] fill(InputStream in) throws Exception {
+				    byte[] buffer = new byte[3];
+				    new DataInputStream(in).readFully(buffer);
+				    return buffer;
+				}
+				""", InputStream.class, DataInputStream.class);
+		assertArrayEquals(new byte[]{7, 8, 9}, Values.asByteArray(evaluate(compiled, "fill", "(Ljava/io/InputStream;)[B", null,
+				List.of(new InstancedObjectValue<>(new ByteArrayInputStream(new byte[]{7, 8, 9, 10}))))));
+	}
+
+	@Test
+	void dataInputStreamReadFullyAtEndThrowsEofException() {
+		String compiled = compile("""
+				static byte[] fill(InputStream in) throws Exception {
+				    byte[] buffer = new byte[3];
+				    new DataInputStream(in).readFully(buffer);
+				    return buffer;
+				}
+				""", InputStream.class, DataInputStream.class);
+		assertByteBufferException(compiled, "fill", "(Ljava/io/InputStream;)[B", "java/io/EOFException",
+				new InstancedObjectValue<>(new ByteArrayInputStream(new byte[]{7, 8})));
+	}
+
+	@Test
+	void dataInputStreamReadFullyKeepsThePartialBytesWhenItThrows() {
+		// The JVM fills the array up to the end of the stream before it throws, so the caught array holds those bytes.
+		String compiled = compile("""
+				static byte[] partial(InputStream in) throws Exception {
+				    byte[] buffer = new byte[3];
+				    try {
+				        new DataInputStream(in).readFully(buffer);
+				    } catch (EOFException ex) {
+				        return buffer;
+				    }
+				    return null;
+				}
+				""", InputStream.class, DataInputStream.class, EOFException.class);
+		assertArrayEquals(new byte[]{7, 8, 0}, Values.asByteArray(evaluate(compiled, "partial", "(Ljava/io/InputStream;)[B", null,
+				List.of(new InstancedObjectValue<>(new ByteArrayInputStream(new byte[]{7, 8}))))));
+	}
+
+	@Test
+	void inputStreamSkipAndAvailableFollowTheHost() {
+		String compiled = compile("""
+				static int skipThenAvailable(InputStream in) throws Exception {
+				    long skipped = in.skip(2);
+				    return (int) skipped * 10 + in.available();
+				}
+				""", InputStream.class);
+
+		// Two bytes are skipped and three are left.
+		assertIntValue(23, evaluate(compiled, "skipThenAvailable", "(Ljava/io/InputStream;)I", null,
+				List.of(new InstancedObjectValue<>(new ByteArrayInputStream(new byte[]{1, 2, 3, 4, 5})))));
+	}
+
+	@Test
+	void inputStreamSkipNBytesAtEndThrowsEofException() {
+		String compiled = compile("""
+				static int skipPastTheEnd(InputStream in) throws Exception {
+				    in.skipNBytes(10);
+				    return 0;
+				}
+				""", InputStream.class);
+
+		// Cannot read 10 bytes from a stream that only has 3, so the skipNBytes call throws an EOFException.
+		assertByteBufferException(compiled, "skipPastTheEnd", "(Ljava/io/InputStream;)I", "java/io/EOFException",
+				new InstancedObjectValue<>(new ByteArrayInputStream(new byte[]{1, 2, 3})));
+	}
+
+	@Test
+	void inputStreamReadNBytesIntoARangeFillsOnlyThatRange() {
+		String compiled = compile("""
+				static int count(InputStream in) throws Exception {
+				    byte[] buffer = {9, 9, 9, 9, 9};
+				    return in.readNBytes(buffer, 1, 3);
+				}
+				static byte[] contents(InputStream in) throws Exception {
+				    byte[] buffer = {9, 9, 9, 9, 9};
+				    in.readNBytes(buffer, 1, 3);
+				    return buffer;
+				}
+				""", InputStream.class);
+
+		// Only two bytes are left, so the count is short and the slots after them keep their values.
+		assertIntValue(2, evaluate(compiled, "count", "(Ljava/io/InputStream;)I", null,
+				List.of(new InstancedObjectValue<>(new ByteArrayInputStream(new byte[]{1, 2})))));
+		assertArrayEquals(new byte[]{9, 1, 2, 9, 9}, Values.asByteArray(evaluate(compiled, "contents", "(Ljava/io/InputStream;)[B", null,
+				List.of(new InstancedObjectValue<>(new ByteArrayInputStream(new byte[]{1, 2}))))));
+	}
+
+	@Test
+	void inputStreamReadIntoAnArrayFillsOnlyWhatWasRead() {
+		String compiled = compile("""
+				static byte[] whole(InputStream in) throws Exception {
+				    byte[] buffer = {9, 9, 9, 9};
+				    in.read(buffer);
+				    return buffer;
+				}
+				static byte[] range(InputStream in) throws Exception {
+				    byte[] buffer = {9, 9, 9, 9};
+				    in.read(buffer, 1, 3);
+				    return buffer;
+				}
+				""", InputStream.class);
+
+		// The stream has two bytes, so each read fills two slots and leaves the rest of the array alone.
+		assertArrayEquals(new byte[]{1, 2, 9, 9}, Values.asByteArray(evaluate(compiled, "whole", "(Ljava/io/InputStream;)[B", null,
+				List.of(new InstancedObjectValue<>(new ByteArrayInputStream(new byte[]{1, 2}))))));
+		assertArrayEquals(new byte[]{9, 1, 2, 9}, Values.asByteArray(evaluate(compiled, "range", "(Ljava/io/InputStream;)[B", null,
+				List.of(new InstancedObjectValue<>(new ByteArrayInputStream(new byte[]{1, 2}))))));
+	}
+
+	@Test
+	void inputStreamTransferToCopiesIntoTheOutputStream() {
+		String compiled = compile("""
+				static long copy(InputStream in, OutputStream out) throws Exception {
+				    return in.transferTo(out);
+				}
+				""", InputStream.class, OutputStream.class);
+
+		// The transferTo call copies all four bytes from the input stream into the output stream.
+		ByteArrayOutputStream output = new ByteArrayOutputStream();
+		assertLongValue(4, evaluate(compiled, "copy", "(Ljava/io/InputStream;Ljava/io/OutputStream;)J", null,
+				List.of(new InstancedObjectValue<>(new ByteArrayInputStream(new byte[]{1, 2, 3, 4})),
+						new InstancedObjectValue<>(output))));
+		assertArrayEquals(new byte[]{1, 2, 3, 4}, output.toByteArray());
+	}
+
+	@Test
+	void inputStreamMarkAndResetRewindTheStream() {
+		String compiled = compile("""
+				static int markedRead(InputStream in) throws Exception {
+				    int supported = in.markSupported() ? 1000 : 0;
+				    in.mark(10);
+				    in.read();
+				    in.read();
+				    in.reset();
+				    return supported + in.read();
+				}
+				""", InputStream.class);
+
+		// ByteArrayInputStream supports marks, so the reset returns to the first byte.
+		assertIntValue(1007, evaluate(compiled, "markedRead", "(Ljava/io/InputStream;)I", null,
+				List.of(new InstancedObjectValue<>(new ByteArrayInputStream(new byte[]{7, 8, 9})))));
+	}
+
+	@Test
+	void everyStreamOwnerReachesTheSameHandlers() {
+		String compiled = compile("""
+						static int viaByteArray(ByteArrayInputStream in) throws Exception {
+						    return in.available() * 100 + in.read();
+						}
+						static int viaFilter(FilterInputStream in) throws Exception {
+						    return in.available() * 100 + in.read();
+						}
+						static int viaBuffered(BufferedInputStream in) throws Exception {
+						    return in.available() * 100 + in.read();
+						}
+						static int viaData(DataInputStream in) throws Exception {
+						    return in.available() * 100 + in.read();
+						}
+						static int viaInput(InputStream in) throws Exception {
+						    return in.available() * 100 + in.read();
+						}
+						""",
+				ByteArrayInputStream.class,
+				FilterInputStream.class,
+				BufferedInputStream.class,
+				DataInputStream.class,
+				InputStream.class);
+
+		byte[] data = {5, 6, 7};
+		assertIntValue(305, evaluate(compiled, "viaByteArray", "(Ljava/io/ByteArrayInputStream;)I", null, List.of(new InstancedObjectValue<>(new ByteArrayInputStream(data)))));
+		assertIntValue(305, evaluate(compiled, "viaFilter", "(Ljava/io/FilterInputStream;)I", null, List.of(new InstancedObjectValue<>(new BufferedInputStream(new ByteArrayInputStream(data))))));
+		assertIntValue(305, evaluate(compiled, "viaBuffered", "(Ljava/io/BufferedInputStream;)I", null, List.of(new InstancedObjectValue<>(new BufferedInputStream(new ByteArrayInputStream(data))))));
+		assertIntValue(305, evaluate(compiled, "viaData", "(Ljava/io/DataInputStream;)I", null, List.of(new InstancedObjectValue<>(new DataInputStream(new ByteArrayInputStream(data))))));
+		assertIntValue(305, evaluate(compiled, "viaInput", "(Ljava/io/InputStream;)I", null, List.of(new InstancedObjectValue<>(new ByteArrayInputStream(data)))));
+	}
+
+	@Test
+	void dataInputPrimitivesReadBackWhatWasWritten() throws IOException {
+		String compiled = compile("""
+				static boolean readBoolean(DataInput in) throws Exception { return in.readBoolean(); }
+				static byte readByte(DataInput in) throws Exception { return in.readByte(); }
+				static int readUnsignedByte(DataInput in) throws Exception { return in.readUnsignedByte(); }
+				static short readShort(DataInput in) throws Exception { return in.readShort(); }
+				static int readUnsignedShort(DataInput in) throws Exception { return in.readUnsignedShort(); }
+				static char readChar(DataInput in) throws Exception { return in.readChar(); }
+				static int readInt(DataInput in) throws Exception { return in.readInt(); }
+				static long readLong(DataInput in) throws Exception { return in.readLong(); }
+				static float readFloat(DataInput in) throws Exception { return in.readFloat(); }
+				static double readDouble(DataInput in) throws Exception { return in.readDouble(); }
+				static String readUTF(DataInput in) throws Exception { return in.readUTF(); }
+				""", DataInput.class);
+
+		assertIntValue(1, evaluate(compiled, "readBoolean", "(Ljava/io/DataInput;)Z", null, List.of(dataInput(out -> out.writeBoolean(true)))));
+		assertIntValue(-5, evaluate(compiled, "readByte", "(Ljava/io/DataInput;)B", null, List.of(dataInput(out -> out.writeByte(-5)))));
+		assertIntValue(251, evaluate(compiled, "readUnsignedByte", "(Ljava/io/DataInput;)I", null, List.of(dataInput(out -> out.writeByte(-5)))));
+		assertIntValue(-300, evaluate(compiled, "readShort", "(Ljava/io/DataInput;)S", null, List.of(dataInput(out -> out.writeShort(-300)))));
+		assertIntValue(65236, evaluate(compiled, "readUnsignedShort", "(Ljava/io/DataInput;)I", null, List.of(dataInput(out -> out.writeShort(-300)))));
+		assertIntValue('Z', evaluate(compiled, "readChar", "(Ljava/io/DataInput;)C", null, List.of(dataInput(out -> out.writeChar('Z')))));
+		assertIntValue(0x7F00FF01, evaluate(compiled, "readInt", "(Ljava/io/DataInput;)I", null, List.of(dataInput(out -> out.writeInt(0x7F00FF01)))));
+		assertLongValue(-1234567890123L, evaluate(compiled, "readLong", "(Ljava/io/DataInput;)J", null, List.of(dataInput(out -> out.writeLong(-1234567890123L)))));
+		assertFloatValue(1.5f, evaluate(compiled, "readFloat", "(Ljava/io/DataInput;)F", null, List.of(dataInput(out -> out.writeFloat(1.5f)))));
+		assertDoubleValue(-2.25, evaluate(compiled, "readDouble", "(Ljava/io/DataInput;)D", null, List.of(dataInput(out -> out.writeDouble(-2.25)))));
+		assertStringValue("héllo", evaluate(compiled, "readUTF", "(Ljava/io/DataInput;)Ljava/lang/String;", null, List.of(dataInput(out -> out.writeUTF("héllo")))));
+	}
+
+	@Test
+	void dataInputReadLineStopsAtNewlineAndReturnsNullAtEnd() throws IOException {
+		String compiled = compile("""
+				static String line(DataInput in) throws Exception {
+				    return in.readLine();
+				}
+				""", DataInput.class);
+		assertStringValue("ab", evaluate(compiled, "line", "(Ljava/io/DataInput;)Ljava/lang/String;", null, List.of(dataInput(out -> out.writeBytes("ab\ncd")))));
+
+		ObjectValue atEnd = assertInstanceOf(ObjectValue.class, evaluate(compiled, "line", "(Ljava/io/DataInput;)Ljava/lang/String;", null, List.of(dataInput(out -> {}))));
+		assertTrue(atEnd.isNull());
+	}
+
+	@Test
+	void dataInputSkipBytesAndReadFullyRange() throws IOException {
+		String compiled = compile("""
+				static int skipPastTheEnd(DataInput in) throws Exception {
+				    return in.skipBytes(10);
+				}
+				static byte[] range(DataInput in) throws Exception {
+				    byte[] buffer = {9, 9, 9, 9};
+				    in.readFully(buffer, 1, 2);
+				    return buffer;
+				}
+				static byte[] partialRange(DataInput in) throws Exception {
+				    byte[] buffer = {9, 9, 9, 9};
+				    try {
+				        in.readFully(buffer, 1, 2);
+				    } catch (EOFException ex) {
+				        return buffer;
+				    }
+				    return null;
+				}
+				""", DataInput.class, EOFException.class);
+
+		// The skipBytes call returns the number of bytes actually skipped, which is the length of the stream.
+		assertIntValue(3, evaluate(compiled, "skipPastTheEnd", "(Ljava/io/DataInput;)I", null, List.of(dataInput(out -> out.write(new byte[]{1, 2, 3})))));
+		assertArrayEquals(new byte[]{9, 1, 2, 9}, Values.asByteArray(evaluate(compiled, "range", "(Ljava/io/DataInput;)[B", null, List.of(dataInput(out -> out.write(new byte[]{1, 2, 3}))))));
+
+		// The byte read before the end of the stream stays in the array, and the slot after it keeps its value.
+		assertArrayEquals(new byte[]{9, 1, 9, 9}, Values.asByteArray(evaluate(compiled, "partialRange", "(Ljava/io/DataInput;)[B", null, List.of(dataInput(out -> out.writeByte(1))))));
+	}
+
+	@Test
+	void dataInputStaticReadUtfReadsFromTheGivenInput() throws IOException {
+		String compiled = compile("""
+				static String read(DataInput in) throws Exception {
+				    return DataInputStream.readUTF(in);
+				}
+				""", DataInput.class, DataInputStream.class);
+
+		assertStringValue("héllo", evaluate(compiled, "read", "(Ljava/io/DataInput;)Ljava/lang/String;", null,
+				List.of(dataInput(out -> out.writeUTF("héllo")))));
+	}
+
+	@Nonnull
+	private static ReValue dataInput(@Nonnull DataWriter writer) throws IOException {
+		ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+		try (DataOutputStream out = new DataOutputStream(bytes)) {
+			writer.write(out);
+		}
+		return new InstancedObjectValue<>(new DataInputStream(new ByteArrayInputStream(bytes.toByteArray())));
+	}
+
+	@FunctionalInterface
+	private interface DataWriter {
+		void write(@Nonnull DataOutputStream out) throws IOException;
 	}
 
 	@Test

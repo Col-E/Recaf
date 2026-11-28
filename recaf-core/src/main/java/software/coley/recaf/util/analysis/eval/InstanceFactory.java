@@ -32,14 +32,17 @@ import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
+import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.DataInput;
+import java.io.DataInputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
 import java.nio.ByteOrder;
+import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
@@ -98,6 +101,7 @@ public class InstanceFactory extends BasicLookupUtils {
 
 		registerMethodHandlers();
 		registerCollectionMethodHandlers();
+		registerStreamMethodHandlers();
 	}
 
 	/**
@@ -1090,45 +1094,6 @@ public class InstanceFactory extends BasicLookupUtils {
 			return null;
 		});
 
-		// java.io.InputStream
-		//  - java.io.ByteArrayInputStream
-		registerMethodHandler("java/io/InputStream", "read", "()I", (ReFrame frame, ReValue host, InputStream receiver, List<ReValue> args) -> i(receiver.read()));
-		registerMethodHandler("java/io/InputStream", "read", "([B)I", (ReFrame frame, ReValue host, InputStream receiver, List<ReValue> args) -> {
-			ReValue destinationValue = args.get(0);
-			byte[] destination = arrb(destinationValue);
-			int read;
-			try {
-				read = receiver.read(destination);
-			} catch (Throwable t) {
-				if (destination != null)
-					replaceByteArrayContents(frame, destinationValue, destination, 0, destination.length);
-				throw t;
-			}
-			replaceByteArrayContents(frame, destinationValue, destination, 0, read);
-			return i(read);
-		});
-		registerMethodHandler("java/io/InputStream", "read", "([BII)I", (ReFrame frame, ReValue host, InputStream receiver, List<ReValue> args) -> {
-			ReValue destinationValue = args.get(0);
-			byte[] destination = arrb(destinationValue);
-			int offset = i((IntValue) args.get(1));
-			int length = i((IntValue) args.get(2));
-			int read;
-			try {
-				read = receiver.read(destination, offset, length);
-			} catch (Throwable t) {
-				if (destination != null)
-					replaceByteArrayContents(frame, destinationValue, destination, offset, length);
-				throw t;
-			}
-			replaceByteArrayContents(frame, destinationValue, destination, offset, read);
-			return i(read);
-		});
-		registerMethodHandler("java/io/InputStream", "readAllBytes", "()[B", (ReFrame frame, ReValue host, InputStream receiver, List<ReValue> args) -> arrb(receiver.readAllBytes()));
-		registerMethodHandler("java/io/InputStream", "close", "()V", (ReFrame frame, ReValue host, InputStream receiver, List<ReValue> args) -> {
-			receiver.close();
-			return null;
-		});
-
 		// java.security.MessageDigest
 		registerMethodHandler("java/security/MessageDigest", "digest", "()[B", (ReFrame frame, ReValue host, MessageDigest receiver, List<ReValue> args) -> arrb(receiver.digest()));
 		registerMethodHandler("java/security/MessageDigest", "digest", "([B)[B", (ReFrame frame, ReValue host, MessageDigest receiver, List<ReValue> args) -> arrb(receiver.digest(arrb(args.get(0)))));
@@ -1270,30 +1235,6 @@ public class InstanceFactory extends BasicLookupUtils {
 		registerMethodHandler("javax/crypto/SecretKey", "getFormat", "()Ljava/lang/String;", (ReFrame frame, ReValue host, Key receiver, List<ReValue> args) -> str(receiver.getFormat()));
 		registerMethodHandler("javax/crypto/SecretKey", "getEncoded", "()[B", (ReFrame frame, ReValue host, Key receiver, List<ReValue> args) -> arrb(receiver.getEncoded()));
 
-		// javax.crypto.CipherInputStream
-		registerMethodHandler("javax/crypto/CipherInputStream", "read", "()I", (ReFrame frame, ReValue host, InputStream receiver, List<ReValue> args) -> i(receiver.read()));
-		registerMethodHandler("javax/crypto/CipherInputStream", "read", "([B)I", (ReFrame frame, ReValue host, InputStream receiver, List<ReValue> args) -> {
-			ReValue destinationValue = args.get(0);
-			byte[] destination = arrb(destinationValue);
-			int read = receiver.read(destination);
-			replaceByteArrayContents(frame, destinationValue, destination, 0, read);
-			return i(read);
-		});
-		registerMethodHandler("javax/crypto/CipherInputStream", "read", "([BII)I", (ReFrame frame, ReValue host, InputStream receiver, List<ReValue> args) -> {
-			ReValue destinationValue = args.get(0);
-			byte[] destination = arrb(destinationValue);
-			int offset = i((IntValue) args.get(1));
-			int length = i((IntValue) args.get(2));
-			int read = receiver.read(destination, offset, length);
-			replaceByteArrayContents(frame, destinationValue, destination, offset, read);
-			return i(read);
-		});
-		registerMethodHandler("javax/crypto/CipherInputStream", "readAllBytes", "()[B", (ReFrame frame, ReValue host, InputStream receiver, List<ReValue> args) -> arrb(receiver.readAllBytes()));
-		registerMethodHandler("javax/crypto/CipherInputStream", "close", "()V", (ReFrame frame, ReValue host, InputStream receiver, List<ReValue> args) -> {
-			receiver.close();
-			return null;
-		});
-
 		// javax.crypto.CipherOutputStream
 		registerMethodHandler("javax/crypto/CipherOutputStream", "write", "(I)V", (ReFrame frame, ReValue host, OutputStream receiver, List<ReValue> args) -> {
 			receiver.write(i((IntValue) args.get(0)));
@@ -1315,6 +1256,94 @@ public class InstanceFactory extends BasicLookupUtils {
 			receiver.close();
 			return null;
 		});
+	}
+
+	private void registerStreamMethodHandlers() {
+		String[] inputStreamOwners = {
+				"java/io/InputStream",
+				"java/io/FilterInputStream",
+				"java/io/BufferedInputStream",
+				"java/io/ByteArrayInputStream",
+				"java/io/DataInputStream",
+				"javax/crypto/CipherInputStream"
+		};
+		for (String owner : inputStreamOwners)
+			registerInputStreamMethods(owner);
+
+		String[] dataInputOwners = {"java/io/DataInput", "java/io/DataInputStream"};
+		for (String owner : dataInputOwners)
+			registerDataInputMethods(owner);
+	}
+
+	@SuppressWarnings("all")
+	private void registerInputStreamMethods(@Nonnull String owner) {
+		registerMethodHandler(owner, "read", "()I", (ReFrame frame, ReValue host, InputStream receiver, List<ReValue> args) -> i(receiver.read()));
+		registerMethodHandler(owner, "read", "([B)I", (ReFrame frame, ReValue host, InputStream receiver, List<ReValue> args) -> i(readIntoByteArray(frame, args.get(0), 0, destination -> receiver.read(destination))));
+		registerMethodHandler(owner, "read", "([BII)I", (ReFrame frame, ReValue host, InputStream receiver, List<ReValue> args) -> {
+			int offset = i((IntValue) args.get(1));
+			int length = i((IntValue) args.get(2));
+			return i(readIntoByteArray(frame, args.get(0), offset, destination -> receiver.read(destination, offset, length)));
+		});
+		registerMethodHandler(owner, "readAllBytes", "()[B", (ReFrame frame, ReValue host, InputStream receiver, List<ReValue> args) -> arrb(receiver.readAllBytes()));
+		registerMethodHandler(owner, "readNBytes", "(I)[B", (ReFrame frame, ReValue host, InputStream receiver, List<ReValue> args) -> arrb(receiver.readNBytes(i((IntValue) args.get(0)))));
+		registerMethodHandler(owner, "readNBytes", "([BII)I", (ReFrame frame, ReValue host, InputStream receiver, List<ReValue> args) -> {
+			int offset = i((IntValue) args.get(1));
+			int length = i((IntValue) args.get(2));
+			return i(readIntoByteArray(frame, args.get(0), offset, destination -> receiver.readNBytes(destination, offset, length)));
+		});
+		registerMethodHandler(owner, "skip", "(J)J", (ReFrame frame, ReValue host, InputStream receiver, List<ReValue> args) -> j(receiver.skip(j((LongValue) args.get(0)))));
+		registerMethodHandler(owner, "skipNBytes", "(J)V", (ReFrame frame, ReValue host, InputStream receiver, List<ReValue> args) -> {
+			receiver.skipNBytes(j((LongValue) args.get(0)));
+			return null;
+		});
+		registerMethodHandler(owner, "available", "()I", (ReFrame frame, ReValue host, InputStream receiver, List<ReValue> args) -> i(receiver.available()));
+		registerMethodHandler(owner, "transferTo", "(Ljava/io/OutputStream;)J", (ReFrame frame, ReValue host, InputStream receiver, List<ReValue> args) -> j(receiver.transferTo(requireRealInstance(args.get(0), OutputStream.class))));
+		registerMethodHandler(owner, "mark", "(I)V", (ReFrame frame, ReValue host, InputStream receiver, List<ReValue> args) -> {
+			receiver.mark(i((IntValue) args.get(0)));
+			return null;
+		});
+		registerMethodHandler(owner, "reset", "()V", (ReFrame frame, ReValue host, InputStream receiver, List<ReValue> args) -> {
+			receiver.reset();
+			return null;
+		});
+		registerMethodHandler(owner, "markSupported", "()Z", (ReFrame frame, ReValue host, InputStream receiver, List<ReValue> args) -> z(receiver.markSupported()));
+		registerMethodHandler(owner, "close", "()V", (ReFrame frame, ReValue host, InputStream receiver, List<ReValue> args) -> {
+			receiver.close();
+			return null;
+		});
+	}
+
+	@SuppressWarnings("all")
+	private void registerDataInputMethods(@Nonnull String owner) {
+		registerMethodHandler(owner, "readBoolean", "()Z", (ReFrame frame, ReValue host, DataInput receiver, List<ReValue> args) -> z(receiver.readBoolean()));
+		registerMethodHandler(owner, "readByte", "()B", (ReFrame frame, ReValue host, DataInput receiver, List<ReValue> args) -> i(receiver.readByte()));
+		registerMethodHandler(owner, "readUnsignedByte", "()I", (ReFrame frame, ReValue host, DataInput receiver, List<ReValue> args) -> i(receiver.readUnsignedByte()));
+		registerMethodHandler(owner, "readShort", "()S", (ReFrame frame, ReValue host, DataInput receiver, List<ReValue> args) -> s(receiver.readShort()));
+		registerMethodHandler(owner, "readUnsignedShort", "()I", (ReFrame frame, ReValue host, DataInput receiver, List<ReValue> args) -> i(receiver.readUnsignedShort()));
+		registerMethodHandler(owner, "readChar", "()C", (ReFrame frame, ReValue host, DataInput receiver, List<ReValue> args) -> c(receiver.readChar()));
+		registerMethodHandler(owner, "readInt", "()I", (ReFrame frame, ReValue host, DataInput receiver, List<ReValue> args) -> i(receiver.readInt()));
+		registerMethodHandler(owner, "readLong", "()J", (ReFrame frame, ReValue host, DataInput receiver, List<ReValue> args) -> j(receiver.readLong()));
+		registerMethodHandler(owner, "readFloat", "()F", (ReFrame frame, ReValue host, DataInput receiver, List<ReValue> args) -> f(receiver.readFloat()));
+		registerMethodHandler(owner, "readDouble", "()D", (ReFrame frame, ReValue host, DataInput receiver, List<ReValue> args) -> d(receiver.readDouble()));
+		registerMethodHandler(owner, "readLine", "()Ljava/lang/String;", (ReFrame frame, ReValue host, DataInput receiver, List<ReValue> args) -> str(receiver.readLine()));
+		registerMethodHandler(owner, "readUTF", "()Ljava/lang/String;", (ReFrame frame, ReValue host, DataInput receiver, List<ReValue> args) -> str(receiver.readUTF()));
+		registerMethodHandler(owner, "readFully", "([B)V", (ReFrame frame, ReValue host, DataInput receiver, List<ReValue> args) -> {
+			readIntoByteArray(frame, args.get(0), 0, destination -> {
+				receiver.readFully(destination);
+				return destination.length;
+			});
+			return null;
+		});
+		registerMethodHandler(owner, "readFully", "([BII)V", (ReFrame frame, ReValue host, DataInput receiver, List<ReValue> args) -> {
+			int offset = i((IntValue) args.get(1));
+			int length = i((IntValue) args.get(2));
+			readIntoByteArray(frame, args.get(0), offset, destination -> {
+				receiver.readFully(destination, offset, length);
+				return length;
+			});
+			return null;
+		});
+		registerMethodHandler(owner, "skipBytes", "(I)I", (ReFrame frame, ReValue host, DataInput receiver, List<ReValue> args) -> i(receiver.skipBytes(i((IntValue) args.get(0)))));
 	}
 
 	/**
@@ -1566,6 +1595,13 @@ public class InstanceFactory extends BasicLookupUtils {
 		registerMapper(ByteArrayInputStream.class, "([B)V", (host, parameters) -> new ByteArrayInputStream(arrb(parameters.get(0))));
 		registerMapper(ByteArrayInputStream.class, "([BII)V", (host, parameters) -> new ByteArrayInputStream(arrb(parameters.get(0)), i((IntValue) parameters.get(1)), i((IntValue) parameters.get(2))));
 
+		// java.io.DataInputStream
+		registerMapper(DataInputStream.class, "(Ljava/io/InputStream;)V", (host, parameters) -> new DataInputStream(requireRealInstance(parameters.get(0), InputStream.class)));
+
+		// java.io.BufferedInputStream
+		registerMapper(BufferedInputStream.class, "(Ljava/io/InputStream;)V", (host, parameters) -> new BufferedInputStream(requireRealInstance(parameters.get(0), InputStream.class)));
+		registerMapper(BufferedInputStream.class, "(Ljava/io/InputStream;I)V", (host, parameters) -> new BufferedInputStream(requireRealInstance(parameters.get(0), InputStream.class), i((IntValue) parameters.get(1))));
+
 		// java.io.ByteArrayOutputStream
 		registerMapper(ByteArrayOutputStream.class, "()V", (host, parameters) -> new ByteArrayOutputStream());
 		registerMapper(ByteArrayOutputStream.class, "(I)V", (host, parameters) -> new ByteArrayOutputStream(i((IntValue) parameters.get(0))));
@@ -1691,6 +1727,9 @@ public class InstanceFactory extends BasicLookupUtils {
 	private void registerStaticMethodHandlers() {
 		registerStaticArrays();
 		registerObjects();
+
+		// java.io.DataInputStream
+		registerStaticMethodHandler("java/io/DataInputStream", "readUTF", "(Ljava/io/DataInput;)Ljava/lang/String;", (frame, interpreter, instruction, args) -> str(DataInputStream.readUTF(requireRealInstance(args.getFirst(), DataInput.class))));
 
 		// Its just one method. How complex can it be?
 		//  [aware.gif]
@@ -2322,5 +2361,46 @@ public class InstanceFactory extends BasicLookupUtils {
 		ArrayValue replacement = new ArrayValueImpl(array.type(), array.nullness(), originalLength,
 				index -> index >= start && index < end ? i(hostContents[index]) : array.getValue(index));
 		frame.replaceValue(original, replacement);
+	}
+
+	/**
+	 * Runs a read into an evaluator byte array, then copies the bytes the read filled back into that array.
+	 * The copy also runs when the read throws, because the host has already written those bytes.
+	 *
+	 * @param frame
+	 * 		Active evaluator frame.
+	 * @param destinationValue
+	 * 		Evaluator array the read fills.
+	 * @param offset
+	 * 		First index of the array that the read fills.
+	 * @param read
+	 * 		Host read into the array. Returns the number of bytes it filled.
+	 *
+	 * @return Number of bytes the host read filled.
+	 *
+	 * @throws Throwable
+	 * 		When the host read throws.
+	 */
+	private static int readIntoByteArray(@Nonnull ReFrame frame, @Nonnull ReValue destinationValue, int offset,
+	                                     @Nonnull ByteArrayRead read) throws Throwable {
+		byte[] destination = arrb(destinationValue);
+		int count;
+		try {
+			count = read.read(destination);
+		} catch (Throwable t) {
+			if (destination != null)
+				replaceByteArrayContents(frame, destinationValue, destination, 0, destination.length);
+			throw t;
+		}
+		replaceByteArrayContents(frame, destinationValue, destination, offset, count);
+		return count;
+	}
+
+	/**
+	 * Host read into a byte array.
+	 */
+	@FunctionalInterface
+	private interface ByteArrayRead {
+		int read(@Nonnull byte[] destination) throws Throwable;
 	}
 }
