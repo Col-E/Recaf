@@ -2331,6 +2331,86 @@ public class EvaluatorTest extends TransformerTestBase {
 	}
 
 	@Test
+	void knownNullConstructorArgumentReachesTheHost() {
+		// The wrapper accepts null, so the JDK's own null handling fails on the first read.
+		String compiled = compile("""
+				static int run() throws Exception {
+				    return new DataInputStream(null).readInt();
+				}
+				""", DataInputStream.class);
+		assertByteBufferException(compiled, "run", "()I", "java/lang/NullPointerException");
+	}
+
+	@Test
+	void knownNullStaticArgumentReachesTheHost() {
+		String compiled = compile("""
+				static String run() throws Exception {
+				    return DataInputStream.readUTF(null);
+				}
+				""", DataInputStream.class);
+		assertByteBufferException(compiled, "run", "()Ljava/lang/String;", "java/lang/NullPointerException");
+	}
+
+	@Test
+	void knownNullInstanceArgumentReachesTheHost() {
+		String compiled = compile("""
+				static long run() throws Exception {
+				    return new ByteArrayInputStream(new byte[]{1}).transferTo(null);
+				}
+				""", ByteArrayInputStream.class);
+		assertByteBufferException(compiled, "run", "()J", "java/lang/NullPointerException");
+	}
+
+	@Test
+	void evaluatorOnlyStreamArgumentAbortsEvaluation() {
+		// The argument has no host stream to wrap, so the call cannot be modeled and evaluation must stop.
+		String compiled = compile("""
+				static int first(InputStream in) throws Exception {
+				    return new DataInputStream(in).readInt();
+				}
+				""", InputStream.class, DataInputStream.class);
+		EvaluationResult result = evaluateResult(compiled, "first", "(Ljava/io/InputStream;)I", null,
+				List.of(new InstancedObjectValue<>(Type.getObjectType("java/io/InputStream"))));
+		assertInstanceOf(EvaluationFailureResult.class, result);
+	}
+
+	@Test
+	void unknownStreamArgumentAbortsEvaluation() {
+		String compiled = compile("""
+				static int first(InputStream in) throws Exception {
+				    return new DataInputStream(in).readInt();
+				}
+				""", InputStream.class, DataInputStream.class);
+		EvaluationResult result = evaluateResult(compiled, "first", "(Ljava/io/InputStream;)I", null,
+				List.of(ObjectValue.object(Type.getObjectType("java/io/InputStream"), Nullness.NOT_NULL)));
+		assertInstanceOf(EvaluationFailureResult.class, result);
+	}
+
+	@Test
+	void unknownArgumentAbortsAnInstanceHandler() {
+		String compiled = compile("""
+				static long copy(OutputStream out) throws Exception {
+				    return new ByteArrayInputStream(new byte[]{1}).transferTo(out);
+				}
+				""", ByteArrayInputStream.class, OutputStream.class);
+		EvaluationResult result = evaluateResult(compiled, "copy", "(Ljava/io/OutputStream;)J", null,
+				List.of(ObjectValue.object(Type.getObjectType("java/io/OutputStream"), Nullness.NOT_NULL)));
+		assertInstanceOf(EvaluationFailureResult.class, result);
+	}
+
+	@Test
+	void unknownArgumentAbortsAStaticHandler() {
+		String compiled = compile("""
+				static String read(DataInput in) throws Exception {
+				    return DataInputStream.readUTF(in);
+				}
+				""", DataInput.class, DataInputStream.class);
+		EvaluationResult result = evaluateResult(compiled, "read", "(Ljava/io/DataInput;)Ljava/lang/String;", null,
+				List.of(ObjectValue.object(Type.getObjectType("java/io/DataInput"), Nullness.NOT_NULL)));
+		assertInstanceOf(EvaluationFailureResult.class, result);
+	}
+
+	@Test
 	void everyStreamOwnerReachesTheSameHandlers() {
 		String compiled = compile("""
 						static int viaByteArray(ByteArrayInputStream in) throws Exception {

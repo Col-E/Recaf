@@ -1850,6 +1850,8 @@ public class Evaluator {
 								try {
 									Object instance = mapper.map(instancedReceiver, valueList);
 									instancedReceiver.setRealInstance(Unchecked.cast(instance));
+								} catch (AnalyzerException ex) {
+									throw ex;
 								} catch (Throwable t) {
 									// A failed registered mapper must surface instead of leaving the host-backed receiver uninitialized.
 									yield exceptionHandler.routeException(this, exceptionHandler.newThrowable(t), insn);
@@ -1968,6 +1970,8 @@ public class Evaluator {
 										push(result);
 										yield insn.getNext();
 									}
+								} catch (AnalyzerException ex) {
+									throw ex;
 								} catch (Throwable t) {
 									yield exceptionHandler.routeException(this, exceptionHandler.newThrowable(t), insn);
 								}
@@ -2093,6 +2097,8 @@ public class Evaluator {
 									returnValue.setRealInstance(Unchecked.cast(value));
 									push(returnValue);
 									yield insn.getNext();
+								} catch (AnalyzerException ex) {
+									throw ex;
 								} catch (Throwable t) {
 									yield exceptionHandler.routeException(this, exceptionHandler.newThrowable(t), insn);
 								}
