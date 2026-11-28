@@ -16,6 +16,7 @@ import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.RecordComponentNode;
 import org.objectweb.asm.tree.TypeInsnNode;
 import org.objectweb.asm.tree.VarInsnNode;
 import software.coley.recaf.info.JvmClassInfo;
@@ -77,6 +78,7 @@ import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Modifier;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
@@ -3971,11 +3973,12 @@ public class EvaluatorTest extends TransformerTestBase {
 		assertStringValue("D[][]", evaluateClassName(Type.getType("[[La/b/C$D;"), "getSimpleName", List.of(member)));
 		assertStringValue("int[]", evaluateClassName(Type.getType("[I"), "getSimpleName", List.of()));
 
-		// In these cases the evaluator isn't configured to evaluate internal resources of the workspace, which
-		// would be where 'java/lang/String' is defined, so the evaluation fails. The idea applies though to any
-		// type not in the workspace. This would work when setting internal evaluation to true.
-		assertInstanceOf(EvaluationFailureResult.class, evaluateClassNameResult(Type.getObjectType("java/lang/String"), "getSimpleName", List.of()));
-		assertInstanceOf(EvaluationFailureResult.class, evaluateClassNameResult(Type.getType("[Ljava/lang/String;"), "getSimpleName", List.of()));
+		// Runtime classes are known, so their simple name is returned.
+		assertStringValue("String", evaluateClassName(Type.getObjectType("java/lang/String"), "getSimpleName", List.of()));
+		assertStringValue("String[]", evaluateClassName(Type.getType("[Ljava/lang/String;"), "getSimpleName", List.of()));
+
+		// A class in neither the workspace nor the runtime JDK is not known.
+		assertInstanceOf(EvaluationFailureResult.class, evaluateClassNameResult(Type.getObjectType("missing/Nope"), "getSimpleName", List.of()));
 	}
 
 	@Test
@@ -3991,6 +3994,400 @@ public class EvaluatorTest extends TransformerTestBase {
 			EvaluationResult result = evaluatorWithOverrides(List.of(), runner).evaluate(runner.name, "run", "(Ljava/lang/Class;)Ljava/lang/String;", null, List.of(ObjectValue.VAL_CLASS));
 			assertInstanceOf(EvaluationFailureResult.class, result);
 		}
+	}
+
+	@Test
+	void classLiteralComponentTypes() {
+		// Arrays have their element as component type, and any other class has none.
+		assertClassLiteral(Type.getObjectType("a/b/C"), evaluateRun("Ljava/lang/Class;", List.of(),
+				new LdcInsnNode(Type.getType("[La/b/C;")), classMethod("getComponentType", "()Ljava/lang/Class;")));
+		assertClassLiteral(Type.getType("[La/b/C;"), evaluateRun("Ljava/lang/Class;", List.of(),
+				new LdcInsnNode(Type.getType("[[La/b/C;")), classMethod("componentType", "()Ljava/lang/Class;")));
+		assertNullValue(evaluateRun("Ljava/lang/Class;", List.of(),
+				new LdcInsnNode(Type.getObjectType("a/b/C")), classMethod("getComponentType", "()Ljava/lang/Class;")));
+
+		// Primitive components are primitive classes, which are only reachable through arrays.
+		assertStringValue("int", yielded(evaluateRun("Ljava/lang/String;", List.of(),
+				new LdcInsnNode(Type.getType("[I")), classMethod("getComponentType", "()Ljava/lang/Class;"),
+				classMethod("getName", "()Ljava/lang/String;"))));
+
+		// Array classes are the array of their element, including for primitives.
+		assertClassLiteral(Type.getType("[La/b/C;"), evaluateRun("Ljava/lang/Class;", List.of(),
+				new LdcInsnNode(Type.getObjectType("a/b/C")), classMethod("arrayType", "()Ljava/lang/Class;")));
+		assertStringValue("[I", yielded(evaluateRun("Ljava/lang/String;", List.of(),
+				new LdcInsnNode(Type.getType("[I")), classMethod("getComponentType", "()Ljava/lang/Class;"),
+				classMethod("arrayType", "()Ljava/lang/Class;"), classMethod("getName", "()Ljava/lang/String;"))));
+	}
+
+	@Test
+	void classLiteralTypeShape() {
+		assertIntValue(1, yielded(evaluateRun("Z", List.of(), new LdcInsnNode(Type.getType("[I")), classMethod("isArray", "()Z"))));
+		assertIntValue(0, yielded(evaluateRun("Z", List.of(), new LdcInsnNode(Type.getObjectType("a/b/C")), classMethod("isArray", "()Z"))));
+		assertIntValue(0, yielded(evaluateRun("Z", List.of(), new LdcInsnNode(Type.getType("[I")), classMethod("isPrimitive", "()Z"))));
+		assertIntValue(1, yielded(evaluateRun("Z", List.of(), new LdcInsnNode(Type.getType("[I")), classMethod("getComponentType", "()Ljava/lang/Class;"), classMethod("isPrimitive", "()Z"))));
+	}
+
+	@Test
+	void classLiteralTypeNames() {
+		assertStringValue("a.b.C[][]", yielded(evaluateRun("Ljava/lang/String;", List.of(),
+				new LdcInsnNode(Type.getType("[[La/b/C;")), classMethod("getTypeName", "()Ljava/lang/String;"))));
+		assertStringValue("int[]", yielded(evaluateRun("Ljava/lang/String;", List.of(),
+				new LdcInsnNode(Type.getType("[I")), classMethod("getTypeName", "()Ljava/lang/String;"))));
+		assertStringValue("a.b.C", yielded(evaluateRun("Ljava/lang/String;", List.of(),
+				new LdcInsnNode(Type.getObjectType("a/b/C")), classMethod("getTypeName", "()Ljava/lang/String;"))));
+
+		// Arrays use the package of their element, primitives are in java.lang, and the default package is empty.
+		assertStringValue("a.b", yielded(evaluateRun("Ljava/lang/String;", List.of(),
+				new LdcInsnNode(Type.getType("[La/b/C;")), classMethod("getPackageName", "()Ljava/lang/String;"))));
+		assertStringValue("java.lang", yielded(evaluateRun("Ljava/lang/String;", List.of(),
+				new LdcInsnNode(Type.getType("[I")), classMethod("getPackageName", "()Ljava/lang/String;"))));
+		assertStringValue("", yielded(evaluateRun("Ljava/lang/String;", List.of(),
+				new LdcInsnNode(Type.getObjectType("C")), classMethod("getPackageName", "()Ljava/lang/String;"))));
+	}
+
+	@Test
+	void classLiteralEqualsComparesTypes() {
+		assertIntValue(1, yielded(evaluateRun("Z", List.of(), new LdcInsnNode(Type.getObjectType("a/b/C")),
+				new LdcInsnNode(Type.getObjectType("a/b/C")), classMethod("equals", "(Ljava/lang/Object;)Z"))));
+		assertIntValue(0, yielded(evaluateRun("Z", List.of(), new LdcInsnNode(Type.getObjectType("a/b/C")),
+				new LdcInsnNode(Type.getObjectType("a/b/D")), classMethod("equals", "(Ljava/lang/Object;)Z"))));
+		assertIntValue(1, yielded(evaluateRun("Z", List.of(), new LdcInsnNode(Type.getType("[I")),
+				new LdcInsnNode(Type.getType("[I")), classMethod("equals", "(Ljava/lang/Object;)Z"))));
+		assertIntValue(0, yielded(evaluateRun("Z", List.of(), new LdcInsnNode(Type.getObjectType("a/b/C")),
+				new InsnNode(Opcodes.ACONST_NULL), classMethod("equals", "(Ljava/lang/Object;)Z"))));
+	}
+
+	@Test
+	void classLiteralKindFlags() {
+		List<JvmClassInfo> classes = classKindsWorkspace();
+		assertIntValue(1, yielded(evaluateRun("Z", classes, new LdcInsnNode(Type.getObjectType("a/I")), classMethod("isInterface", "()Z"))));
+		assertIntValue(0, yielded(evaluateRun("Z", classes, new LdcInsnNode(Type.getObjectType("a/Impl")), classMethod("isInterface", "()Z"))));
+		assertIntValue(1, yielded(evaluateRun("Z", classes, new LdcInsnNode(Type.getObjectType("a/E")), classMethod("isEnum", "()Z"))));
+		assertIntValue(0, yielded(evaluateRun("Z", classes, new LdcInsnNode(Type.getObjectType("a/I")), classMethod("isEnum", "()Z"))));
+		assertIntValue(1, yielded(evaluateRun("Z", classes, new LdcInsnNode(Type.getObjectType("a/Ann")), classMethod("isAnnotation", "()Z"))));
+		assertIntValue(1, yielded(evaluateRun("Z", classes, new LdcInsnNode(Type.getObjectType("a/R")), classMethod("isRecord", "()Z"))));
+		assertIntValue(0, yielded(evaluateRun("Z", classes, new LdcInsnNode(Type.getObjectType("a/Impl")), classMethod("isRecord", "()Z"))));
+		assertIntValue(1, yielded(evaluateRun("Z", classes, new LdcInsnNode(Type.getObjectType("a/S")), classMethod("isSealed", "()Z"))));
+		assertIntValue(0, yielded(evaluateRun("Z", classes, new LdcInsnNode(Type.getObjectType("a/Impl")), classMethod("isSealed", "()Z"))));
+		assertIntValue(1, yielded(evaluateRun("Z", classes, new LdcInsnNode(Type.getObjectType("a/Syn")), classMethod("isSynthetic", "()Z"))));
+
+		// Arrays are never interfaces, enums, or annotations.
+		assertIntValue(0, yielded(evaluateRun("Z", classes, new LdcInsnNode(Type.getType("[La/I;")), classMethod("isInterface", "()Z"))));
+		assertIntValue(0, yielded(evaluateRun("Z", classes, new LdcInsnNode(Type.getType("[La/E;")), classMethod("isEnum", "()Z"))));
+	}
+
+	@Test
+	void classLiteralNestingAndHierarchy() {
+		List<JvmClassInfo> classes = classKindsWorkspace();
+		Type priv = Type.getObjectType("a/Outer$Priv");
+		Type local = Type.getObjectType("a/Outer$1Local");
+		Type anonymous = Type.getObjectType("a/Outer$1");
+		String classDesc = "()Ljava/lang/Class;";
+		String nameDesc = "()Ljava/lang/String;";
+
+		// Member, local, and anonymous classes.
+		assertIntValue(1, yielded(evaluateRun("Z", classes, new LdcInsnNode(priv), classMethod("isMemberClass", "()Z"))));
+		assertIntValue(0, yielded(evaluateRun("Z", classes, new LdcInsnNode(local), classMethod("isMemberClass", "()Z"))));
+		assertIntValue(1, yielded(evaluateRun("Z", classes, new LdcInsnNode(local), classMethod("isLocalClass", "()Z"))));
+		assertIntValue(0, yielded(evaluateRun("Z", classes, new LdcInsnNode(anonymous), classMethod("isLocalClass", "()Z"))));
+		assertIntValue(1, yielded(evaluateRun("Z", classes, new LdcInsnNode(anonymous), classMethod("isAnonymousClass", "()Z"))));
+		assertIntValue(0, yielded(evaluateRun("Z", classes, new LdcInsnNode(local), classMethod("isAnonymousClass", "()Z"))));
+
+		// Only members have a declaring class, but local and anonymous classes are still enclosed.
+		assertStringValue("a.Outer", yielded(evaluateRun("Ljava/lang/String;", classes, new LdcInsnNode(priv),
+				classMethod("getDeclaringClass", classDesc), classMethod("getName", nameDesc))));
+		assertStringValue("a.Outer", yielded(evaluateRun("Ljava/lang/String;", classes, new LdcInsnNode(priv),
+				classMethod("getEnclosingClass", classDesc), classMethod("getName", nameDesc))));
+		assertNullValue(evaluateRun("Ljava/lang/Class;", classes, new LdcInsnNode(local), classMethod("getDeclaringClass", classDesc)));
+		assertStringValue("a.Outer", yielded(evaluateRun("Ljava/lang/String;", classes, new LdcInsnNode(local),
+				classMethod("getEnclosingClass", classDesc), classMethod("getName", nameDesc))));
+		assertStringValue("a.Outer", yielded(evaluateRun("Ljava/lang/String;", classes, new LdcInsnNode(anonymous),
+				classMethod("getEnclosingClass", classDesc), classMethod("getName", nameDesc))));
+		assertNullValue(evaluateRun("Ljava/lang/Class;", classes, new LdcInsnNode(Type.getObjectType("a/Outer")), classMethod("getEnclosingClass", classDesc)));
+
+		// Simple and canonical names. Local and anonymous classes have no canonical name.
+		assertStringValue("Local", yielded(evaluateRun("Ljava/lang/String;", classes, new LdcInsnNode(local), classMethod("getSimpleName", nameDesc))));
+		assertStringValue("", yielded(evaluateRun("Ljava/lang/String;", classes, new LdcInsnNode(anonymous), classMethod("getSimpleName", nameDesc))));
+		assertStringValue("a.Outer.Priv", yielded(evaluateRun("Ljava/lang/String;", classes, new LdcInsnNode(priv), classMethod("getCanonicalName", nameDesc))));
+		assertNullValue(evaluateRun("Ljava/lang/String;", classes, new LdcInsnNode(local), classMethod("getCanonicalName", nameDesc)));
+		assertNullValue(evaluateRun("Ljava/lang/String;", classes, new LdcInsnNode(anonymous), classMethod("getCanonicalName", nameDesc)));
+
+		// Nest hosts. A class without a NestHost attribute is its own host.
+		assertStringValue("a.Outer", yielded(evaluateRun("Ljava/lang/String;", classes, new LdcInsnNode(priv),
+				classMethod("getNestHost", classDesc), classMethod("getName", nameDesc))));
+		assertStringValue("a.Outer", yielded(evaluateRun("Ljava/lang/String;", classes, new LdcInsnNode(Type.getObjectType("a/Outer")),
+				classMethod("getNestHost", classDesc), classMethod("getName", nameDesc))));
+
+		// Hierarchy. Interfaces have no superclass, and classes list their direct interfaces.
+		assertStringValue("a.Base", yielded(evaluateRun("Ljava/lang/String;", classes, new LdcInsnNode(Type.getObjectType("a/Impl")),
+				classMethod("getSuperclass", classDesc), classMethod("getName", nameDesc))));
+		assertNullValue(evaluateRun("Ljava/lang/Class;", classes, new LdcInsnNode(Type.getObjectType("a/I")), classMethod("getSuperclass", classDesc)));
+		assertIntValue(1, yielded(evaluateRun("I", classes, new LdcInsnNode(Type.getObjectType("a/Impl")),
+				classMethod("getInterfaces", "()[Ljava/lang/Class;"), new InsnNode(Opcodes.ARRAYLENGTH))));
+		assertStringValue("a.I", yielded(evaluateRun("Ljava/lang/String;", classes, new LdcInsnNode(Type.getObjectType("a/Impl")),
+				classMethod("getInterfaces", "()[Ljava/lang/Class;"), new InsnNode(Opcodes.ICONST_0), new InsnNode(Opcodes.AALOAD),
+				classMethod("getName", nameDesc))));
+
+		// Arrays implement Cloneable and then Serializable, and have Object as their superclass.
+		assertStringValue("java.lang.Cloneable", yielded(evaluateRun("Ljava/lang/String;", classes, new LdcInsnNode(Type.getType("[I")),
+				classMethod("getInterfaces", "()[Ljava/lang/Class;"), new InsnNode(Opcodes.ICONST_0), new InsnNode(Opcodes.AALOAD),
+				classMethod("getName", nameDesc))));
+		assertStringValue("java.lang.Object", yielded(evaluateRun("Ljava/lang/String;", classes, new LdcInsnNode(Type.getType("[I")),
+				classMethod("getSuperclass", classDesc), classMethod("getName", nameDesc))));
+	}
+
+	@Test
+	void classLiteralModifiersAndStrings() {
+		List<JvmClassInfo> classes = classKindsWorkspace();
+		String modifiersDesc = "()I";
+		String stringDesc = "()Ljava/lang/String;";
+
+		// Class access flags, without ACC_SUPER, which is not a modifier.
+		assertIntValue(1537, yielded(evaluateRun("I", classes, new LdcInsnNode(Type.getObjectType("a/I")), classMethod("getModifiers", modifiersDesc))));
+		assertIntValue(16401, yielded(evaluateRun("I", classes, new LdcInsnNode(Type.getObjectType("a/E")), classMethod("getModifiers", modifiersDesc))));
+		assertIntValue(9729, yielded(evaluateRun("I", classes, new LdcInsnNode(Type.getObjectType("a/Ann")), classMethod("getModifiers", modifiersDesc))));
+		assertIntValue(4097, yielded(evaluateRun("I", classes, new LdcInsnNode(Type.getObjectType("a/Syn")), classMethod("getModifiers", modifiersDesc))));
+
+		// Member classes report the flags of their InnerClasses entry, so this is 'private static'.
+		assertIntValue(10, yielded(evaluateRun("I", classes, new LdcInsnNode(Type.getObjectType("a/Outer$Priv")), classMethod("getModifiers", modifiersDesc))));
+
+		// Arrays and primitives are public, abstract, and final.
+		assertIntValue(1041, yielded(evaluateRun("I", classes, new LdcInsnNode(Type.getType("[La/I;")), classMethod("getModifiers", modifiersDesc))));
+		assertIntValue(1041, yielded(evaluateRun("I", classes, new LdcInsnNode(Type.getType("[I")), classMethod("getComponentType", "()Ljava/lang/Class;"), classMethod("getModifiers", modifiersDesc))));
+
+		// Strings follow Class.toString(), which names interfaces and uses the JVM name of arrays.
+		assertStringValue("interface a.I", yielded(evaluateRun("Ljava/lang/String;", classes, new LdcInsnNode(Type.getObjectType("a/I")), classMethod("toString", stringDesc))));
+		assertStringValue("class a.Impl", yielded(evaluateRun("Ljava/lang/String;", classes, new LdcInsnNode(Type.getObjectType("a/Impl")), classMethod("toString", stringDesc))));
+		assertStringValue("class [I", yielded(evaluateRun("Ljava/lang/String;", classes, new LdcInsnNode(Type.getType("[I")), classMethod("toString", stringDesc))));
+		assertStringValue("int", yielded(evaluateRun("Ljava/lang/String;", classes, new LdcInsnNode(Type.getType("[I")), classMethod("getComponentType", "()Ljava/lang/Class;"), classMethod("toString", stringDesc))));
+	}
+
+	@Test
+	void classLiteralJdkMetadata() {
+		// Runtime classes are known, so their metadata should be accessible via 'cls.isX' and such.
+		Type entry = Type.getObjectType("java/util/Map$Entry");
+		assertIntValue(1, yielded(evaluateRun("Z", List.of(), new LdcInsnNode(entry), classMethod("isInterface", "()Z"))));
+		assertIntValue(1, yielded(evaluateRun("Z", List.of(), new LdcInsnNode(entry), classMethod("isMemberClass", "()Z"))));
+		assertStringValue("java.util.Map", yielded(evaluateRun("Ljava/lang/String;", List.of(), new LdcInsnNode(entry),
+				classMethod("getDeclaringClass", "()Ljava/lang/Class;"), classMethod("getName", "()Ljava/lang/String;"))));
+		assertStringValue("java.util.Map.Entry", yielded(evaluateRun("Ljava/lang/String;", List.of(), new LdcInsnNode(entry),
+				classMethod("getCanonicalName", "()Ljava/lang/String;"))));
+
+		assertIntValue(Modifier.PUBLIC | Modifier.STATIC | Modifier.ABSTRACT | Modifier.INTERFACE,
+				yielded(evaluateRun("I", List.of(), new LdcInsnNode(entry), classMethod("getModifiers", "()I"))));
+
+		Type state = Type.getObjectType("java/lang/Thread$State");
+		assertIntValue(1, yielded(evaluateRun("Z", List.of(), new LdcInsnNode(state), classMethod("isEnum", "()Z"))));
+		assertIntValue(Modifier.PUBLIC | Modifier.STATIC | Modifier.FINAL | Opcodes.ACC_ENUM, yielded(evaluateRun("I", List.of(), new LdcInsnNode(state), classMethod("getModifiers", "()I"))));
+
+		Type string = Type.getObjectType("java/lang/String");
+		assertIntValue(0, yielded(evaluateRun("Z", List.of(), new LdcInsnNode(string), classMethod("isInterface", "()Z"))));
+		assertIntValue(Modifier.PUBLIC | Modifier.FINAL, yielded(evaluateRun("I", List.of(), new LdcInsnNode(string), classMethod("getModifiers", "()I"))));
+		assertStringValue("java.lang.Object", yielded(evaluateRun("Ljava/lang/String;", List.of(), new LdcInsnNode(string), classMethod("getSuperclass", "()Ljava/lang/Class;"), classMethod("getName", "()Ljava/lang/String;"))));
+
+		// A class in neither the workspace nor the runtime JDK is not known.
+		assertInstanceOf(EvaluationFailureResult.class, evaluateRun("Ljava/lang/Class;", List.of(),
+				new LdcInsnNode(Type.getObjectType("missing/Nope")), classMethod("getSuperclass", "()Ljava/lang/Class;")));
+	}
+
+	@Test
+	void classLiteralIsAssignableFrom() {
+		List<JvmClassInfo> classes = classKindsWorkspace();
+		assertIntValue(1, yielded(isAssignableFromResult(classes, Type.getObjectType("a/Base"), Type.getObjectType("a/Impl"))));
+		assertIntValue(0, yielded(isAssignableFromResult(classes, Type.getObjectType("a/Impl"), Type.getObjectType("a/Base"))));
+		assertIntValue(1, yielded(isAssignableFromResult(classes, Type.getObjectType("a/I"), Type.getObjectType("a/Impl"))));
+		assertIntValue(1, yielded(isAssignableFromResult(classes, Type.getObjectType("java/lang/Object"), Type.getObjectType("a/I"))));
+
+		// Arrays are assignable to Object and the array supertypes, and element types follow the same rules.
+		assertIntValue(1, yielded(isAssignableFromResult(classes, Type.getObjectType("java/lang/Object"), Type.getType("[I"))));
+		assertIntValue(1, yielded(isAssignableFromResult(classes, Type.getObjectType("java/lang/Cloneable"), Type.getType("[I"))));
+		assertIntValue(1, yielded(isAssignableFromResult(classes, Type.getObjectType("java/io/Serializable"), Type.getType("[La/Base;"))));
+		assertIntValue(0, yielded(isAssignableFromResult(classes, Type.getObjectType("a/Base"), Type.getType("[La/Base;"))));
+		assertIntValue(0, yielded(isAssignableFromResult(classes, Type.getType("[La/Base;"), Type.getObjectType("a/Base"))));
+		assertIntValue(1, yielded(isAssignableFromResult(classes, Type.getType("[La/Base;"), Type.getType("[La/Impl;"))));
+		assertIntValue(0, yielded(isAssignableFromResult(classes, Type.getType("[La/Impl;"), Type.getType("[La/Base;"))));
+		assertIntValue(1, yielded(isAssignableFromResult(classes, Type.getType("[I"), Type.getType("[I"))));
+		assertIntValue(0, yielded(isAssignableFromResult(classes, Type.getType("[I"), Type.getType("[J"))));
+		assertIntValue(0, yielded(isAssignableFromResult(classes, Type.getType("[Ljava/lang/Object;"), Type.getType("[I"))));
+		assertIntValue(1, yielded(isAssignableFromResult(classes, Type.getType("[Ljava/lang/Object;"), Type.getType("[[I"))));
+
+		// Unknown classes and null arguments are not evaluable.
+		assertInstanceOf(EvaluationFailureResult.class, isAssignableFromResult(classes, Type.getObjectType("a/Base"), Type.getObjectType("missing/Nope")));
+		assertInstanceOf(EvaluationFailureResult.class, evaluateRun("Z", classes, new LdcInsnNode(Type.getObjectType("a/Base")),
+				new InsnNode(Opcodes.ACONST_NULL), classMethod("isAssignableFrom", "(Ljava/lang/Class;)Z")));
+	}
+
+	@Test
+	void classLiteralForName() {
+		List<JvmClassInfo> classes = classKindsWorkspace();
+		assertClassLiteral(Type.getObjectType("a/Impl"), forNameResult(classes, ObjectValue.string("a.Impl")));
+		assertClassLiteral(Type.getType("[La/Impl;"), forNameResult(classes, ObjectValue.string("[La.Impl;")));
+		assertClassLiteral(Type.getType("[I"), forNameResult(classes, ObjectValue.string("[I")));
+		assertClassLiteral(Type.getObjectType("java/lang/String"), forNameResult(classes, ObjectValue.string("java.lang.String")));
+
+		// Slashes are not binary names. Empty, malformed, and missing names are not classes.
+		for (String name : List.of("a/Impl", "", "[X", "[La.Impl", "[L;", "missing.Nope", "[Lmissing.Nope;")) {
+			assertInstanceOf(EvaluationFailureResult.class, forNameResult(classes, ObjectValue.string(name)), name);
+		}
+
+		// A name that is not known to the evaluator cannot be resolved.
+		assertInstanceOf(EvaluationFailureResult.class, forNameResult(classes, StringValue.VAL_STRING));
+	}
+
+	@Test
+	void classForNameRunsWorkspaceInitializerWhenEnabled() {
+		compileFull("ForNameFailing", """
+				public class ForNameFailing {
+				    static int VALUE = fail();
+				    static int fail() { throw new IllegalStateException("initializer"); }
+				}
+				""");
+		String compiled = compile("""
+				static int run() throws Exception {
+				    Class.forName("ForNameFailing");
+				    return 0;
+				}
+				""");
+
+		// Nothing else touches the class, so its initializer failing shows that the lookup initialized it.
+		EvaluationThrowsResult thrown = assertInstanceOf(EvaluationThrowsResult.class,
+				evaluateResult(compiled, "run", "()I", null, List.of(), true, get("ForNameFailing")));
+		assertEquals("java/lang/IllegalStateException",
+				assertInstanceOf(ThrowableValue.class, thrown.exception()).type().getInternalName());
+
+		// With initializers disabled, the lookup does not run the initializer.
+		assertIntValue(0, yielded(evaluateResult(compiled, "run", "()I", null, List.of(), false, get("ForNameFailing"))));
+	}
+
+	@Test
+	void unnamedClassValueAbortsForNewMethods() {
+		// A class value from an unknown source has no known name, so none of these methods can be evaluated.
+		String[][] methods = {
+				{"isArray", "()Z"},
+				{"isInterface", "()Z"},
+				{"getComponentType", "()Ljava/lang/Class;"},
+				{"getInterfaces", "()[Ljava/lang/Class;"},
+				{"getModifiers", "()I"},
+				{"getTypeName", "()Ljava/lang/String;"},
+				{"getCanonicalName", "()Ljava/lang/String;"},
+				{"toString", "()Ljava/lang/String;"}
+		};
+		for (String[] method : methods) {
+			Type returnType = Type.getReturnType(method[1]);
+			String desc = "(Ljava/lang/Class;)" + returnType.getDescriptor();
+			ClassNode runner = syntheticClass("synthetic/UnnamedClassRunner", Opcodes.ACC_PUBLIC);
+			runner.methods.add(syntheticMethod("run", desc, Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,
+					new VarInsnNode(Opcodes.ALOAD, 0),
+					new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/Class", method[0], method[1], false),
+					new InsnNode(returnType.getOpcode(Opcodes.IRETURN))));
+
+			EvaluationResult result = evaluatorWithOverrides(List.of(), runner)
+					.evaluate(runner.name, "run", desc, null, List.of(ObjectValue.VAL_CLASS));
+			assertInstanceOf(EvaluationFailureResult.class, result, method[0]);
+		}
+	}
+
+	@Nonnull
+	private static ReValue yielded(@Nonnull EvaluationResult result) {
+		return assertInstanceOf(EvaluationYieldResult.class, result).value();
+	}
+
+	private static void assertClassLiteral(@Nonnull Type expected, @Nonnull EvaluationResult result) {
+		ReValue value = yielded(result);
+		if (value instanceof ClassLiteralValueImpl literal)
+			assertEquals(expected, literal.literal());
+		else
+			fail("Expected class literal " + expected + ", got: " + value);
+	}
+
+	private static void assertNullValue(@Nonnull EvaluationResult result) {
+		ReValue value = yielded(result);
+		assertTrue(value instanceof ObjectValue object && object.isNull(), "Expected null, got: " + value);
+	}
+
+	@Nonnull
+	private static MethodInsnNode classMethod(@Nonnull String name, @Nonnull String desc) {
+		return new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/Class", name, desc, false);
+	}
+
+	@Nonnull
+	private static EvaluationResult evaluateRun(@Nonnull String returnDesc, @Nonnull List<JvmClassInfo> workspaceClasses,
+	                                            @Nonnull AbstractInsnNode... body) {
+		List<AbstractInsnNode> instructions = new ArrayList<>(List.of(body));
+		instructions.add(new InsnNode(Type.getType(returnDesc).getOpcode(Opcodes.IRETURN)));
+		ClassNode runner = syntheticClass("synthetic/ClassMethodRunner", Opcodes.ACC_PUBLIC);
+		runner.methods.add(syntheticMethod("run", "()" + returnDesc, Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,
+				instructions.toArray(AbstractInsnNode[]::new)));
+		return evaluatorWithOverrides(workspaceClasses, runner)
+				.evaluate(runner.name, "run", "()" + returnDesc, null, List.of());
+	}
+
+	@Nonnull
+	private static EvaluationResult isAssignableFromResult(@Nonnull List<JvmClassInfo> classes,
+	                                                       @Nonnull Type type, @Nonnull Type from) {
+		return evaluateRun("Z", classes, new LdcInsnNode(type), new LdcInsnNode(from),
+				classMethod("isAssignableFrom", "(Ljava/lang/Class;)Z"));
+	}
+
+	@Nonnull
+	private static EvaluationResult forNameResult(@Nonnull List<JvmClassInfo> classes, @Nonnull ReValue name) {
+		ClassNode runner = syntheticClass("synthetic/ForNameRunner", Opcodes.ACC_PUBLIC);
+		runner.methods.add(syntheticMethod("run", "(Ljava/lang/String;)Ljava/lang/Class;", Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,
+				new VarInsnNode(Opcodes.ALOAD, 0),
+				new MethodInsnNode(Opcodes.INVOKESTATIC, "java/lang/Class", "forName", "(Ljava/lang/String;)Ljava/lang/Class;", false),
+				new InsnNode(Opcodes.ARETURN)));
+		return evaluatorWithOverrides(classes, runner)
+				.evaluate(runner.name, "run", "(Ljava/lang/String;)Ljava/lang/Class;", null, List.of(name));
+	}
+
+	@Nonnull
+	private static JvmClassInfo classOf(@Nonnull String name, int access, @Nonnull String superName,
+	                                    @Nonnull Consumer<ClassNode> customizer) {
+		return TestClassUtils.createClass(name, node -> {
+			node.version = Opcodes.V17;
+			node.access = access;
+			node.superName = superName;
+			customizer.accept(node);
+		});
+	}
+
+	/**
+	 * @return Workspace classes covering each kind of class the {@link Class} metadata methods report on.
+	 */
+	@Nonnull
+	private static List<JvmClassInfo> classKindsWorkspace() {
+		String object = "java/lang/Object";
+		return List.of(
+				classOf("a/I", Opcodes.ACC_PUBLIC | Opcodes.ACC_INTERFACE | Opcodes.ACC_ABSTRACT, object, node -> {}),
+				classOf("a/E", Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL | Opcodes.ACC_ENUM | Opcodes.ACC_SUPER, "java/lang/Enum", node -> {}),
+				classOf("a/Ann", Opcodes.ACC_PUBLIC | Opcodes.ACC_INTERFACE | Opcodes.ACC_ABSTRACT | Opcodes.ACC_ANNOTATION, object,
+						node -> node.interfaces = List.of("java/lang/annotation/Annotation")),
+				classOf("a/R", Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL | Opcodes.ACC_SUPER, "java/lang/Record",
+						node -> node.recordComponents = List.of(new RecordComponentNode("x", "I", null))),
+				classOf("a/S", Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT | Opcodes.ACC_SUPER, object,
+						node -> node.permittedSubclasses = List.of("a/Impl")),
+				classOf("a/Syn", Opcodes.ACC_PUBLIC | Opcodes.ACC_SYNTHETIC | Opcodes.ACC_SUPER, object, node -> {}),
+				classOf("a/Base", Opcodes.ACC_PUBLIC | Opcodes.ACC_SUPER, object, node -> {}),
+				classOf("a/Impl", Opcodes.ACC_PUBLIC | Opcodes.ACC_SUPER, "a/Base",
+						node -> node.interfaces = List.of("a/I")),
+				classOf("a/Outer", Opcodes.ACC_PUBLIC | Opcodes.ACC_SUPER, object, node -> {}),
+				classOf("a/Outer$Priv", Opcodes.ACC_SUPER, object, node -> {
+					node.nestHostClass = "a/Outer";
+					node.innerClasses.add(new InnerClassNode("a/Outer$Priv", "a/Outer", "Priv", Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC));
+				}),
+				classOf("a/Outer$1Local", Opcodes.ACC_SUPER, object, node -> {
+					node.outerClass = "a/Outer";
+					node.outerMethod = "run";
+					node.outerMethodDesc = "()V";
+					node.innerClasses.add(new InnerClassNode("a/Outer$1Local", null, "Local", 0));
+				}),
+				classOf("a/Outer$1", Opcodes.ACC_SUPER, object, node -> {
+					node.outerClass = "a/Outer";
+					node.outerMethod = "run";
+					node.outerMethodDesc = "()V";
+					node.innerClasses.add(new InnerClassNode("a/Outer$1", null, null, 0));
+				})
+		);
 	}
 
 	@Nonnull
@@ -4062,24 +4459,26 @@ public class EvaluatorTest extends TransformerTestBase {
 
 	@Test
 	void resourceStreamMissOutsideTheJdkReturnsNull() {
-		// Library packages are not JDK packages, so a miss there is answered.
+		// Library packages are not JDK packages, so a resource that doesn't exist in the workspace should return null.
 		Workspace workspace = resourceWorkspace("a/b/data.txt", "abc");
 		assertNullResource(resourceStreamResult(workspace, Type.getObjectType("a/b/C"), "/org/apache/missing.txt"));
 	}
 
 	@Test
-	void resourceStreamOnJdkClassAborts() {
+	void resourceStreamOnJdkClassDoesNotFindIt() {
 		// Class.getResourceAsStream on a JDK class searches the JDK module, not the classpath.
 		// So the evaluator shouldn't yield the workspace defined resource.
 		Workspace workspace = resourceWorkspace("java/lang/data.txt", "abc");
-		assertInstanceOf(EvaluationFailureResult.class, resourceStreamResult(workspace, Type.getObjectType("java/lang/String"), "data.txt"));
+		EvaluationResult result = resourceStreamResult(workspace, Type.getObjectType("java/lang/String"), "data.txt");
+		assertNullResource(result);
 	}
 
 	@Test
-	void resourceStreamOnArrayClassAborts() {
-		// Array classes search the package of their element type, which is not modeled.
+	void resourceStreamOnArrayClass() throws Exception {
+		// Array classes resolve names through their element type.
 		Workspace workspace = resourceWorkspace("a/b/data.txt", "abc");
-		assertInstanceOf(EvaluationFailureResult.class, resourceStreamResult(workspace, Type.getType("[La/b/C;"), "data.txt"));
+		EvaluationResult result = resourceStreamResult(workspace, Type.getType("[La/b/C;"), "data.txt");
+		assertEquals("abc", readResourceStream(result));
 	}
 
 	@Test
@@ -4123,16 +4522,6 @@ public class EvaluatorTest extends TransformerTestBase {
 				new InsnNode(Opcodes.ARETURN)));
 		EvaluationResult result = evaluatorWithOverrides(workspace, runner).evaluate(runner.name, "run", "(Ljava/lang/Class;)Ljava/io/InputStream;", null, List.of(ObjectValue.VAL_CLASS));
 		assertInstanceOf(EvaluationFailureResult.class, result);
-	}
-
-	@Test
-	void resourceStreamCopiesTheWorkspaceBytes() throws Exception {
-		// The stream is copied when the lookup is evaluated, so later changes to the workspace bytes do not reach it.
-		byte[] content = "abc".getBytes(StandardCharsets.UTF_8);
-		Workspace workspace = resourceWorkspace("a/b/data.txt", content);
-		EvaluationResult result = resourceStreamResult(workspace, Type.getObjectType("a/b/C"), "data.txt");
-		content[0] = 'z';
-		assertEquals("abc", readResourceStream(result));
 	}
 
 	@Test

@@ -257,6 +257,17 @@ public class Types {
 
 	/**
 	 * @param type
+	 * 		Some type.
+	 *
+	 * @return Component type of an array, or {@code null} for all other types.
+	 */
+	@Nullable
+	public static Type getComponentType(@Nonnull Type type) {
+		return type.getSort() == Type.ARRAY ? Type.getType(type.getDescriptor().substring(1)) : null;
+	}
+
+	/**
+	 * @param type
 	 * 		Some internal type name.
 	 *
 	 * @return {@code true} for super-types of arrays.
@@ -645,6 +656,54 @@ public class Types {
 			pretty += suffix;
 		}
 		return pretty;
+	}
+
+	/**
+	 * @param type
+	 * 		Some type, either primitive, void, object, or array.
+	 *
+	 * @return Binary name of the type, with dots. Arrays use their descriptor.
+	 */
+	@Nonnull
+	public static String getBinaryName(@Nonnull Type type) {
+		return switch (type.getSort()) {
+			case Type.ARRAY -> type.getDescriptor().replace('/', '.');
+			case Type.OBJECT -> type.getInternalName().replace('/', '.');
+			default -> type.getClassName(); // Primitives, such as 'int'.
+		};
+	}
+
+	/**
+	 * @param type
+	 * 		Some type.
+	 *
+	 * @return Name of the type, following {@link Class#getTypeName()}. Arrays use their component's name.
+	 */
+	@Nonnull
+	public static String getTypeName(@Nonnull Type type) {
+		if (type.getSort() == Type.ARRAY)
+			return getTypeName(type.getElementType()) + "[]".repeat(type.getDimensions());
+		return getBinaryName(type);
+	}
+
+	/**
+	 * @param type
+	 * 		Some type.
+	 *
+	 * @return Package of the type, following {@link Class#getPackageName()}. Arrays use their element's package,
+	 * and primitives are in {@code java.lang}.
+	 */
+	@Nonnull
+	public static String getPackageName(@Nonnull Type type) {
+		return switch (type.getSort()) {
+			case Type.ARRAY -> getPackageName(type.getElementType());
+			case Type.OBJECT -> {
+				String internalName = type.getInternalName();
+				int slash = internalName.lastIndexOf('/');
+				yield slash < 0 ? "" : internalName.substring(0, slash).replace('/', '.');
+			}
+			default -> "java.lang";
+		};
 	}
 
 	/**

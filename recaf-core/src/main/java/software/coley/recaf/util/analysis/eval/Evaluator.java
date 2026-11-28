@@ -613,7 +613,7 @@ public class Evaluator {
 	 * thrown result produced while initializing the class.
 	 */
 	@Nullable
-	private EvaluationResult initializeClassIfNeeded(@Nonnull String className, @Nonnull EvaluationContext context) {
+	public EvaluationResult initializeClassIfNeeded(@Nonnull String className, @Nonnull EvaluationContext context) {
 		// Skip if initializer evaluation is disabled.
 		// A supplied root node may be outside the workspace, so only require a workspace class when no per-evaluation override exists.
 		if (!evaluateClassInitializers || (context.getClassNodeOverrides().get(className) == null && workspace.findClass(evaluateInternals, className) == null))

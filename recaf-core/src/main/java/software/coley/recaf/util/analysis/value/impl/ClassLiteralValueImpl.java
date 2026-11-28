@@ -20,12 +20,11 @@ public class ClassLiteralValueImpl implements ObjectValue {
 	/**
 	 * @param literal
 	 * 		Type of the class literal.
-	 * 		Must be an object or array type.
+	 * 		Must be a primitive, void, object, or array type. Method types are not classes.
 	 */
 	public ClassLiteralValueImpl(@Nonnull Type literal) {
-		int sort = literal.getSort();
-		if (sort != Type.OBJECT && sort != Type.ARRAY)
-			throw new IllegalArgumentException("Class literal must be an object or array type: " + literal);
+		if (literal.getSort() == Type.METHOD)
+			throw new IllegalArgumentException("Class literal must be a primitive, void, object, or array type: " + literal);
 		this.literal = literal;
 	}
 
